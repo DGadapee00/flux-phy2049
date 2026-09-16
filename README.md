@@ -2,7 +2,7 @@
 
 Interactive 3D labs for Montgomery’s Calculus Physics II. One app at http://localhost:5174/ — exam units in the top row, labs as tabs, hash URLs so each lab is bookmarkable (`#/e3/potential`).
 
-Private GitHub remote (create the empty repo, then): `git remote add origin https://github.com/DGadapee00/flux-phy2049.git`
+Private repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — no lecture notes, worksheets, or Canvas files.
 
 ## Run
 
