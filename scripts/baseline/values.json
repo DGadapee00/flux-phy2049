@@ -1,0 +1,49 @@
+{
+  "captured": "2026-09-16",
+  "note": "Physics values from the eight-lab FLUX before the registry split. Merge gate is these numbers, not pixel-identical chrome.",
+  "gauss": {
+    "phi": 113090.41374449793,
+    "phiG": 112994.35028248586,
+    "match": 99.91498383611932,
+    "charges": 1
+  },
+  "field": {
+    "Ex": 33883.77308343497,
+    "Ey": 15059.454703748876,
+    "Ez": 0
+  },
+  "integral": {
+    "mag": 77361.12486555138,
+    "analytic": 77337.40178748014
+  },
+  "force": {
+    "Fx": -0.06317612170931547,
+    "Fy": -0.005960011482010893,
+    "Fz": 0
+  },
+  "potential": {
+    "V": 17983.609388914727,
+    "Ex": 35967.218777829454
+  },
+  "capacitor": {
+    "C": 7.084177200000001e-12,
+    "U": 5.100607584e-10
+  },
+  "ohm": {
+    "R": 8,
+    "I": 1.5
+  },
+  "power": {
+    "P": 60
+  },
+  "offcenter": {
+    "phi": 113042.27194532704,
+    "phiG": 112994.35028248586,
+    "match": 99.95758932838555,
+    "nIn": 1
+  },
+  "outside": {
+    "phi": 16.022201173023795,
+    "nIn": 0
+  }
+}
