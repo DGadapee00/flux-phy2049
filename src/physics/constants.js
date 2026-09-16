@@ -11,6 +11,10 @@ export const QE = 1.6e-19;
 export const MU0 = 4e-7 * Math.PI;
 export const MU0_SHEET = '4π×10⁻⁷';
 
+/** c = 1/√(μ₀ε₀). Compute from the sheet constants; display 3.00×10⁸ m/s. */
+export const C = 1 / Math.sqrt(MU0 * EPS0);
+export const C_SHEET = 3.0e8;
+
 /** 1 Three.js unit = 0.125 m so a ~0.5 m Gaussian sphere reads well. */
 export const UNITS_PER_METER = 8;
 

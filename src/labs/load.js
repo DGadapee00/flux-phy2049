@@ -15,6 +15,8 @@ const loaders = {
   magforce: () => import('./magforce.js'),
   faraday: () => import('./faraday.js'),
   ac: () => import('./ac.js'),
+  emwave: () => import('./emwave.js'),
+  polar: () => import('./polar.js'),
 };
 
 const cache = new Map();

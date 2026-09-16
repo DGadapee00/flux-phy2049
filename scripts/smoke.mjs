@@ -34,6 +34,8 @@ const LAB = {
   magforce: 'e4',
   faraday: 'e5',
   ac: 'e5',
+  emwave: 'e6',
+  polar: 'e6',
 };
 
 async function go(lab) {
@@ -276,15 +278,34 @@ const ac = await page.evaluate(() => {
 await page.screenshot({ path: path.join(outDir, 'ac.png') });
 check('ac.series RLC |Z|', ac.Z, Math.hypot(15, 2 * Math.PI * 60 * 0.08 - 1 / (2 * Math.PI * 60 * 4e-5)), 0.01);
 
+await go('emwave');
+const emwave = await page.evaluate(() => {
+  const w = window.__gauss.computed.em;
+  const E0 = window.__gauss.state.E0;
+  return { lab: window.__gauss.state.lab, c: w?.c, B0: w?.B0, E0, Iavg: w?.Iavg, band: w?.band?.id };
+});
+await page.screenshot({ path: path.join(outDir, 'emwave.png') });
+check('emwave E₀/B₀ = c', emwave.E0 / emwave.B0, emwave.c, 0.002);
+check('emwave visible band', emwave.band === 'vis' ? 1 : 0, 1, 0);
+
+await go('polar');
+const polar = await page.evaluate(() => {
+  const p = window.__gauss.computed.pol;
+  const I0 = window.__gauss.state.I0;
+  return { lab: window.__gauss.state.lab, frac: p && I0 ? p.I / I0 : null };
+});
+await page.screenshot({ path: path.join(outDir, 'polar.png') });
+check('polar 0°/45°/90° I/I₀ = 1/8', polar.frac, 0.125, 0.002);
+
 // Back button walks lab history (pushState entries).
 await page.goBack();
-await page.waitForFunction(() => window.__gauss?.state?.lab === 'faraday', null, { timeout: 5000 }).catch(() => {});
+await page.waitForFunction(() => window.__gauss?.state?.lab === 'emwave', null, { timeout: 5000 }).catch(() => {});
 const back = await page.evaluate(() => window.__gauss.state.lab);
-if (back !== 'faraday') mismatches.push({ name: 'history.back', got: back, exp: 'faraday' });
+if (back !== 'emwave') mismatches.push({ name: 'history.back', got: back, exp: 'emwave' });
 
 console.log(
   JSON.stringify(
-    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, faraday, ac, back, mismatches, errors },
+    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, faraday, ac, emwave, polar, back, mismatches, errors },
     null,
     2,
   ),

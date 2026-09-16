@@ -109,8 +109,37 @@ export function fmtL(L) {
 
 export function fmtHz(f) {
   if (!Number.isFinite(f)) return '—';
-  if (f >= 1e3) return `${(f / 1e3).toFixed(2)} kHz`;
+  const a = Math.abs(f);
+  if (a >= 1e15) return `${(f / 1e15).toFixed(2)} PHz`;
+  if (a >= 1e12) return `${(f / 1e12).toFixed(2)} THz`;
+  if (a >= 1e9) return `${(f / 1e9).toFixed(2)} GHz`;
+  if (a >= 1e6) return `${(f / 1e6).toFixed(2)} MHz`;
+  if (a >= 1e3) return `${(f / 1e3).toFixed(2)} kHz`;
   return `${f.toFixed(2)} Hz`;
+}
+
+export function fmtWaveLen(m) {
+  if (!Number.isFinite(m)) return '—';
+  const a = Math.abs(m);
+  if (a >= 1) return `${a.toFixed(2)} m`;
+  if (a >= 1e-2) return `${(a * 100).toFixed(1)} cm`;
+  if (a >= 1e-3) return `${(a * 1e3).toFixed(2)} mm`;
+  if (a >= 1e-6) return `${(a * 1e6).toFixed(2)} μm`;
+  if (a >= 1e-9) return `${(a * 1e9).toFixed(1)} nm`;
+  if (a >= 1e-12) return `${(a * 1e12).toFixed(2)} pm`;
+  return `${sciText(a)} m`;
+}
+
+/** Time-average intensity / Poynting flux, W/m². */
+export function fmtIrr(I) {
+  if (!Number.isFinite(I)) return '—';
+  const a = Math.abs(I);
+  const s = I < 0 ? '−' : '';
+  if (a >= 1e6) return `${s}${(a / 1e6).toFixed(2)} MW/m²`;
+  if (a >= 1e3) return `${s}${(a / 1e3).toFixed(2)} kW/m²`;
+  if (a >= 1) return `${s}${a.toFixed(2)} W/m²`;
+  if (a >= 1e-3) return `${s}${(a * 1e3).toFixed(2)} mW/m²`;
+  return `${s}${sciText(a)} W/m²`;
 }
 
 /** Magnetic flux in webers. */

@@ -28,7 +28,8 @@ node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts
 | Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Capacitor, Ohm, Power |
 | Exam 4 · Ch 43–47 | `#/e4/circuits` | Circuits, Biot–Savart, Ampère, Mag force |
 | Exam 5 · Ch 48–52 | `#/e5/faraday` | Faraday, AC |
-| Exam 6–7, Wave | `#/e6` … `#/wave` | Coming — EM waves, optics (greyed tabs) |
+| Exam 6 · Ch 53–57 | `#/e6/emwave` | EM wave, Polarization |
+| Exam 7, Wave | `#/e7` … `#/wave` | Coming — refraction, mirrors, lenses, wave optics |
 
 ### Exam 4 labs
 
@@ -42,7 +43,12 @@ node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts
 - **Faraday** (`#/e5/faraday`) — moving magnet, growing loop, sliding bar, rotating generator. Live ε = −dΦ_B/dt; yellow chevrons are Lenz’s induced current (counterclockwise from +y is +I and makes +B_y).
 - **AC** (`#/e5/ac`) — series R, RC, RL, RLC. Phasors and |Z|, φ, f₀. Tune through resonance and I peaks when X_L = X_C.
 
-Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up. Faraday uses the same loop convention for Lenz.
+### Exam 6 labs
+
+- **EM wave** (`#/e6/emwave`) — traveling plane wave, E ŷ, B ẑ, S along +x̂. E/B = c = 1/√(μ₀ε₀). Intensity I = ½ c ε₀ E₀². The drawing is stretched and slowed; the HUD has the real λ, f, and spectrum band (Ch 54).
+- **Polarization** (`#/e6/polar`) — Malus I = I₀ cos²θ. Unpolarized → one filter is I₀/2. Crossed filters go dark; a 45° filter in the middle brings back I₀/8.
+
+Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up. Faraday uses the same loop convention for Lenz. The EM wave uses E ŷ, B ẑ, travel +x̂ so ŷ × ẑ = x̂.
 
 ## Controls
 

@@ -1,4 +1,4 @@
-import { K, EPS0, QE, MU0 } from './constants.js';
+import { K, EPS0, QE, MU0, C } from './constants.js';
 import { fieldAt } from './field.js';
 import { sampleSphere, sampleCylinder, sampleCube, enclosedCharge } from './surfaces.js';
 import { integrateFlux, gaussPrediction, matchQuality } from './flux.js';
@@ -46,6 +46,8 @@ import { solveCircuit, loopTerms, junctionTerms } from './mna.js';
 import { CIRCUITS, netlist, equivalentR } from '../data/circuits.js';
 import { expandingLoop, slidingBar, generator, dipoleLoop, fluxDipoleLoop, inducedCurrent, lenz } from './faraday.js';
 import { acState } from './ac.js';
+import { planeWave, intensityAvg, spectrumBand } from './emwave.js';
+import { malusChain, malus } from './polarization.js';
 
 let failed = 0;
 let passed = 0;
@@ -506,6 +508,46 @@ console.log('\nAC circuits');
   const s = acState({ R: 40, L: 0.08, C: 0, f: 60, Vrms: 120, hasL: true, hasC: false });
   approx(s.XL, 2 * Math.PI * 60 * 0.08, 0.002, 'RL: X_L = ωL');
   ok(s.phi > 0, 'RL: φ > 0 (voltage leads current)');
+}
+
+console.log('\nEM waves / Malus');
+
+{
+  approx(C, 1 / Math.sqrt(MU0 * EPS0), 1e-12, 'c = 1/√(μ₀ε₀)');
+  approx(C, 2.998e8, 0.002, 'c ≈ 3.00×10⁸ m/s from sheet ε₀, μ₀');
+}
+
+{
+  const E0 = 100;
+  const w = planeWave({ E0, lambda: 500e-9, t: 0, x: 0 });
+  approx(w.B0, E0 / C, 1e-12, 'B₀ = E₀/c');
+  approx(w.f * 500e-9, C, 1e-12, 'c = f λ');
+  approx(w.Iavg, intensityAvg(E0), 1e-12, 'I = ½ c ε₀ E₀²');
+  approx(w.Iavg, (E0 * E0) / (2 * MU0 * C), 0.002, 'I = E₀² / (2 μ₀ c)');
+  approx(w.Iavg, (E0 * w.B0) / (2 * MU0), 0.002, 'I = E₀ B₀ / (2 μ₀)');
+  ok(spectrumBand(500e-9).id === 'vis', '500 nm is visible');
+  ok(spectrumBand(0.125).id === 'microwave', '12.5 cm is microwave');
+}
+
+{
+  const E0 = 50;
+  const lambda = 1;
+  const t = 0.3;
+  const x = 0.2;
+  const w = planeWave({ E0, lambda, t, x });
+  const phase = (2 * Math.PI) / lambda * x - 2 * Math.PI * (C / lambda) * t;
+  approx(w.Ey, E0 * Math.sin(phase), 1e-9, 'E_y = E₀ sin(kx − ωt)');
+  approx(w.Bz * C, w.Ey, 1e-9, 'E/B = c at every instant');
+  ok(w.Ey * w.Bz >= -1e-18, 'E_y and B_z same sign → S = (E×B)/μ₀ along +x');
+}
+
+{
+  const I0 = 8;
+  approx(malus(I0, 60), I0 * 0.25, 1e-9, 'Malus: I = I₀ cos²60° = I₀/4');
+  approx(malusChain(I0, [0]).I, I0 / 2, 1e-9, 'unpolarized → one polarizer: I₀/2');
+  approx(malusChain(I0, [0, 60]).I, I0 / 8, 1e-9, 'unpolarized → 0° then 60°: (I₀/2)cos²60° = I₀/8');
+  approx(malusChain(I0, [0, 90]).I, 0, 1e-9, 'crossed polarizers: dark');
+  approx(malusChain(I0, [0, 45, 90]).I, I0 / 8, 1e-9, '0° / 45° / 90°: I₀/8 — middle polarizer lets light through');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);
