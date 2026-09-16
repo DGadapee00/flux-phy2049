@@ -94,6 +94,7 @@ body {
 .hud .btn,
 .hud .toggle,
 .hud .tab,
+.hud .exam-tab,
 .hud input,
 .hud select,
 .hud .seg button {
@@ -118,7 +119,7 @@ body {
   gap: 2px 12px;
   padding: 12px 14px;
   min-width: 300px;
-  max-width: 430px;
+  max-width: 480px;
 }
 
 .brand-mark {
@@ -140,14 +141,53 @@ body {
   color: var(--text-muted);
 }
 
+.exam-tabs {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 2px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.exam-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0 5px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.exam-tab:hover {
+  color: var(--text);
+  background: rgba(236, 230, 226, 0.04);
+}
+
+.exam-tab.active {
+  color: var(--yellow);
+  background: rgba(244, 211, 69, 0.1);
+}
+
 .lab-tabs {
   grid-column: 1 / -1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 2px;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+#toggle-host,
+#legend-host {
+  display: contents;
 }
 
 .tab-row {

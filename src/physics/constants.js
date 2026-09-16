@@ -7,6 +7,10 @@ export const K = 1 / (4 * Math.PI * EPS0);
 export const K_SHEET = 9.0e9;
 export const QE = 1.6e-19;
 
+/** μ₀ = 4π×10⁻⁷ T·m/A. Exact on Montgomery’s sheet. Compute with this; display 4π×10⁻⁷. */
+export const MU0 = 4e-7 * Math.PI;
+export const MU0_SHEET = '4π×10⁻⁷';
+
 /** 1 Three.js unit = 0.125 m so a ~0.5 m Gaussian sphere reads well. */
 export const UNITS_PER_METER = 8;
 

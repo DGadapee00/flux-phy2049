@@ -27,7 +27,7 @@ export function coach(state, computed) {
   return { title: '', body: '', canFindE: false, Eguess: null };
 }
 
-function coachGauss(surface, charges, extraE, computed) {
+export function coachGauss(surface, charges, extraE, computed) {
   const closed = isClosed(surface.type);
   const o = surface.origin;
   const hasUniform = extraE && (extraE.x || extraE.y || extraE.z);
@@ -192,7 +192,7 @@ function coachGauss(surface, charges, extraE, computed) {
   };
 }
 
-function coachField(charges, computed) {
+export function coachField(charges, computed) {
   if (charges.length === 0) {
     return {
       title: 'Place charges',
@@ -224,7 +224,7 @@ function coachField(charges, computed) {
   };
 }
 
-function coachIntegral(state) {
+export function coachIntegral(state) {
   const kind = state.integral.kind;
   if (kind === 'rod') {
     return {
@@ -240,7 +240,7 @@ function coachIntegral(state) {
   };
 }
 
-function coachForce(charges) {
+export function coachForce(charges) {
   if (charges.length < 2) {
     return {
       title: 'Coulomb’s law',
@@ -255,7 +255,7 @@ function coachForce(charges) {
   };
 }
 
-function coachPotential(state, computed) {
+export function coachPotential(state, computed) {
   const V = computed.V;
   if (state.extraE && Math.hypot(state.extraE.x, state.extraE.y, state.extraE.z) > 1) {
     return {
@@ -284,7 +284,7 @@ function coachPotential(state, computed) {
   };
 }
 
-function coachCap(state, computed) {
+export function coachCap(state, computed) {
   const r = computed.cap;
   if (!r) {
     return { title: 'Capacitor', body: 'Two plates, +Q and −Q. C = q/ΔV = κε₀A/d.' };
@@ -313,7 +313,7 @@ function coachCap(state, computed) {
   };
 }
 
-function coachOhm(state, computed) {
+export function coachOhm(state, computed) {
   const o = computed.ohm;
   if (!o) return { title: 'Ohm’s law', body: 'V = IR. R = ρL/A.' };
   return {
@@ -322,7 +322,7 @@ function coachOhm(state, computed) {
   };
 }
 
-function coachPower(state, computed) {
+export function coachPower(state, computed) {
   const pw = state.power;
   const p = computed.power;
   if (pw.mode === 'ac') {

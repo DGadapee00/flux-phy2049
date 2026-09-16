@@ -1,6 +1,8 @@
-# FLUX — Gauss & Electrostatics Lab
+# FLUX — PHY 2049
 
-Interactive 3D simulator for PHY 2049 (Montgomery): Coulomb’s law, electric fields, the continuous-charge integral, electric flux, and Gauss’s law.
+Interactive 3D labs for Montgomery’s Calculus Physics II. One app at http://localhost:5174/ — exam units in the top row, labs as tabs, hash URLs so each lab is bookmarkable (`#/e3/potential`).
+
+Private GitHub remote (create the empty repo, then): `git remote add origin https://github.com/DGadapee00/flux-phy2049.git`
 
 ## Run
 
@@ -10,40 +12,33 @@ npm install
 npm start
 ```
 
-If `npm start` is not defined, use:
-
-```bash
-npm run dev
-```
-
 Opens at http://localhost:5174/
 
-Physics self-test (no browser):
-
 ```bash
-npm test
+npm test          # physics self-test (no browser)
+node scripts/smoke.mjs   # 8 labs vs scripts/baseline/values.json
 ```
 
-## Labs
+## Exams
 
-| Tab | What it is for |
-|---|---|
-| **Gauss** | Closed surface as a Riemann sum of tiles. Gold = outward flux (E·n̂ > 0), blue = inward. Numerical Σ E·ΔA is compared live to Q_in/ε₀. Drag a charge through the surface and watch flux jump only when Q_in changes. |
-| **Field** | Point-charge field, field lines, superposition at a probe. E_net = Σ E_i with components. |
-| **Integrals** | Finite line (perpendicular bisector) and ring on axis — the two sheet integrals. Play the sum: E_x cancels, E_y builds. |
-| **Force** | Coulomb pairs and F_net = q E_others on the selected charge. |
-| **Potential** | V = kq/r, ΔPE = qΔV, equipotentials, E = −dV/dx. Shift-click sets point A. |
-| **Capacitor** | C = κε₀A/d, battery vs isolated, dielectrics, U = ½CV², breakdown. |
-| **Ohm** | I = dq/dt, V = IR, R = ρL/A, drift velocity, ρ(T). |
-| **Power** | P = IV = I²R = V²/R, DC vs AC, rms, 120 Vrms → 170 V peak. |
+| Unit | Hash | Labs |
+|---|---|---|
+| Exam 1 · Ch V, 34–35 | `#/e1/force` | Force (Vectors next) |
+| Exam 2 · Ch 36–37 | `#/e2/gauss` | Field, Integrals, Gauss (Conductors next) |
+| Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Capacitor, Ohm, Power |
+| Exam 4–7, Wave | `#/e4` … `#/wave` | Coming — Biot–Savart, Ampère, Faraday, optics |
 
 ## Controls
 
-- Drag to orbit, scroll to zoom
-- Drag a charge in the xz plane; **Shift-drag** to change height
-- Click empty space (Gauss / Field) to place the E probe
-- `1–8` switch labs · `Space` plays the integral · `Delete` removes the selected charge · `+` / `−` add charges · `R` resets the camera
+- Exam tabs **1–7 W**, or `[` / `]`
+- Labs in the current exam: keys `1–9`
+- Drag to orbit (Ohm / Power lock rotation), scroll to zoom
+- Drag a charge in the xz plane; **Shift-drag** for height
+- Click empty space (Gauss / Field / Potential) to place the probe
+- `Space` plays the integral · `Delete` removes a charge · `+` / `−` add charges · `R` resets the camera
+
+Phone layout (< ~720 px) is out of scope for now.
 
 ## What Gauss can and cannot do
 
-The coach panel says when symmetry lets you pull |E| out of the integral (centered point + sphere, long line + cylinder, sheet + pillbox) and when it only gives flux (off-center charge, cube, mixed charges). That is the Exam 2 distinction: **Φ = Q_in/ε₀ is always true on a closed surface; Φ = EA is not.**
+Φ = Q_in/ε₀ is always true on a closed surface; Φ = EA is not. The coach panel says when symmetry lets you pull |E| out.

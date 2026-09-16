@@ -100,6 +100,7 @@ export class ChargeView {
   }
 
   pick(raycaster) {
+    if (!this.group.visible) return null;
     const meshes = [];
     for (const rec of this.map.values()) meshes.push(rec.mesh);
     const hits = raycaster.intersectObjects(meshes, false);

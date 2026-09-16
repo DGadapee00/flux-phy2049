@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FLUX — Gauss & Electrostatics Lab</title>
+    <title>FLUX — PHY 2049</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -29,22 +29,10 @@
         </svg>
         <div class="brand-text">
           <h1>FLUX</h1>
-          <p class="subtitle">PHY 2049 · Gauss through power</p>
+          <p class="subtitle" id="brand-sub">PHY 2049</p>
         </div>
-        <nav class="lab-tabs" id="lab-tabs" role="tablist" aria-label="Labs">
-          <div class="tab-row">
-            <button type="button" class="tab active" data-lab="gauss" role="tab" aria-selected="true">Gauss</button>
-            <button type="button" class="tab" data-lab="field" role="tab" aria-selected="false">Field</button>
-            <button type="button" class="tab" data-lab="integral" role="tab" aria-selected="false">Integrals</button>
-            <button type="button" class="tab" data-lab="force" role="tab" aria-selected="false">Force</button>
-          </div>
-          <div class="tab-row">
-            <button type="button" class="tab" data-lab="potential" role="tab" aria-selected="false">Potential</button>
-            <button type="button" class="tab" data-lab="capacitor" role="tab" aria-selected="false">Capacitor</button>
-            <button type="button" class="tab" data-lab="ohm" role="tab" aria-selected="false">Ohm</button>
-            <button type="button" class="tab" data-lab="power" role="tab" aria-selected="false">Power</button>
-          </div>
-        </nav>
+        <nav class="exam-tabs" id="exam-tabs" aria-label="Exams"></nav>
+        <nav class="lab-tabs" id="lab-tabs" role="tablist" aria-label="Labs"></nav>
       </header>
 
       <aside class="hud panel eq-panel" id="eq-panel">
@@ -58,24 +46,7 @@
       </aside>
 
       <aside class="hud panel toggles" id="toggles">
-        <button type="button" class="toggle active" id="tog-flux" data-for="gauss" data-key="flux" aria-pressed="true">
-          <span class="toggle-dot"></span> Flux color
-        </button>
-        <button type="button" class="toggle" id="tog-E" data-for="gauss" data-key="E" aria-pressed="false">
-          <span class="toggle-dot"></span> E arrows
-        </button>
-        <button type="button" class="toggle" id="tog-n" data-for="gauss" data-key="nHat" aria-pressed="false">
-          <span class="toggle-dot"></span> n̂
-        </button>
-        <button type="button" class="toggle" id="tog-lines" data-for="gauss field potential" data-key="lines" aria-pressed="false">
-          <span class="toggle-dot"></span> Field lines
-        </button>
-        <button type="button" class="toggle" id="tog-equipot" data-for="potential" data-key="equipot" aria-pressed="true">
-          <span class="toggle-dot"></span> Equipotentials
-        </button>
-        <button type="button" class="toggle" id="tog-forces" data-for="gauss field force" data-key="forces" aria-pressed="false">
-          <span class="toggle-dot"></span> Forces
-        </button>
+        <div id="toggle-host"></div>
         <button type="button" class="btn ghost" id="btn-reset-cam">Reset view</button>
       </aside>
 
@@ -90,260 +61,23 @@
           <select id="scenario"></select>
         </label>
 
-        <div data-for="gauss" class="lab-block">
-          <div class="row wrap">
-            <span class="mini-label">Gaussian surface</span>
-            <div class="seg" id="surface-type">
-              <button type="button" data-type="sphere" class="active">Sphere</button>
-              <button type="button" data-type="cylinder">Cylinder</button>
-              <button type="button" data-type="cube">Cube</button>
-              <button type="button" data-type="pillbox">Pillbox</button>
-              <button type="button" data-type="square">Square</button>
-            </div>
-          </div>
-
-          <label class="field">
-            <span id="r-label">Radius R</span>
-            <div class="slider-row">
-              <input type="range" id="surf-R" min="0.18" max="0.9" step="0.01" value="0.45" />
-              <span class="mono val" id="surf-R-val">0.45 m</span>
-            </div>
-          </label>
-
-          <label class="field" id="wrap-L">
-            <span>Length L</span>
-            <div class="slider-row">
-              <input type="range" id="surf-L" min="0.12" max="1.2" step="0.01" value="0.55" />
-              <span class="mono val" id="surf-L-val">0.55 m</span>
-            </div>
-          </label>
-
-          <label class="field" id="wrap-tilt">
-            <span>Tilt θ of n̂</span>
-            <div class="slider-row">
-              <input type="range" id="surf-tilt" min="0" max="1.57" step="0.01" value="0" />
-              <span class="mono val" id="surf-tilt-val">0°</span>
-            </div>
-          </label>
-
-          <button type="button" class="btn accent" id="btn-sweep">Play ∮ E · dA</button>
-        </div>
-
-        <div data-for="gauss field force potential" class="lab-block">
-          <div class="row">
-            <button type="button" class="btn pos" id="add-plus">+ Charge</button>
-            <button type="button" class="btn neg" id="add-minus">− Charge</button>
-            <button type="button" class="btn ghost" id="del-charge">Delete</button>
-          </div>
-          <ul class="charge-list" id="charge-list"></ul>
-        </div>
-
-        <div data-for="integral" class="lab-block">
-          <div class="seg" id="integral-kind">
-            <button type="button" data-kind="rod" class="active">Line charge</button>
-            <button type="button" data-kind="ring">Ring</button>
-          </div>
-
-          <div id="int-rod">
-            <label class="field">
-              <span>Length L</span>
-              <div class="slider-row">
-                <input type="range" id="int-L" min="0.3" max="1.4" step="0.01" value="0.8" />
-                <span class="mono val" id="int-L-val">0.80 m</span>
-              </div>
-            </label>
-            <label class="field">
-              <span>λ</span>
-              <div class="slider-row">
-                <input type="range" id="int-lambda" min="-5" max="5" step="0.1" value="2" />
-                <span class="mono val" id="int-lambda-val">+2.00 μC/m</span>
-              </div>
-            </label>
-            <label class="field">
-              <span>Distance d to P</span>
-              <div class="slider-row">
-                <input type="range" id="int-d" min="0.12" max="0.9" step="0.01" value="0.35" />
-                <span class="mono val" id="int-d-val">0.35 m</span>
-              </div>
-            </label>
-          </div>
-
-          <div id="int-ring" hidden>
-            <label class="field">
-              <span>Radius a</span>
-              <div class="slider-row">
-                <input type="range" id="int-a" min="0.12" max="0.7" step="0.01" value="0.32" />
-                <span class="mono val" id="int-a-val">0.32 m</span>
-              </div>
-            </label>
-            <label class="field">
-              <span>Q</span>
-              <div class="slider-row">
-                <input type="range" id="int-Q" min="-5" max="5" step="0.1" value="2.5" />
-                <span class="mono val" id="int-Q-val">+2.50 μC</span>
-              </div>
-            </label>
-            <label class="field">
-              <span>Axis distance y</span>
-              <div class="slider-row">
-                <input type="range" id="int-y" min="-0.8" max="0.8" step="0.01" value="0.38" />
-                <span class="mono val" id="int-y-val">0.38 m</span>
-              </div>
-            </label>
-          </div>
-
-          <label class="field">
-            <span>Slices n (Riemann sum)</span>
-            <div class="slider-row">
-              <input type="range" id="int-n" min="6" max="48" step="1" value="20" />
-              <span class="mono val" id="int-n-val">20</span>
-            </div>
-          </label>
-          <div class="seg" id="int-qty">
-            <button type="button" data-qty="E" class="active">∫ dE</button>
-            <button type="button" data-qty="V">∫ dV = k dq/r</button>
-          </div>
-          <button type="button" class="btn accent" id="btn-sweep-int">Play ∫ dE</button>
-        </div>
-
-        <div data-for="potential" class="lab-block">
-          <label class="field">
-            <span>Test charge q (for PE)</span>
-            <div class="slider-row">
-              <input type="range" id="q-test" min="-5" max="5" step="0.1" value="1" />
-              <span class="mono val" id="q-test-val">+1.00 μC</span>
-            </div>
-          </label>
-          <p class="tiny">Click empty space to move the probe (point B). Path A is the gold marker — ΔV and W use A → probe.</p>
-        </div>
-
-        <div data-for="capacitor" class="lab-block">
-          <div class="seg" id="cap-mode">
-            <button type="button" data-mode="battery" class="active">Battery (V fixed)</button>
-            <button type="button" data-mode="isolated">Isolated (Q fixed)</button>
-          </div>
-          <label class="field">
-            <span>Dielectric</span>
-            <select id="cap-dielectric"></select>
-          </label>
-          <label class="row">
-            <input type="checkbox" id="cap-inserted" checked />
-            <span>Dielectric inserted</span>
-          </label>
-          <label class="field">
-            <span>Plate area A</span>
-            <div class="slider-row">
-              <input type="range" id="cap-A" min="0.01" max="2" step="0.01" value="0.04" />
-              <span class="mono val" id="cap-A-val">0.04 m²</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>Separation d</span>
-            <div class="slider-row">
-              <input type="range" id="cap-d" min="0.001" max="0.12" step="0.001" value="0.05" />
-              <span class="mono val" id="cap-d-val">5.0 cm</span>
-            </div>
-          </label>
-          <label class="field" id="wrap-cap-V">
-            <span>Voltage V</span>
-            <div class="slider-row">
-              <input type="range" id="cap-V" min="1" max="5000" step="1" value="12" />
-              <span class="mono val" id="cap-V-val">12 V</span>
-            </div>
-          </label>
-        </div>
-
-        <div data-for="ohm" class="lab-block">
-          <label class="field">
-            <span>Material</span>
-            <select id="ohm-material"></select>
-          </label>
-          <label class="field">
-            <span>Length L</span>
-            <div class="slider-row">
-              <input type="range" id="ohm-L" min="0.1" max="100" step="0.1" value="2" />
-              <span class="mono val" id="ohm-L-val">2.0 m</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>Cross section A</span>
-            <div class="slider-row">
-              <input type="range" id="ohm-A" min="0.1" max="10" step="0.1" value="1" />
-              <span class="mono val" id="ohm-A-val">1.00 mm²</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>Voltage V</span>
-            <div class="slider-row">
-              <input type="range" id="ohm-V" min="1" max="120" step="1" value="12" />
-              <span class="mono val" id="ohm-V-val">12 V</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>Temperature T</span>
-            <div class="slider-row">
-              <input type="range" id="ohm-T" min="-20" max="1000" step="5" value="20" />
-              <span class="mono val" id="ohm-T-val">20 °C</span>
-            </div>
-          </label>
-        </div>
-
-        <div data-for="power" class="lab-block">
-          <div class="seg" id="pwr-mode">
-            <button type="button" data-mode="dc" class="active">DC</button>
-            <button type="button" data-mode="ac">AC</button>
-          </div>
-          <label class="field">
-            <span id="pwr-V-label">Voltage V</span>
-            <div class="slider-row">
-              <input type="range" id="pwr-V" min="1" max="240" step="1" value="120" />
-              <span class="mono val" id="pwr-V-val">120 V</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>Resistance R</span>
-            <div class="slider-row">
-              <input type="range" id="pwr-R" min="1" max="400" step="1" value="240" />
-              <span class="mono val" id="pwr-R-val">240 Ω</span>
-            </div>
-          </label>
-          <label class="field" id="wrap-pwr-f">
-            <span>Frequency f</span>
-            <div class="slider-row">
-              <input type="range" id="pwr-f" min="10" max="120" step="1" value="60" />
-              <span class="mono val" id="pwr-f-val">60 Hz</span>
-            </div>
-          </label>
-        </div>
+        <div id="lab-controls"></div>
       </aside>
 
-      <div class="hud legend" id="legend">
-        <div class="legend-title">E · n̂</div>
-        <div class="legend-bar"></div>
-        <div class="legend-row">
-          <span>inward (−)</span>
-          <span>outward (+)</span>
-        </div>
-      </div>
-      <div class="hud legend" id="legend-V" hidden>
-        <div class="legend-title">Potential V</div>
-        <div class="legend-bar legend-v"></div>
-        <div class="legend-row">
-          <span>low</span>
-          <span>high</span>
-        </div>
-      </div>
+      <div id="legend-host"></div>
 
       <footer class="hud panel readout" id="readout"></footer>
 
       <div class="hud hint-bar" id="hint-bar">
-        <span>Drag to orbit</span>
+        <span id="hint-orbit">Drag to orbit</span>
         <span class="sep">·</span>
         <span>Scroll to zoom</span>
         <span class="sep">·</span>
         <span id="hint-action">Drag a charge through the surface</span>
         <span class="sep">·</span>
         <span>Shift-drag for height</span>
+        <span class="sep">·</span>
+        <span>1–9 labs · [ ] exams</span>
       </div>
     </div>
 

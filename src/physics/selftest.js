@@ -1,4 +1,4 @@
-import { K, EPS0 } from './constants.js';
+import { K, EPS0, QE, MU0 } from './constants.js';
 import { fieldAt } from './field.js';
 import { sampleSphere, sampleCylinder, sampleCube, enclosedCharge } from './surfaces.js';
 import { integrateFlux, gaussPrediction, matchQuality } from './flux.js';
@@ -15,7 +15,17 @@ import {
 import { potentialAt } from './potential.js';
 import { capacitorState } from './capacitor.js';
 import { ohmState, powerState, bulbFromPower } from './circuit.js';
-import { QE } from './constants.js';
+import {
+  BwireInfinite,
+  BloopAxis,
+  Bsolenoid,
+  Bpolyline,
+  wireAlongY,
+  ampereCirculation,
+  mu0I,
+  FparallelWires,
+  cyclotronRadius,
+} from './bfield.js';
 
 let failed = 0;
 let passed = 0;
@@ -215,6 +225,49 @@ console.log('Gauss lab self-test');
 }
 
 ok(Math.abs(QE - 1.6e-19) < 1e-21, 'q_e matches the sheet');
+ok(Math.abs(MU0 - 4e-7 * Math.PI) < 1e-16, 'μ₀ = 4π×10⁻⁷');
+
+{
+  const I = 2;
+  const r = 0.05;
+  const analytic = BwireInfinite(I, r);
+  const pts = wireAlongY(-8, 8, 80);
+  const B = Bpolyline(I, pts, { x: r, y: 0, z: 0 }, 4);
+  approx(Math.abs(B.z), analytic, 0.03, 'long wire: |B| ≈ μ₀I/2πr');
+  approx(B.x, 0, 0.05 * analytic, 'long wire: B_x ≈ 0');
+  approx(B.y, 0, 0.05 * analytic, 'long wire: B_y ≈ 0');
+}
+
+{
+  const I = 3;
+  const R = 0.2;
+  const z = 0.1;
+  const analytic = BloopAxis(I, R, z);
+  const n = 48;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const phi = (i / n) * 2 * Math.PI;
+    pts.push({ x: R * Math.cos(phi), y: 0, z: R * Math.sin(phi) });
+  }
+  const B = Bpolyline(I, pts, { x: 0, y: z, z: 0 }, 6);
+  approx(B.y, analytic, 0.04, 'loop on axis: B ≈ μ₀ I R² / 2(R²+z²)^{3/2}');
+}
+
+{
+  approx(Bsolenoid(200, 1.5), MU0 * 200 * 1.5, 0.002, 'solenoid B = μ₀ n I');
+}
+
+{
+  const I = 1.2;
+  const pts = wireAlongY(-10, 10, 60);
+  const circ = ampereCirculation((p) => Bpolyline(I, pts, p, 3), 0.08, 32);
+  approx(circ, mu0I(I), 0.08, 'Ampère: ∮ B·dl ≈ μ₀ I_enc');
+}
+
+{
+  approx(FparallelWires(3, 4, 2, 0.05), (MU0 * 3 * 4 * 2) / (2 * Math.PI * 0.05), 0.002, 'parallel wires F = μ₀ I₁ I₂ L / 2πd');
+  approx(cyclotronRadius(1.67e-27, 1e6, 1.6e-19, 0.5), (1.67e-27 * 1e6) / (1.6e-19 * 0.5), 0.002, 'cyclotron r = mv/qB');
+}
 
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

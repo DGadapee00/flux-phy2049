@@ -7,6 +7,7 @@ const { chromium } = require('playwright');
 
 const outDir = path.resolve('scripts/output');
 fs.mkdirSync(outDir, { recursive: true });
+const baseline = JSON.parse(fs.readFileSync(path.resolve('scripts/baseline/values.json'), 'utf8'));
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -16,105 +17,131 @@ page.on('console', (msg) => {
   if (msg.type() === 'error') errors.push(msg.text());
 });
 
-await page.goto('http://localhost:5174/', { waitUntil: 'networkidle', timeout: 30000 });
+const LAB = {
+  gauss: 'e2',
+  field: 'e2',
+  integral: 'e2',
+  force: 'e1',
+  potential: 'e3',
+  capacitor: 'e3',
+  ohm: 'e3',
+  power: 'e3',
+};
+
+async function go(lab) {
+  const exam = LAB[lab];
+  await page.evaluate((h) => {
+    location.hash = h;
+  }, `#/${exam}/${lab}`);
+  await page.waitForFunction((id) => window.__gauss?.state?.lab === id, lab, { timeout: 10000 });
+  await page.waitForTimeout(350);
+}
+
+function relErr(got, exp) {
+  return Math.abs(got - exp) / Math.max(1, Math.abs(exp));
+}
+
+const mismatches = [];
+function check(name, got, exp, tol = 0.02) {
+  const ok = relErr(got, exp) <= tol;
+  if (!ok) mismatches.push({ name, got, exp, rel: relErr(got, exp) });
+}
+
+await page.goto('http://localhost:5174/#/e2/gauss', { waitUntil: 'networkidle', timeout: 30000 });
+await page.waitForFunction((id) => window.__gauss?.state?.lab === id, 'gauss', { timeout: 10000 });
 await page.waitForTimeout(800);
 
 const title = await page.title();
-const law = await page.locator('#law-line').innerText();
-const insight = await page.locator('#insight-title').innerText();
-const readout = await page.locator('#readout').innerText();
 const canvasOk = await page.evaluate(() => {
   const c = document.getElementById('c');
   const gl = c.getContext('webgl2') || c.getContext('webgl');
+  const g = window.__gauss;
   return {
     w: c.width,
     h: c.height,
     gl: !!gl,
-    hasGauss: !!window.__gauss,
-    lab: window.__gauss?.state?.lab,
-    phi: window.__gauss?.computed?.gauss?.Phi,
-    phiG: window.__gauss?.computed?.gauss?.PhiG,
-    match: window.__gauss?.computed?.gauss?.match?.pct,
-    charges: window.__gauss?.state?.charges?.length,
+    hasGauss: !!g,
+    lab: g?.state?.lab,
+    phi: g?.computed?.gauss?.Phi,
+    phiG: g?.computed?.gauss?.PhiG,
+    match: g?.computed?.gauss?.match?.pct,
+    charges: g?.state?.charges?.length,
   };
 });
-
 await page.screenshot({ path: path.join(outDir, 'gauss.png'), fullPage: true });
+check('gauss.phi', canvasOk.phi, baseline.gauss.phi, 0.02);
+check('gauss.phiG', canvasOk.phiG, baseline.gauss.phiG, 0.002);
+check('gauss.match', canvasOk.match, baseline.gauss.match, 0.02);
 
-await page.click('[data-lab="field"]');
-await page.waitForTimeout(400);
+await go('field');
 const field = await page.evaluate(() => ({
   lab: window.__gauss.state.lab,
   E: window.__gauss.computed.probeE,
-  law: document.getElementById('law-line').innerText,
 }));
 await page.screenshot({ path: path.join(outDir, 'field.png') });
+check('field.Ex', field.E.x, baseline.field.Ex, 0.02);
+check('field.Ey', field.E.y, baseline.field.Ey, 0.02);
 
-await page.click('[data-lab="integral"]');
-await page.waitForTimeout(400);
+await go('integral');
 const integral = await page.evaluate(() => ({
   lab: window.__gauss.state.lab,
   mag: window.__gauss.computed.integral?.partial?.mag,
   analytic: window.__gauss.computed.integral?.analytic?.mag,
-  law: document.getElementById('law-line').innerText,
 }));
 await page.screenshot({ path: path.join(outDir, 'integral.png') });
+check('integral.mag', integral.mag, baseline.integral.mag, 0.02);
+check('integral.analytic', integral.analytic, baseline.integral.analytic, 0.02);
 await page.click('[data-kind="ring"]');
 await page.waitForTimeout(400);
 await page.screenshot({ path: path.join(outDir, 'ring.png') });
-await page.click('[data-kind="rod"]');
-await page.waitForTimeout(200);
 
-await page.click('[data-lab="force"]');
-await page.waitForTimeout(400);
+await go('force');
 const force = await page.evaluate(() => ({
   lab: window.__gauss.state.lab,
   F: window.__gauss.computed.selectedForce,
-  law: document.getElementById('law-line').innerText,
 }));
 await page.screenshot({ path: path.join(outDir, 'force.png') });
+check('force.Fx', force.F.x, baseline.force.Fx, 0.03);
+check('force.Fy', force.F.y, baseline.force.Fy, 0.05);
 
-await page.click('[data-lab="potential"]');
-await page.waitForTimeout(500);
+await go('potential');
 const potential = await page.evaluate(() => ({
   lab: window.__gauss.state.lab,
   V: window.__gauss.computed.V,
-  law: document.getElementById('law-line').innerText,
   err: window.__gauss.computed.grad,
 }));
 await page.screenshot({ path: path.join(outDir, 'potential.png') });
+check('potential.V', potential.V, baseline.potential.V, 0.02);
 
-await page.click('[data-lab="capacitor"]');
-await page.waitForTimeout(500);
+await go('capacitor');
 const capacitor = await page.evaluate(() => ({
   lab: window.__gauss.state.lab,
   C: window.__gauss.computed.cap?.C,
   U: window.__gauss.computed.cap?.U,
-  law: document.getElementById('law-line').innerText,
 }));
 await page.screenshot({ path: path.join(outDir, 'capacitor.png') });
+check('capacitor.C', capacitor.C, baseline.capacitor.C, 0.002);
+check('capacitor.U', capacitor.U, baseline.capacitor.U, 0.002);
 
-await page.click('[data-lab="ohm"]');
-await page.waitForTimeout(500);
+await go('ohm');
 const ohm = await page.evaluate(() => ({
   lab: window.__gauss.state.lab,
   R: window.__gauss.computed.ohm?.R,
   I: window.__gauss.computed.ohm?.I,
-  law: document.getElementById('law-line').innerText,
 }));
 await page.screenshot({ path: path.join(outDir, 'ohm.png') });
+check('ohm.R', ohm.R, baseline.ohm.R, 0.002);
+check('ohm.I', ohm.I, baseline.ohm.I, 0.002);
 
-await page.click('[data-lab="power"]');
-await page.waitForTimeout(500);
+await go('power');
 const power = await page.evaluate(() => ({
   lab: window.__gauss.state.lab,
   P: window.__gauss.computed.power?.P,
-  law: document.getElementById('law-line').innerText,
 }));
 await page.screenshot({ path: path.join(outDir, 'power.png') });
+check('power.P', power.P, baseline.power.P, 0.02);
 
-await page.click('[data-lab="gauss"]');
-await page.waitForTimeout(200);
+await go('gauss');
 await page.selectOption('#scenario', 'offcenter');
 await page.waitForTimeout(300);
 const off = await page.evaluate(() => ({
@@ -124,6 +151,8 @@ const off = await page.evaluate(() => ({
   nIn: window.__gauss.computed.gauss.nIn,
 }));
 await page.screenshot({ path: path.join(outDir, 'offcenter.png') });
+check('off.phiG', off.phiG, baseline.offcenter.phiG, 0.002);
+check('off.nIn', off.nIn, baseline.offcenter.nIn, 0);
 
 await page.selectOption('#scenario', 'outside');
 await page.waitForTimeout(300);
@@ -142,13 +171,7 @@ const sweep = await page.evaluate(() => ({
   total: window.__gauss.computed.gauss.Phi,
 }));
 await page.screenshot({ path: path.join(outDir, 'sweep.png') });
-if (windowSweepNeedsStop(sweep)) {
-  await page.click('#btn-sweep');
-}
-
-function windowSweepNeedsStop(sweep) {
-  return sweep.playing;
-}
+if (sweep.playing) await page.click('#btn-sweep');
 
 await page.selectOption('#scenario', 'outside');
 await page.waitForTimeout(300);
@@ -158,6 +181,7 @@ const outside = await page.evaluate(() => ({
   match: window.__gauss.computed.gauss.match.pct,
   nIn: window.__gauss.computed.gauss.nIn,
 }));
+check('outside.nIn', outside.nIn, 0, 0);
 
 await page.click('#add-plus');
 await page.waitForTimeout(200);
@@ -171,9 +195,19 @@ const cube = await page.evaluate(() => ({
 }));
 await page.screenshot({ path: path.join(outDir, 'cube.png') });
 
-console.log(JSON.stringify({ title, law, insight, readout, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, errors }, null, 2));
+console.log(
+  JSON.stringify(
+    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, mismatches, errors },
+    null,
+    2,
+  ),
+);
 
 await browser.close();
 if (errors.length) process.exit(2);
 if (!canvasOk.hasGauss) process.exit(3);
 if (!(canvasOk.match > 95)) process.exit(4);
+if (mismatches.length) {
+  console.error('baseline mismatches', mismatches);
+  process.exit(5);
+}
