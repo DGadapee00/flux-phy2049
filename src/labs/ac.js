@@ -1,35 +1,98 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine } from '../scene/manim.js';
+import { Arrow, M, fatLine, updateFatLine, disposeTree } from '../scene/manim.js';
 import { acState, vOfT, iOfT } from '../physics/ac.js';
 import { kv, cells, qv, tex } from '../ui/shared.js';
 import { fmtV, fmtI, fmtR, fmtL, fmtC, fmtHz, fmtP } from '../ui/format.js';
 
 const SCENARIOS = [
-  { id: 'rlc', name: 'Series RLC — off resonance', hasL: true, hasC: true, R: 15, L: 0.08, C: 4e-5, f: 60, Vrms: 120 },
+  { id: 'rlc', name: 'Series RLC — below resonance', hasL: true, hasC: true, R: 15, L: 0.08, C: 4e-5, f: 60, Vrms: 120 },
   { id: 'res', name: 'Series RLC — at resonance', hasL: true, hasC: true, R: 15, L: 0.08, C: 4e-5, f: 0, Vrms: 120 },
+  { id: 'above', name: 'Series RLC — above resonance', hasL: true, hasC: true, R: 15, L: 0.08, C: 4e-5, f: 160, Vrms: 120 },
   { id: 'rc', name: 'Series RC', hasL: false, hasC: true, R: 100, L: 0.08, C: 2.5e-5, f: 60, Vrms: 120 },
   { id: 'rl', name: 'Series RL', hasL: true, hasC: false, R: 40, L: 0.12, C: 4e-5, f: 60, Vrms: 120 },
   { id: 'r', name: 'Resistor only', hasL: false, hasC: false, R: 80, L: 0.08, C: 4e-5, f: 60, Vrms: 120 },
 ];
+
+/** Layout in scene units: circuit upper left, phasor diagram right. */
+const CX0 = -5.4;
+const CX1 = -1.2;
+const CY0 = 0.2;
+const CY1 = 2.6;
+const PX = 2.4;
+const PY = 0.4;
+const RD = 2.3;
+
+function withResonance(sc) {
+  const s = { ...sc };
+  if (sc.hasL && sc.hasC && sc.f === 0) s.f = 1 / (2 * Math.PI * Math.sqrt(sc.L * sc.C));
+  return s;
+}
 
 function label(html, x, y, cls = 'circuit-label') {
   const el = document.createElement('div');
   el.className = cls;
   el.innerHTML = html;
   const o = new CSS2DObject(el);
-  o.position.set(x, y, 0);
-  o.userData.el = el;
+  o.position.set(x, y, 0.02);
   return o;
 }
 
-function applyRes(sc) {
-  const s = { ...sc };
-  if (sc.id === 'res' || (sc.hasL && sc.hasC && sc.f === 0)) {
-    s.f = 1 / (2 * Math.PI * Math.sqrt(sc.L * sc.C));
+function setHTML(obj, html) {
+  if (obj.userData.html !== html) {
+    obj.userData.html = html;
+    obj.element.innerHTML = html;
   }
-  return s;
+}
+
+/** Series circuit along the top wire: source on the left side, R, L, C left to right. */
+function buildCircuit(group, a) {
+  const y = CY1;
+  const slots = [
+    { kind: 'R', x0: -4.6, x1: -3.8 },
+    { kind: 'L', x0: -3.3, x1: -2.5, on: a.hasL },
+    { kind: 'C', x0: -2.0, x1: -1.7, on: a.hasC },
+  ];
+  const wire = { color: M.white, width: 2.5 };
+  let x = CX0;
+  for (const s of slots) {
+    const on = s.kind === 'R' || s.on;
+    group.add(fatLine([x, y, 0, on ? s.x0 : s.x1, y, 0], wire));
+    if (s.kind === 'R') {
+      const pts = [s.x0, y, 0];
+      for (let k = 0; k < 6; k++) pts.push(s.x0 + ((k + 0.5) / 6) * (s.x1 - s.x0), y + (k % 2 ? -0.16 : 0.16), 0);
+      pts.push(s.x1, y, 0);
+      group.add(fatLine(pts, { color: M.green, width: 3 }));
+    } else if (s.kind === 'L' && on) {
+      const pts = [];
+      const loops = 4;
+      const b = 0.13;
+      const aStep = (s.x1 - s.x0) / (2 * Math.PI * loops);
+      for (let i = 0; i <= 120; i++) {
+        const t = (i / 120) * 2 * Math.PI * loops;
+        pts.push(s.x0 + aStep * t - b * Math.sin(t) * 0.6, y + b - b * Math.cos(t), 0);
+      }
+      group.add(fatLine(pts, { color: M.teal, width: 3 }));
+    } else if (s.kind === 'C' && on) {
+      group.add(fatLine([s.x0, y - 0.3, 0, s.x0, y + 0.3, 0], { color: M.gold, width: 4 }));
+      group.add(fatLine([s.x1, y - 0.3, 0, s.x1, y + 0.3, 0], { color: M.gold, width: 4 }));
+    }
+    x = s.x1;
+  }
+  group.add(fatLine([x, y, 0, CX1, y, 0, CX1, CY0, 0, CX0, CY0, 0, CX0, (CY0 + CY1) / 2 - 0.42, 0], wire));
+  group.add(fatLine([CX0, (CY0 + CY1) / 2 + 0.42, 0, CX0, CY1, 0], wire));
+  // AC source: circle with a sine wave.
+  const cy = (CY0 + CY1) / 2;
+  const ring = [];
+  for (let i = 0; i <= 64; i++) ring.push(CX0 + 0.42 * Math.cos((i / 64) * 2 * Math.PI), cy + 0.42 * Math.sin((i / 64) * 2 * Math.PI), 0);
+  group.add(fatLine(ring, { color: M.blue, width: 3 }));
+  const sine = [];
+  for (let i = 0; i <= 32; i++) {
+    const t = i / 32;
+    sine.push(CX0 - 0.26 + 0.52 * t, cy + 0.14 * Math.sin(t * 2 * Math.PI), 0);
+  }
+  group.add(fatLine(sine, { color: M.blue, width: 2.5 }));
 }
 
 export default defineLab({
@@ -39,119 +102,66 @@ export default defineLab({
   hint: 'Tune f through resonance — I peaks when X_L = X_C',
   live: true,
   orbit: false,
-  camera: { pos: new THREE.Vector3(0.4, 0.15, 13), target: new THREE.Vector3(0.4, 0.15, 0) },
+  camera: { pos: new THREE.Vector3(-0.8, 0.9, 15.5), target: new THREE.Vector3(-0.8, 0.9, 0) },
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
-    const s = applyRes(SCENARIOS[0]);
-    return {
-      scenarioId: s.id,
-      hasL: s.hasL,
-      hasC: s.hasC,
-      R: s.R,
-      L: s.L,
-      C: s.C,
-      f: s.f,
-      Vrms: s.Vrms,
-      anim: { playing: false, i: 0 },
-    };
+    const s = withResonance(SCENARIOS[0]);
+    return { scenarioId: s.id, hasL: s.hasL, hasC: s.hasC, R: s.R, L: s.L, C: s.C, f: s.f, Vrms: s.Vrms, anim: { playing: false, i: 0 } };
   },
   applyScenario(id, state) {
-    const raw = SCENARIOS.find((s) => s.id === id) || SCENARIOS[0];
-    const sc = applyRes(raw);
-    Object.assign(state, {
-      scenarioId: sc.id,
-      hasL: sc.hasL,
-      hasC: sc.hasC,
-      R: sc.R,
-      L: sc.L,
-      C: sc.C,
-      f: sc.f,
-      Vrms: sc.Vrms,
-    });
+    const sc = withResonance(SCENARIOS.find((s) => s.id === id) || SCENARIOS[0]);
+    Object.assign(state, { scenarioId: sc.id, hasL: sc.hasL, hasC: sc.hasC, R: sc.R, L: sc.L, C: sc.C, f: sc.f, Vrms: sc.Vrms });
   },
   controls() {
+    const slider = (id, text, min, max, step, cls = '') => `
+          <label class="field" id="wrap-${id}">
+            <span>${text}</span>
+            <div class="slider-row">
+              <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" />
+              <span class="mono val ${cls}" id="${id}-val"></span>
+            </div>
+          </label>`;
     return `
         <div class="lab-block">
-          <label class="field">
-            <span>V_rms</span>
-            <div class="slider-row">
-              <input type="range" id="ac-V" min="10" max="240" step="1" value="120" />
-              <span class="mono val qV" id="ac-V-val">120 V</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>R</span>
-            <div class="slider-row">
-              <input type="range" id="ac-R" min="1" max="200" step="1" value="15" />
-              <span class="mono val qR" id="ac-R-val">15 Ω</span>
-            </div>
-          </label>
-          <label class="field" id="wrap-ac-L">
-            <span>L</span>
-            <div class="slider-row">
-              <input type="range" id="ac-L" min="0.01" max="0.4" step="0.005" value="0.08" />
-              <span class="mono val" id="ac-L-val">80 mH</span>
-            </div>
-          </label>
-          <label class="field" id="wrap-ac-C">
-            <span>C</span>
-            <div class="slider-row">
-              <input type="range" id="ac-C" min="5" max="200" step="1" value="40" />
-              <span class="mono val" id="ac-C-val">40 μF</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>Frequency f</span>
-            <div class="slider-row">
-              <input type="range" id="ac-f" min="10" max="400" step="1" value="60" />
-              <span class="mono val" id="ac-f-val">60 Hz</span>
-            </div>
-          </label>
-          <button type="button" class="btn accent" id="btn-ac-res" hidden>Tune f to f₀</button>
-          <p class="tiny">Phasors: V blue (reference), I yellow. V<sub>R</sub> along I, V<sub>L</sub> leads I by 90°, V<sub>C</sub> lags I by 90°. Slow-motion: one cycle takes 2 s.</p>
+          ${slider('ac-V', 'V_rms', 10, 240, 1, 'qV')}
+          ${slider('ac-R', 'R', 1, 200, 1, 'qR')}
+          ${slider('ac-L', 'L', 0.01, 0.4, 0.005)}
+          ${slider('ac-C', 'C (μF)', 5, 200, 1)}
+          ${slider('ac-f', 'Frequency f', 10, 400, 1)}
+          <button type="button" class="btn accent" id="btn-ac-res">Tune f to f₀</button>
+          <p class="tiny">Phasors turn counterclockwise at ω (slowed to one turn per 2 s). Their vertical shadows are v(t) and i(t) — the plot below. V<sub>R</sub> points along I, V<sub>L</sub> leads I by 90°, V<sub>C</sub> lags by 90°, and laid tip to tail they land exactly on V.</p>
         </div>`;
   },
   bind(api) {
     const $ = (id) => document.getElementById(id);
-    $('ac-V').addEventListener('input', (e) => {
-      api.slice().Vrms = Number(e.target.value);
-      api.bump(false);
-    });
-    $('ac-R').addEventListener('input', (e) => {
-      api.slice().R = Number(e.target.value);
-      api.bump(false);
-    });
-    $('ac-L').addEventListener('input', (e) => {
-      api.slice().L = Number(e.target.value);
-      api.bump(false);
-    });
-    $('ac-C').addEventListener('input', (e) => {
-      api.slice().C = Number(e.target.value) * 1e-6;
-      api.bump(false);
-    });
-    $('ac-f').addEventListener('input', (e) => {
-      api.slice().f = Number(e.target.value);
-      api.bump(false);
-    });
+    const on = (id, key, scale = 1) =>
+      $(id).addEventListener('input', (e) => {
+        api.slice()[key] = Number(e.target.value) * scale;
+        api.bump(false);
+      });
+    on('ac-V', 'Vrms');
+    on('ac-R', 'R');
+    on('ac-L', 'L');
+    on('ac-C', 'C', 1e-6);
+    on('ac-f', 'f');
     $('btn-ac-res').addEventListener('click', () => {
       const s = api.slice();
-      if (s.hasL && s.hasC && s.L > 0 && s.C > 0) s.f = 1 / (2 * Math.PI * Math.sqrt(s.L * s.C));
+      if (s.hasL && s.hasC) s.f = 1 / (2 * Math.PI * Math.sqrt(s.L * s.C));
       api.bump(false);
     });
   },
   syncControls(state) {
     const $ = (id) => document.getElementById(id);
-    $('ac-V').value = state.Vrms;
-    $('ac-V-val').textContent = fmtV(state.Vrms);
-    $('ac-R').value = state.R;
-    $('ac-R-val').textContent = fmtR(state.R);
-    $('ac-L').value = state.L;
-    $('ac-L-val').textContent = fmtL(state.L);
-    $('ac-C').value = state.C * 1e6;
-    $('ac-C-val').textContent = fmtC(state.C);
-    $('ac-f').value = state.f;
-    $('ac-f-val').textContent = fmtHz(state.f);
+    const set = (id, v, text) => {
+      if (document.activeElement !== $(id)) $(id).value = v;
+      $(`${id}-val`).textContent = text;
+    };
+    set('ac-V', state.Vrms, fmtV(state.Vrms));
+    set('ac-R', state.R, fmtR(state.R).replace('.000', ''));
+    set('ac-L', state.L, fmtL(state.L));
+    set('ac-C', state.C * 1e6, fmtC(state.C));
+    set('ac-f', state.f, fmtHz(state.f));
     $('wrap-ac-L').hidden = !state.hasL;
     $('wrap-ac-C').hidden = !state.hasC;
     $('btn-ac-res').hidden = !(state.hasL && state.hasC);
@@ -159,68 +169,38 @@ export default defineLab({
   init(ctx) {
     const group = new THREE.Group();
     ctx.scene.add(group);
+    const circuit = new THREE.Group();
+    group.add(circuit);
 
-    const yTop = 1.55;
-    const yBot = -0.85;
-    const x0 = -4.3;
-    const x1 = 0.4;
-    group.add(fatLine([x0, yBot, 0, x0, yTop, 0, x1, yTop, 0, x1, yBot, 0, x0, yBot, 0], { color: M.white, width: 2 }));
+    const ring = [];
+    for (let i = 0; i <= 96; i++) ring.push(PX + Math.cos((i / 96) * 2 * Math.PI), PY + Math.sin((i / 96) * 2 * Math.PI), 0);
+    const circle = fatLine(ring, { color: M.blue, width: 1.2, opacity: 0.3 });
+    group.add(circle);
+    group.add(fatLine([PX - RD - 0.3, PY, 0, PX + RD + 0.3, PY, 0], { color: 0x444444, width: 1.2 }));
+    group.add(fatLine([PX, PY - RD - 0.3, 0, PX, PY + RD + 0.3, 0], { color: 0x666666, width: 1.4 }));
 
-    const src = new THREE.Group();
-    src.add(fatLine([x0 - 0.02, yBot + 0.55, 0, x0 - 0.02, yBot + 1.15, 0], { color: M.blue, width: 5 }));
-    src.add(fatLine([x0 + 0.12, yBot + 0.7, 0, x0 + 0.12, yBot + 1.0, 0], { color: M.blue, width: 3 }));
-    src.add(label(qv('qV', 'V'), x0 - 0.55, yBot + 0.85));
-    group.add(src);
+    const arrow = (color, shaft) => new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(PX, PY, 0), 1, color, 0.3, 0.22, shaft);
+    const arrows = { V: arrow(M.blue, 0.04), I: arrow(M.yellow, 0.04), VR: arrow(M.green, 0.028), VL: arrow(M.teal, 0.028), VC: arrow(M.gold, 0.028) };
+    Object.values(arrows).forEach((a) => group.add(a));
+    const projV = fatLine([0, 0, 0, 1, 0, 0], { color: M.blue, width: 1.4, opacity: 0.55 });
+    const projI = fatLine([0, 0, 0, 1, 0, 0], { color: M.yellow, width: 1.4, opacity: 0.55 });
+    group.add(projV, projI);
 
-    const rBox = new THREE.Mesh(
-      new THREE.BoxGeometry(0.9, 0.35, 0.08),
-      new THREE.MeshBasicMaterial({ color: M.green, toneMapped: false }),
-    );
-    rBox.position.set(-2.6, yTop, 0);
-    group.add(rBox);
-    const rLab = label(qv('qR', 'R'), -2.6, yTop + 0.42);
-    group.add(rLab);
-
-    const coil = new THREE.Group();
-    for (let i = 0; i < 5; i++) {
-      const c = new THREE.Mesh(
-        new THREE.TorusGeometry(0.16, 0.035, 8, 16),
-        new THREE.MeshBasicMaterial({ color: 0x5cd0b3, toneMapped: false }),
-      );
-      c.rotation.y = Math.PI / 2;
-      c.position.set(-1.15 + i * 0.18, yTop, 0);
-      coil.add(c);
-    }
-    group.add(coil);
-    const lLab = label('L', -0.8, yTop + 0.45);
-    group.add(lLab);
-
-    const cap = new THREE.Group();
-    cap.add(fatLine([-0.15, yTop - 0.28, 0, -0.15, yTop + 0.28, 0], { color: M.gold, width: 5 }));
-    cap.add(fatLine([0.05, yTop - 0.28, 0, 0.05, yTop + 0.28, 0], { color: M.gold, width: 5 }));
-    cap.position.x = -0.05;
-    group.add(cap);
-    const cLab = label('C', 0.05, yTop + 0.45);
-    group.add(cLab);
-
-    const ox = 2.55;
-    const oy = 0.15;
-    const Varr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(ox, oy, 0), 2.2, M.blue, 0.28, 0.2, 0.03);
-    const Iarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(ox, oy, 0), 2.2, M.yellow, 0.28, 0.2, 0.03);
-    const VRarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(ox, oy, 0), 1, M.green, 0.22, 0.16, 0.022);
-    const VLarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(ox, oy, 0), 1, 0x5cd0b3, 0.22, 0.16, 0.022);
-    const VCarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(ox, oy, 0), 1, M.gold, 0.22, 0.16, 0.022);
-    group.add(Varr, Iarr, VRarr, VLarr, VCarr);
-    const axes = fatLine([ox - 0.2, oy, 0, ox + 2.5, oy, 0, ox, oy - 2.2, 0, ox, oy + 2.2, 0], { color: 0x444444, width: 1.2 });
-    group.add(axes);
-    const vLab = label(qv('qV', 'V'), ox + 2.35, oy + 0.22);
-    const iLab = label(qv('qI', 'I'), ox + 1.6, oy - 0.35);
-    group.add(vLab, iLab);
-    const title = label('phasors', ox + 0.9, oy + 2.35);
-    group.add(title);
-
+    const labels = {
+      V: label(qv('qV', '<i>V</i>'), 0, 0),
+      I: label(qv('qI', '<i>I</i>'), 0, 0),
+      VR: label('<span style="color:#83C167"><i>V</i><sub>R</sub></span>', 0, 0),
+      VL: label('<span style="color:#5CD0B3"><i>V</i><sub>L</sub></span>', 0, 0),
+      VC: label('<span style="color:#F0AC5F"><i>V</i><sub>C</sub></span>', 0, 0),
+      title: label('<small>phasors · vertical shadow = instantaneous value</small>', PX, PY + RD + 0.75),
+      src: label('', CX0 - 1.05, (CY0 + CY1) / 2),
+      R: label('', -4.2, CY1 + 0.62),
+      L: label('', -2.9, CY1 + 0.62),
+      C: label('', -1.85, CY1 + 0.62),
+    };
+    Object.values(labels).forEach((l) => group.add(l));
     group.visible = false;
-    return { group, coil, cap, lLab, cLab, Varr, Iarr, VRarr, VLarr, VCarr, iLab, ox, oy };
+    return { group, circuit, circle, arrows, projV, projI, labels, key: '' };
   },
   enter(ctx, handle) {
     handle.group.visible = true;
@@ -238,40 +218,59 @@ export default defineLab({
     const h = ctx.handle;
     const a = computed.ac;
     if (!h || !a) return;
-    h.coil.visible = a.hasL;
-    h.lLab.visible = a.hasL;
-    h.cap.visible = a.hasC;
-    h.cLab.visible = a.hasC;
     ctx.grid.visible = false;
 
-    const ox = h.ox;
-    const oy = h.oy;
-    const vScale = 2.15 / Math.max(a.Vp, 1e-9);
-    const set = (arr, vx, vy, on) => {
-      arr.visible = on && Math.hypot(vx, vy) > 1e-6;
-      if (!arr.visible) return;
-      const L = Math.hypot(vx, vy);
-      arr.position.set(ox, oy, 0.02);
-      arr.setDirection(new THREE.Vector3(vx, vy, 0));
-      arr.setLength(L, 0.24, 0.18);
+    const key = `${a.hasL}|${a.hasC}`;
+    if (key !== h.key) {
+      h.key = key;
+      while (h.circuit.children.length) {
+        const ch = h.circuit.children[0];
+        h.circuit.remove(ch);
+        disposeTree(ch);
+      }
+      buildCircuit(h.circuit, a);
+    }
+    setHTML(h.labels.src, `${qv('qV', `<i>V</i><sub>rms</sub> = ${fmtV(a.Vrms)}`)}<small>${fmtHz(state.f)}</small>`);
+    setHTML(h.labels.R, qv('qR', `<i>R</i> = ${fmtR(state.R).replace('.000', '')}`));
+    setHTML(h.labels.L, `<span style="color:#5CD0B3"><i>L</i> = ${fmtL(state.L)}</span>`);
+    setHTML(h.labels.C, `<span style="color:#F0AC5F"><i>C</i> = ${fmtC(state.C)}</span>`);
+    h.labels.L.visible = a.hasL;
+    h.labels.C.visible = a.hasC;
+
+    // Phasor angles: V at ωt, I (and V_R) at ωt − φ, V_L 90° ahead of I, V_C 90° behind.
+    const wt = a.omega * (computed.t || 0);
+    const thI = wt - a.phi;
+    const reach = Math.max(a.Vp, a.VRp + Math.max(a.VLp, a.VCp), 1e-9);
+    const k = RD / reach;
+    const place = (arr, lab, x0, y0, len, th, on = true) => {
+      arr.visible = on && len > 1e-3;
+      lab.visible = arr.visible;
+      if (!arr.visible) return { x: x0, y: y0 };
+      const dx = Math.cos(th);
+      const dy = Math.sin(th);
+      arr.position.set(x0, y0, 0.02);
+      arr.setDirection(new THREE.Vector3(dx, dy, 0));
+      arr.setLength(len, Math.min(0.3, len * 0.45), 0.22);
+      lab.position.set(x0 + dx * (len + 0.28), y0 + dy * (len + 0.28), 0.02);
+      return { x: x0 + dx * len, y: y0 + dy * len };
     };
-    set(h.Varr, a.Vp * vScale, 0, true);
-    const c = Math.cos(-a.phi);
-    const s = Math.sin(-a.phi);
-    const iLen = 2.15;
-    set(h.Iarr, iLen * c, iLen * s, true);
-    set(h.VRarr, a.VRp * vScale * c, a.VRp * vScale * s, true);
-    set(h.VLarr, a.VLp * vScale * -s, a.VLp * vScale * c, a.hasL);
-    set(h.VCarr, a.VCp * vScale * s, a.VCp * vScale * -c, a.hasC);
-    h.iLab.position.set(ox + iLen * c * 0.72, oy + iLen * s * 0.72 - 0.28, 0);
+    h.circle.scale.set(a.Vp * k, a.Vp * k, 1);
+    h.circle.position.set(PX - PX * a.Vp * k, PY - PY * a.Vp * k, 0);
+    const vTip = place(h.arrows.V, h.labels.V, PX, PY, a.Vp * k, wt);
+    const iLen = 0.75 * RD;
+    const iTip = place(h.arrows.I, h.labels.I, PX, PY, iLen, thI);
+    const p1 = place(h.arrows.VR, h.labels.VR, PX, PY, a.VRp * k, thI);
+    const p2 = place(h.arrows.VL, h.labels.VL, p1.x, p1.y, a.VLp * k, thI + Math.PI / 2, a.hasL);
+    place(h.arrows.VC, h.labels.VC, p2.x, p2.y, a.VCp * k, thI - Math.PI / 2, a.hasC);
+    updateFatLine(h.projV, [vTip.x, vTip.y, 0.01, PX, vTip.y, 0.01]);
+    updateFatLine(h.projI, [iTip.x, iTip.y, 0.01, PX, iTip.y, 0.01]);
   },
   law(state, computed) {
     const a = computed.ac;
-    const z = String.raw`\qZ = \sqrt{\qR^2+(X_L-X_C)^2}\qquad X_L=\omega L\qquad X_C=1/\omega C`;
-    if (a?.hasL && a?.hasC) {
-      return [z, String.raw`\omega_0 = 1/\sqrt{LC}\qquad \varphi=\tan^{-1}\dfrac{X_L-X_C}{\qR}`];
-    }
-    return [z, String.raw`\varphi=\tan^{-1}\dfrac{X_L-X_C}{\qR}\qquad \qI=\qV/\qZ`];
+    const z = String.raw`Z = \sqrt{\qR^2+(X_L-X_C)^2}\qquad \qI_{\text{rms}}=\dfrac{\qV_{\text{rms}}}{Z}`;
+    const x = String.raw`X_L=\omega L\qquad X_C=\dfrac{1}{\omega C}\qquad \varphi=\tan^{-1}\dfrac{X_L-X_C}{\qR}`;
+    if (a?.hasL && a?.hasC) return [z, x, String.raw`\omega_0 = \dfrac{1}{\sqrt{LC}}\qquad Q=\dfrac{\omega_0 L}{\qR}`];
+    return [z, x];
   },
   liveRows(state, computed) {
     const a = computed.ac;
@@ -279,21 +278,21 @@ export default defineLab({
     const deg = (a.phi * 180) / Math.PI;
     const rows = [
       kv(tex(String.raw`\qV_{\text{rms}}`), qv('qV', fmtV(a.Vrms))),
-      kv(tex(String.raw`\qI_{\text{rms}}=\qV/\qZ`), qv('qI', fmtI(a.Irms))),
+      kv(tex(String.raw`\qI_{\text{rms}}=\qV_{\text{rms}}/Z`), qv('qI', fmtI(a.Irms))),
       kv('|Z|', `${a.Z.toFixed(2)} Ω`),
       kv('φ (V leads I)', `${deg >= 0 ? '+' : '−'}${Math.abs(deg).toFixed(1)}°`),
       kv('X<sub>L</sub> = ωL', a.hasL ? `${a.XL.toFixed(2)} Ω` : '—'),
       kv('X<sub>C</sub> = 1/ωC', a.hasC ? `${a.XC.toFixed(2)} Ω` : '—'),
-      kv('V<sub>R</sub> = I R', qv('qV', fmtV(a.VR))),
+      kv('V<sub>R</sub> = I R (rms)', fmtV(a.VR)),
     ];
-    if (a.hasL) rows.push(kv('V<sub>L</sub> = I X<sub>L</sub>', fmtV(a.VL)));
-    if (a.hasC) rows.push(kv('V<sub>C</sub> = I X<sub>C</sub>', fmtV(a.VC)));
+    if (a.hasL) rows.push(kv('V<sub>L</sub> = I X<sub>L</sub> (rms)', fmtV(a.VL)));
+    if (a.hasC) rows.push(kv('V<sub>C</sub> = I X<sub>C</sub> (rms)', fmtV(a.VC)));
+    rows.push(kv('√(V<sub>R</sub>² + (V<sub>L</sub>−V<sub>C</sub>)²)', `${fmtV(Math.hypot(a.VR, a.VL - a.VC))} = V<sub>rms</sub>`));
     if (a.f0 != null) {
       rows.push(kv('f₀ = 1/(2π√(LC))', fmtHz(a.f0)));
-      rows.push(kv('Q = ω₀L/R', a.Q.toFixed(2)));
+      if (a.Q != null) rows.push(kv('Q = ω₀L/R', a.Q.toFixed(2)));
     }
-    rows.push(kv('P<sub>avg</sub> = I V cosφ', qv('qP', fmtP(a.Pavg))));
-    rows.push(kv('V(t), I(t) now', `${qv('qV', fmtV(computed.vNow))} , ${qv('qI', fmtI(computed.iNow))}`));
+    rows.push(kv('P<sub>avg</sub> = I<sub>rms</sub> V<sub>rms</sub> cosφ', qv('qP', fmtP(a.Pavg))));
     return rows.join('');
   },
   readout(state, computed) {
@@ -309,46 +308,45 @@ export default defineLab({
   },
   plot(state, computed) {
     const a = computed.ac;
-    if (!a) return null;
-    return { type: 'vi', omega: a.omega, phi: a.phi, t: computed.t || 0 };
+    return a ? { type: 'vi', omega: a.omega, phi: a.phi, t: computed.t || 0 } : null;
   },
   coach(state, computed) {
     const a = computed.ac;
     if (!a) return { title: 'AC', body: '' };
+    const deg = Math.abs((a.phi * 180) / Math.PI).toFixed(0);
     if (a.hasL && a.hasC) {
-      const near = Math.abs(state.f - a.f0) / a.f0 < 0.04;
-      if (near) {
+      if (Math.abs(state.f - a.f0) / a.f0 < 0.04) {
         return {
           title: 'Resonance — X_L = X_C, Z = R',
-          body: `ω₀ = 1/√(LC) so f₀ = ${a.f0.toFixed(1)} Hz. The inductor and capacitor voltages cancel (they are 180° apart), current is V/R, and φ = 0. Q = ω₀L/R = ${a.Q.toFixed(1)} says how sharp the peak is.`,
+          body: `ω₀ = 1/√(LC), f₀ = ${a.f0.toFixed(1)} Hz. V_L and V_C are equal and opposite, so in the phasor chain they cancel and V_R alone reaches V: φ = 0, I = V/R is as large as it gets. Each of V_L and V_C is still Q = ${a.Q?.toFixed(1)} times V — the parts can see more voltage than the source.`,
         };
       }
       if (a.phi > 0) {
         return {
           title: 'Above resonance — inductive',
-          body: `X_L > X_C so the net reactance is inductive. Voltage leads current by φ = ${((a.phi * 180) / Math.PI).toFixed(0)}°. Turn f down toward f₀ = ${a.f0.toFixed(1)} Hz and watch I climb.`,
+          body: `X_L > X_C, so the teal V_L outruns the gold V_C and the chain swings V ahead of I by φ = ${deg}°. Lower f toward f₀ = ${a.f0.toFixed(1)} Hz and watch I grow.`,
         };
       }
       return {
         title: 'Below resonance — capacitive',
-        body: `X_C > X_L, φ < 0: current leads voltage. Same as a capacitor dominating. f₀ = ${a.f0.toFixed(1)} Hz is where they cancel.`,
+        body: `X_C > X_L, so V_C wins and V lags I by ${deg}° (current leads). Raise f toward f₀ = ${a.f0.toFixed(1)} Hz: X_C = 1/ωC falls, X_L = ωL rises, and they meet there.`,
       };
     }
-    if (a.hasC && !a.hasL) {
+    if (a.hasC) {
       return {
-        title: 'RC — current leads',
-        body: 'X_C = 1/ωC. High frequency: capacitor looks like a wire (X_C → 0). Low frequency: it looks open. φ = tan⁻¹(−X_C/R) < 0, so I leads V. V_R and V_C are 90° apart; they add as a phasor hypotenuse equal to V.',
+        title: 'RC — current leads voltage',
+        body: `X_C = 1/ωC. V_R (along I) and V_C (90° behind I) form a right triangle whose hypotenuse is V, so V lags I by ${deg}°. High f: X_C → 0, the capacitor acts like a wire. Low f: X_C → ∞, it acts like a gap.`,
       };
     }
-    if (a.hasL && !a.hasC) {
+    if (a.hasL) {
       return {
-        title: 'RL — voltage leads',
-        body: 'X_L = ωL. High frequency: inductor looks open. φ = tan⁻¹(X_L/R) > 0, V leads I. Instantaneous P = I(t)V(t) still averages to I_rms V_rms cosφ.',
+        title: 'RL — voltage leads current',
+        body: `X_L = ωL. V_L is 90° ahead of I, so V leads I by ${deg}°. High f: X_L grows and the inductor chokes the current. Average power is still I_rms V_rms cosφ — only the resistor dissipates.`,
       };
     }
     return {
-      title: 'Resistor — φ = 0',
-      body: 'No reactance, Z = R, I = V/R in phase with V. This is the Ch 42 AC power case: P_avg = I_rms V_rms.',
+      title: 'Resistor only — in phase',
+      body: 'No reactance: Z = R, φ = 0, and V and I turn together. This is the Ch 42 case: P_avg = I_rms V_rms.',
     };
   },
 });

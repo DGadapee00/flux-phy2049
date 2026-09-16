@@ -81,7 +81,8 @@ export class ArrowView {
   sync(patches, samples, showE, showN, extraEScale = 5e4) {
     const u = UNITS_PER_METER;
     const n = patches.length;
-    const stride = n > 900 ? 4 : n > 450 ? 3 : 2;
+    // About 150 arrows at most: enough to read the pattern without a thicket.
+    const stride = Math.max(2, Math.ceil(n / 150));
     this.E.begin();
     this.N.begin();
 
@@ -93,7 +94,7 @@ export class ArrowView {
         const mag = _d.length();
         if (mag > 1e-6) {
           _d.multiplyScalar(1 / mag);
-          const L = (0.07 + 0.13 * Math.tanh(mag / extraEScale)) * u;
+          const L = (0.05 + 0.09 * Math.tanh(mag / extraEScale)) * u;
           _p.set(p.x * u, p.y * u, p.z * u);
           _c.set(s.En >= 0 ? M.yellow : M.blue);
           this.E.push(_p, _d, L, _c);

@@ -1,53 +1,43 @@
 import * as THREE from 'three';
-import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, disposeTree } from '../scene/manim.js';
+import { M } from '../scene/manim.js';
 import { imageOf, principalRays, fmtCm } from '../physics/optics.js';
+import { wipe, label, line, arrowAt, tick, drawBundle, frameCamera } from '../scene/opticsBench.js';
 import { kv, cells } from '../ui/shared.js';
 
 const SCENARIOS = [
-  { id: 'concave-out', name: 'Concave, object beyond C — real reduced', type: 'concave', fAbs: 12, do: 36, ho: 8 },
-  { id: 'concave-c', name: 'Concave, object at C — real same size', type: 'concave', fAbs: 12, do: 24, ho: 8 },
-  { id: 'concave-f', name: 'Concave, between F and C — real enlarged', type: 'concave', fAbs: 12, do: 18, ho: 6 },
-  { id: 'concave-in', name: 'Concave, inside F — virtual enlarged', type: 'concave', fAbs: 12, do: 8, ho: 6 },
+  { id: 'concave-out', name: 'Concave, object beyond C — real, reduced', type: 'concave', fAbs: 12, do: 36, ho: 8 },
+  { id: 'concave-c', name: 'Concave, object at C — real, same size', type: 'concave', fAbs: 12, do: 24, ho: 8 },
+  { id: 'concave-f', name: 'Concave, between F and C — real, enlarged', type: 'concave', fAbs: 12, do: 18, ho: 6 },
+  { id: 'concave-in', name: 'Concave, inside F — virtual, enlarged', type: 'concave', fAbs: 12, do: 8, ho: 6 },
   { id: 'convex', name: 'Convex — always virtual, reduced', type: 'convex', fAbs: 12, do: 20, ho: 8 },
 ];
-
-const U = 0.26;
-
-function label(html, x, y) {
-  const el = document.createElement('div');
-  el.className = 'circuit-label';
-  el.innerHTML = html;
-  const o = new CSS2DObject(el);
-  o.position.set(x * U, y * U, 0.04);
-  o.userData.el = el;
-  return o;
-}
-
-function flat(pts) {
-  const o = [];
-  for (const p of pts) o.push(p.x * U, p.y * U, 0);
-  return o;
-}
-
-function wipe(g) {
-  while (g.children.length) {
-    const ch = g.children[0];
-    g.remove(ch);
-    disposeTree(ch);
-  }
-}
 
 function fOf(state) {
   return state.type === 'concave' ? state.fAbs : -state.fAbs;
 }
 
-function arrowVert(x, y, color) {
-  const dir = new THREE.Vector3(0, Math.sign(y) || 1, 0);
-  const len = Math.abs(y) * U;
-  const origin = y >= 0 ? new THREE.Vector3(x * U, 0, 0) : new THREE.Vector3(x * U, y * U, 0);
-  return new Arrow(dir, origin, Math.max(0.15, len), color, 0.22, 0.16, 0.018);
+function framing(state) {
+  const f = fOf(state);
+  const img = imageOf({ f, do: state.do, ho: state.ho, kind: 'mirror' });
+  const xs = [-state.do, 0, -f, 8];
+  if (state.type === 'concave') xs.push(-2 * f);
+  if (!img.infinite) xs.push(img.imageX);
+  return frameCamera(xs, [state.ho, img.hi]);
+}
+
+/** Mirror in the thin-mirror picture: a gentle arc (sagitta ≤ 1.2 cm) plus hatching on the back. */
+function drawMirror(group, f, halfHeight) {
+  const sag = (halfHeight * halfHeight) / (4 * Math.abs(f));
+  const k = Math.min(1, 1.2 / sag);
+  const pts = [];
+  for (let i = -20; i <= 20; i++) {
+    const y = (i / 20) * halfHeight;
+    const x = ((f > 0 ? -1 : 1) * k * (y * y)) / (4 * Math.abs(f));
+    pts.push({ x, y });
+    if (i % 2 === 0 && i < 20) group.add(line([{ x, y }, { x: x + 1.2, y: y + 1.2 }], { color: M.white, width: 1.2, opacity: 0.45 }));
+  }
+  group.add(line(pts, { color: M.white, width: 3.4 }));
 }
 
 export default defineLab({
@@ -56,7 +46,8 @@ export default defineLab({
   title: 'Mirrors',
   hint: 'Move the object through F — the image jumps from real to virtual',
   orbit: false,
-  camera: { pos: new THREE.Vector3(-4, 0.2, 16), target: new THREE.Vector3(-4, 0.2, 0) },
+  camera: frameCamera([-36, 0, -24, 8, -18], [8, -4]),
+  cameraFor: framing,
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
@@ -83,7 +74,7 @@ export default defineLab({
           <label class="field">
             <span>Object distance d_o</span>
             <div class="slider-row">
-              <input type="range" id="mir-do" min="5" max="70" step="0.5" value="36" />
+              <input type="range" id="mir-do" min="4" max="70" step="0.5" value="36" />
               <span class="mono val" id="mir-do-val">36 cm</span>
             </div>
           </label>
@@ -94,7 +85,7 @@ export default defineLab({
               <span class="mono val" id="mir-ho-val">8.0 cm</span>
             </div>
           </label>
-          <p class="tiny">1/f = 1/d_o + 1/d_i, m = −d_i/d_o = h_i/h_o. Concave (f&gt;0) can make a real inverted image; convex (f&lt;0) is always virtual, upright, reduced.</p>
+          <p class="tiny">1/f = 1/d_o + 1/d_i, m = −d_i/d_o = h_i/h_o. Solid lines are real rays; dashed lines are extensions your eye traces back to a virtual image. The view re-frames when you let go of a slider.</p>
         </div>`;
   },
   bind(api) {
@@ -104,19 +95,18 @@ export default defineLab({
       if (!btn) return;
       api.slice().type = btn.dataset.type;
       api.bump();
+      api.resetCamera();
     });
-    $('mir-f').addEventListener('input', (e) => {
-      api.slice().fAbs = Number(e.target.value);
-      api.bump(false);
-    });
-    $('mir-do').addEventListener('input', (e) => {
-      api.slice().do = Number(e.target.value);
-      api.bump(false);
-    });
-    $('mir-ho').addEventListener('input', (e) => {
-      api.slice().ho = Number(e.target.value);
-      api.bump(false);
-    });
+    const num = (id, key) => {
+      $(id).addEventListener('input', (e) => {
+        api.slice()[key] = Number(e.target.value);
+        api.bump(false);
+      });
+      $(id).addEventListener('change', () => api.resetCamera());
+    };
+    num('mir-f', 'fAbs');
+    num('mir-do', 'do');
+    num('mir-ho', 'ho');
   },
   syncControls(state) {
     const $ = (id) => document.getElementById(id);
@@ -146,11 +136,9 @@ export default defineLab({
   },
   recompute(state, computed) {
     const f = fOf(state);
-    computed.mir = {
-      f,
-      ...imageOf({ f, do: state.do, ho: state.ho, kind: 'mirror' }),
-      bundle: principalRays({ f, do: state.do, ho: state.ho, kind: 'mirror', span: 80 }),
-    };
+    const img = imageOf({ f, do: state.do, ho: state.ho, kind: 'mirror' });
+    const span = Math.max(state.do, 2 * Math.abs(f)) + 20;
+    computed.mir = { f, ...img, bundle: principalRays({ f, do: state.do, ho: state.ho, kind: 'mirror', span }) };
   },
   syncViews(state, computed, ctx) {
     const h = ctx.handle;
@@ -158,50 +146,40 @@ export default defineLab({
     if (!h || !m) return;
     wipe(h.draw);
     const f = m.f;
-    h.draw.add(fatLine([-80 * U, 0, 0, 25 * U, 0, 0], { color: 0x666666, width: 1.5 }));
-    const pts = [];
-    for (let i = -16; i <= 16; i++) {
-      const y = i * 1.2;
-      const x = f > 0 ? -(y * y) / (4 * f) : (y * y) / (4 * Math.abs(f));
-      pts.push(x * U, y * U, 0);
-    }
-    h.draw.add(fatLine(pts, { color: M.white, width: 3.4 }));
+    const halfH = Math.min(40, Math.max(14, state.ho + 6, Number.isFinite(m.hi) ? Math.abs(m.hi) + 6 : 0));
+    const left = -(Math.max(state.do, 2 * Math.abs(f)) + 20);
+    const right = Math.max(20, !m.real && Number.isFinite(m.imageX) ? m.imageX + 10 : 0);
+    h.draw.add(line([{ x: left, y: 0 }, { x: right, y: 0 }], { color: 0x666666, width: 1.5 }));
+    drawMirror(h.draw, f, halfH);
+    drawBundle(h.draw, m.bundle);
 
-    const colors = [M.gold, 0x5cd0b3, M.blue];
-    m.bundle.rays.forEach((ray, i) => {
-      if (ray.length < 2) return;
-      h.draw.add(fatLine(flat(ray), { color: colors[i % 3], width: 2.2, dashed: !m.real && !m.infinite }));
-    });
-
-    h.draw.add(arrowVert(-state.do, state.ho, M.gold));
-    h.draw.add(label('object', -state.do, state.ho + 2.2));
+    h.draw.add(arrowAt(-state.do, state.ho, M.gold));
+    h.draw.add(label('object', -state.do, state.ho + 3));
     if (!m.infinite && Number.isFinite(m.imageX)) {
-      h.draw.add(arrowVert(m.imageX, m.hi, m.real ? 0xfc6255 : M.blue));
-      h.draw.add(label(m.real ? 'real image' : 'virtual image', m.imageX, m.hi + (m.hi >= 0 ? 2.2 : -3)));
+      h.draw.add(arrowAt(m.imageX, m.hi, m.real ? M.red : M.blue));
+      h.draw.add(label(m.real ? 'real image' : 'virtual image', m.imageX, m.hi + (m.hi >= 0 ? 3 : -3.5)));
     }
-    h.draw.add(label('F', -f, -3.2));
-    h.draw.add(label('C', -2 * f, -3.2));
-    h.draw.add(label('V', 1.5, -3.2));
-    // ticks
-    h.draw.add(fatLine([-f * U, -0.4 * U, 0, -f * U, 0.4 * U, 0], { color: M.gold, width: 2 }));
-    h.draw.add(fatLine([-2 * f * U, -0.4 * U, 0, -2 * f * U, 0.4 * U, 0], { color: M.white, width: 2 }));
+    tick(h.draw, -f, 'F', M.gold);
+    tick(h.draw, -2 * f, 'C');
+    h.draw.add(label('V', 1.8, -2.6));
+    if (state.type === 'convex') h.draw.add(label('<small>F and C are behind the mirror</small>', -f, -6));
     ctx.grid.visible = false;
   },
   law: () => [
-    String.raw`\dfrac{1}{f}=\dfrac{1}{d_o}+\dfrac{1}{d_i}`,
-    String.raw`m=-\dfrac{d_i}{d_o}=\dfrac{h_i}{h_o}\qquad f>0\text{ concave}`,
+    String.raw`\dfrac{1}{f}=\dfrac{1}{d_o}+\dfrac{1}{d_i}\qquad f=\dfrac{R}{2}`,
+    String.raw`m=-\dfrac{d_i}{d_o}=\dfrac{h_i}{h_o}\qquad f>0\text{ concave},\ f<0\text{ convex}`,
   ],
   liveRows(state, computed) {
     const m = computed.mir;
     if (!m) return '';
     return [
-      kv('f', fmtCm(m.f)),
+      kv('f (R = 2f)', `${fmtCm(m.f)} (R = ${fmtCm(2 * m.f)})`),
       kv('d_o', fmtCm(state.do)),
-      kv('d_i', m.infinite ? '∞' : fmtCm(m.di)),
-      kv('1/f', (1 / m.f).toFixed(3) + ' cm⁻¹'),
-      kv('1/d_o + 1/d_i', m.infinite ? '1/f' : (1 / state.do + 1 / m.di).toFixed(3) + ' cm⁻¹'),
-      kv('m = −d_i/d_o', m.infinite ? '∞' : m.m.toFixed(2)),
-      kv('h_i', m.infinite ? '∞' : fmtCm(m.hi)),
+      kv('d_i', m.infinite ? '∞' : `${fmtCm(m.di)} ${m.di > 0 ? '(in front)' : '(behind)'}`),
+      kv('1/d_o + 1/d_i', m.infinite ? `1/f = ${(1 / m.f).toFixed(4)} cm⁻¹` : `${(1 / state.do + 1 / m.di).toFixed(4)} cm⁻¹`),
+      kv('1/f', `${(1 / m.f).toFixed(4)} cm⁻¹`),
+      kv('m = −d_i/d_o', m.infinite ? '∞' : m.m.toFixed(3)),
+      kv('h_i = m h_o', m.infinite ? '∞' : fmtCm(m.hi)),
       kv('Image', m.type),
     ].join('');
   },
@@ -220,24 +198,24 @@ export default defineLab({
     if (state.type === 'convex') {
       return {
         title: 'Convex mirror — f is negative',
-        body: 'Diverging, like a diverging lens. The image is always virtual, upright, and reduced, behind the mirror (d_i < 0). Car side mirrors are this: you see a wide field, and objects are closer than they appear because |m| < 1.',
+        body: 'The reflected rays spread apart (solid). Traced backward (dashed) they meet behind the mirror: a virtual, upright, reduced image with d_i < 0. Car side mirrors do this — a wide field of view, and objects are closer than they appear because |m| < 1.',
       };
     }
     if (m?.infinite) {
       return {
-        title: 'Object at F — rays come out parallel',
-        body: '1/d_i = 0 so the image is at infinity. A concave mirror with a bulb at F is a spotlight. Nudge d_o either side of F and the image snaps from real (inverted) to virtual (upright).',
+        title: 'Object at F — reflected rays leave parallel',
+        body: '1/d_i = 1/f − 1/d_o = 0, so the image is at infinity. A bulb at the focus of a concave mirror makes a searchlight beam. Nudge d_o either side of F and the image snaps from real/inverted to virtual/upright.',
       };
     }
     if (m?.real) {
       return {
-        title: 'Real image — on the same side as the object',
-        body: `${m.type}. d_i > 0 means the rays actually cross in front of the mirror. Gold / teal / blue are the three principal rays: parallel→F, through C, through F→parallel. They meet at the image.`,
+        title: 'Real image — the rays really cross in front',
+        body: `${m.type}. Gold: parallel → through F. Teal: aimed at C, reflects straight back. Blue: through F → parallel. All three reflected rays pass through one point, so light actually gathers there — you could put a screen at d_i = ${fmtCm(m.di)}.`,
       };
     }
     return {
       title: 'Virtual image — behind the mirror',
-      body: `Object is inside F, so d_i < 0. The reflected rays diverge; your eye traces them back through the glass. ${m?.type}. Makeup mirrors put your face inside F on purpose.`,
+      body: `The object is inside F, so the reflected rays (solid) diverge and never meet. Your eye extends them backward (dashed) to a point ${fmtCm(-(m?.di ?? 0))} behind the mirror: ${m?.type}. That is a makeup or shaving mirror.`,
     };
   },
 });

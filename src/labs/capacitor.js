@@ -13,6 +13,12 @@ export default defineLab({
   hint: 'Insert a dielectric or switch battery / isolated',
   orbit: true,
   camera: { pos: new THREE.Vector3(0.2, 2.2, 6.4), target: new THREE.Vector3(0, 0, 0) },
+  // Big plates (the Ch 40 1.5 m² example) need the camera pulled back in proportion.
+  cameraFor(state) {
+    const side = Math.min(Math.max(Math.sqrt(state.cap?.A ?? 0.04), 0.18), 0.55);
+    const k = Math.max(1, (side * 8 + 1) / 2.6);
+    return { pos: new THREE.Vector3(0.2 * k, 2.2 * k, 6.4 * k), target: new THREE.Vector3(0, 0, 0) };
+  },
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS.capacitor,
   defaultState() {

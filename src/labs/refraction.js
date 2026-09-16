@@ -54,7 +54,7 @@ export default defineLab({
   title: 'Refraction',
   hint: 'Raise θ₁ past the critical angle — the ray turns back',
   orbit: false,
-  camera: { pos: new THREE.Vector3(0, 0.05, 14), target: new THREE.Vector3(0, 0.05, 0) },
+  camera: { pos: new THREE.Vector3(0, 0.05, 9.5), target: new THREE.Vector3(0, 0.05, 0) },
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
@@ -121,8 +121,8 @@ export default defineLab({
     group.add(left, right);
     const rays = new THREE.Group();
     group.add(rays);
-    const n1Lab = label('n₁', -2.2, 1.55);
-    const n2Lab = label('n₂', 2.2, 1.55);
+    const n1Lab = label('n₁', -1.25, 1.45);
+    const n2Lab = label('n₂', 1.25, 1.45);
     group.add(n1Lab, n2Lab);
     group.visible = false;
     return { group, left, right, rays, n1Lab, n2Lab };
@@ -156,7 +156,15 @@ export default defineLab({
     const pR = { x: -L * Math.cos(th1), y: L * Math.sin(th1) };
     h.rays.add(fatLine(flat([pI, { x: 0, y: 0 }]), { color: M.gold, width: 3.2 }));
     h.rays.add(new Arrow(new THREE.Vector3(Math.cos(th1), Math.sin(th1), 0), new THREE.Vector3(pI.x * 0.45, pI.y * 0.45, 0), 0.55, M.gold, 0.22, 0.16, 0.02));
-    h.rays.add(fatLine(flat([{ x: 0, y: 0 }, pR]), { color: M.blue, width: 2.4 }));
+    // Under TIR the reflected ray carries all the light, so it is drawn as boldly as the incident ray.
+    h.rays.add(fatLine(flat([{ x: 0, y: 0 }, pR]), { color: M.blue, width: r.tir ? 3.2 : 2, opacity: r.tir ? 1 : 0.7 }));
+    if (r.thetaC != null) {
+      const pc = { x: -L * 0.92 * Math.cos(r.thetaC), y: -L * 0.92 * Math.sin(r.thetaC) };
+      const guide = fatLine(flat([pc, { x: 0, y: 0 }]), { color: M.white, width: 1.2, opacity: 0.5, dashed: true });
+      guide.computeLineDistances();
+      h.rays.add(guide);
+      h.rays.add(label(`<small>θ_c ${fmtDeg(r.thetaC)}</small>`, pc.x - 0.25, pc.y - 0.12));
+    }
     h.rays.add(label(`θ₁ ${fmtDeg(th1)}`, pI.x * 0.35 - 0.15, pI.y * 0.35 - 0.2));
     h.rays.add(label(`θᵣ ${fmtDeg(th1)}`, pR.x * 0.35 - 0.15, pR.y * 0.35 + 0.2));
     h.rays.add(fatLine(flat(arc(0.38, Math.PI, Math.PI + th1)), { color: M.gold, width: 1.5 }));

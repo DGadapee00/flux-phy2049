@@ -112,7 +112,8 @@ export class DistributionView {
       );
       sprite.position.set(pc.x * u, pc.y * u, pc.z * u);
       sprite.renderOrder = 4;
-      sprite.scale.setScalar((current ? 0.13 : 0.085) * u);
+      // Diameter stays under the slice spacing so neighbouring dq discs do not merge into a bar.
+      sprite.scale.setScalar((current ? 0.08 : 0.05) * u);
       this.group.add(sprite);
       this.dqMeshes.push(sprite);
 

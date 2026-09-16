@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
 import { Arrow, M, fatLine, fatSegments, disposeTree } from '../scene/manim.js';
-import { UNITS_PER_METER } from '../physics/constants.js';
 import { dot, len, normalize } from '../physics/vec.js';
 import { kv, cells } from '../ui/shared.js';
+
+/** Vectors are dimensionless here; draw 1 unit as 4 scene units so |a| ≈ 1 fits on screen. */
+const S = 4;
 
 const SCENARIOS = [
   { id: 'axes', name: 'x̂ and ŷ', a: { x: 1, y: 0, z: 0 }, b: { x: 0, y: 1, z: 0 } },
@@ -171,7 +173,7 @@ export default defineLab({
   syncViews(state, computed, ctx) {
     const h = ctx.handle;
     if (!h) return;
-    const u = UNITS_PER_METER;
+    const u = S;
     placeArrow(h.aArr, h.aTip, state.a, u);
     placeArrow(h.bArr, h.bTip, state.b, u);
     rebuildGuides(h, state, u);
@@ -250,14 +252,14 @@ export default defineLab({
       const hit = new THREE.Vector3();
       const v = ctx.state[dragWhich];
       if (e.shiftKey) {
-        plane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, v.z * UNITS_PER_METER));
+        plane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, v.z * S));
       } else {
-        plane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, v.y * UNITS_PER_METER, 0));
+        plane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, v.y * S, 0));
       }
       if (raycaster.ray.intersectPlane(plane, hit)) {
-        v.x = Math.max(-1.2, Math.min(1.2, hit.x / UNITS_PER_METER));
-        if (e.shiftKey) v.y = Math.max(-1.1, Math.min(1.1, hit.y / UNITS_PER_METER));
-        else v.z = Math.max(-1.2, Math.min(1.2, hit.z / UNITS_PER_METER));
+        v.x = Math.max(-1.2, Math.min(1.2, hit.x / S));
+        if (e.shiftKey) v.y = Math.max(-1.1, Math.min(1.1, hit.y / S));
+        else v.z = Math.max(-1.2, Math.min(1.2, hit.z / S));
         ctx.bump();
       }
     },

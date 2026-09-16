@@ -48,7 +48,7 @@ import { expandingLoop, slidingBar, generator, dipoleLoop, fluxDipoleLoop, induc
 import { acState } from './ac.js';
 import { planeWave, intensityAvg, spectrumBand } from './emwave.js';
 import { malusChain, malus } from './polarization.js';
-import { snell, criticalAngle, imageOf, twoLenses } from './optics.js';
+import { snell, criticalAngle, imageOf, twoLenses, principalRays, traceRay } from './optics.js';
 
 let failed = 0;
 let passed = 0;
@@ -596,6 +596,141 @@ console.log('\nGeometric optics');
   approx(sys.i1.di, 20, 1e-9, 'two-lens: first image at 20 cm');
   approx(sys.do2, 10, 1e-9, 'eyepiece sees object at its F');
   ok(sys.i2.infinite, 'Keplerian: final image at infinity');
+}
+
+console.log('\nFaraday: ε against a finite-difference −ΔΦ/Δt');
+
+{
+  const dt = 1e-7;
+  const e = expandingLoop(0.4, 0.25, 0.5, 2);
+  approx(e.emf, -(expandingLoop(0.4, 0.25 + 0.5 * dt, 0.5, 2).Phi - e.Phi) / dt, 1e-5, 'expanding loop: ε = −ΔΦ/Δt');
+  const b = slidingBar(0.5, 0.4, 0.3, 2);
+  approx(b.emf, -(slidingBar(0.5, 0.4, 0.3 + 2 * dt, 2).Phi - b.Phi) / dt, 1e-6, 'sliding bar: ε = −ΔΦ/Δt');
+  const w = 12;
+  const th = 0.7;
+  const g = generator(10, 0.1, 0.05, w, th);
+  const dPhi = generator(10, 0.1, 0.05, w, th + w * dt).Phi - generator(10, 0.1, 0.05, w, th - w * dt).Phi;
+  approx(g.emf, -dPhi / (2 * dt), 1e-6, 'generator: ε = NBAω sinωt = −ΔΦ/Δt');
+}
+
+console.log('\nRay tracing (paraxial)');
+
+/** Every outgoing ray, extended as a straight line, passes through (x, y). */
+function raysMeet(bundle, x, y, tol) {
+  return bundle.rays.every((r) => {
+    const [a, b] = r.outgoing;
+    const yy = a.y + ((b.y - a.y) / (b.x - a.x)) * (x - a.x);
+    return Math.abs(yy - y) <= tol;
+  });
+}
+
+{
+  const lens = principalRays({ f: 12, do: 36, ho: 8, kind: 'lens' });
+  ok(lens.rays.length === 3, 'lens: three principal rays');
+  ok(raysMeet(lens, 18, -4, 1e-9), 'converging lens: all three rays cross at the real image (18 cm, −4 cm)');
+  ok(lens.rays.every((r) => r.extension === null && r.outgoing[1].x > 0), 'real image: no dashed extensions, rays continue to the right');
+
+  const mag = principalRays({ f: 12, do: 8, ho: 6, kind: 'lens' });
+  ok(raysMeet(mag, -24, 18, 1e-9), 'magnifier (inside F): outgoing rays extended backward meet at the virtual image (−24 cm, 18 cm)');
+  ok(mag.rays.every((r) => r.outgoing[1].x > 0 && r.extension && Math.abs(r.extension[1].x + 24) < 1e-9), 'virtual image: real rays go right, dashed extensions go back to the image');
+
+  const div = principalRays({ f: -12, do: 24, ho: 8, kind: 'lens' });
+  const dimg = imageOf({ f: -12, do: 24, ho: 8 });
+  ok(raysMeet(div, dimg.di, dimg.hi, 1e-9), 'diverging lens: extensions meet at the virtual image');
+  approx(div.rays[2].slopeOut, 0, 1e-12, 'diverging lens: ray aimed at the far F leaves parallel');
+
+  const cm = principalRays({ f: 10, do: 30, ho: 8, kind: 'mirror' });
+  ok(raysMeet(cm, -15, -4, 1e-9), 'concave mirror: reflected rays cross at the real image in front (−15 cm, −4 cm)');
+  ok(cm.rays.every((r) => r.outgoing[1].x < 0), 'mirror: reflected rays head back toward the object side');
+  const toC = cm.rays[1];
+  const mIn = (toC.incoming[1].y - toC.incoming[0].y) / (toC.incoming[1].x - toC.incoming[0].x);
+  approx(toC.slopeOut, mIn, 1e-12, 'mirror: ray aimed at C reflects back along itself');
+
+  const inside = principalRays({ f: 12, do: 8, ho: 6, kind: 'mirror' });
+  ok(raysMeet(inside, 24, 18, 1e-9), 'concave mirror inside F: extensions meet behind the mirror (+24 cm)');
+  const vx = principalRays({ f: -20, do: 20, ho: 6, kind: 'mirror' });
+  ok(raysMeet(vx, 10, 3, 1e-9), 'convex mirror: extensions meet at the virtual image (+10 cm, 3 cm)');
+}
+
+{
+  // Keplerian telescope focused for a relaxed eye: intermediate image at the eyepiece focus.
+  const f1 = 40;
+  const f2 = 10;
+  const d_o = 1000;
+  const di1 = 1 / (1 / f1 - 1 / d_o);
+  const sep = di1 + f2;
+  const els = [
+    { x: 0, f: f1 },
+    { x: sep, f: f2 },
+  ];
+  const chief = traceRay(els, { x: -d_o, y: 50 }, -50 / d_o, sep + 40);
+  const marginal = traceRay(els, { x: -d_o, y: 50 }, (8 - 50) / d_o, sep + 40);
+  approx(marginal.slope, chief.slope, 1e-9, 'telescope: every ray leaves the eyepiece parallel (image at ∞)');
+  approx(chief.slope / (-50 / d_o), 1 - sep / f2, 1e-9, 'telescope: angular magnification from the chief ray = 1 − sep/f₂');
+  approx(1 - (f1 + f2) / f2, -f1 / f2, 1e-12, 'telescope: at sep = f₁ + f₂ that is −f₁/f₂');
+
+  // Microscope with the final virtual image at the 25 cm near point.
+  const fo = 4;
+  const fe = 10;
+  const d1 = 5;
+  const sepM = 1 / (1 / fo - 1 / d1) + 1 / (1 / fe + 1 / 25);
+  const sys = twoLenses({ f1: fo, f2: fe, do1: d1, ho: 2, sep: sepM });
+  approx(sys.i2.di, -25, 1e-9, 'microscope: final virtual image at the near point');
+  const xImg = sepM + sys.i2.di;
+  const elsM = [
+    { x: 0, f: fo },
+    { x: sepM, f: fe },
+  ];
+  const meet = [2, 0, -1].every((yHit) => {
+    const r = traceRay(elsM, { x: -d1, y: 2 }, (yHit - 2) / d1, sepM + 10);
+    return Math.abs(r.exit.y + r.slope * (xImg - r.exit.x) - sys.i2.hi) < 1e-9;
+  });
+  ok(meet, 'microscope: rays through both lenses extend back to the final image');
+}
+
+console.log('\nAC: phasor current against a time-domain simulation');
+
+/** RK4 on the series circuit L di/dt + Ri + q/C = V_p sin ωt, after the transient has died. */
+function phasorError(p) {
+  const s = acState(p);
+  const w = 2 * Math.PI * p.f;
+  const Vp = p.Vrms * Math.SQRT2;
+  const hasL = p.hasL && p.L > 0;
+  const hasC = p.hasC && p.C > 0;
+  const spc = 2000;
+  const cycles = 60;
+  const dt = 1 / p.f / spc;
+  const V = (t) => Vp * Math.sin(w * t);
+  const vc = (q) => (hasC ? q / p.C : 0);
+  // With L: state (q, i). Without L the current is algebraic: i = (V − q/C)/R.
+  const f = (t, q, i) => (hasL ? [i, (V(t) - p.R * i - vc(q)) / p.L] : [(V(t) - vc(q)) / p.R, 0]);
+  let q = 0;
+  let i = 0;
+  let t = 0;
+  let worst = 0;
+  for (let n = 0; n < cycles * spc; n++) {
+    const k1 = f(t, q, i);
+    const k2 = f(t + dt / 2, q + (dt / 2) * k1[0], i + (dt / 2) * k1[1]);
+    const k3 = f(t + dt / 2, q + (dt / 2) * k2[0], i + (dt / 2) * k2[1]);
+    const k4 = f(t + dt, q + dt * k3[0], i + dt * k3[1]);
+    q += (dt / 6) * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]);
+    i += (dt / 6) * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+    t += dt;
+    if (n >= (cycles - 1) * spc) {
+      const iNow = hasL ? i : (V(t) - vc(q)) / p.R;
+      worst = Math.max(worst, Math.abs(iNow - s.Ip * Math.sin(w * t - s.phi)));
+    }
+  }
+  return worst / s.Ip;
+}
+
+{
+  const L = 0.08;
+  const Cc = 4e-5;
+  approx(phasorError({ R: 15, L, C: Cc, f: 60, Vrms: 120, hasL: true, hasC: true }), 0, 1e-3, 'RLC off resonance: I_p sin(ωt − φ) matches the ODE');
+  approx(phasorError({ R: 15, L, C: Cc, f: 1 / (2 * Math.PI * Math.sqrt(L * Cc)), Vrms: 120, hasL: true, hasC: true }), 0, 1e-3, 'RLC at resonance: matches the ODE');
+  approx(phasorError({ R: 100, L: 0, C: 2.5e-5, f: 60, Vrms: 120, hasL: false, hasC: true }), 0, 1e-3, 'RC: matches the ODE (current leads)');
+  approx(phasorError({ R: 40, L: 0.12, C: 0, f: 60, Vrms: 120, hasL: true, hasC: false }), 0, 1e-3, 'RL: matches the ODE (current lags)');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -42,7 +42,8 @@ export class ProbeView {
     }
     this.arrow.visible = true;
     this._dir.set(E.x, E.y, E.z).normalize();
-    const L = (0.35 + 0.7 * Math.tanh(mag / 8e4)) * u;
+    // Capped at ~3.6 units so the arrow stays on screen next to the probe label.
+    const L = (0.2 + 0.25 * Math.tanh(mag / 8e4)) * u;
     this.arrow.setDirection(this._dir);
     this.arrow.setLength(L, 0.3, 0.2);
     this.el.textContent = extra ? extra : `|E| = ${fmtE(mag)}`;

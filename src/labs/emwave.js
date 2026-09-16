@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine } from '../scene/manim.js';
+import { Arrow, M, fatLine, updateFatLine } from '../scene/manim.js';
 import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, C_SHEET } from '../physics/constants.js';
 import { planeWave, spectrumBand, wavelengthRGB } from '../physics/emwave.js';
-import { kv, cells, qv } from '../ui/shared.js';
+import { kv, cells } from '../ui/shared.js';
 import { fmtE, fmtHz, fmtWaveLen, fmtIrr, sciHTML } from '../ui/format.js';
 import { fmtB } from './biot.js';
 
@@ -20,12 +20,15 @@ const SCENARIOS = [
   { id: 'xray', name: 'Soft X-ray · 1 nm', lambda: 1e-9, E0: 50 },
 ];
 
-const X0 = -1.15;
-const X1 = 1.15;
-const LAM_VIS = 0.8;
-const N_ARR = 20;
-const N_CURVE = 96;
+/** Drawing (not physics) scale, in meters of scene: two wavelengths along x, fixed amplitude. */
+const X0 = -0.7;
+const X1 = 0.7;
+const LAM_VIS = 0.7;
+const AMP = 0.3;
+const N_ARR = 24;
+const N_CURVE = 97;
 const T_CYCLE = 2;
+const TEAL = M.teal;
 
 function label(html, x, y, z) {
   const el = document.createElement('div');
@@ -37,38 +40,22 @@ function label(html, x, y, z) {
   return o;
 }
 
-function makeCurve() {
-  const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(N_CURVE * 3);
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const mat = new THREE.LineBasicMaterial({ color: 0xffffff, toneMapped: false });
-  return { line: new THREE.Line(geo, mat), pos };
-}
-
 export default defineLab({
   id: 'emwave',
   exam: 'e6',
   title: 'EM wave',
-  hint: 'E, B, and S are mutually perpendicular — S = E × B / μ₀ along +x',
+  hint: 'E, B, and the direction of travel are mutually perpendicular — S = E × B / μ₀',
   live: true,
   orbit: true,
-  camera: { pos: new THREE.Vector3(7.4, 4.6, 9.6), target: new THREE.Vector3(0, 0.2, 0) },
+  camera: { pos: new THREE.Vector3(8.5, 5.6, 14), target: new THREE.Vector3(0.7, 0.2, 0) },
   keys: { ' ': 'sweep', r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
-    return {
-      scenarioId: 'green',
-      lambda: 532e-9,
-      E0: 200,
-      anim: { playing: true, i: 0 },
-    };
+    return { scenarioId: 'green', lambda: 532e-9, E0: 200, t: 0, anim: { playing: true, i: 0 } };
   },
   applyScenario(id, state) {
     const sc = SCENARIOS.find((s) => s.id === id) || SCENARIOS[0];
-    state.scenarioId = sc.id;
-    state.lambda = sc.lambda;
-    state.E0 = sc.E0;
-    state.anim = { playing: true, i: 0 };
+    Object.assign(state, { scenarioId: sc.id, lambda: sc.lambda, E0: sc.E0, anim: { playing: true, i: 0 } });
   },
   controls() {
     return `
@@ -88,7 +75,7 @@ export default defineLab({
               <span class="mono val" id="em-logL-val">532 nm</span>
             </div>
           </label>
-          <p class="tiny">The drawing is stretched and slowed: a few wavelengths fit on screen and one cycle takes 2 s. The numbers are the real wave. E red (ŷ), B teal (ẑ), S gold (+x̂). ŷ × ẑ = x̂.</p>
+          <p class="tiny">The picture is stretched and slowed — two wavelengths on screen, one cycle every 2 s, E and B drawn the same height — but every number in the panel is the real wave. E along ŷ (colored by λ when visible), B along ẑ in teal, travel along +x̂ because ŷ × ẑ = x̂.</p>
         </div>`;
   },
   bind(api) {
@@ -105,7 +92,7 @@ export default defineLab({
   },
   syncControls(state) {
     const $ = (id) => document.getElementById(id);
-    if ($('btn-em-play')) $('btn-em-play').textContent = state.anim.playing ? 'Pause' : 'Play';
+    $('btn-em-play').textContent = state.anim.playing ? 'Pause' : 'Play';
     $('em-E0').value = state.E0;
     $('em-E0-val').textContent = fmtE(state.E0);
     $('em-logL').value = Math.log10(state.lambda);
@@ -115,23 +102,22 @@ export default defineLab({
     const u = UNITS_PER_METER;
     const group = new THREE.Group();
     ctx.scene.add(group);
-    group.add(fatLine([X0 * u, 0, 0, X1 * u, 0, 0], { color: M.white, width: 1.8 }));
+    group.add(fatLine([X0 * u - 0.6, 0, 0, X1 * u + 0.6, 0, 0], { color: M.white, width: 1.8 }));
     const Ebatch = new VectorBatch(group, M.red);
-    const Bbatch = new VectorBatch(group, 0x5cd0b3);
-    const eCurve = makeCurve();
-    const bCurve = makeCurve();
-    eCurve.line.material.color.set(M.red);
-    bCurve.line.material.color.set(0x5cd0b3);
-    group.add(eCurve.line, bCurve.line);
-    const Sarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 1.6, M.gold, 0.3, 0.22, 0.03);
+    const Bbatch = new VectorBatch(group, TEAL);
+    const zeros = new Array(N_CURVE * 3).fill(0);
+    for (let i = 0; i < N_CURVE; i++) zeros[i * 3] = (X0 + (i / (N_CURVE - 1)) * (X1 - X0)) * u;
+    const eCurve = fatLine(zeros, { color: M.red, width: 3 });
+    const bCurve = fatLine(zeros, { color: TEAL, width: 3 });
+    group.add(eCurve, bCurve);
+    const Sarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3((X1 + 0.12) * u, 0, 0), 1.6, M.gold, 0.34, 0.26, 0.05);
     group.add(Sarr);
-    const eLab = label('<span style="color:#fc6255">E</span>', 0.15 * u, 1.15 * u, 0);
-    const bLab = label('<span style="color:#5cd0b3">B</span>', 0.15 * u, 0, 1.15 * u);
-    const sLab = label('<span style="color:#f0ac5f">S</span>', 1.35 * u, 0.25 * u, 0);
-    const kLab = label('k̂', (X1 + 0.12) * u, -0.28 * u, 0);
-    group.add(eLab, bLab, sLab, kLab);
+    const eLab = label('<i>E</i>', X0 * u - 0.2, (AMP + 0.06) * u, 0);
+    const bLab = label('<span class="qB"><i>B</i></span>', X0 * u - 0.2, 0.2, (AMP + 0.06) * u);
+    const sLab = label('<span style="color:#F0AC5F"><i>S</i>, direction of travel</span>', (X1 + 0.2) * u, 0.5, 0);
+    group.add(eLab, bLab, sLab);
     group.visible = false;
-    return { group, Ebatch, Bbatch, eCurve, bCurve, Sarr };
+    return { group, Ebatch, Bbatch, eCurve, bCurve, Sarr, eLab };
   },
   enter(ctx, handle) {
     handle.group.visible = true;
@@ -139,71 +125,60 @@ export default defineLab({
   exit(ctx, handle) {
     handle.group.visible = false;
   },
-  recompute(state, computed, ctx) {
-    const tDisp = (state.t ?? 0);
+  recompute(state, computed) {
     const w = planeWave({ E0: state.E0, lambda: state.lambda, t: 0, x: 0 });
-    computed.em = {
-      ...w,
-      band: spectrumBand(state.lambda),
-      rgb: wavelengthRGB(state.lambda),
-      tDisp,
-      kVis: (2 * Math.PI) / LAM_VIS,
-      omegaVis: (2 * Math.PI) / T_CYCLE,
-    };
+    computed.em = { ...w, band: spectrumBand(state.lambda), rgb: wavelengthRGB(state.lambda), tDisp: state.t ?? 0 };
   },
   syncViews(state, computed, ctx) {
     const h = ctx.handle;
     const em = computed.em;
     if (!h || !em) return;
     const u = UNITS_PER_METER;
+    const k = (2 * Math.PI) / LAM_VIS;
+    const om = (2 * Math.PI) / T_CYCLE;
     const t = em.tDisp;
-    const k = em.kVis;
-    const om = em.omegaVis;
-    const col = new THREE.Color(em.rgb.r, em.rgb.g, em.rgb.b);
     const vis = em.band.id === 'vis';
+    const eColor = vis ? new THREE.Color(em.rgb.r, em.rgb.g, em.rgb.b) : new THREE.Color(M.red);
+    const bColor = new THREE.Color(TEAL);
 
     h.Ebatch.begin();
     h.Bbatch.begin();
+    const origin = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
+    const down = new THREE.Vector3(0, -1, 0);
+    const out = new THREE.Vector3(0, 0, 1);
+    const inn = new THREE.Vector3(0, 0, -1);
     for (let i = 0; i < N_ARR; i++) {
       const x = X0 + (i / (N_ARR - 1)) * (X1 - X0);
-      const s = Math.sin(k * x - om * t);
-      const eL = 0.72 * s * u;
-      const bL = 0.72 * s * u;
-      const origin = new THREE.Vector3(x * u, 0, 0);
-      if (Math.abs(eL) > 0.02) {
-        const dirE = new THREE.Vector3(0, Math.sign(eL) || 1, 0);
-        h.Ebatch.push(origin, dirE, Math.abs(eL), vis ? col : new THREE.Color(M.red));
-      }
-      if (Math.abs(bL) > 0.02) {
-        const dirB = new THREE.Vector3(0, 0, Math.sign(bL) || 1);
-        h.Bbatch.push(origin, dirB, Math.abs(bL), new THREE.Color(0x5cd0b3));
-      }
+      const L = AMP * Math.sin(k * x - om * t) * u;
+      if (Math.abs(L) < 0.06) continue;
+      origin.set(x * u, 0, 0);
+      h.Ebatch.push(origin, L > 0 ? up : down, Math.abs(L), eColor);
+      h.Bbatch.push(origin, L > 0 ? out : inn, Math.abs(L), bColor);
     }
     h.Ebatch.end(true);
     h.Bbatch.end(true);
 
-    const pe = h.eCurve.pos;
-    const pb = h.bCurve.pos;
+    const pe = new Array(N_CURVE * 3);
+    const pb = new Array(N_CURVE * 3);
     for (let i = 0; i < N_CURVE; i++) {
       const x = X0 + (i / (N_CURVE - 1)) * (X1 - X0);
-      const s = Math.sin(k * x - om * t);
+      const s = AMP * Math.sin(k * x - om * t) * u;
       pe[i * 3] = x * u;
-      pe[i * 3 + 1] = 0.72 * s * u;
+      pe[i * 3 + 1] = s;
       pe[i * 3 + 2] = 0;
       pb[i * 3] = x * u;
       pb[i * 3 + 1] = 0;
-      pb[i * 3 + 2] = 0.72 * s * u;
+      pb[i * 3 + 2] = s;
     }
-    h.eCurve.line.geometry.attributes.position.needsUpdate = true;
-    h.bCurve.line.geometry.attributes.position.needsUpdate = true;
-    if (vis) h.eCurve.line.material.color.copy(col);
-    else h.eCurve.line.material.color.set(M.red);
+    updateFatLine(h.eCurve, pe);
+    updateFatLine(h.bCurve, pb);
+    h.eCurve.material.color.copy(eColor);
+    h.eLab.element.style.color = `#${eColor.getHexString()}`;
 
-    const sMid = Math.sin(-om * t);
-    h.Sarr.position.set(0, 0, 0);
-    h.Sarr.visible = true;
-    h.Sarr.setDirection(new THREE.Vector3(1, 0, 0));
-    h.Sarr.setLength(0.7 + 0.9 * sMid * sMid, 0.28, 0.2);
+    // |S| at the front of the drawing pulses as sin², always along +x.
+    const s = Math.sin(k * X1 - om * t);
+    h.Sarr.setLength(0.6 + 1.4 * s * s, 0.34, 0.26);
     ctx.grid.visible = true;
   },
   tick(dt, state) {
@@ -218,26 +193,24 @@ export default defineLab({
   liveRows(state, computed) {
     const w = computed.em;
     if (!w) return '';
-    const rows = [
+    return [
       kv('Band', w.band.name),
       kv('λ', fmtWaveLen(state.lambda)),
       kv('f = c/λ', fmtHz(w.f)),
-      kv('c = 1/√(μ₀ε₀)', `${sciHTML(w.c)} m/s  (sheet ${sciHTML(C_SHEET)} )`),
+      kv('c = 1/√(μ₀ε₀)', `${sciHTML(w.c, 3)} m/s (sheet ${sciHTML(C_SHEET)})`),
       kv('E₀', fmtE(state.E0)),
       kv('B₀ = E₀/c', fmtB(w.B0)),
-      kv('E₀/B₀', `${sciHTML(state.E0 / w.B0)} m/s`),
       kv('I = ½ c ε₀ E₀²', fmtIrr(w.Iavg)),
-      kv('S = (E × B)/μ₀', '+x̂  (ŷ × ẑ)'),
-    ];
-    return rows.join('');
+      kv('Direction of S = E × B', '+x̂ (ŷ × ẑ = x̂)'),
+    ].join('');
   },
   readout(state, computed) {
     const w = computed.em;
     if (!w) return '';
     return cells([
       ['Band', w.band.name, w.band.id === 'vis' ? 'ok' : ''],
-      ['λ', fmtWaveLen(state.lambda), ''],
       ['f', fmtHz(w.f), ''],
+      ['B₀', fmtB(w.B0), ''],
       ['I avg', fmtIrr(w.Iavg), ''],
     ]);
   },
@@ -245,8 +218,8 @@ export default defineLab({
     const w = computed.em;
     const band = w?.band?.name || '';
     return {
-      title: `${band} — E, B, and the travel direction are a triad`,
-      body: `A plane wave is E ŷ and B ẑ with E/B = c, traveling +x̂ because ŷ × ẑ = x̂. The Poynting vector S = (E × B)/μ₀ is the energy flow; its average is the intensity I = ½ c ε₀ E₀². Stretching λ here does not change that — only the HUD numbers are the real wave. Ch 54 is the spectrum slider: same wave, different λ.`,
+      title: `${band}: E, B and the travel direction form a right-handed triad`,
+      body: `E is along ŷ and B along ẑ, in phase, with E/B = c at every instant — so B₀ = E₀/c is tiny (${w ? fmtB(w.B0).replace(/<[^>]+>/g, '') : '—'} here). The energy flows along S = (E × B)/μ₀ = +x̂. Its average is the intensity I = ½cε₀E₀²: double E₀ and I goes up four times. Sliding λ across the spectrum changes f = c/λ but not c, and not the geometry.`,
     };
   },
 });

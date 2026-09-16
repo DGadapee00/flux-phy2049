@@ -325,11 +325,41 @@ const lenses = await page.evaluate(() => {
 await page.screenshot({ path: path.join(outDir, 'lenses.png') });
 check('lenses f=12 d_o=36 → d_i=18', lenses.di, 18, 0.002);
 
+await page.selectOption('#scenario', 'tele');
+await page.waitForTimeout(300);
+const tele = await page.evaluate(() => ({ M: window.__gauss.computed.len?.angularM, sep: window.__gauss.state.sep, f2: window.__gauss.state.f2 }));
+check('telescope traced M_θ = 1 − sep/f_e (relaxed eye)', tele.M, 1 - tele.sep / tele.f2, 1e-6);
+await page.selectOption('#scenario', 'micro');
+await page.waitForTimeout(300);
+const micro = await page.evaluate(() => window.__gauss.computed.len?.i2?.di);
+check('microscope final image at the 25 cm near point', micro, -25, 1e-6);
+await page.selectOption('#scenario', 'conv-far');
+await page.waitForTimeout(200);
+
+// Mirrors lab was visited before lenses; check a virtual-image scenario there via its own state.
+await go('mirrors');
+await page.selectOption('#scenario', 'concave-in');
+await page.waitForTimeout(300);
+const virt = await page.evaluate(() => {
+  const b = window.__gauss.computed.mir?.bundle;
+  return { rays: b?.rays.length, withExt: b?.rays.filter((r) => r.extension).length, real: window.__gauss.computed.mir?.real };
+});
+if (virt.real || virt.rays !== 3 || virt.withExt !== 3) mismatches.push({ name: 'mirror virtual image: dashed extensions', got: virt, exp: '3 rays, 3 extensions' });
+await page.selectOption('#scenario', 'concave-out');
+await page.waitForTimeout(200);
+await go('lenses');
+
+await go('faraday');
+await page.waitForTimeout(600);
+const emfText = await page.evaluate(() => document.querySelector('#readout')?.textContent || '');
+if (!/[μn]V/.test(emfText)) mismatches.push({ name: 'faraday ε readout shows μV/nV (not 0)', got: emfText.slice(0, 120), exp: 'μV' });
+await go('lenses');
+
 // Back button walks lab history (pushState entries).
 await page.goBack();
-await page.waitForFunction(() => window.__gauss?.state?.lab === 'mirrors', null, { timeout: 5000 }).catch(() => {});
+await page.waitForFunction(() => window.__gauss?.state?.lab === 'faraday', null, { timeout: 5000 }).catch(() => {});
 const back = await page.evaluate(() => window.__gauss.state.lab);
-if (back !== 'mirrors') mismatches.push({ name: 'history.back', got: back, exp: 'mirrors' });
+if (back !== 'faraday') mismatches.push({ name: 'history.back', got: back, exp: 'faraday' });
 
 console.log(
   JSON.stringify(

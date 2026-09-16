@@ -17,7 +17,11 @@ Opens at http://localhost:5174/
 ```bash
 npm test                 # physics self-test (no browser) — analytic vs numerical, relative tolerances
 node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts/baseline/values.json
+node scripts/gallery.mjs [lab ...]   # screenshot every lab × scenario to scripts/output/gallery
+node scripts/contact.mjs [regex]     # tile those screenshots into contact sheets for review
 ```
+
+The self-test checks the code against independent methods rather than against itself: Biot–Savart sums vs closed forms, Ampère loops, Boris-integrated orbits, image-charge surface potentials, Kirchhoff rules on every circuit layout, −ΔΦ/Δt for Faraday, an RK4 simulation of each AC circuit vs its phasor current, and paraxial ray tracing that must land every principal ray on the computed image.
 
 ## Exams
 

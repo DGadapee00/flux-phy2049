@@ -87,66 +87,60 @@ export function twoLenses({ f1, f2, do1, ho, sep }) {
   return { i1, i2, do2, M };
 }
 
-function atX(a, b, x) {
-  const dx = b.x - a.x;
-  if (Math.abs(dx) < 1e-12) return { x, y: a.y };
-  const t = (x - a.x) / dx;
-  return { x, y: a.y + t * (b.y - a.y) };
-}
-
-function extend(p, dir, len) {
-  const n = Math.hypot(dir.x, dir.y) || 1;
-  return { x: p.x + (dir.x / n) * len, y: p.y + (dir.y / n) * len };
+/**
+ * Paraxial thin-element ray transfer. elements: [{ x, f }] in order along +x.
+ * Between elements y changes by slope·Δx; at an element slope → slope − y/f.
+ * A mirror is traced as a lens and unfolded by the caller (outgoing x → −x).
+ * Returns the vertices from the start, through each element, to xEnd, plus the final slope.
+ */
+export function traceRay(elements, start, slope, xEnd) {
+  const pts = [{ x: start.x, y: start.y }];
+  let x = start.x;
+  let y = start.y;
+  let m = slope;
+  for (const el of elements) {
+    y += m * (el.x - x);
+    x = el.x;
+    pts.push({ x, y });
+    m -= y / el.f;
+  }
+  pts.push({ x: xEnd, y: y + m * (xEnd - x) });
+  return { pts, slope: m, exit: { x, y } };
 }
 
 /**
- * Three principal rays for a thin lens (kind='lens') or spherical mirror (kind='mirror').
- * Coordinates in the same units as f, do, ho (cm).
+ * The three principal rays from the object tip, for a thin lens (kind 'lens') or spherical mirror
+ * (kind 'mirror'), element at x = 0, object at x = −d_o. Units follow f, d_o, h_o (cm).
+ *
+ * Each ray is split the way a diagram should draw it:
+ *   incoming  — object tip → element (always a real ray, solid)
+ *   outgoing  — element → far edge (the real refracted / reflected ray, solid)
+ *   extension — element → virtual image, backward along the outgoing ray (dashed), or null
+ *
+ * Lens rays: parallel → F, through the center, through the near F → parallel.
+ * Mirror rays: parallel → F, toward C (reflects back on itself), through F → parallel.
  */
 export function principalRays({ f, do: d_o, ho, kind = 'lens', span = 80 }) {
   const img = imageOf({ f, do: d_o, ho, kind });
   const obj = { x: -d_o, y: ho };
-  const lensX = 0;
-  const rays = [];
-  const nearF = -f;
+  const defs = [{ name: kind === 'mirror' ? 'parallel → F' : 'parallel → F', m: 0 }];
+  if (kind === 'lens') defs.push({ name: 'through the center', m: -ho / d_o });
+  else if (Math.abs(d_o - 2 * f) > 1e-6) defs.push({ name: 'toward C', m: -ho / (d_o - 2 * f) });
+  else defs.push({ name: 'to the vertex', m: -ho / d_o });
+  if (Math.abs(d_o - f) > 1e-6) defs.push({ name: 'through F → parallel', m: -ho / (d_o - f) });
 
-  // Ray 1: parallel to axis, then through (lens far / mirror) F.
-  const hit1 = { x: lensX, y: ho };
-  if (kind === 'lens') {
-    const out1 = img.infinite ? extend(hit1, { x: 1, y: -ho / f }, span) : { x: img.imageX, y: img.hi };
-    rays.push([obj, hit1, out1]);
-  } else {
-    const out1 = img.infinite ? extend(hit1, { x: -f, y: -ho }, span) : { x: img.imageX, y: img.hi };
-    rays.push([obj, hit1, out1]);
-  }
-
-  // Ray 2: through the optical center (lens undeviated; mirror through C = 2f).
-  if (kind === 'lens') {
-    const out2 = img.infinite ? extend({ x: 0, y: 0 }, { x: d_o, y: -ho }, span) : { x: img.imageX, y: img.hi };
-    rays.push([obj, { x: 0, y: 0 }, out2]);
-  } else {
-    const C = { x: -2 * f, y: 0 };
-    const hit2 = atX(obj, C, 0);
-    const out2 = img.infinite ? extend(hit2, { x: obj.x - hit2.x, y: obj.y - hit2.y }, span) : { x: img.imageX, y: img.hi };
-    rays.push([obj, hit2, out2]);
-  }
-
-  // Ray 3: through near F, then parallel to the axis. Skip when the object sits on F.
-  if (Math.abs(d_o - Math.abs(f)) > 1e-6) {
-    const throughF = atX(obj, { x: nearF, y: 0 }, 0);
-    if (kind === 'lens') {
-      const out3 = { x: span, y: throughF.y };
-      if (img.infinite) rays.push([obj, throughF, out3]);
-      else rays.push([obj, throughF, { x: img.imageX, y: img.hi }]);
-    } else {
-      const out3 = { x: -span, y: throughF.y };
-      if (Number.isFinite(throughF.y)) {
-        rays.push([obj, throughF, img.infinite ? out3 : { x: img.imageX, y: img.hi }]);
-      }
-    }
-  }
-
-  return { img, obj, rays, F: nearF, C: kind === 'mirror' ? -2 * f : null };
+  // Unfold: a mirror is a lens whose outgoing side is flipped back toward the object.
+  const sx = kind === 'mirror' ? -1 : 1;
+  const reach = Math.max(span, Number.isFinite(img.di) ? Math.abs(img.di) + 15 : span);
+  const rays = defs.map(({ name, m }) => {
+    const y = ho + m * d_o;
+    const mOut = m - y / f;
+    const hit = { x: 0, y };
+    const out = { x: sx * reach, y: y + mOut * reach };
+    const extension = !img.infinite && !img.real ? [hit, { x: sx * img.di, y: y + mOut * img.di }] : null;
+    return { name, incoming: [obj, hit], outgoing: [hit, out], extension, slopeOut: sx * mOut };
+  });
+  return { img, obj, rays, F: -f, C: kind === 'mirror' ? -2 * f : null };
 }
 
 export function fmtCm(x) {

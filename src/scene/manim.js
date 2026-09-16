@@ -148,6 +148,27 @@ export function makeChargeTexture(hex, sign) {
   return tex;
 }
 
+/**
+ * Move the vertices of an existing fatLine without reallocating (for per-frame animation).
+ * `flat` must have the same number of points the line was created with.
+ */
+export function updateFatLine(line, flat) {
+  const buf = line.geometry.attributes.instanceStart.data;
+  const arr = buf.array;
+  const n = flat.length / 3;
+  for (let i = 0; i < n - 1; i++) {
+    const o = i * 6;
+    arr[o] = flat[i * 3];
+    arr[o + 1] = flat[i * 3 + 1];
+    arr[o + 2] = flat[i * 3 + 2];
+    arr[o + 3] = flat[i * 3 + 3];
+    arr[o + 4] = flat[i * 3 + 4];
+    arr[o + 5] = flat[i * 3 + 5];
+  }
+  buf.needsUpdate = true;
+  line.frustumCulled = false;
+}
+
 export function disposeTree(root) {
   root.traverse((o) => {
     if (o.geometry && o.geometry !== SHAFT_GEO && o.geometry !== TIP_GEO) o.geometry.dispose();

@@ -1,69 +1,78 @@
 import * as THREE from 'three';
-import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, disposeTree } from '../scene/manim.js';
-import { imageOf, principalRays, twoLenses, fmtCm } from '../physics/optics.js';
+import { M } from '../scene/manim.js';
+import { imageOf, principalRays, twoLenses, traceRay, fmtCm } from '../physics/optics.js';
+import { RAY_COLORS, wipe, label, line, arrowAt, tick, drawBundle, frameCamera } from '../scene/opticsBench.js';
 import { kv, cells } from '../ui/shared.js';
 
+/** Microscope: final virtual image at the 25 cm near point. Telescope: final image at infinity. */
+const NEAR_POINT = 25;
+const relaxedTeleSep = (f1, f2, d_o) => 1 / (1 / f1 - 1 / d_o) + f2;
+const nearPointMicroSep = (f1, f2, d_o) => 1 / (1 / f1 - 1 / d_o) + 1 / (1 / f2 + 1 / NEAR_POINT);
+
 const SCENARIOS = [
-  { id: 'conv-far', name: 'Converging, object beyond 2F — real reduced', mode: 'single', type: 'conv', fAbs: 12, do: 36, ho: 8 },
-  { id: 'conv-2f', name: 'Converging, object at 2F — real same size', mode: 'single', type: 'conv', fAbs: 12, do: 24, ho: 8 },
-  { id: 'conv-in', name: 'Converging, inside F — virtual enlarged', mode: 'single', type: 'conv', fAbs: 12, do: 8, ho: 6 },
+  { id: 'conv-far', name: 'Converging, object beyond 2F — real, reduced', mode: 'single', type: 'conv', fAbs: 12, do: 36, ho: 8 },
+  { id: 'conv-2f', name: 'Converging, object at 2F — real, same size', mode: 'single', type: 'conv', fAbs: 12, do: 24, ho: 8 },
+  { id: 'conv-f2f', name: 'Converging, between F and 2F — real, enlarged', mode: 'single', type: 'conv', fAbs: 12, do: 18, ho: 5 },
+  { id: 'conv-in', name: 'Converging, inside F — magnifying glass', mode: 'single', type: 'conv', fAbs: 12, do: 8, ho: 5 },
   { id: 'div', name: 'Diverging — always virtual, reduced', mode: 'single', type: 'div', fAbs: 12, do: 24, ho: 8 },
-  { id: 'tele', name: 'Keplerian telescope (two lenses)', mode: 'tele', type: 'conv', fAbs: 40, do: 200, ho: 8, f2: 10, sep: 50 },
-  { id: 'micro', name: 'Compound microscope (two lenses)', mode: 'micro', type: 'conv', fAbs: 8, do: 10, ho: 4, f2: 12, sep: 42 },
+  { id: 'tele', name: 'Keplerian telescope — object 10 m away', mode: 'tele', type: 'conv', fAbs: 40, do: 1000, ho: 50, f2: 10, sep: relaxedTeleSep(40, 10, 1000) },
+  { id: 'micro', name: 'Compound microscope — image at 25 cm', mode: 'micro', type: 'conv', fAbs: 4, do: 5, ho: 2, f2: 10, sep: nearPointMicroSep(4, 10, 5) },
 ];
-
-const U = 0.22;
-
-function label(html, x, y) {
-  const el = document.createElement('div');
-  el.className = 'circuit-label';
-  el.innerHTML = html;
-  const o = new CSS2DObject(el);
-  o.position.set(x * U, y * U, 0.04);
-  return o;
-}
-
-function flat(pts) {
-  const o = [];
-  for (const p of pts) o.push(p.x * U, p.y * U, 0);
-  return o;
-}
-
-function wipe(g) {
-  while (g.children.length) {
-    const ch = g.children[0];
-    g.remove(ch);
-    disposeTree(ch);
-  }
-}
 
 function fOf(state) {
   return state.type === 'div' ? -state.fAbs : state.fAbs;
 }
 
-function arrowVert(x, y, color) {
-  const dir = new THREE.Vector3(0, Math.sign(y) || 1, 0);
-  const len = Math.abs(y) * U;
-  const origin = y >= 0 ? new THREE.Vector3(x * U, 0, 0) : new THREE.Vector3(x * U, y * U, 0);
-  return new Arrow(dir, origin, Math.max(0.15, len), color, 0.22, 0.16, 0.018);
-}
-
-function drawLens(group, x, f) {
-  const h = 16;
-  const bow = f > 0 ? 1.6 : -1.6;
+function drawLens(group, x, f, halfHeight) {
+  const bow = f > 0 ? 1.4 : -1.4;
   const left = [];
   const right = [];
-  for (let i = -12; i <= 12; i++) {
-    const y = (i / 12) * h;
-    const dx = bow * (1 - (y / h) * (y / h));
-    left.push((x - dx) * U, y * U, 0);
-    right.push((x + dx) * U, y * U, 0);
+  for (let i = -16; i <= 16; i++) {
+    const y = (i / 16) * halfHeight;
+    const dx = bow * (1 - (y / halfHeight) ** 2) + (f > 0 ? 0 : 0.5);
+    left.push({ x: x - dx, y });
+    right.push({ x: x + dx, y });
   }
-  group.add(fatLine(left, { color: 0x58c4dd, width: 2.4 }));
-  group.add(fatLine(right, { color: 0x58c4dd, width: 2.4 }));
-  group.add(fatLine([x * U, -h * U, 0, x * U, h * U, 0], { color: 0x58c4dd, width: 1.2, dashed: true }));
+  group.add(line(left, { color: M.blue, width: 2.4 }));
+  group.add(line(right, { color: M.blue, width: 2.4 }));
+  group.add(line([{ x, y: -halfHeight }, { x, y: halfHeight }], { color: M.blue, width: 1, opacity: 0.5, dashed: true }));
+}
+
+/** Rays for a two-lens system, from the object tip through objective and eyepiece. */
+function systemRays(state, sys) {
+  const els = [
+    { x: 0, f: state.fAbs },
+    { x: state.sep, f: state.f2 },
+  ];
+  const obj = { x: -state.do, y: state.ho };
+  const aperture = state.mode === 'tele' ? 7 : 3;
+  const xEnd = state.sep + (state.mode === 'tele' ? 45 : 20);
+  const xStart = -Math.min(state.do, state.mode === 'tele' ? 45 : state.do);
+  return [0, aperture, -aperture].map((yHit) => {
+    const slope = (yHit - obj.y) / (0 - obj.x);
+    const start = { x: xStart, y: obj.y + slope * (xStart - obj.x) };
+    const tr = traceRay(els, start, slope, xEnd);
+    let extension = null;
+    if (sys.i2 && !sys.i2.infinite && !sys.i2.real) {
+      const xi = state.sep + sys.i2.di;
+      extension = [tr.exit, { x: xi, y: tr.exit.y + tr.slope * (xi - tr.exit.x) }];
+    }
+    return { pts: tr.pts, extension, slope: tr.slope, slopeIn: slope };
+  });
+}
+
+function framing(state) {
+  if (state.mode === 'tele') return frameCamera([-45, 0, state.sep, state.sep + 45], [14]);
+  if (state.mode === 'micro') {
+    const sys = twoLenses({ f1: state.fAbs, f2: state.f2, do1: state.do, ho: state.ho, sep: state.sep });
+    return frameCamera([-state.do, state.sep, state.sep + 20, state.sep + (sys.i2?.di ?? 0)], [sys.i2?.hi ?? 20, sys.i1?.hi ?? 8]);
+  }
+  const f = fOf(state);
+  const img = imageOf({ f, do: state.do, ho: state.ho, kind: 'lens' });
+  const xs = [-state.do, 0, f, -f, 10];
+  if (!img.infinite) xs.push(img.imageX);
+  return frameCamera(xs, [state.ho, img.hi]);
 }
 
 export default defineLab({
@@ -72,26 +81,12 @@ export default defineLab({
   title: 'Lenses',
   hint: 'Same equation as the mirror — f > 0 converges',
   orbit: false,
-  camera: { pos: new THREE.Vector3(4, 0.2, 17), target: new THREE.Vector3(4, 0.2, 0) },
-  cameraFor(state) {
-    if (state.mode === 'tele') return { pos: new THREE.Vector3(15, 0.3, 28), target: new THREE.Vector3(15, 0.3, 0) };
-    if (state.mode === 'micro') return { pos: new THREE.Vector3(12, 0.3, 20), target: new THREE.Vector3(12, 0.3, 0) };
-    return { pos: new THREE.Vector3(4, 0.2, 17), target: new THREE.Vector3(4, 0.2, 0) };
-  },
+  camera: frameCamera([-36, 0, 12, -12, 18], [8, -4]),
+  cameraFor: framing,
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
-    return {
-      scenarioId: 'conv-far',
-      mode: 'single',
-      type: 'conv',
-      fAbs: 12,
-      do: 36,
-      ho: 8,
-      f2: 10,
-      sep: 50,
-      anim: { playing: false, i: 0 },
-    };
+    return { scenarioId: 'conv-far', mode: 'single', type: 'conv', fAbs: 12, do: 36, ho: 8, f2: 10, sep: 50, anim: { playing: false, i: 0 } };
   },
   applyScenario(id, state) {
     const sc = SCENARIOS.find((s) => s.id === id) || SCENARIOS[0];
@@ -107,48 +102,27 @@ export default defineLab({
     });
   },
   controls() {
+    const slider = (id, text) => `
+          <label class="field" id="wrap-${id}">
+            <span id="${id}-label">${text}</span>
+            <div class="slider-row">
+              <input type="range" id="${id}" />
+              <span class="mono val" id="${id}-val"></span>
+            </div>
+          </label>`;
     return `
         <div class="lab-block">
           <div class="seg" id="len-type">
             <button type="button" data-type="conv" class="active">Converging f&gt;0</button>
             <button type="button" data-type="div">Diverging f&lt;0</button>
           </div>
-          <label class="field">
-            <span>|f| (objective)</span>
-            <div class="slider-row">
-              <input type="range" id="len-f" min="6" max="50" step="0.5" value="12" />
-              <span class="mono val" id="len-f-val">12 cm</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>Object distance d_o</span>
-            <div class="slider-row">
-              <input type="range" id="len-do" min="5" max="80" step="0.5" value="36" />
-              <span class="mono val" id="len-do-val">36 cm</span>
-            </div>
-          </label>
-          <label class="field">
-            <span>Object height h_o</span>
-            <div class="slider-row">
-              <input type="range" id="len-ho" min="2" max="16" step="0.5" value="8" />
-              <span class="mono val" id="len-ho-val">8.0 cm</span>
-            </div>
-          </label>
-          <label class="field" id="wrap-len-f2">
-            <span>Eyepiece f₂</span>
-            <div class="slider-row">
-              <input type="range" id="len-f2" min="4" max="20" step="0.5" value="10" />
-              <span class="mono val" id="len-f2-val">10 cm</span>
-            </div>
-          </label>
-          <label class="field" id="wrap-len-sep">
-            <span>Lens separation</span>
-            <div class="slider-row">
-              <input type="range" id="len-sep" min="20" max="80" step="1" value="50" />
-              <span class="mono val" id="len-sep-val">50 cm</span>
-            </div>
-          </label>
-          <p class="tiny">Same equation as the mirror. A telescope is two converging lenses about f₁+f₂ apart; a microscope puts a real intermediate image at the eyepiece’s front focus.</p>
+          ${slider('len-f', '|f|')}
+          ${slider('len-do', 'Object distance d_o')}
+          ${slider('len-ho', 'Object height h_o')}
+          ${slider('len-f2', 'Eyepiece f_e')}
+          ${slider('len-sep', 'Lens separation')}
+          <button type="button" class="btn ghost" id="len-focus"></button>
+          <p class="tiny" id="len-note"></p>
         </div>`;
   },
   bind(api) {
@@ -156,40 +130,61 @@ export default defineLab({
     $('len-type').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-type]');
       if (!btn) return;
-      api.slice().type = btn.dataset.type;
-      api.slice().mode = 'single';
+      const s = api.slice();
+      s.type = btn.dataset.type;
+      if (s.mode !== 'single') Object.assign(s, { mode: 'single', scenarioId: s.type === 'div' ? 'div' : 'conv-far', fAbs: 12, do: 36, ho: 8 });
       api.bump();
+      api.resetCamera();
     });
-    const num = (id, key) =>
+    const num = (id, key) => {
       $(id).addEventListener('input', (e) => {
         api.slice()[key] = Number(e.target.value);
         api.bump(false);
       });
+      $(id).addEventListener('change', () => api.resetCamera());
+    };
     num('len-f', 'fAbs');
     num('len-do', 'do');
     num('len-ho', 'ho');
     num('len-f2', 'f2');
     num('len-sep', 'sep');
+    $('len-focus').addEventListener('click', () => {
+      const s = api.slice();
+      s.sep = s.mode === 'tele' ? relaxedTeleSep(s.fAbs, s.f2, s.do) : nearPointMicroSep(s.fAbs, s.f2, s.do);
+      api.bump(false);
+      api.resetCamera();
+    });
   },
   syncControls(state) {
     const $ = (id) => document.getElementById(id);
-    document.querySelectorAll('#len-type [data-type]').forEach((b) => {
-      b.classList.toggle('active', b.dataset.type === state.type);
-    });
-    $('len-f').value = state.fAbs;
-    $('len-f-val').textContent = fmtCm(state.fAbs);
-    $('len-do').value = state.do;
-    $('len-do-val').textContent = fmtCm(state.do);
-    $('len-ho').value = state.ho;
-    $('len-ho-val').textContent = fmtCm(state.ho);
-    $('len-f2').value = state.f2;
-    $('len-f2-val').textContent = fmtCm(state.f2);
-    $('len-sep').value = state.sep;
-    $('len-sep-val').textContent = fmtCm(state.sep);
     const two = state.mode !== 'single';
+    const tele = state.mode === 'tele';
+    document.querySelectorAll('#len-type [data-type]').forEach((b) => {
+      b.classList.toggle('active', !two && b.dataset.type === state.type);
+    });
+    const set = (id, v, min, max, step, text) => {
+      const el = $(id);
+      el.min = min;
+      el.max = max;
+      el.step = step;
+      if (document.activeElement !== el) el.value = v;
+      $(`${id}-val`).textContent = text;
+    };
+    $('len-f-label').textContent = two ? 'Objective f_o' : '|f|';
+    set('len-f', state.fAbs, two ? 2 : 6, two ? 60 : 50, 0.5, fmtCm(state.fAbs));
+    set('len-do', state.do, tele ? 200 : two ? 4.2 : 4, tele ? 5000 : two ? 20 : 80, tele ? 10 : 0.1, fmtCm(state.do));
+    set('len-ho', state.ho, tele ? 10 : 1, tele ? 200 : 16, 0.5, fmtCm(state.ho));
+    set('len-f2', state.f2, 2, 20, 0.5, fmtCm(state.f2));
+    set('len-sep', state.sep, 5, 90, 0.1, fmtCm(state.sep));
     $('wrap-len-f2').hidden = !two;
     $('wrap-len-sep').hidden = !two;
-    $('len-type').hidden = two;
+    $('len-focus').hidden = !two;
+    $('len-focus').textContent = tele ? 'Focus for a relaxed eye (image at ∞)' : 'Put the final image at 25 cm';
+    $('len-note').textContent = two
+      ? tele
+        ? 'The objective forms a small real image at its focus; the eyepiece, one f_e further on, sends every ray out parallel. What grows is the angle, not the size.'
+        : 'A short-focus objective makes a large real intermediate image just inside the eyepiece focus; the eyepiece acts as a magnifier on it.'
+      : '1/f = 1/d_o + 1/d_i, m = −d_i/d_o. Solid lines are real rays; dashed lines are extensions back to a virtual image. The view re-frames when you let go of a slider.';
   },
   init(ctx) {
     const group = new THREE.Group();
@@ -206,100 +201,128 @@ export default defineLab({
     handle.group.visible = false;
   },
   recompute(state, computed) {
-    const f = fOf(state);
     if (state.mode === 'single') {
-      computed.len = {
-        mode: 'single',
-        f,
-        ...imageOf({ f, do: state.do, ho: state.ho, kind: 'lens' }),
-        bundle: principalRays({ f, do: state.do, ho: state.ho, kind: 'lens', span: 90 }),
-      };
+      const f = fOf(state);
+      const img = imageOf({ f, do: state.do, ho: state.ho, kind: 'lens' });
+      const span = Math.max(40, Number.isFinite(img.di) ? Math.abs(img.di) + 15 : 40, 2 * Math.abs(f) + 10);
+      computed.len = { mode: 'single', f, ...img, bundle: principalRays({ f, do: state.do, ho: state.ho, kind: 'lens', span }) };
       return;
     }
     const sys = twoLenses({ f1: state.fAbs, f2: state.f2, do1: state.do, ho: state.ho, sep: state.sep });
-    computed.len = { mode: state.mode, f: state.fAbs, ...sys };
+    const rays = systemRays(state, sys);
+    const chief = rays[0];
+    computed.len = {
+      mode: state.mode,
+      ...sys,
+      rays,
+      angularM: chief.slope / chief.slopeIn,
+      angularIdeal: -state.fAbs / state.f2,
+      tube: state.sep - state.fAbs - state.f2,
+      microEstimate: -((state.sep - state.fAbs - state.f2) / state.fAbs) * (NEAR_POINT / state.f2),
+    };
   },
   syncViews(state, computed, ctx) {
     const h = ctx.handle;
     const L = computed.len;
     if (!h || !L) return;
     wipe(h.draw);
-    h.draw.add(fatLine([-90 * U, 0, 0, 120 * U, 0, 0], { color: 0x666666, width: 1.5 }));
+    ctx.grid.visible = false;
 
     if (L.mode === 'single') {
-      drawLens(h.draw, 0, L.f);
-      const colors = [M.gold, 0x5cd0b3, M.blue];
-      L.bundle.rays.forEach((ray, i) => {
-        if (ray.length < 2) return;
-        h.draw.add(fatLine(flat(ray), { color: colors[i % 3], width: 2.2, dashed: !L.real && !L.infinite }));
-      });
-      h.draw.add(arrowVert(-state.do, state.ho, M.gold));
-      h.draw.add(label('object', -state.do, state.ho + 2.4));
+      const halfH = Math.min(40, Math.max(14, state.ho + 6, Number.isFinite(L.hi) ? Math.abs(L.hi) + 6 : 0));
+      const left = -(Math.max(state.do, 2 * Math.abs(L.f)) + 15);
+      const right = Math.max(2 * Math.abs(L.f), Number.isFinite(L.di) ? Math.abs(L.di) : 0) + 15;
+      h.draw.add(line([{ x: left, y: 0 }, { x: right, y: 0 }], { color: 0x666666, width: 1.5 }));
+      drawLens(h.draw, 0, L.f, halfH);
+      drawBundle(h.draw, L.bundle);
+      h.draw.add(arrowAt(-state.do, state.ho, M.gold));
+      h.draw.add(label('object', -state.do, state.ho + 3));
       if (!L.infinite && Number.isFinite(L.imageX)) {
-        h.draw.add(arrowVert(L.imageX, L.hi, L.real ? 0xfc6255 : M.blue));
-        h.draw.add(label(L.real ? 'real image' : 'virtual image', L.imageX, L.hi + (L.hi >= 0 ? 2.4 : -3.2)));
+        h.draw.add(arrowAt(L.imageX, L.hi, L.real ? M.red : M.blue));
+        h.draw.add(label(L.real ? 'real image' : 'virtual image', L.imageX, L.hi + (L.hi >= 0 ? 3 : -3.5)));
       }
-      h.draw.add(label('F', L.f, -3.4));
-      h.draw.add(label("F'", -L.f, -3.4));
-      h.draw.add(fatLine([L.f * U, -0.4 * U, 0, L.f * U, 0.4 * U, 0], { color: M.gold, width: 2 }));
-      h.draw.add(fatLine([-L.f * U, -0.4 * U, 0, -L.f * U, 0.4 * U, 0], { color: M.gold, width: 2 }));
-    } else {
-      drawLens(h.draw, 0, state.fAbs);
-      drawLens(h.draw, state.sep, state.f2);
-      h.draw.add(label('objective', 0, 18));
-      h.draw.add(label('eyepiece', state.sep, 18));
-      h.draw.add(arrowVert(-state.do, state.ho, M.gold));
-      h.draw.add(label('object', -state.do, state.ho + 2.4));
-      if (L.i1 && !L.i1.infinite) {
-        h.draw.add(arrowVert(L.i1.imageX, L.i1.hi, 0xf4d345));
-        h.draw.add(label('intermediate', L.i1.imageX, L.i1.hi + (L.i1.hi >= 0 ? 2.2 : -3)));
+      tick(h.draw, L.f, 'F', M.gold);
+      tick(h.draw, -L.f, 'F', M.gold);
+      if (L.f > 0) {
+        tick(h.draw, 2 * L.f, '2F');
+        tick(h.draw, -2 * L.f, '2F');
       }
-      if (L.i2 && !L.i2.infinite && Number.isFinite(L.i2.imageX)) {
-        const x2 = state.sep + L.i2.imageX;
-        h.draw.add(arrowVert(x2, L.i2.hi, L.i2.real ? 0xfc6255 : M.blue));
-        h.draw.add(label(L.i2.real ? 'final real' : 'final virtual', x2, L.i2.hi + (L.i2.hi >= 0 ? 2.4 : -3.2)));
-      }
-      h.draw.add(fatLine([state.fAbs * U, -0.4 * U, 0, state.fAbs * U, 0.4 * U, 0], { color: M.gold, width: 2 }));
-      h.draw.add(fatLine([(state.sep - state.f2) * U, -0.4 * U, 0, (state.sep - state.f2) * U, 0.4 * U, 0], { color: M.gold, width: 2 }));
+      return;
     }
-    ctx.grid.visible = false;
+
+    const tele = L.mode === 'tele';
+    const objH = tele ? 12 : Math.max(8, state.ho + 3);
+    const eyeH = tele ? 12 : Math.max(10, Math.abs(L.i1?.hi ?? 0) + 3);
+    const xLeft = tele ? -45 : -state.do - 6;
+    const xRight = state.sep + (tele ? 45 : 20);
+    h.draw.add(line([{ x: xLeft, y: 0 }, { x: xRight, y: 0 }], { color: 0x666666, width: 1.5 }));
+    drawLens(h.draw, 0, state.fAbs, objH);
+    drawLens(h.draw, state.sep, state.f2, eyeH);
+    h.draw.add(label('objective', 0, objH + 3));
+    h.draw.add(label('eyepiece', state.sep, eyeH + 3));
+    L.rays.forEach((r, i) => {
+      const color = RAY_COLORS[i % RAY_COLORS.length];
+      h.draw.add(line(r.pts, { color, width: 2.2 }));
+      if (r.extension) h.draw.add(line(r.extension, { color, width: 1.5, opacity: 0.7, dashed: true }));
+    });
+    if (tele) {
+      h.draw.add(label(`← object ${fmtCm(state.do)} away`, -26, 12));
+    } else {
+      h.draw.add(arrowAt(-state.do, state.ho, M.gold));
+      h.draw.add(label('object', -state.do, state.ho + 2.5));
+    }
+    if (L.i1 && !L.i1.infinite) {
+      h.draw.add(arrowAt(L.i1.imageX, L.i1.hi, M.yellow));
+      h.draw.add(label('intermediate (real)', L.i1.imageX, L.i1.hi + (L.i1.hi >= 0 ? 2.5 : tele ? -7 : -3)));
+    }
+    if (L.i2 && !L.i2.infinite && Number.isFinite(L.i2.di) && Math.abs(L.i2.di) < 400) {
+      const x2 = state.sep + L.i2.di;
+      h.draw.add(arrowAt(x2, L.i2.hi, L.i2.real ? M.red : M.blue));
+      h.draw.add(label(L.i2.real ? 'final (real)' : 'final (virtual)', x2, L.i2.hi + (L.i2.hi >= 0 ? 2.5 : -3)));
+    } else if (L.i2) {
+      h.draw.add(label('final image at ∞ — rays leave parallel', state.sep + 30, -11));
+    }
+    tick(h.draw, state.fAbs, 'F_o', M.gold);
+    tick(h.draw, state.sep - state.f2, 'F_e', M.gold);
   },
   law(state) {
     if (state.mode === 'tele') {
-      return [String.raw`\dfrac{1}{f}=\dfrac{1}{d_o}+\dfrac{1}{d_i}`, String.raw`M_{\text{telescope}}\approx -f_o/f_e`];
+      return [String.raw`\dfrac{1}{f}=\dfrac{1}{d_o}+\dfrac{1}{d_i}\ \text{for each lens}`, String.raw`M_\theta=\dfrac{\theta_{\text{out}}}{\theta_{\text{in}}}\approx-\dfrac{f_o}{f_e}`];
     }
     if (state.mode === 'micro') {
-      return [String.raw`\dfrac{1}{f}=\dfrac{1}{d_o}+\dfrac{1}{d_i}`, String.raw`M_{\text{microscope}}\approx -\dfrac{L}{f_o}\dfrac{25\,\text{cm}}{f_e}`];
+      return [String.raw`M = m_o\,m_e = \left(-\dfrac{d_{i1}}{d_{o1}}\right)\left(-\dfrac{d_{i2}}{d_{o2}}\right)`, String.raw`M\approx-\dfrac{L}{f_o}\,\dfrac{25\ \text{cm}}{f_e}`];
     }
-    return [
-      String.raw`\dfrac{1}{f}=\dfrac{1}{d_o}+\dfrac{1}{d_i}`,
-      String.raw`m=-\dfrac{d_i}{d_o}=\dfrac{h_i}{h_o}\qquad f>0\text{ converging}`,
-    ];
+    return [String.raw`\dfrac{1}{f}=\dfrac{1}{d_o}+\dfrac{1}{d_i}`, String.raw`m=-\dfrac{d_i}{d_o}=\dfrac{h_i}{h_o}\qquad f>0\text{ converging}`];
   },
   liveRows(state, computed) {
     const L = computed.len;
     if (!L) return '';
     if (L.mode !== 'single') {
       const rows = [
-        kv('f₁ objective', fmtCm(state.fAbs)),
-        kv('f₂ eyepiece', fmtCm(state.f2)),
-        kv('separation', fmtCm(state.sep)),
+        kv('f_o objective, f_e eyepiece', `${fmtCm(state.fAbs)}, ${fmtCm(state.f2)}`),
+        kv('Separation', fmtCm(state.sep)),
         kv('d_o', fmtCm(state.do)),
-        kv('intermediate d_i', L.i1?.infinite ? '∞' : fmtCm(L.i1.di)),
-        kv('d_o for eyepiece', Number.isFinite(L.do2) ? fmtCm(L.do2) : '∞'),
-        kv('final d_i', !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di)),
-        kv('M = h_final / h_o', !Number.isFinite(L.M) ? '∞' : L.M.toFixed(2)),
+        kv('Intermediate image d_i1', L.i1?.infinite ? '∞' : fmtCm(L.i1.di)),
+        kv('Eyepiece object distance', Number.isFinite(L.do2) ? fmtCm(L.do2) : '∞'),
+        kv('Final image (from eyepiece)', !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di)),
       ];
-      if (state.mode === 'tele') rows.push(kv('−f₁/f₂ (angular)', (-state.fAbs / state.f2).toFixed(2)));
+      if (L.mode === 'tele') {
+        rows.push(kv('M_θ traced (chief ray)', L.angularM.toFixed(2)));
+        rows.push(kv('−f_o/f_e', L.angularIdeal.toFixed(2)));
+      } else {
+        rows.push(kv('M = m_o m_e (exact)', Number.isFinite(L.M) ? L.M.toFixed(1) : '∞'));
+        rows.push(kv('Tube length L = sep − f_o − f_e', fmtCm(L.tube)));
+        rows.push(kv('−(L/f_o)(25 cm/f_e) estimate', L.microEstimate.toFixed(1)));
+      }
       return rows.join('');
     }
     return [
       kv('f', fmtCm(L.f)),
       kv('d_o', fmtCm(state.do)),
-      kv('d_i', L.infinite ? '∞' : fmtCm(L.di)),
-      kv('1/f', (1 / L.f).toFixed(3) + ' cm⁻¹'),
-      kv('1/d_o + 1/d_i', L.infinite ? '1/f' : (1 / state.do + 1 / L.di).toFixed(3) + ' cm⁻¹'),
-      kv('m', L.infinite ? '∞' : L.m.toFixed(2)),
+      kv('d_i', L.infinite ? '∞' : `${fmtCm(L.di)} ${L.di > 0 ? '(far side)' : '(object side)'}`),
+      kv('1/d_o + 1/d_i', L.infinite ? `1/f = ${(1 / L.f).toFixed(4)} cm⁻¹` : `${(1 / state.do + 1 / L.di).toFixed(4)} cm⁻¹`),
+      kv('1/f', `${(1 / L.f).toFixed(4)} cm⁻¹`),
+      kv('m = −d_i/d_o', L.infinite ? '∞' : L.m.toFixed(3)),
       kv('h_i', L.infinite ? '∞' : fmtCm(L.hi)),
       kv('Image', L.type),
     ].join('');
@@ -307,12 +330,20 @@ export default defineLab({
   readout(state, computed) {
     const L = computed.len;
     if (!L) return '';
-    if (L.mode !== 'single') {
+    if (L.mode === 'tele') {
       return cells([
-        ['M', !Number.isFinite(L.M) ? '∞' : L.M.toFixed(2), ''],
-        ['intermediate', L.i1?.infinite ? '∞' : fmtCm(L.i1.di), ''],
-        ['final d_i', !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di), ''],
-        ['−f₁/f₂', (-state.fAbs / state.f2).toFixed(2), ''],
+        ['M_θ (traced)', L.angularM.toFixed(2), ''],
+        ['−f_o/f_e', L.angularIdeal.toFixed(2), ''],
+        ['Final image', !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di), L.i2?.infinite ? 'ok' : ''],
+        ['Separation', fmtCm(state.sep), ''],
+      ]);
+    }
+    if (L.mode === 'micro') {
+      return cells([
+        ['M exact', Number.isFinite(L.M) ? L.M.toFixed(1) : '∞', ''],
+        ['Estimate', L.microEstimate.toFixed(1), ''],
+        ['Intermediate', L.i1?.infinite ? '∞' : fmtCm(L.i1.di), ''],
+        ['Final image', !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di), ''],
       ]);
     }
     return cells([
@@ -325,32 +356,43 @@ export default defineLab({
   coach(state, computed) {
     const L = computed.len;
     if (state.mode === 'tele') {
+      const relaxed = L?.i2?.infinite || (L?.i2 && Math.abs(L.i2.di) > 400);
       return {
-        title: 'Telescope — objective + eyepiece',
-        body: `Two converging lenses about f₁+f₂ apart. The objective makes a real image near the eyepiece’s front focus; the eyepiece then sends those rays out nearly parallel (image at infinity, relaxed eye). Angular magnification ≈ −f_o/f_e = ${(-state.fAbs / state.f2).toFixed(1)}.`,
+        title: 'Telescope — it magnifies angles',
+        body: `The objective (f_o = ${fmtCm(state.fAbs)}) images the distant object near its focus. ${
+          relaxed
+            ? 'That image sits at the eyepiece focus, so every ray leaves parallel — a relaxed eye sees it at infinity.'
+            : 'Press “Focus for a relaxed eye” to move the eyepiece so that image lands on its focus.'
+        } Compare the ray angles going in and coming out: the traced M_θ is ${L?.angularM.toFixed(2)}, close to −f_o/f_e = ${L?.angularIdeal.toFixed(2)}. Negative means the view is inverted.`,
       };
     }
     if (state.mode === 'micro') {
       return {
-        title: 'Microscope — short f objective',
-        body: 'The objective sits close to a small object (d_o just beyond f) and throws a large real intermediate image. The eyepiece uses that as its object. Total M is (objective linear mag) × (eyepiece angular mag).',
+        title: 'Microscope — two stages of magnification',
+        body: `The object sits just outside f_o, so the objective throws a large real, inverted image (m_o = ${L?.i1 ? L.i1.m.toFixed(1) : '—'}). That image lands just inside the eyepiece focus, and the eyepiece works as a magnifying glass on it. Total M = m_o·m_e = ${Number.isFinite(L?.M) ? L.M.toFixed(1) : '—'}; the textbook −(L/f_o)(25 cm/f_e) = ${L?.microEstimate.toFixed(1)} is the same idea with the final image at infinity.`,
       };
     }
     if (state.type === 'div') {
       return {
         title: 'Diverging lens — f is negative',
-        body: 'Always a virtual, upright, reduced image on the same side as the object. Same algebra as a convex mirror. The three rays still work: parallel in, as if from F on the incoming side; through the center; toward the far F, then parallel.',
+        body: 'Every refracted ray (solid) spreads away from the axis. Traced backward (dashed) they meet on the object side: a virtual, upright, reduced image. Gold: parallel in, leaves as if from the near F. Teal: straight through the center. Blue: aimed at the far F, leaves parallel.',
       };
     }
     if (L?.infinite) {
       return {
-        title: 'Object at F — collimated output',
-        body: 'A point source at F is how you make a beam of parallel rays (searchlight, collimator). Slide d_o inside F and the image becomes virtual and enlarged — a magnifying glass.',
+        title: 'Object at F — rays leave parallel',
+        body: 'A point source at the focus makes a parallel beam (a collimator or searchlight). Slide d_o inside F and the image turns virtual and enlarged — a magnifying glass.',
+      };
+    }
+    if (L?.real) {
+      return {
+        title: 'Real image — light really gathers on the far side',
+        body: `${L.type}. Gold: parallel → through F. Teal: through the center, undeviated. Blue: through the near F → parallel. All three cross at d_i = ${fmtCm(L.di)}, where a screen would show the image.`,
       };
     }
     return {
-      title: L?.real ? 'Real image — opposite side of the lens' : 'Virtual image — same side as the object',
-      body: `${L?.type}. 1/f = 1/d_o + 1/d_i is the whole machine. Gold / teal / blue are parallel→F, through the center, through F→parallel. They meet at the image, even when you have to extend them backward (virtual).`,
+      title: 'Magnifying glass — object inside F',
+      body: `The refracted rays (solid) still diverge after the lens, so they never cross. Extend them backward (dashed) and they meet ${fmtCm(-(L?.di ?? 0))} in front of the lens: ${L?.type}. That upright enlarged image is what your eye sees.`,
     };
   },
 });

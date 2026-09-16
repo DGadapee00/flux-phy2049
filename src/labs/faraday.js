@@ -17,7 +17,8 @@ const SCENARIOS = [
 ];
 
 const CAMS = {
-  magnet: { pos: new THREE.Vector3(5.4, 4.2, 9.2), target: new THREE.Vector3(0, 0.4, 0) },
+  // The magnet rides 2–7 units above the loop, so frame the whole stroke.
+  magnet: { pos: new THREE.Vector3(7.5, 6.5, 13), target: new THREE.Vector3(0, 2.8, 0) },
   expand: { pos: new THREE.Vector3(5.2, 6.2, 8.4), target: new THREE.Vector3(0, 0, 0) },
   bar: { pos: new THREE.Vector3(2.2, 8.5, 6.5), target: new THREE.Vector3(0.3, 0, 0) },
   generator: { pos: new THREE.Vector3(6.2, 4.4, 8.8), target: new THREE.Vector3(0, 0, 0) },
@@ -181,7 +182,7 @@ export default defineLab({
               <span class="mono val" id="far-slow-val">1.0×</span>
             </div>
           </label>
-          <p class="tiny">ε = −dΦ<sub>B</sub>/dt. Gold disk = +Φ (out of the page along +y), blue = −Φ. Yellow chevrons are the induced current. Convention: counterclockwise from +y is +I and makes +B<sub>y</sub>.</p>
+          <p class="tiny">ε = −dΦ<sub>B</sub>/dt. The disk is Φ: gold for +Φ (along +y), blue for −Φ, brighter near its peak. Yellow chevrons are the induced current. Convention: counterclockwise seen from +y is +I and makes +B<sub>y</sub>.</p>
         </div>`;
   },
   bind(api) {
@@ -282,7 +283,14 @@ export default defineLab({
     const r = physics(state, kin);
     const I = inducedCurrent(r.emf, state.Rloop);
     const L = lenz(r.dPhi_dt);
-    computed.far = { ...r, ...kin, I, L };
+    // Largest |Φ| over one cycle, so the flux shading means "fraction of the peak" in every scenario.
+    let PhiMax = 1e-30;
+    const period = (2 * Math.PI) / state.omega;
+    for (let k = 0; k < 24; k++) {
+      const probe = { ...state, t: (k / 24) * period };
+      PhiMax = Math.max(PhiMax, Math.abs(physics(probe, kinematics(probe)).Phi));
+    }
+    computed.far = { ...r, ...kin, I, L, PhiMax };
   },
   syncViews(state, computed, ctx) {
     const h = ctx.handle;
@@ -292,6 +300,11 @@ export default defineLab({
     const kind = state.kind;
 
     h.magnet.visible = kind === 'magnet';
+    if (h.arrowKind !== kind) {
+      h.arrowKind = kind;
+      const spots = kind === 'bar' ? [0.2, 0.5, 0.8].flatMap((x) => [-0.12, 0, 0.12].map((z) => [x, z])) : [-1, 0, 1].flatMap((i) => [-1, 0, 1].map((j) => [i * 0.15, j * 0.15]));
+      h.Barrows.children.forEach((a, n) => a.position.set(spots[n][0] * u, -1.1, spots[n][1] * u));
+    }
     h.Barrows.visible = kind !== 'magnet';
     h.rails.visible = kind === 'bar';
     h.bar.visible = kind === 'bar';
@@ -326,8 +339,7 @@ export default defineLab({
 
     if (kind !== 'bar') {
       h.disk.scale.setScalar(R * u);
-      const mag = Math.min(0.55, 0.12 + Math.abs(f.Phi) * 80);
-      h.disk.material.opacity = mag;
+      h.disk.material.opacity = 0.06 + 0.5 * Math.min(1, Math.abs(f.Phi) / f.PhiMax);
       h.disk.material.color.set(f.Phi >= 0 ? M.gold : M.blue);
       h.disk.rotation.x = -Math.PI / 2;
       h.loop.group.rotation.x = kind === 'generator' ? f.theta : 0;
@@ -350,9 +362,10 @@ export default defineLab({
           disposeTree(ch);
         }
         const z1 = (w / 2) * u;
-        h.rails.add(fatLine([-0.2 * u, 0, z1, 1.15 * u, 0, z1], { color: M.white, width: 2.5 }));
-        h.rails.add(fatLine([-0.2 * u, 0, -z1, 1.15 * u, 0, -z1], { color: M.white, width: 2.5 }));
-        h.rails.add(fatLine([-0.15 * u, 0, -z1, -0.15 * u, 0, z1], { color: M.yellow, width: 3 }));
+        // The fixed end sits at x = 0, the origin of Φ = B w x.
+        h.rails.add(fatLine([-0.05 * u, 0, z1, 1.15 * u, 0, z1], { color: M.white, width: 2.5 }));
+        h.rails.add(fatLine([-0.05 * u, 0, -z1, 1.15 * u, 0, -z1], { color: M.white, width: 2.5 }));
+        h.rails.add(fatLine([0, 0, -z1, 0, 0, z1], { color: M.yellow, width: 3 }));
       }
       while (h.bar.children.length) {
         const ch = h.bar.children[0];
@@ -376,6 +389,17 @@ export default defineLab({
       flux.rotation.x = -Math.PI / 2;
       flux.position.set((f.x / 2) * u, 0, 0);
       h.bar.add(flux);
+      // Induced current around the rectangle. +I is counterclockwise seen from +y: along −ẑ in the bar.
+      if (Math.abs(f.I) > 1e-12) {
+        const sgn = Math.sign(f.I);
+        const chev = [
+          [new THREE.Vector3(x, 0.02, 0), new THREE.Vector3(0, 0, -sgn)],
+          [new THREE.Vector3(0, 0.02, 0), new THREE.Vector3(0, 0, sgn)],
+          [new THREE.Vector3(x / 2, 0.02, z1), new THREE.Vector3(sgn, 0, 0)],
+          [new THREE.Vector3(x / 2, 0.02, -z1), new THREE.Vector3(-sgn, 0, 0)],
+        ];
+        for (const [p, d] of chev) h.bar.add(new Arrow(d, p.clone().addScaledVector(d, -0.25), 0.5, M.yellow, 0.3, 0.3, 0.001));
+      }
     }
 
     h.emfLab.position.set(0, (kind === 'magnet' ? 1.6 : 1.15) * u, 0);

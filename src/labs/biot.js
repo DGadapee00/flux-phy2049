@@ -109,6 +109,11 @@ export default defineLab({
   orbit: true,
   probe: true,
   camera: { pos: new THREE.Vector3(4.8, 3.6, 8.8), target: new THREE.Vector3(0, 0, 0) },
+  cameraFor(state) {
+    if (state.kind === 'solenoid') return { pos: new THREE.Vector3(8, 3.5, 14), target: new THREE.Vector3(0, 0, 0) };
+    if (state.kind === 'loop') return { pos: new THREE.Vector3(5, 4.6, 10), target: new THREE.Vector3(0, 0.9, 0) };
+    return { pos: new THREE.Vector3(4.8, 3.6, 8.8), target: new THREE.Vector3(0, 0, 0) };
+  },
   keys: { ' ': 'sweep', r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {

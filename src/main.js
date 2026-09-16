@@ -308,6 +308,8 @@ window.__gauss = {
   },
   computed,
   app,
+  camera,
+  controls,
 };
 
 const boot = parseHash();

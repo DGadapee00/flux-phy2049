@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { M, fatLine, fatSegments } from '../scene/manim.js';
+import { Arrow, M, fatLine, fatSegments, disposeTree } from '../scene/manim.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import { malusChain } from '../physics/polarization.js';
 import { kv, cells, qv } from '../ui/shared.js';
@@ -16,7 +16,12 @@ const SCENARIOS = [
 ];
 
 const I0 = 1000;
-const XS = [-1.05, -0.15, 0.75];
+/** Beam along +x (meters). Polarizer planes are yz; an axis angle θ points along (0, cosθ, sinθ). */
+const XS = [-0.38, 0, 0.38];
+const X_SOURCE = -0.72;
+const X_END = 0.72;
+const R_POL = 0.2;
+const E_LEN = 0.14;
 
 function label(html, x, y, z) {
   const el = document.createElement('div');
@@ -24,54 +29,44 @@ function label(html, x, y, z) {
   el.innerHTML = html;
   const o = new CSS2DObject(el);
   o.position.set(x, y, z);
-  o.userData.el = el;
   return o;
 }
 
 function polarizerMesh(u) {
   const g = new THREE.Group();
-  const R = 0.38 * u;
+  const R = R_POL * u;
   const disk = new THREE.Mesh(
     new THREE.CircleGeometry(R, 48),
-    new THREE.MeshBasicMaterial({
-      color: 0x1c758a,
-      transparent: true,
-      opacity: 0.28,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      toneMapped: false,
-    }),
-  );
-  const rim = new THREE.Mesh(
-    new THREE.TorusGeometry(R, 0.02 * u, 8, 48),
-    new THREE.MeshBasicMaterial({ color: M.white, toneMapped: false }),
+    new THREE.MeshBasicMaterial({ color: M.blueE, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }),
   );
   disk.rotation.y = Math.PI / 2;
-  rim.rotation.y = Math.PI / 2;
+  const rimPts = [];
+  for (let i = 0; i <= 64; i++) {
+    const a = (i / 64) * Math.PI * 2;
+    rimPts.push(0, R * Math.cos(a), R * Math.sin(a));
+  }
+  const rim = fatLine(rimPts, { color: M.white, width: 2.2 });
   const stripes = [];
-  const half = 0.32 * u;
   for (let i = -3; i <= 3; i++) {
-    const z = i * 0.09 * u;
+    const z = i * 0.045 * u;
+    const half = Math.sqrt(Math.max(0, R * R - z * z)) * 0.92;
     stripes.push(0, -half, z, 0, half, z);
   }
-  const grid = fatSegments(stripes, { color: M.gold, width: 1.6 });
-  g.add(disk, rim, grid);
-  g.userData.grid = grid;
+  // The stripes turn with the axis; the rim does not.
+  const axis = new THREE.Group();
+  axis.add(fatSegments(stripes, { color: M.gold, width: 1.6, opacity: 0.85 }));
+  g.add(disk, rim, axis);
+  g.userData.axis = axis;
   return g;
 }
 
-function beamMesh(color, u) {
-  const mat = new THREE.MeshBasicMaterial({
-    color,
-    transparent: true,
-    opacity: 0.55,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.14 * u, 0.14 * u, 1, 20), mat);
-  mesh.rotation.z = Math.PI / 2;
-  mesh.userData.r0 = 0.14 * u;
-  return mesh;
+/** Double-headed arrow: the line E oscillates along. */
+function eGlyph(center, dir, len, color) {
+  const g = new THREE.Group();
+  if (len < 0.02) return g;
+  g.add(new Arrow(dir.clone(), center.clone(), len, color, 0.24, 0.2, 0.025));
+  g.add(new Arrow(dir.clone().multiplyScalar(-1), center.clone(), len, color, 0.24, 0.2, 0.025));
+  return g;
 }
 
 export default defineLab({
@@ -81,7 +76,7 @@ export default defineLab({
   hint: 'Cross two polarizers, then slide a third in at 45° — light comes back',
   live: false,
   orbit: true,
-  camera: { pos: new THREE.Vector3(2.4, 3.8, 11.2), target: new THREE.Vector3(0, 0, 0) },
+  camera: { pos: new THREE.Vector3(4.6, 3.4, 12), target: new THREE.Vector3(0, 0, 0) },
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
@@ -89,13 +84,17 @@ export default defineLab({
   },
   applyScenario(id, state) {
     const sc = SCENARIOS.find((s) => s.id === id) || SCENARIOS[0];
-    state.scenarioId = sc.id;
-    state.n = sc.n;
-    state.a = sc.a;
-    state.b = sc.b;
-    state.c = sc.c;
+    Object.assign(state, { scenarioId: sc.id, n: sc.n, a: sc.a, b: sc.b, c: sc.c });
   },
   controls() {
+    const slider = (id, text, v) => `
+          <label class="field" id="wrap-${id}">
+            <span>${text}</span>
+            <div class="slider-row">
+              <input type="range" id="${id}" min="0" max="180" step="1" value="${v}" />
+              <span class="mono val" id="${id}-val">${v}°</span>
+            </div>
+          </label>`;
     return `
         <div class="lab-block">
           <div class="seg" id="pol-n">
@@ -103,28 +102,10 @@ export default defineLab({
             <button type="button" data-n="2">2 filters</button>
             <button type="button" data-n="3" class="active">3 filters</button>
           </div>
-          <label class="field">
-            <span>P1 axis</span>
-            <div class="slider-row">
-              <input type="range" id="pol-a" min="0" max="180" step="1" value="0" />
-              <span class="mono val" id="pol-a-val">0°</span>
-            </div>
-          </label>
-          <label class="field" id="wrap-pol-b">
-            <span>P2 axis</span>
-            <div class="slider-row">
-              <input type="range" id="pol-b" min="0" max="180" step="1" value="45" />
-              <span class="mono val" id="pol-b-val">45°</span>
-            </div>
-          </label>
-          <label class="field" id="wrap-pol-c">
-            <span>P3 axis</span>
-            <div class="slider-row">
-              <input type="range" id="pol-c" min="0" max="180" step="1" value="90" />
-              <span class="mono val" id="pol-c-val">90°</span>
-            </div>
-          </label>
-          <p class="tiny">Unpolarized in, then Malus I = I₀ cos²θ at each polarizer. Gold lines are the transmission axis. Crossed filters go dark; a 45° filter in the middle brings light back (I₀/8).</p>
+          ${slider('pol-a', 'P1 axis (from vertical)', 0)}
+          ${slider('pol-b', 'P2 axis', 45)}
+          ${slider('pol-c', 'P3 axis', 90)}
+          <p class="tiny">Unpolarized light in, then Malus I = I₀cos²θ at each polarizer, θ = angle between successive axes. Gold stripes are the transmission axis. The white double arrows show the direction E oscillates and how big it is (E ∝ √I).</p>
         </div>`;
   },
   bind(api) {
@@ -146,15 +127,11 @@ export default defineLab({
   },
   syncControls(state) {
     const $ = (id) => document.getElementById(id);
-    document.querySelectorAll('#pol-n [data-n]').forEach((b) => {
-      b.classList.toggle('active', Number(b.dataset.n) === state.n);
-    });
-    $('pol-a').value = state.a;
-    $('pol-a-val').textContent = `${state.a.toFixed(0)}°`;
-    $('pol-b').value = state.b;
-    $('pol-b-val').textContent = `${state.b.toFixed(0)}°`;
-    $('pol-c').value = state.c;
-    $('pol-c-val').textContent = `${state.c.toFixed(0)}°`;
+    document.querySelectorAll('#pol-n [data-n]').forEach((b) => b.classList.toggle('active', Number(b.dataset.n) === state.n));
+    for (const k of ['a', 'b', 'c']) {
+      $(`pol-${k}`).value = state[k];
+      $(`pol-${k}-val`).textContent = `${state[k].toFixed(0)}°`;
+    }
     $('wrap-pol-b').hidden = state.n < 2;
     $('wrap-pol-c').hidden = state.n < 3;
   },
@@ -162,23 +139,28 @@ export default defineLab({
     const u = UNITS_PER_METER;
     const group = new THREE.Group();
     ctx.scene.add(group);
-    const pols = [polarizerMesh(u), polarizerMesh(u), polarizerMesh(u)];
-    pols.forEach((p, i) => {
-      p.position.set(XS[i] * u, 0, 0);
+    const pols = XS.map((x) => {
+      const p = polarizerMesh(u);
+      p.position.set(x * u, 0, 0);
       group.add(p);
+      return p;
     });
-    const beams = [beamMesh(0xece6e2, u), beamMesh(0xece6e2, u), beamMesh(0xece6e2, u), beamMesh(0xece6e2, u)];
-    beams.forEach((b) => group.add(b));
-    const labs = [
-      label('source', -1.55 * u, 0.85 * u, 0),
-      label('P1', XS[0] * u, 0.85 * u, 0),
-      label('P2', XS[1] * u, 0.85 * u, 0),
-      label('P3', XS[2] * u, 0.85 * u, 0),
-    ];
+    const beams = [0, 1, 2, 3].map(() => {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(1, 1, 1, 24, 1, true),
+        new THREE.MeshBasicMaterial({ color: M.yellow, transparent: true, opacity: 0.4, depthWrite: false, toneMapped: false }),
+      );
+      mesh.rotation.z = Math.PI / 2;
+      group.add(mesh);
+      return mesh;
+    });
+    const labs = [label('unpolarized', X_SOURCE * u, 0.3 * u, 0), ...XS.map((x, i) => label(`P${i + 1}`, x * u, (R_POL + 0.07) * u, 0))];
     labs.forEach((l) => group.add(l));
-    group.add(fatLine([-1.7 * u, 0, 0, 1.55 * u, 0, 0], { color: 0x444444, width: 1.2 }));
+    group.add(fatLine([X_SOURCE * u - 0.4, 0, 0, X_END * u, 0, 0], { color: 0x555555, width: 1.2 }));
+    const glyphs = new THREE.Group();
+    group.add(glyphs);
     group.visible = false;
-    return { group, pols, beams, labs };
+    return { group, pols, beams, labs, glyphs };
   },
   enter(ctx, handle) {
     handle.group.visible = true;
@@ -187,8 +169,7 @@ export default defineLab({
     handle.group.visible = false;
   },
   recompute(state, computed) {
-    const angles = [state.a, state.b, state.c].slice(0, state.n);
-    computed.pol = malusChain(state.I0, angles, null);
+    computed.pol = malusChain(state.I0, [state.a, state.b, state.c].slice(0, state.n), null);
   },
   syncViews(state, computed, ctx) {
     const h = ctx.handle;
@@ -200,41 +181,54 @@ export default defineLab({
       const on = i < state.n;
       h.pols[i].visible = on;
       h.labs[i + 1].visible = on;
-      if (on) h.pols[i].rotation.x = (angles[i] * Math.PI) / 180;
+      if (on) h.pols[i].userData.axis.rotation.x = (angles[i] * Math.PI) / 180;
     }
-    const xs = [-1.55, ...XS.slice(0, state.n), 1.45];
-    const Is = p.steps.map((s) => s.I);
+
+    while (h.glyphs.children.length) {
+      const ch = h.glyphs.children[0];
+      h.glyphs.remove(ch);
+      disposeTree(ch);
+    }
+    const xs = [X_SOURCE, ...XS.slice(0, state.n), X_END];
     for (let i = 0; i < 4; i++) {
       const beam = h.beams[i];
-      const on = i <= state.n;
-      beam.visible = on;
-      if (!on) continue;
+      if (i > state.n) {
+        beam.visible = false;
+        continue;
+      }
+      const frac = Math.max(0, p.steps[i].I / state.I0);
       const x0 = xs[i];
       const x1 = xs[i + 1];
-      const I = Is[i];
-      const frac = Math.max(0, I / state.I0);
-      const r = (0.05 + 0.12 * Math.sqrt(frac)) * u;
-      const r0 = beam.userData.r0;
-      beam.position.set(((x0 + x1) / 2) * u, 0, 0);
-      beam.scale.set(r / r0, (x1 - x0) * u, r / r0);
-      beam.material.opacity = 0.15 + 0.65 * frac;
+      const r = (0.012 + 0.035 * Math.sqrt(frac)) * u;
       beam.visible = frac > 1e-4;
+      beam.position.set(((x0 + x1) / 2) * u, 0, 0);
+      beam.scale.set(r, (x1 - x0) * u, r);
+      beam.material.opacity = 0.1 + 0.45 * frac;
+
+      const center = new THREE.Vector3(((x0 + x1) / 2) * u, 0, 0);
+      const len = E_LEN * Math.sqrt(frac) * u;
+      if (i === 0) {
+        for (const deg of [0, 45, 90, 135]) {
+          const a = (deg * Math.PI) / 180;
+          h.glyphs.add(eGlyph(center, new THREE.Vector3(0, Math.cos(a), Math.sin(a)), len, M.white));
+        }
+      } else if (frac > 1e-4) {
+        const a = (angles[i - 1] * Math.PI) / 180;
+        h.glyphs.add(eGlyph(center, new THREE.Vector3(0, Math.cos(a), Math.sin(a)), len, M.white));
+      }
     }
     ctx.grid.visible = true;
   },
-  law: () => [
-    String.raw`I = I_0\cos^2\theta\qquad\text{(Malus)}`,
-    String.raw`\text{unpolarized }\to\text{ polarizer: }I=I_0/2`,
-  ],
+  law: () => [String.raw`I = I_0\cos^2\theta\qquad\text{(Malus)}`, String.raw`\text{unpolarized }\to\text{ polarizer: }I=I_0/2`],
   liveRows(state, computed) {
     const p = computed.pol;
     if (!p) return '';
     const rows = [kv('I₀ (unpolarized in)', fmtIrr(state.I0))];
-    const names = ['after P1', 'after P2', 'after P3'];
     for (let i = 1; i < p.steps.length; i++) {
       const s = p.steps[i];
-      const frac = s.I / state.I0;
-      rows.push(kv(`${names[i - 1]} (${s.axis.toFixed(0)}°)`, `${fmtIrr(s.I)}  (${(frac * 100).toFixed(1)}% of I₀)`));
+      const prev = p.steps[i - 1];
+      const how = prev.axis == null ? '× ½' : `× cos²${Math.abs(s.axis - prev.axis).toFixed(0)}°`;
+      rows.push(kv(`after P${i} (${s.axis.toFixed(0)}°, ${how})`, `${fmtIrr(s.I)} (${((s.I / state.I0) * 100).toFixed(1)}%)`));
     }
     rows.push(kv('I / I₀', qv('qI', (p.I / state.I0).toFixed(3))));
     return rows.join('');
@@ -243,13 +237,12 @@ export default defineLab({
     const p = computed.pol;
     if (!p) return '';
     const frac = p.I / state.I0;
-    const dark = frac < 0.02;
-    const three = state.n === 3 && Math.abs(state.a) < 1 && Math.abs(state.c - 90) < 1;
+    const last = state.n >= 2 ? Math.abs([state.a, state.b, state.c][state.n - 1] - [state.a, state.b, state.c][state.n - 2]) : null;
     return cells([
       ['Filters', String(state.n), ''],
-      ['I out', fmtIrr(p.I), dark ? 'bad' : 'ok'],
-      ['I / I₀', frac.toFixed(3), three && frac > 0.1 ? 'ok' : ''],
-      ['Malus', 'cos²θ', ''],
+      ['I out', fmtIrr(p.I), frac < 0.02 ? 'bad' : 'ok'],
+      ['I / I₀', frac.toFixed(3), ''],
+      ['Last θ', last == null ? '— (unpolarized in)' : `${last.toFixed(0)}°`, ''],
     ]);
   },
   coach(state, computed) {
@@ -257,25 +250,25 @@ export default defineLab({
     const frac = p ? p.I / state.I0 : 0;
     if (state.n === 1) {
       return {
-        title: 'One polarizer eats half of unpolarized light',
-        body: 'Unpolarized light is a mix of all axes. A polarizer keeps the component along its gold lines and dumps the rest, so I = I₀/2 and what remains is linearly polarized.',
+        title: 'One polarizer passes half of unpolarized light',
+        body: 'Unpolarized light has E pointing every which way (the star of arrows). A polarizer keeps only the component along its gold axis, so on average I = I₀/2 and what comes out oscillates along one line.',
       };
     }
     if (state.n === 2 && Math.abs(((state.b - state.a + 90) % 180) - 90) < 4) {
       return {
         title: 'Crossed polarizers — Malus gives zero',
-        body: 'θ = 90°, cosθ = 0, I = 0. The second filter is asked for a component the first one already threw away. Add a third filter in between at 45° (the “three filters” scenario) and light comes back: each step is only 45°, and (I₀/2)(½)(½) = I₀/8.',
+        body: 'θ = 90°, cos²θ = 0. The second filter wants the component of E along an axis perpendicular to the light it receives, and there is none. Put a third filter between them at 45° and light comes back: (I₀/2)(½)(½) = I₀/8.',
       };
     }
     if (state.n === 3 && frac > 0.05) {
       return {
-        title: 'A polarizer in the middle resurrects the beam',
-        body: `P1 polarizes at ${state.a.toFixed(0)}°. P2 at ${state.b.toFixed(0)}° passes cos²Δ of that. P3 at ${state.c.toFixed(0)}° does it again. Crossed P1 and P3 would be dark alone; the middle axis gives the last filter something to project. For 0° / 45° / 90° that is I₀/8.`,
+        title: 'A filter in the middle brings the light back',
+        body: `P1 at ${state.a.toFixed(0)}° passes I₀/2. P2 at ${state.b.toFixed(0)}° keeps cos² of the angle between them, and rotates the E arrow to its own axis. P3 at ${state.c.toFixed(0)}° does the same. P1 and P3 alone would be crossed, but P2 gives P3 a component to keep. At 0° / 45° / 90° that is I₀/8.`,
       };
     }
     return {
-      title: 'Malus’s law is a projection',
-      body: 'I = I₀ cos²θ compares two axes. Intensity follows the square because E projects as cosθ and I ∝ E². Turn a filter and watch the beam fatten or fade.',
+      title: 'Malus’s law is a projection, squared',
+      body: 'Only E·(axis) gets through, so E_out = E_in cosθ. Intensity goes as E², hence I = I₀cos²θ. Watch the white arrow shrink as you turn a filter away from the one before it.',
     };
   },
 });
