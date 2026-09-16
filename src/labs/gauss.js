@@ -14,6 +14,7 @@ export default defineLab({
   title: 'Gauss',
   hint: 'Drag a charge through the surface',
   orbit: true,
+  probe: true,
   live: false,
   camera: { pos: new THREE.Vector3(7.2, 4.8, 11.4), target: new THREE.Vector3(0, 0, 0) },
   keys: { ' ': 'sweep', '+': 'add+', '=': 'add+', '-': 'add-', Delete: 'delete', Backspace: 'delete', r: 'reset', R: 'reset' },

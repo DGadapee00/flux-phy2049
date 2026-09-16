@@ -31,13 +31,18 @@ export function createHUD(api) {
 
   function renderLabTabs(exam, labId) {
     const labs = exam?.labs || [];
-    $('lab-tabs').innerHTML = labs
-      .map((id, i) => {
+    const built = labs
+      .map((id) => {
         const on = id === labId;
         const title = LAB_META[id]?.title || id;
         return `<button type="button" class="tab${on ? ' active' : ''}" data-lab="${id}" role="tab" aria-selected="${on}">${title}</button>`;
       })
       .join('');
+    // Unbuilt labs stay visible so the exam's full scope is on screen.
+    const soon = (exam?.coming || [])
+      .map((t) => `<button type="button" class="tab soon" disabled title="Coming soon">${t}</button>`)
+      .join('');
+    $('lab-tabs').innerHTML = built + soon;
   }
 
   function renderToggles(lab, state) {

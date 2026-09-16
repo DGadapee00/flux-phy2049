@@ -29,6 +29,9 @@ const LAB = {
   vectors: 'e1',
   conductors: 'e2',
   biot: 'e4',
+  circuits: 'e4',
+  ampere: 'e4',
+  magforce: 'e4',
 };
 
 async function go(lab) {
@@ -40,8 +43,10 @@ async function go(lab) {
   await page.waitForTimeout(350);
 }
 
+/** Relative error; absolute when the expected value is 0. (max(1, |exp|) made C ~ 1e-11 F uncheckable.) */
 function relErr(got, exp) {
-  return Math.abs(got - exp) / Math.max(1, Math.abs(exp));
+  if (!Number.isFinite(got)) return Infinity;
+  return Math.abs(got - exp) / (exp !== 0 ? Math.abs(exp) : 1);
 }
 
 const mismatches = [];
@@ -217,13 +222,49 @@ await go('biot');
 const biot = await page.evaluate(() => ({
   lab: window.__gauss.state.lab,
   mag: window.__gauss.computed.biot?.magFull,
-  analytic: window.__gauss.computed.biot?.an?.mag,
+  exact: window.__gauss.computed.biot?.an?.exact,
 }));
 await page.screenshot({ path: path.join(outDir, 'biot.png') });
+check('biot.wire Σ dB vs finite-wire formula', biot.mag, Math.abs(biot.exact), 0.005);
+check('conductors.metal-or-outside', conductors.region === 'outside' ? 1 : 0, 1, 0);
+
+await go('circuits');
+const circuits = await page.evaluate(() => ({
+  lab: window.__gauss.state.lab,
+  I1: window.__gauss.computed.circ?.sol?.I?.R1,
+  loopMax: window.__gauss.computed.circ?.loopMax,
+}));
+await page.screenshot({ path: path.join(outDir, 'circuits.png') });
+check('circuits.series I = 12 V / 12 Ω', circuits.I1, 1, 0.001);
+check('circuits.loop rule', circuits.loopMax, 0, 1e-6);
+
+await go('ampere');
+const ampere = await page.evaluate(() => ({
+  lab: window.__gauss.state.lab,
+  circ: window.__gauss.computed.amp?.circ,
+  target: window.__gauss.computed.amp?.target,
+}));
+await page.screenshot({ path: path.join(outDir, 'ampere.png') });
+check('ampere ∮ B·dl vs μ₀I_enc', ampere.circ, ampere.target, 1e-6);
+
+await go('magforce');
+const magforce = await page.evaluate(() => ({
+  lab: window.__gauss.state.lab,
+  rNum: window.__gauss.computed.mf?.run?.rNum,
+  rA: window.__gauss.computed.mf?.run?.rA,
+}));
+await page.screenshot({ path: path.join(outDir, 'magforce.png') });
+check('magforce proton r numerical vs mv/qB', magforce.rNum, magforce.rA, 0.005);
+
+// Back button walks lab history (pushState entries).
+await page.goBack();
+await page.waitForFunction(() => window.__gauss?.state?.lab === 'ampere', null, { timeout: 5000 }).catch(() => {});
+const back = await page.evaluate(() => window.__gauss.state.lab);
+if (back !== 'ampere') mismatches.push({ name: 'history.back', got: back, exp: 'ampere' });
 
 console.log(
   JSON.stringify(
-    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, mismatches, errors },
+    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, back, mismatches, errors },
     null,
     2,
   ),

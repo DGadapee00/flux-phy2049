@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M } from '../scene/manim.js';
+import { Arrow, M, fatLine, fatSegments, disposeTree } from '../scene/manim.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import { dot, len, normalize } from '../physics/vec.js';
 import { kv, cells } from '../ui/shared.js';
 
 const SCENARIOS = [
   { id: 'axes', name: 'x̂ and ŷ', a: { x: 1, y: 0, z: 0 }, b: { x: 0, y: 1, z: 0 } },
-  { id: '345', name: '3-4-5 right angle', a: { x: 0.6, y: 0, z: 0 }, b: { x: 0, y: 0.8, z: 0 } },
+  { id: '345', name: '3-4-5: a = 0.6 x̂ + 0.8 ŷ, b = x̂', a: { x: 0.6, y: 0.8, z: 0 }, b: { x: 1, y: 0, z: 0 } },
   { id: 'obtuse', name: 'Obtuse — negative dot product', a: { x: 0.8, y: 0.2, z: 0 }, b: { x: -0.5, y: 0.6, z: 0 } },
   { id: 'acute', name: 'Acute in the xz plane', a: { x: 0.7, y: 0, z: 0.2 }, b: { x: 0.4, y: 0, z: 0.7 } },
 ];
@@ -47,6 +47,58 @@ function makeTip(color, letter) {
   mesh.add(lab);
   mesh.userData.which = letter;
   return mesh;
+}
+
+/** Dashed drop lines to the floor and the axes (components), plus the φ arc between a and b. */
+function rebuildGuides(h, state, u) {
+  if (h.guides) {
+    h.group.remove(h.guides);
+    disposeTree(h.guides);
+  }
+  const g = new THREE.Group();
+  for (const [v, color] of [
+    [state.a, M.red],
+    [state.b, M.blue],
+  ]) {
+    const segs = [];
+    if (Math.abs(v.y) > 1e-3) segs.push(v.x * u, v.y * u, v.z * u, v.x * u, 0, v.z * u);
+    if (Math.abs(v.z) > 1e-3) segs.push(v.x * u, 0, v.z * u, v.x * u, 0, 0);
+    if (Math.abs(v.x) > 1e-3 && Math.abs(v.z) > 1e-3) segs.push(v.x * u, 0, v.z * u, 0, 0, v.z * u);
+    if (Math.abs(v.x) > 1e-3 && Math.abs(v.y) > 1e-3 && Math.abs(v.z) < 1e-3) segs.push(v.x * u, v.y * u, 0, 0, v.y * u, 0);
+    if (segs.length) {
+      const s = fatSegments(segs, { color, width: 1.6, opacity: 0.6, dashed: true });
+      s.computeLineDistances();
+      g.add(s);
+    }
+  }
+  const ma = mag(state.a);
+  const mb = mag(state.b);
+  const phi = angle(state.a, state.b);
+  const s = Math.sin(phi);
+  if (ma > 1e-3 && mb > 1e-3 && s > 1e-3) {
+    const ah = normalize(state.a);
+    const bh = normalize(state.b);
+    const r = 0.35 * Math.min(ma, mb) * u;
+    const pts = [];
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40;
+      const k1 = Math.sin((1 - t) * phi) / s;
+      const k2 = Math.sin(t * phi) / s;
+      pts.push((k1 * ah.x + k2 * bh.x) * r, (k1 * ah.y + k2 * bh.y) * r, (k1 * ah.z + k2 * bh.z) * r);
+    }
+    g.add(fatLine(pts, { color: M.yellow, width: 2.5 }));
+    const el = document.createElement('div');
+    el.className = 'probe-label';
+    el.style.color = 'var(--yellow)';
+    el.textContent = 'φ';
+    const lab = new CSS2DObject(el);
+    const mid = 0.5;
+    const k = Math.sin((1 - mid) * phi) / s;
+    lab.position.set((k * ah.x + k * bh.x) * r * 1.45, (k * ah.y + k * bh.y) * r * 1.45, (k * ah.z + k * bh.z) * r * 1.45);
+    g.add(lab);
+  }
+  h.guides = g;
+  h.group.add(g);
 }
 
 let dragWhich = null;
@@ -111,8 +163,9 @@ export default defineLab({
       fromCos: ma * mb * Math.cos(phi),
       ahat: normalize(a),
       bhat: normalize(b),
-      alpha: ma ? Math.acos(Math.min(1, Math.abs(a.x) / ma)) : 0,
-      beta: ma ? Math.acos(Math.min(1, Math.abs(a.y) / ma)) : 0,
+      // Direction angles with +x̂ and +ŷ: cos α = a_x/|a| keeps its sign (α > 90° when a_x < 0).
+      alpha: ma ? Math.acos(Math.max(-1, Math.min(1, a.x / ma))) : 0,
+      beta: ma ? Math.acos(Math.max(-1, Math.min(1, a.y / ma))) : 0,
     };
   },
   syncViews(state, computed, ctx) {
@@ -121,6 +174,7 @@ export default defineLab({
     const u = UNITS_PER_METER;
     placeArrow(h.aArr, h.aTip, state.a, u);
     placeArrow(h.bArr, h.bTip, state.b, u);
+    rebuildGuides(h, state, u);
     ctx.grid.visible = true;
   },
   law: () => [
@@ -142,6 +196,7 @@ export default defineLab({
       kv('|a||b|cosφ', v.fromCos.toFixed(3)),
       kv('φ', `${deg.toFixed(1)}°`),
       kv('α = cos⁻¹(a<sub>x</sub>/|a|)', `${((v.alpha * 180) / Math.PI).toFixed(1)}°`),
+      kv('β = cos⁻¹(a<sub>y</sub>/|a|)', `${((v.beta * 180) / Math.PI).toFixed(1)}°`),
     ].join('');
   },
   readout(state, computed) {

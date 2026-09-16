@@ -13,6 +13,7 @@ export default defineLab({
   title: 'Field',
   hint: 'Click empty space to place the probe',
   orbit: true,
+  probe: true,
   camera: { pos: new THREE.Vector3(5.8, 4.4, 9.6), target: new THREE.Vector3(0, 0, 0) },
   keys: { '+': 'add+', '=': 'add+', '-': 'add-', Delete: 'delete', Backspace: 'delete', r: 'reset', R: 'reset' },
   toggles: [

@@ -15,11 +15,15 @@ export function parseHash() {
   return { examId: exam.id, labId: exam.labs[0] || null };
 }
 
-export function writeHash(examId, labId) {
+/**
+ * Each lab switch is a history entry so Back / Forward walk through labs.
+ * `replace` is for boot, where we only normalize the URL (e.g. `#/` → `#/e2/gauss`).
+ */
+export function writeHash(examId, labId, { replace = false } = {}) {
   const next = labId ? `#/${examId}/${labId}` : `#/${examId}`;
-  if (location.hash !== next) {
-    history.replaceState(null, '', next);
-  }
+  if (location.hash === next) return;
+  if (replace) history.replaceState(null, '', next);
+  else history.pushState(null, '', next);
 }
 
 export function neighborExam(examId, dir) {

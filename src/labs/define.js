@@ -25,6 +25,10 @@
  * coach(state, computed)
  * plot(state, computed)     — null | { type:'Vx'|'ac', ... }
  * pointer                   — null = default charge drag; or { down, move, up }
+ * probe                     — true: clicking empty space moves state.probe (xz plane at probe.y)
+ * cameraFor(state)          — optional per-scenario camera; falls back to `camera`
+ * applyScenario(id, state)  — optional; otherwise data/scenarios.js applyScenario(lab.id, …)
+ * afterFrame(dt, state, computed, ctx) — per-frame animation that does not need a recompute
  */
 export function defineLab(spec) {
   return {

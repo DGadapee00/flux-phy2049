@@ -27,7 +27,7 @@ function makeInstanced(geo, color) {
 }
 
 /** Instanced Manim vectors: shaft stretches with length, tip keeps a constant size. */
-class VectorBatch {
+export class VectorBatch {
   constructor(group, color) {
     this.shaft = makeInstanced(SHAFT, color);
     this.tip = makeInstanced(TIP, color);

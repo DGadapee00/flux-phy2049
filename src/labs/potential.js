@@ -15,6 +15,7 @@ export default defineLab({
   title: 'Potential',
   hint: 'Click probe (B) · Shift-click sets A',
   orbit: true,
+  probe: true,
   camera: { pos: new THREE.Vector3(5.6, 5.2, 9.8), target: new THREE.Vector3(0, 0, 0) },
   keys: { '+': 'add+', '=': 'add+', '-': 'add-', Delete: 'delete', Backspace: 'delete', r: 'reset', R: 'reset' },
   toggles: [

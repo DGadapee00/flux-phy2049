@@ -10,6 +10,9 @@ const loaders = {
   vectors: () => import('./vectors.js'),
   conductors: () => import('./conductors.js'),
   biot: () => import('./biot.js'),
+  circuits: () => import('./circuits.js'),
+  ampere: () => import('./ampere.js'),
+  magforce: () => import('./magforce.js'),
 };
 
 const cache = new Map();

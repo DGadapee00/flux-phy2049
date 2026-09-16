@@ -648,6 +648,34 @@ select {
   background: linear-gradient(90deg, #1c758a, #58c4dd 20%, #5cd0b3 40%, #83c167 60%, #f4d345 80%, #fc6255);
 }
 
+.legend-sigma {
+  background: linear-gradient(90deg, #58c4dd, #3a3d44 50%, #fc6255);
+}
+
+.legend-bdl {
+  background: linear-gradient(90deg, #58c4dd, #2c2e33 50%, #f4d345);
+}
+
+.qB {
+  color: var(--teal);
+}
+
+.circuit-label.right-text {
+  text-align: right;
+}
+
+.tab.soon {
+  color: var(--text-dim);
+  font-style: italic;
+  opacity: 0.6;
+  cursor: default;
+}
+
+.tab.soon:hover {
+  background: transparent;
+  color: var(--text-dim);
+}
+
 .legend-row {
   display: flex;
   justify-content: space-between;

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { UNITS_PER_METER } from '../physics/constants.js';
 
-export function createChargePointer({ camera, controls, canvas, getState, getPool, getHandle, getLab, bump, labsWithProbe }) {
+export function createChargePointer({ camera, controls, canvas, getState, getPool, getHandle, getLab, bump }) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const plane = new THREE.Plane();
@@ -90,7 +90,8 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
       }
       return;
     }
-    const allowProbe = labsWithProbe.has(state.lab);
+    // Labs opt in with `probe: true`; a click on empty space moves state.probe in its xz plane.
+    const allowProbe = !!getLab?.()?.probe && !!state.probe;
     if (down && !down.moved && down.id == null && allowProbe) {
       setPointer(e);
       raycaster.setFromCamera(pointer, camera);

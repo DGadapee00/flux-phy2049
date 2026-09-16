@@ -90,7 +90,6 @@ const pointer = createChargePointer({
   bump: () => {
     app.dirty = true;
   },
-  labsWithProbe: new Set(['field', 'gauss', 'potential', 'conductors', 'biot']),
 });
 
 let camTween = null;
@@ -99,13 +98,15 @@ controls.addEventListener('start', () => {
 });
 
 function goCamera(lab) {
-  if (!lab?.camera) return;
+  // cameraFor(state) lets one lab frame different scenarios differently (particle orbit vs a wire).
+  const cam = lab?.cameraFor?.(slice()) || lab?.camera;
+  if (!cam) return;
   camTween = {
     t: 0,
     fromPos: camera.position.clone(),
     fromTarget: controls.target.clone(),
-    toPos: lab.camera.pos,
-    toTarget: lab.camera.target,
+    toPos: cam.pos,
+    toTarget: cam.target,
   };
 }
 
@@ -207,7 +208,7 @@ async function setExam(examId, preferredLab) {
     app.labId = null;
     pool.hideAll();
     hud.mount(null, exam, { examId: exam.id });
-    writeHash(exam.id, '');
+    writeHash(exam.id, '', { replace: booting });
     app.dirty = true;
   }
 }
@@ -239,16 +240,21 @@ async function setLab(labId) {
   setOrbit(lab.orbit);
   goCamera(lab);
   hud.mount(lab, examById(app.examId), s);
-  writeHash(app.examId, labId);
+  writeHash(app.examId, labId, { replace: booting });
   app.dirty = true;
 }
 
-window.addEventListener('hashchange', () => {
+let booting = true;
+
+function followUrl() {
   const { examId, labId } = parseHash();
   if (examId === app.examId && labId === app.labId) return;
   if (labId) setLab(labId);
   else setExam(examId);
-});
+}
+// Typed / bookmarked hashes fire hashchange; Back / Forward over pushState entries fire popstate.
+window.addEventListener('hashchange', followUrl);
+window.addEventListener('popstate', followUrl);
 
 function recompute() {
   const lab = app.lab;
@@ -306,6 +312,7 @@ window.__gauss = {
 
 const boot = parseHash();
 setExam(boot.examId, boot.labId).then(() => {
+  booting = false;
   recompute();
   syncViews();
   hud.update(publicState(), computed, app.lab);

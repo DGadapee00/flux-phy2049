@@ -15,8 +15,8 @@ npm start
 Opens at http://localhost:5174/
 
 ```bash
-npm test          # physics self-test (no browser)
-node scripts/smoke.mjs   # 8 labs vs scripts/baseline/values.json
+npm test                 # physics self-test (no browser) — analytic vs numerical, relative tolerances
+node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts/baseline/values.json
 ```
 
 ## Exams
@@ -26,17 +26,26 @@ node scripts/smoke.mjs   # 8 labs vs scripts/baseline/values.json
 | Exam 1 · Ch V, 34–35 | `#/e1/vectors` | Vectors, Force |
 | Exam 2 · Ch 36–37 | `#/e2/gauss` | Field, Integrals, Gauss, Conductors |
 | Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Capacitor, Ohm, Power |
-| Exam 4 · Ch 43–47 | `#/e4/biot` | Biot–Savart (Circuits, Ampère, Mag force next) |
-| Exam 5–7, Wave | `#/e5` … `#/wave` | Coming — Faraday, AC, EM waves, optics |
+| Exam 4 · Ch 43–47 | `#/e4/circuits` | Circuits, Biot–Savart, Ampère, Mag force |
+| Exam 5–7, Wave | `#/e5` … `#/wave` | Coming — Faraday, AC, EM waves, optics (greyed tabs) |
+
+### Exam 4 labs
+
+- **Circuits** (`#/e4/circuits`) — series, parallel, R₁ + (R₂∥R₃), and the Ch 44 two-battery circuit. Solved by nodal analysis; wires colored by potential, dots show real current, grey chevrons show the assumed direction. Junction and loop rules are evaluated live.
+- **Biot–Savart** (`#/e4/biot`) — wire, loop, solenoid. Σ dB is compared with the exact formula for the *same finite* geometry; the ideal limit (μ₀I/2πρ, μ₀nI) is shown separately.
+- **Ampère** (`#/e4/ampere`) — circular Amperian loop as a Riemann sum, pieces colored by B·dl. Centered, off-center, wire outside, two wires, inside a thick wire.
+- **Mag force** (`#/e4/magforce`) — proton / electron orbits and a helix (Boris integration), velocity selector, F = I L × B, parallel wires.
+
+Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up.
 
 ## Controls
 
-- Exam tabs **1–7 W**, or `[` / `]`
+- Exam tabs **1–7 W**, or `[` / `]`; Back / Forward walk through the labs you visited
 - Labs in the current exam: keys `1–9`
-- Drag to orbit (Ohm / Power lock rotation), scroll to zoom
+- Drag to orbit (Ohm / Power / Circuits lock rotation), scroll to zoom
 - Drag a charge in the xz plane; **Shift-drag** for height
-- Click empty space (Gauss / Field / Potential) to place the probe
-- `Space` plays the integral · `Delete` removes a charge · `+` / `−` add charges · `R` resets the camera
+- Click empty space (Gauss / Field / Potential / Conductors / Biot–Savart) to place the probe
+- `Space` plays the integral or sum · `Delete` removes a charge · `+` / `−` add charges · `R` resets the camera
 
 Phone layout (< ~720 px) is out of scope for now.
 

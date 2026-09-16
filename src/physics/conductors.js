@@ -20,6 +20,22 @@ export function sigmaUniform(Q, R) {
   return Q / (4 * Math.PI * R * R);
 }
 
+/**
+ * Surface charge density on the (outer) sphere in direction `dir` from the center.
+ * Grounded / neutral: the point charge sits on +x at distance d, so cosθ = dir.x.
+ * Grounded: σ = −q(d² − R²) / [4πR (R² + d² − 2Rd cosθ)^{3/2}], which integrates to q′ = −qR/d.
+ * Neutral isolated: add the uniform +qR/d spread so the total is zero.
+ */
+export function sigmaSphere(state, dir) {
+  const { kind, R, q, d, Q, b } = state;
+  if (kind === 'uniform') return Q / (4 * Math.PI * R * R);
+  if (kind === 'cage') return q / (4 * Math.PI * b * b);
+  const cos = dir.x / Math.hypot(dir.x, dir.y, dir.z);
+  const g = (-q * (d * d - R * R)) / (4 * Math.PI * R * Math.pow(R * R + d * d - 2 * R * d * cos, 1.5));
+  if (kind === 'grounded') return g;
+  return g + (q * R) / d / (4 * Math.PI * R * R);
+}
+
 export function EoutsideSphere(Q, r) {
   return (K * Q) / (r * r);
 }

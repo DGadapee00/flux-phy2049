@@ -1,10 +1,44 @@
 import * as THREE from 'three';
 import { defineLab } from './define.js';
-import { conductorField, imageGrounded, imageIsolatedNeutral, sigmaUniform, EoutsideSphere } from '../physics/conductors.js';
+import { conductorField, imageGrounded, imageIsolatedNeutral, sigmaUniform, sigmaSphere, EoutsideSphere } from '../physics/conductors.js';
 import { fmtE, fmtCharge } from '../ui/format.js';
 import { kv, cells } from '../ui/shared.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
-import { M } from '../scene/manim.js';
+import { POS_COLOR, NEG_COLOR } from '../scene/manim.js';
+
+const _neutral = new THREE.Color(0x3a3d44);
+const _pos = new THREE.Color(POS_COLOR);
+const _neg = new THREE.Color(NEG_COLOR);
+const _c = new THREE.Color();
+
+/** Vertex colors by σ: red +, blue −, charcoal ≈ 0 (sqrt so small σ still reads). */
+function paintSigma(mesh, sigmaAt, sMax) {
+  const pos = mesh.geometry.attributes.position;
+  const col = mesh.geometry.attributes.color;
+  for (let i = 0; i < pos.count; i++) {
+    const s = sigmaAt({ x: pos.getX(i), y: pos.getY(i), z: pos.getZ(i) });
+    const t = Math.max(-1, Math.min(1, s / (sMax || 1)));
+    _c.copy(_neutral).lerp(t >= 0 ? _pos : _neg, Math.sqrt(Math.abs(t)));
+    col.setXYZ(i, _c.r, _c.g, _c.b);
+  }
+  col.needsUpdate = true;
+}
+
+function sigmaSphereMesh(w, h) {
+  const geo = new THREE.SphereGeometry(1, w, h);
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3), 3));
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    vertexColors: true,
+    metalness: 0.15,
+    roughness: 0.45,
+    transparent: true,
+    opacity: 0.62,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  return new THREE.Mesh(geo, mat);
+}
 
 const SCENARIOS = [
   { id: 'uniform', name: 'Isolated sphere, charge on the surface', kind: 'uniform', R: 0.35, Q: 2e-6, q: 0, d: 0.7, a: 0.22, b: 0.38 },
@@ -19,6 +53,8 @@ export default defineLab({
   title: 'Conductors',
   hint: 'Move the probe: E = 0 in the metal',
   orbit: true,
+  probe: true,
+  legend: { id: 'sigma', title: 'Surface charge σ', low: '− induced', high: '+', barClass: 'legend-sigma' },
   camera: { pos: new THREE.Vector3(6.2, 4.2, 9.4), target: new THREE.Vector3(0, 0, 0) },
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
@@ -92,6 +128,7 @@ export default defineLab({
       const s = api.slice();
       s.R = Number(e.target.value);
       s.b = Math.max(s.R, s.a + 0.04);
+      s.d = Math.max(s.d, s.R + 0.08);
       api.bump();
     });
     $('con-Q').addEventListener('input', (e) => {
@@ -125,22 +162,11 @@ export default defineLab({
   init(ctx) {
     const group = new THREE.Group();
     ctx.scene.add(group);
-    const metalMat = new THREE.MeshPhysicalMaterial({
-      color: 0x8aa0b0,
-      metalness: 0.85,
-      roughness: 0.25,
-      transparent: true,
-      opacity: 0.35,
-      side: THREE.DoubleSide,
-    });
-    const sphere = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), metalMat);
-    const inner = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 32, 24),
-      new THREE.MeshBasicMaterial({ color: M.blueE, transparent: true, opacity: 0.12, side: THREE.BackSide }),
-    );
+    const sphere = sigmaSphereMesh(72, 48);
+    const inner = sigmaSphereMesh(48, 32);
     const qMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.11, 20, 14),
-      new THREE.MeshBasicMaterial({ color: M.red, toneMapped: false }),
+      new THREE.MeshBasicMaterial({ color: POS_COLOR, toneMapped: false }),
     );
     group.add(sphere, inner, qMesh);
     group.visible = false;
@@ -171,6 +197,13 @@ export default defineLab({
     h.qMesh.visible = state.kind !== 'uniform';
     if (state.kind === 'cage') h.qMesh.position.set(0, 0, 0);
     else if (state.kind !== 'uniform') h.qMesh.position.set(state.d * u, 0, 0);
+    h.qMesh.material.color.setHex(state.q >= 0 ? POS_COLOR : NEG_COLOR);
+
+    const sigmaInner = state.kind === 'cage' ? -state.q / (4 * Math.PI * state.a * state.a) : 0;
+    let sMax = Math.abs(sigmaInner);
+    for (const c of [1, 0, -1]) sMax = Math.max(sMax, Math.abs(sigmaSphere(state, { x: c, y: Math.sqrt(1 - c * c), z: 0 })));
+    paintSigma(h.sphere, (dir) => sigmaSphere(state, dir), sMax);
+    if (state.kind === 'cage') paintSigma(h.inner, () => sigmaInner, sMax);
     const probe = ctx.pool.probe();
     probe.setVisible(true);
     probe.sync(state.probe, computed.cond, computed.cond.region === 'metal' ? 'E = 0' : '');
@@ -195,6 +228,10 @@ export default defineLab({
       kv('Probe', `(${state.probe.x.toFixed(2)}, ${state.probe.y.toFixed(2)}, ${state.probe.z.toFixed(2)}) m`),
     ];
     if (computed.sigma != null) rows.push(kv('σ = Q/4πR²', `${computed.sigma.toExponential(2)} C/m²`));
+    if (state.kind === 'grounded' || state.kind === 'neutral') {
+      rows.push(kv('σ facing q (θ = 0)', `${sigmaSphere(state, { x: 1, y: 0, z: 0 }).toExponential(2)} C/m²`));
+      rows.push(kv('σ far side (θ = π)', `${sigmaSphere(state, { x: -1, y: 0, z: 0 }).toExponential(2)} C/m²`));
+    }
     if (state.kind === 'grounded' && computed.image) {
       rows.push(kv("q' = −(R/d)q", fmtCharge(computed.image.q)));
       rows.push(kv("d' = R²/d", `${computed.image.x.toFixed(3)} m`));
