@@ -13,6 +13,8 @@ const loaders = {
   circuits: () => import('./circuits.js'),
   ampere: () => import('./ampere.js'),
   magforce: () => import('./magforce.js'),
+  faraday: () => import('./faraday.js'),
+  ac: () => import('./ac.js'),
 };
 
 const cache = new Map();

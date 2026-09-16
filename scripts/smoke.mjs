@@ -32,6 +32,8 @@ const LAB = {
   circuits: 'e4',
   ampere: 'e4',
   magforce: 'e4',
+  faraday: 'e5',
+  ac: 'e5',
 };
 
 async function go(lab) {
@@ -256,15 +258,33 @@ const magforce = await page.evaluate(() => ({
 await page.screenshot({ path: path.join(outDir, 'magforce.png') });
 check('magforce proton r numerical vs mv/qB', magforce.rNum, magforce.rA, 0.005);
 
+await go('faraday');
+const faraday = await page.evaluate(() => {
+  const f = window.__gauss.computed.far;
+  return { lab: window.__gauss.state.lab, Phi: f?.Phi, emf: f?.emf, I: f?.I };
+});
+await page.screenshot({ path: path.join(outDir, 'faraday.png') });
+if (faraday.lab !== 'faraday' || !Number.isFinite(faraday.emf)) {
+  mismatches.push({ name: 'faraday.boot', got: faraday, exp: 'finite ε' });
+}
+
+await go('ac');
+const ac = await page.evaluate(() => {
+  const a = window.__gauss.computed.ac;
+  return { lab: window.__gauss.state.lab, Z: a?.Z, Irms: a?.Irms, phi: a?.phi };
+});
+await page.screenshot({ path: path.join(outDir, 'ac.png') });
+check('ac.series RLC |Z|', ac.Z, Math.hypot(15, 2 * Math.PI * 60 * 0.08 - 1 / (2 * Math.PI * 60 * 4e-5)), 0.01);
+
 // Back button walks lab history (pushState entries).
 await page.goBack();
-await page.waitForFunction(() => window.__gauss?.state?.lab === 'ampere', null, { timeout: 5000 }).catch(() => {});
+await page.waitForFunction(() => window.__gauss?.state?.lab === 'faraday', null, { timeout: 5000 }).catch(() => {});
 const back = await page.evaluate(() => window.__gauss.state.lab);
-if (back !== 'ampere') mismatches.push({ name: 'history.back', got: back, exp: 'ampere' });
+if (back !== 'faraday') mismatches.push({ name: 'history.back', got: back, exp: 'faraday' });
 
 console.log(
   JSON.stringify(
-    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, back, mismatches, errors },
+    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, faraday, ac, back, mismatches, errors },
     null,
     2,
   ),

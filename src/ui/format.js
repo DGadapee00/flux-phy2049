@@ -100,6 +100,30 @@ export function fmtC(c) {
   return `${sciText(c)} F`;
 }
 
+export function fmtL(L) {
+  if (!Number.isFinite(L)) return '—';
+  if (L >= 1) return `${L.toFixed(3)} H`;
+  if (L >= 1e-3) return `${(L * 1e3).toFixed(2)} mH`;
+  return `${(L * 1e6).toFixed(2)} μH`;
+}
+
+export function fmtHz(f) {
+  if (!Number.isFinite(f)) return '—';
+  if (f >= 1e3) return `${(f / 1e3).toFixed(2)} kHz`;
+  return `${f.toFixed(2)} Hz`;
+}
+
+/** Magnetic flux in webers. */
+export function fmtWb(x) {
+  if (!Number.isFinite(x)) return '—';
+  const a = Math.abs(x);
+  const s = x < 0 ? '−' : '';
+  if (a >= 1) return `${s}${a.toFixed(3)} Wb`;
+  if (a >= 1e-3) return `${s}${(a * 1e3).toFixed(2)} mWb`;
+  if (a >= 1e-6) return `${s}${(a * 1e6).toFixed(2)} μWb`;
+  return `${s}${sciText(a)} Wb`;
+}
+
 export function fmtR(r) {
   if (!Number.isFinite(r)) return '—';
   if (r >= 1e6) return `${(r / 1e6).toFixed(2)} MΩ`;

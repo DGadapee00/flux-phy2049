@@ -27,7 +27,8 @@ node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts
 | Exam 2 · Ch 36–37 | `#/e2/gauss` | Field, Integrals, Gauss, Conductors |
 | Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Capacitor, Ohm, Power |
 | Exam 4 · Ch 43–47 | `#/e4/circuits` | Circuits, Biot–Savart, Ampère, Mag force |
-| Exam 5–7, Wave | `#/e5` … `#/wave` | Coming — Faraday, AC, EM waves, optics (greyed tabs) |
+| Exam 5 · Ch 48–52 | `#/e5/faraday` | Faraday, AC |
+| Exam 6–7, Wave | `#/e6` … `#/wave` | Coming — EM waves, optics (greyed tabs) |
 
 ### Exam 4 labs
 
@@ -36,7 +37,12 @@ node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts
 - **Ampère** (`#/e4/ampere`) — circular Amperian loop as a Riemann sum, pieces colored by B·dl. Centered, off-center, wire outside, two wires, inside a thick wire.
 - **Mag force** (`#/e4/magforce`) — proton / electron orbits and a helix (Boris integration), velocity selector, F = I L × B, parallel wires.
 
-Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up.
+### Exam 5 labs
+
+- **Faraday** (`#/e5/faraday`) — moving magnet, growing loop, sliding bar, rotating generator. Live ε = −dΦ_B/dt; yellow chevrons are Lenz’s induced current (counterclockwise from +y is +I and makes +B_y).
+- **AC** (`#/e5/ac`) — series R, RC, RL, RLC. Phasors and |Z|, φ, f₀. Tune through resonance and I peaks when X_L = X_C.
+
+Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up. Faraday uses the same loop convention for Lenz.
 
 ## Controls
 

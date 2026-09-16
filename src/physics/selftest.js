@@ -44,6 +44,8 @@ import {
 } from './magforce.js';
 import { solveCircuit, loopTerms, junctionTerms } from './mna.js';
 import { CIRCUITS, netlist, equivalentR } from '../data/circuits.js';
+import { expandingLoop, slidingBar, generator, dipoleLoop, fluxDipoleLoop, inducedCurrent, lenz } from './faraday.js';
+import { acState } from './ac.js';
 
 let failed = 0;
 let passed = 0;
@@ -428,6 +430,82 @@ function solveLayout(id, values) {
   ok(sol.I.R3 < 0, 'two-loop: I₃ < 0 → it really flows out of the junction');
   approx(junctionTerms('mt', edges, sol).sum, 0, 1e-6, 'two-loop junction rule');
   for (const loop of layout.loops) approx(loopTerms(loop.path, edges, sol).sum, 0, 1e-6, `two-loop loop rule: ${loop.name}`);
+}
+
+console.log('\nFaraday / Lenz');
+
+{
+  const B = 0.4;
+  const R = 0.25;
+  const Rdot = 0.5;
+  const N = 2;
+  const r = expandingLoop(B, R, Rdot, N);
+  approx(r.Phi, N * B * Math.PI * R * R, 1e-9, 'expanding loop: Φ = N B π R²');
+  approx(r.emf, -N * B * 2 * Math.PI * R * Rdot, 1e-9, 'expanding loop: ε = −N B 2π R Ṙ');
+}
+
+{
+  const B = 0.5;
+  const w = 0.4;
+  const v = 2;
+  const r = slidingBar(B, w, 0.3, v);
+  approx(r.Phi, B * w * 0.3, 1e-9, 'sliding bar: Φ = B w x');
+  approx(r.emf, -B * w * v, 1e-9, 'sliding bar: ε = −B ℓ v');
+}
+
+{
+  const N = 10;
+  const B = 0.1;
+  const A = 0.05;
+  const omega = 12;
+  const g0 = generator(N, B, A, omega, 0);
+  approx(g0.Phi, N * B * A, 1e-9, 'generator t=0: Φ = NBA');
+  approx(g0.emf, 0, 1e-9, 'generator t=0: ε = 0');
+  const g90 = generator(N, B, A, omega, Math.PI / 2);
+  approx(g90.Phi, 0, 1e-9, 'generator θ=90°: Φ = 0');
+  approx(g90.emf, N * B * A * omega, 1e-9, 'generator θ=90°: ε = NBA ω');
+}
+
+{
+  const m = 1.2;
+  const z = 0.4;
+  const R = 0.2;
+  const vz = -0.3;
+  const r = dipoleLoop(m, z, R, vz);
+  const dt = 1e-6;
+  const Phi2 = fluxDipoleLoop(m, z + vz * dt, R);
+  approx(r.emf, -(Phi2 - r.Phi) / dt, 0.01, 'dipole loop: ε vs numerical −ΔΦ/Δt');
+  ok(r.dPhi_dt > 0, 'dipole approaching (z>0, vz<0): Φ_y increases');
+  ok(lenz(r.dPhi_dt).Isign < 0, 'Lenz: dΦ/dt > 0 → I clockwise (from +y)');
+  approx(inducedCurrent(r.emf, 2), r.emf / 2, 1e-12, 'I = ε/R');
+}
+
+console.log('\nAC circuits');
+
+{
+  const L = 0.1;
+  const C = 1e-5;
+  const omega0 = 1 / Math.sqrt(L * C);
+  const s = acState({ R: 10, L, C, f: omega0 / (2 * Math.PI), Vrms: 12, hasL: true, hasC: true });
+  approx(s.XL, s.XC, 0.002, 'RLC resonance: X_L = X_C');
+  approx(s.Z, 10, 0.002, 'RLC resonance: Z = R');
+  approx(s.phi, 0, 0.002, 'RLC resonance: φ = 0');
+  approx(s.Irms, 12 / 10, 0.002, 'RLC resonance: I = V/R is maximum');
+  approx(s.f0, omega0 / (2 * Math.PI), 0.002, 'f₀ = 1/(2π√(LC))');
+}
+
+{
+  const s = acState({ R: 100, L: 0, C: 1e-6, f: 1000, Vrms: 10, hasL: false, hasC: true });
+  const XC = 1 / (2 * Math.PI * 1000 * 1e-6);
+  approx(s.XC, XC, 0.002, 'RC: X_C = 1/ωC');
+  approx(s.Z, Math.hypot(100, XC), 0.002, 'RC: |Z| = √(R²+X_C²)');
+  ok(s.phi < 0, 'RC: φ < 0 (voltage lags current)');
+}
+
+{
+  const s = acState({ R: 40, L: 0.08, C: 0, f: 60, Vrms: 120, hasL: true, hasC: false });
+  approx(s.XL, 2 * Math.PI * 60 * 0.08, 0.002, 'RL: X_L = ωL');
+  ok(s.phi > 0, 'RL: φ > 0 (voltage leads current)');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

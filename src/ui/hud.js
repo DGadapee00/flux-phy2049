@@ -1,6 +1,6 @@
 import { EXAMS, examById, LAB_META } from '../data/catalog.js';
 import { setLawEl } from './shared.js';
-import { drawVx, drawAC } from './plot.js';
+import { drawVx, drawAC, drawVI } from './plot.js';
 import { resetChargeListSig } from '../labs/charges-ui.js';
 
 export function createHUD(api) {
@@ -171,6 +171,7 @@ export function createHUD(api) {
       canvas.hidden = false;
       if (plot.type === 'Vx') drawVx(canvas, plot.xs, plot.Vs, plot.xProbe, plot.xA);
       if (plot.type === 'ac') drawAC(canvas, plot.power, plot.t);
+      if (plot.type === 'vi') drawVI(canvas, plot);
     }
   }
 

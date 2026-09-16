@@ -163,6 +163,36 @@ export function drawAC(canvas, pwr, t) {
   ctx.globalAlpha = 1;
 }
 
+/** One slow-motion cycle of v(t) (blue) and i(t) (yellow), current lagging by φ. */
+export function drawVI(canvas, { omega, phi, t }) {
+  if (!canvas) return;
+  const { ctx, w, h } = setup(canvas);
+  const f = omega / (2 * Math.PI);
+  const T = 1 / f;
+  const n = 120;
+  axes(ctx, w, h, h / 2, 8);
+  const curve = (color, fn) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const tt = t - T + (i / n) * T;
+      const X = 12 + (i / n) * (w - 24);
+      const Y = h / 2 - fn(tt) * (h / 2 - 12);
+      if (i === 0) ctx.moveTo(X, Y);
+      else ctx.lineTo(X, Y);
+    }
+    ctx.stroke();
+  };
+  curve(BLUE, (tt) => Math.sin(omega * tt));
+  curve(YELLOW, (tt) => Math.sin(omega * tt - phi));
+  ctx.font = SERIF;
+  ctx.fillStyle = BLUE;
+  ctx.fillText('V(t)', 14, 16);
+  ctx.fillStyle = YELLOW;
+  ctx.fillText('I(t)', 52, 16);
+}
+
 function nearest(xs, x) {
   let best = 0;
   let d = Infinity;
