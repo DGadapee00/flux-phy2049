@@ -1,4 +1,4 @@
-import { EXAMS, examById } from '../data/catalog.js';
+import { EXAMS, examById, LAB_META } from '../data/catalog.js';
 import { setLawEl } from './shared.js';
 import { drawVx, drawAC } from './plot.js';
 import { resetChargeListSig } from '../labs/charges-ui.js';
@@ -34,9 +34,8 @@ export function createHUD(api) {
     $('lab-tabs').innerHTML = labs
       .map((id, i) => {
         const on = id === labId;
-        const title = id.charAt(0).toUpperCase() + id.slice(1);
-        const metaTitle = title;
-        return `<button type="button" class="tab${on ? ' active' : ''}" data-lab="${id}" role="tab" aria-selected="${on}">${metaTitle}</button>`;
+        const title = LAB_META[id]?.title || id;
+        return `<button type="button" class="tab${on ? ' active' : ''}" data-lab="${id}" role="tab" aria-selected="${on}">${title}</button>`;
       })
       .join('');
   }

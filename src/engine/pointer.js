@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { UNITS_PER_METER } from '../physics/constants.js';
 
-export function createChargePointer({ camera, controls, canvas, getState, getPool, bump, labsWithProbe }) {
+export function createChargePointer({ camera, controls, canvas, getState, getPool, getHandle, getLab, bump, labsWithProbe }) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const plane = new THREE.Plane();
@@ -29,9 +29,9 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
     if (e.button !== 0) return;
     const state = getState();
     const pool = getPool();
-    const custom = state.__lab?.pointer;
+    const custom = getLab?.()?.pointer;
     if (custom?.down) {
-      custom.down(e, { state, camera, controls, canvas, bump });
+      custom.down(e, { state, camera, controls, canvas, bump, handle: getHandle?.(), pool });
       return;
     }
     if (!state.charges) return;
@@ -49,9 +49,9 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
 
   window.addEventListener('pointermove', (e) => {
     const state = getState();
-    const custom = state.__lab?.pointer;
+    const custom = getLab?.()?.pointer;
     if (custom?.move) {
-      custom.move(e, { state, camera, controls, canvas, bump });
+      custom.move(e, { state, camera, controls, canvas, bump, handle: getHandle?.(), pool: getPool() });
       return;
     }
     if (!down) return;
@@ -80,11 +80,14 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
 
   window.addEventListener('pointerup', (e) => {
     const state = getState();
-    const custom = state.__lab?.pointer;
+    const custom = getLab?.()?.pointer;
     if (custom?.up) {
-      custom.up(e, { state, camera, controls, canvas, bump });
+      custom.up(e, { state, camera, controls, canvas, bump, handle: getHandle?.(), pool: getPool() });
       down = null;
-      drag = null;
+      if (drag) {
+        drag = null;
+        controls.enabled = true;
+      }
       return;
     }
     const allowProbe = labsWithProbe.has(state.lab);

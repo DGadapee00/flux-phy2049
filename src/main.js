@@ -85,10 +85,12 @@ const pointer = createChargePointer({
   canvas,
   getState: publicState,
   getPool: () => pool,
+  getHandle: () => app.handles[app.labId],
+  getLab: () => app.lab,
   bump: () => {
     app.dirty = true;
   },
-  labsWithProbe: new Set(['field', 'gauss', 'potential']),
+  labsWithProbe: new Set(['field', 'gauss', 'potential', 'conductors', 'biot']),
 });
 
 let camTween = null;
@@ -168,10 +170,15 @@ function apiAdd(sign) {
   bump();
 }
 
+function applyLabScenario(lab, id, s) {
+  if (lab.applyScenario) lab.applyScenario(id, s);
+  else applyScenario(lab.id, id, s);
+}
+
 function setScenario(id) {
   const lab = app.lab;
   if (!lab) return;
-  applyScenario(lab.id, id, slice());
+  applyLabScenario(lab, id, slice());
   goCamera(lab);
   bump();
 }
@@ -223,7 +230,7 @@ async function setLab(labId) {
   if (!app.slices[labId]) {
     const s = lab.defaultState();
     const list = typeof lab.scenarios === 'function' ? lab.scenarios() : lab.scenarios || [];
-    if (list[0]) applyScenario(labId, list[0].id, s);
+    if (list[0]) applyLabScenario(lab, list[0].id, s);
     app.slices[labId] = s;
   }
   const s = app.slices[labId];
@@ -247,6 +254,7 @@ function recompute() {
   const lab = app.lab;
   const s = slice();
   if (!lab) return;
+  ctx.handle = app.handles[app.labId];
   lab.recompute(s, computed, ctx);
   computed.coach = lab.coach(s, computed);
 }
@@ -258,6 +266,7 @@ function syncViews() {
     grid.visible = true;
     return;
   }
+  ctx.handle = app.handles[app.labId];
   lab.syncViews(slice(), computed, ctx);
 }
 

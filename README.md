@@ -23,10 +23,11 @@ node scripts/smoke.mjs   # 8 labs vs scripts/baseline/values.json
 
 | Unit | Hash | Labs |
 |---|---|---|
-| Exam 1 · Ch V, 34–35 | `#/e1/force` | Force (Vectors next) |
-| Exam 2 · Ch 36–37 | `#/e2/gauss` | Field, Integrals, Gauss (Conductors next) |
+| Exam 1 · Ch V, 34–35 | `#/e1/vectors` | Vectors, Force |
+| Exam 2 · Ch 36–37 | `#/e2/gauss` | Field, Integrals, Gauss, Conductors |
 | Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Capacitor, Ohm, Power |
-| Exam 4–7, Wave | `#/e4` … `#/wave` | Coming — Biot–Savart, Ampère, Faraday, optics |
+| Exam 4 · Ch 43–47 | `#/e4/biot` | Biot–Savart (Circuits, Ampère, Mag force next) |
+| Exam 5–7, Wave | `#/e5` … `#/wave` | Coming — Faraday, AC, EM waves, optics |
 
 ## Controls
 

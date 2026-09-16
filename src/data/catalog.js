@@ -7,8 +7,8 @@ export const EXAMS = [
     title: 'Charge & force',
     chapters: 'V, 34–35',
     date: 'Fri 8/28',
-    labs: ['force'],
-    coming: ['Vectors'],
+    labs: ['vectors', 'force'],
+    coming: [],
   },
   {
     id: 'e2',
@@ -16,8 +16,8 @@ export const EXAMS = [
     title: 'Fields & Gauss',
     chapters: '36–37',
     date: 'Fri 9/11',
-    labs: ['field', 'integral', 'gauss'],
-    coming: ['Conductors'],
+    labs: ['field', 'integral', 'gauss', 'conductors'],
+    coming: [],
   },
   {
     id: 'e3',
@@ -34,8 +34,8 @@ export const EXAMS = [
     title: 'Circuits & magnetism',
     chapters: '43–47',
     date: 'Fri 10/9',
-    labs: [],
-    coming: ['Circuits', 'Biot–Savart', 'Ampère', 'Mag force'],
+    labs: ['biot'],
+    coming: ['Circuits', 'Ampère', 'Mag force'],
   },
   {
     id: 'e5',
@@ -76,10 +76,13 @@ export const EXAMS = [
 ];
 
 export const LAB_META = {
+  vectors: { id: 'vectors', exam: 'e1', title: 'Vectors' },
   force: { id: 'force', exam: 'e1', title: 'Force' },
   field: { id: 'field', exam: 'e2', title: 'Field' },
   integral: { id: 'integral', exam: 'e2', title: 'Integrals' },
   gauss: { id: 'gauss', exam: 'e2', title: 'Gauss' },
+  conductors: { id: 'conductors', exam: 'e2', title: 'Conductors' },
+  biot: { id: 'biot', exam: 'e4', title: 'Biot–Savart' },
   potential: { id: 'potential', exam: 'e3', title: 'Potential' },
   capacitor: { id: 'capacitor', exam: 'e3', title: 'Capacitor' },
   ohm: { id: 'ohm', exam: 'e3', title: 'Ohm' },

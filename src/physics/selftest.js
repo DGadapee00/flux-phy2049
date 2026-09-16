@@ -15,6 +15,7 @@ import {
 import { potentialAt } from './potential.js';
 import { capacitorState } from './capacitor.js';
 import { ohmState, powerState, bulbFromPower } from './circuit.js';
+import { imageGrounded, conductorField } from './conductors.js';
 import {
   BwireInfinite,
   BloopAxis,
@@ -267,6 +268,24 @@ ok(Math.abs(MU0 - 4e-7 * Math.PI) < 1e-16, 'μ₀ = 4π×10⁻⁷');
 {
   approx(FparallelWires(3, 4, 2, 0.05), (MU0 * 3 * 4 * 2) / (2 * Math.PI * 0.05), 0.002, 'parallel wires F = μ₀ I₁ I₂ L / 2πd');
   approx(cyclotronRadius(1.67e-27, 1e6, 1.6e-19, 0.5), (1.67e-27 * 1e6) / (1.6e-19 * 0.5), 0.002, 'cyclotron r = mv/qB');
+}
+
+{
+  const im = imageGrounded(1e-6, 0.5, 0.2);
+  approx(im.q, -(0.2 / 0.5) * 1e-6, 0.002, 'image q′ = −(R/d)q');
+  approx(im.x, 0.08, 0.002, 'image d′ = R²/d');
+}
+
+{
+  const Ein = conductorField({ kind: 'uniform', R: 0.3, Q: 2e-6, q: 0, d: 0, a: 0.2, b: 0.3 }, { x: 0.1, y: 0, z: 0 });
+  approx(Ein.mag, 0, 0.002, 'E = 0 inside isolated sphere');
+  const Eout = conductorField({ kind: 'uniform', R: 0.3, Q: 2e-6, q: 0, d: 0, a: 0.2, b: 0.3 }, { x: 0.6, y: 0, z: 0 });
+  approx(Eout.mag, (K * 2e-6) / 0.36, 0.002, 'outside sphere E = kQ/r²');
+}
+
+{
+  const Em = conductorField({ kind: 'cage', R: 0.4, Q: 0, q: 1e-6, d: 0, a: 0.2, b: 0.4 }, { x: 0.3, y: 0, z: 0 });
+  approx(Em.mag, 0, 0.002, 'E = 0 in Faraday-cage metal');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -26,6 +26,9 @@ const LAB = {
   capacitor: 'e3',
   ohm: 'e3',
   power: 'e3',
+  vectors: 'e1',
+  conductors: 'e2',
+  biot: 'e4',
 };
 
 async function go(lab) {
@@ -195,9 +198,32 @@ const cube = await page.evaluate(() => ({
 }));
 await page.screenshot({ path: path.join(outDir, 'cube.png') });
 
+await go('vectors');
+const vectors = await page.evaluate(() => ({
+  lab: window.__gauss.state.lab,
+  adb: window.__gauss.computed.vec?.adb,
+}));
+await page.screenshot({ path: path.join(outDir, 'vectors.png') });
+
+await go('conductors');
+const conductors = await page.evaluate(() => ({
+  lab: window.__gauss.state.lab,
+  region: window.__gauss.computed.cond?.region,
+  mag: window.__gauss.computed.cond?.mag,
+}));
+await page.screenshot({ path: path.join(outDir, 'conductors.png') });
+
+await go('biot');
+const biot = await page.evaluate(() => ({
+  lab: window.__gauss.state.lab,
+  mag: window.__gauss.computed.biot?.magFull,
+  analytic: window.__gauss.computed.biot?.an?.mag,
+}));
+await page.screenshot({ path: path.join(outDir, 'biot.png') });
+
 console.log(
   JSON.stringify(
-    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, mismatches, errors },
+    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, mismatches, errors },
     null,
     2,
   ),
