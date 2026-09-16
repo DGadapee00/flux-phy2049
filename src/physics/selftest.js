@@ -48,6 +48,7 @@ import { expandingLoop, slidingBar, generator, dipoleLoop, fluxDipoleLoop, induc
 import { acState } from './ac.js';
 import { planeWave, intensityAvg, spectrumBand } from './emwave.js';
 import { malusChain, malus } from './polarization.js';
+import { snell, criticalAngle, imageOf, twoLenses } from './optics.js';
 
 let failed = 0;
 let passed = 0;
@@ -548,6 +549,53 @@ console.log('\nEM waves / Malus');
   approx(malusChain(I0, [0, 60]).I, I0 / 8, 1e-9, 'unpolarized → 0° then 60°: (I₀/2)cos²60° = I₀/8');
   approx(malusChain(I0, [0, 90]).I, 0, 1e-9, 'crossed polarizers: dark');
   approx(malusChain(I0, [0, 45, 90]).I, I0 / 8, 1e-9, '0° / 45° / 90°: I₀/8 — middle polarizer lets light through');
+}
+
+console.log('\nGeometric optics');
+
+{
+  const th1 = Math.PI / 4;
+  const r = snell(1, th1, 1.5);
+  approx(r.theta2, Math.asin(Math.sin(th1) / 1.5), 1e-9, 'air→glass 45°: n sinθ');
+  ok(!r.tir, 'air→glass 45° is not TIR');
+  approx(1 * Math.sin(th1), 1.5 * Math.sin(r.theta2), 1e-9, 'Snell: n₁ sinθ₁ = n₂ sinθ₂');
+}
+
+{
+  const thc = criticalAngle(1.33, 1);
+  approx(thc, Math.asin(1 / 1.33), 1e-9, 'water→air θ_c = sin⁻¹(1/1.33)');
+  ok(snell(1.33, (55 * Math.PI) / 180, 1).tir, 'water→air 55° is TIR');
+  ok(!snell(1.33, (35 * Math.PI) / 180, 1).tir, 'water→air 35° still transmits');
+  ok(criticalAngle(1, 1.5) == null, 'no θ_c going air→glass');
+}
+
+{
+  const m = imageOf({ f: 10, do: 30, ho: 8, kind: 'mirror' });
+  approx(m.di, 15, 1e-9, 'concave f=10, d_o=30: d_i=15');
+  approx(m.m, -0.5, 1e-9, 'm = −d_i/d_o = −1/2');
+  approx(m.hi, -4, 1e-9, 'h_i = m h_o');
+  ok(m.real && m.inverted, 'real inverted image');
+}
+
+{
+  const L = imageOf({ f: 12, do: 36, ho: 8, kind: 'lens' });
+  approx(L.di, 18, 1e-9, 'lens f=12, d_o=36: d_i=18');
+  approx(L.m, -0.5, 1e-9, 'same algebra as the mirror');
+  ok(L.imageX > 0, 'real lens image is on the far side');
+}
+
+{
+  const v = imageOf({ f: -20, do: 20, ho: 6, kind: 'mirror' });
+  approx(v.di, -10, 1e-9, 'convex f=−20, d_o=20: d_i=−10');
+  ok(!v.real && !v.inverted, 'convex: virtual upright');
+  approx(v.m, 0.5, 1e-9, 'convex |m| < 1');
+}
+
+{
+  const sys = twoLenses({ f1: 10, f2: 10, do1: 20, ho: 4, sep: 30 });
+  approx(sys.i1.di, 20, 1e-9, 'two-lens: first image at 20 cm');
+  approx(sys.do2, 10, 1e-9, 'eyepiece sees object at its F');
+  ok(sys.i2.infinite, 'Keplerian: final image at infinity');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

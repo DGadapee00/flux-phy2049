@@ -29,7 +29,8 @@ node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts
 | Exam 4 · Ch 43–47 | `#/e4/circuits` | Circuits, Biot–Savart, Ampère, Mag force |
 | Exam 5 · Ch 48–52 | `#/e5/faraday` | Faraday, AC |
 | Exam 6 · Ch 53–57 | `#/e6/emwave` | EM wave, Polarization |
-| Exam 7, Wave | `#/e7` … `#/wave` | Coming — refraction, mirrors, lenses, wave optics |
+| Exam 7 · Ch 58–62 | `#/e7/refraction` | Refraction, Mirrors, Lenses |
+| Wave | `#/wave` | Coming — interference, diffraction, thin film |
 
 ### Exam 4 labs
 
@@ -48,13 +49,19 @@ node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts
 - **EM wave** (`#/e6/emwave`) — traveling plane wave, E ŷ, B ẑ, S along +x̂. E/B = c = 1/√(μ₀ε₀). Intensity I = ½ c ε₀ E₀². The drawing is stretched and slowed; the HUD has the real λ, f, and spectrum band (Ch 54).
 - **Polarization** (`#/e6/polar`) — Malus I = I₀ cos²θ. Unpolarized → one filter is I₀/2. Crossed filters go dark; a 45° filter in the middle brings back I₀/8.
 
+### Exam 7 labs
+
+- **Refraction** (`#/e7/refraction`) — Snell n₁ sinθ₁ = n₂ sinθ₂, θᵣ = θ₁, TIR past θ_c = sin⁻¹(n₂/n₁). Rotation locked.
+- **Mirrors** (`#/e7/mirrors`) — 1/f = 1/d_o + 1/d_i, m = −d_i/d_o. Concave f>0 / convex f<0. Three principal rays.
+- **Lenses** (`#/e7/lenses`) — same equation. Converging / diverging, plus Keplerian telescope and compound-microscope two-lens scenarios.
+
 Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up. Faraday uses the same loop convention for Lenz. The EM wave uses E ŷ, B ẑ, travel +x̂ so ŷ × ẑ = x̂.
 
 ## Controls
 
 - Exam tabs **1–7 W**, or `[` / `]`; Back / Forward walk through the labs you visited
 - Labs in the current exam: keys `1–9`
-- Drag to orbit (Ohm / Power / Circuits lock rotation), scroll to zoom
+- Drag to orbit (Ohm / Power / Circuits / Refraction / Mirrors / Lenses lock rotation), scroll to zoom
 - Drag a charge in the xz plane; **Shift-drag** for height
 - Click empty space (Gauss / Field / Potential / Conductors / Biot–Savart) to place the probe
 - `Space` plays the integral or sum · `Delete` removes a charge · `+` / `−` add charges · `R` resets the camera

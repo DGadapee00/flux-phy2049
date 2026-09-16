@@ -17,6 +17,9 @@ const loaders = {
   ac: () => import('./ac.js'),
   emwave: () => import('./emwave.js'),
   polar: () => import('./polar.js'),
+  refraction: () => import('./refraction.js'),
+  mirrors: () => import('./mirrors.js'),
+  lenses: () => import('./lenses.js'),
 };
 
 const cache = new Map();

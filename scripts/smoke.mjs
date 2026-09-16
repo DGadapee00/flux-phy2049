@@ -36,6 +36,9 @@ const LAB = {
   ac: 'e5',
   emwave: 'e6',
   polar: 'e6',
+  refraction: 'e7',
+  mirrors: 'e7',
+  lenses: 'e7',
 };
 
 async function go(lab) {
@@ -297,15 +300,40 @@ const polar = await page.evaluate(() => {
 await page.screenshot({ path: path.join(outDir, 'polar.png') });
 check('polar 0°/45°/90° I/I₀ = 1/8', polar.frac, 0.125, 0.002);
 
+await go('refraction');
+const refraction = await page.evaluate(() => {
+  const r = window.__gauss.computed.ref;
+  return { lab: window.__gauss.state.lab, tir: r?.tir, thetaC: r?.thetaC };
+});
+await page.screenshot({ path: path.join(outDir, 'refraction.png') });
+check('refraction water→air 55° TIR', refraction.tir ? 1 : 0, 1, 0);
+
+await go('mirrors');
+const mirrors = await page.evaluate(() => {
+  const m = window.__gauss.computed.mir;
+  return { lab: window.__gauss.state.lab, di: m?.di, m: m?.m };
+});
+await page.screenshot({ path: path.join(outDir, 'mirrors.png') });
+check('mirrors f=12 d_o=36 → d_i=18', mirrors.di, 18, 0.002);
+check('mirrors m = −1/2', mirrors.m, -0.5, 0.002);
+
+await go('lenses');
+const lenses = await page.evaluate(() => {
+  const L = window.__gauss.computed.len;
+  return { lab: window.__gauss.state.lab, di: L?.di, m: L?.m };
+});
+await page.screenshot({ path: path.join(outDir, 'lenses.png') });
+check('lenses f=12 d_o=36 → d_i=18', lenses.di, 18, 0.002);
+
 // Back button walks lab history (pushState entries).
 await page.goBack();
-await page.waitForFunction(() => window.__gauss?.state?.lab === 'emwave', null, { timeout: 5000 }).catch(() => {});
+await page.waitForFunction(() => window.__gauss?.state?.lab === 'mirrors', null, { timeout: 5000 }).catch(() => {});
 const back = await page.evaluate(() => window.__gauss.state.lab);
-if (back !== 'emwave') mismatches.push({ name: 'history.back', got: back, exp: 'emwave' });
+if (back !== 'mirrors') mismatches.push({ name: 'history.back', got: back, exp: 'mirrors' });
 
 console.log(
   JSON.stringify(
-    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, faraday, ac, emwave, polar, back, mismatches, errors },
+    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, faraday, ac, emwave, polar, refraction, mirrors, lenses, back, mismatches, errors },
     null,
     2,
   ),
