@@ -66,6 +66,14 @@ problem({
 
   This replaced `fitLayout`, which scaled positions into a fixed-size scene and compensated on the charges (×s² for E, ×s for V and F). The answer was right, but the separation on screen was never the separation in the question, so the sim could not be used alongside the worked problem.
 
+## 2b. Panel markup
+
+Everything the panel prints is typeset with KaTeX through `src/ui/shared.js`:
+
+- `kv(label, value)` and `cells([[label, value, cls]])` render `$…$` as math, so a row reads `$\Delta V = V_B - V_A$` rather than `ΔV = V<sub>B</sub> − V<sub>A</sub>`.
+- A lab's `coach()` returns `{ title, body }`. `body` is a string, or a list of strings and `eq(\`…\`)` display equations — a short argument with the equation it turns on set on its own line, the way a textbook does it.
+- Write the TeX in a `String.raw` template, or double every backslash. In an ordinary template literal JavaScript eats `\text` (tab), `\vec` (vertical tab), `\frac` (form feed) and `\rho` (carriage return), and KaTeX then renders the wreckage without complaining. `node scripts/tex-check.mjs` (part of `npm test`) fails on exactly that mistake.
+
 ## 3. What the check proves
 
 For every template, `scripts/problems-check.mjs` confirms that:

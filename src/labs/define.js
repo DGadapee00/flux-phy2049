@@ -34,7 +34,11 @@ export function planeCamera(state) {
  * law(state, computed)      — KaTeX strings
  * liveRows(state, computed) — eq-live HTML
  * readout(state, computed)  — bottom four cells HTML
- * coach(state, computed)
+ * coach(state, computed) — { title, body }: the explainer under the readout. `title` and the
+ *                           string blocks of `body` are prose with inline math between `$…$`;
+ *                           `body` may also be a list mixing those with eq(`…`) display
+ *                           equations (src/ui/shared.js). Row labels in liveRows() and readout()
+ *                           take the same markup.
  * plot(state, computed)     — null | { type:'Vx'|'ac', ... }
  * pointer                   — null = default charge drag; or { down, move, up }
  * probe                     — true: clicking empty space moves state.probe in the work plane

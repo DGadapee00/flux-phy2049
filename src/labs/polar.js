@@ -4,7 +4,7 @@ import { defineLab } from './define.js';
 import { Arrow, M, fatLine, fatSegments, disposeTree } from '../scene/manim.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import { malusChain } from '../physics/polarization.js';
-import { kv, cells, qv } from '../ui/shared.js';
+import { kv, cells, qv, eq } from '../ui/shared.js';
 import { fmtIrr } from '../ui/format.js';
 
 const SCENARIOS = [
@@ -223,14 +223,14 @@ export default defineLab({
   liveRows(state, computed) {
     const p = computed.pol;
     if (!p) return '';
-    const rows = [kv('I₀ (unpolarized in)', fmtIrr(state.I0))];
+    const rows = [kv(String.raw`$I_0$ (unpolarized in)`, fmtIrr(state.I0))];
     for (let i = 1; i < p.steps.length; i++) {
       const s = p.steps[i];
       const prev = p.steps[i - 1];
-      const how = prev.axis == null ? '× ½' : `× cos²${Math.abs(s.axis - prev.axis).toFixed(0)}°`;
-      rows.push(kv(`after P${i} (${s.axis.toFixed(0)}°, ${how})`, `${fmtIrr(s.I)} (${((s.I / state.I0) * 100).toFixed(1)}%)`));
+      const how = prev.axis == null ? String.raw`$\times \tfrac{1}{2}$` : `$\\times \\cos^2 ${Math.abs(s.axis - prev.axis).toFixed(0)}^\\circ$`;
+      rows.push(kv(`after $P_${i}$ (${s.axis.toFixed(0)}°, ${how})`, `${fmtIrr(s.I)} (${((s.I / state.I0) * 100).toFixed(1)}%)`));
     }
-    rows.push(kv('I / I₀', qv('qI', (p.I / state.I0).toFixed(3))));
+    rows.push(kv(String.raw`$I/I_0$`, qv('qI', (p.I / state.I0).toFixed(3))));
     return rows.join('');
   },
   readout(state, computed) {
@@ -240,9 +240,9 @@ export default defineLab({
     const last = state.n >= 2 ? Math.abs([state.a, state.b, state.c][state.n - 1] - [state.a, state.b, state.c][state.n - 2]) : null;
     return cells([
       ['Filters', String(state.n), ''],
-      ['I out', fmtIrr(p.I), frac < 0.02 ? 'bad' : 'ok'],
-      ['I / I₀', frac.toFixed(3), ''],
-      ['Last θ', last == null ? '— (unpolarized in)' : `${last.toFixed(0)}°`, ''],
+      [String.raw`$I$ out`, fmtIrr(p.I), frac < 0.02 ? 'bad' : 'ok'],
+      [String.raw`$I/I_0$`, frac.toFixed(3), ''],
+      [String.raw`last $\theta$`, last == null ? '— (unpolarized in)' : `${last.toFixed(0)}°`, ''],
     ]);
   },
   coach(state, computed) {
@@ -251,24 +251,39 @@ export default defineLab({
     if (state.n === 1) {
       return {
         title: 'One polarizer passes half of unpolarized light',
-        body: 'Unpolarized light has E pointing every which way (the star of arrows). A polarizer keeps only the component along its gold axis, so on average I = I₀/2 and what comes out oscillates along one line.',
+        body: [
+          String.raw`Unpolarized light has $\vec{E}$ pointing every which way — the star of arrows. A polarizer keeps only the component along its gold axis, and averaging $\cos^2$ over every direction gives one half:`,
+          eq(String.raw`I = \tfrac{1}{2}I_0`),
+          'What comes out oscillates along a single line.',
+        ],
       };
     }
     if (state.n === 2 && Math.abs(((state.b - state.a + 90) % 180) - 90) < 4) {
       return {
         title: 'Crossed polarizers — Malus gives zero',
-        body: 'θ = 90°, cos²θ = 0. The second filter wants the component of E along an axis perpendicular to the light it receives, and there is none. Put a third filter between them at 45° and light comes back: (I₀/2)(½)(½) = I₀/8.',
+        body: [
+          String.raw`At $\theta = 90^\circ$, $\cos^2\theta = 0$: the second filter asks for the component of $\vec{E}$ along an axis perpendicular to the light it receives, and there is none.`,
+          String.raw`Put a third filter between them at $45^\circ$ and the light comes back:`,
+          eq(String.raw`\tfrac{1}{2}I_0 \cdot \tfrac{1}{2} \cdot \tfrac{1}{2} = \tfrac{1}{8}I_0`),
+        ],
       };
     }
     if (state.n === 3 && frac > 0.05) {
       return {
         title: 'A filter in the middle brings the light back',
-        body: `P1 at ${state.a.toFixed(0)}° passes I₀/2. P2 at ${state.b.toFixed(0)}° keeps cos² of the angle between them, and rotates the E arrow to its own axis. P3 at ${state.c.toFixed(0)}° does the same. P1 and P3 alone would be crossed, but P2 gives P3 a component to keep. At 0° / 45° / 90° that is I₀/8.`,
+        body: [
+          `$P_1$ at ${state.a.toFixed(0)}° passes $\\tfrac{1}{2}I_0$. $P_2$ at ${state.b.toFixed(0)}° keeps $\\cos^2$ of the angle between them and rotates the $\\vec{E}$ arrow onto its own axis; $P_3$ at ${state.c.toFixed(0)}° does the same.`,
+          String.raw`$P_1$ and $P_3$ alone would be crossed, but $P_2$ leaves $P_3$ something to keep — at $0^\circ/45^\circ/90^\circ$ that is $\tfrac{1}{8}I_0$.`,
+        ],
       };
     }
     return {
       title: 'Malus’s law is a projection, squared',
-      body: 'Only E·(axis) gets through, so E_out = E_in cosθ. Intensity goes as E², hence I = I₀cos²θ. Watch the white arrow shrink as you turn a filter away from the one before it.',
+      body: [
+        String.raw`Only the component along the axis gets through, so $E_{\text{out}} = E_{\text{in}}\cos\theta$. Intensity goes as $E^2$:`,
+        eq(String.raw`I = I_0\cos^2\theta`),
+        'Watch the white arrow shrink as you turn a filter away from the one before it.',
+      ],
     };
   },
 });

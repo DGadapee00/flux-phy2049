@@ -3,7 +3,7 @@ import { defineLab } from './define.js';
 import { SchematicView } from '../scene/schematic.js';
 import { CIRCUITS, circuitById, netlist, equivalentR } from '../data/circuits.js';
 import { solveCircuit, loopTerms, junctionTerms } from '../physics/mna.js';
-import { kv, cells, qv } from '../ui/shared.js';
+import { kv, cells, qv, eq } from '../ui/shared.js';
 import { fmtV, fmtI as fmtIBase, fmtP, fmtR } from '../ui/format.js';
 
 /** Like fmtI, but 0.99999 A (wires are 10⁻⁶ Ω, not 0) reads as 1.000 A instead of 999.99 mA. */
@@ -207,20 +207,20 @@ export default defineLab({
     const rows = [];
     const bat = c.edges.find((e) => e.type === 'V');
     if (c.Req != null) {
-      rows.push(kv('R<sub>eq</sub>', qv('qR', fmtOhm(c.Req))));
-      rows.push(kv('I = ε / R<sub>eq</sub>', qv('qI', fmtI(bat.value / c.Req))));
+      rows.push(kv(String.raw`$\qR_{\text{eq}}$`, qv('qR', fmtOhm(c.Req))));
+      rows.push(kv(String.raw`$\qI = \varepsilon/\qR_{\text{eq}}$`, qv('qI', fmtI(bat.value / c.Req))));
     }
     for (const e of c.edges) {
       if (e.type !== 'R') continue;
       const I = c.sol.I[e.id];
-      rows.push(kv(`I<sub>${e.n}</sub> · ΔV<sub>${e.n}</sub>`, `${qv('qI', fmtI(I))} · ${qv('qV', fmtV(Math.abs(I * e.value)))}`));
+      rows.push(kv(`$\\qI_${e.n}$ · $\\Delta \\qV_${e.n}$`, `${qv('qI', fmtI(I))} · ${qv('qV', fmtV(Math.abs(I * e.value)))}`));
     }
     if (c.junction) {
       const terms = c.junction.terms
         .filter((t) => t.e.type !== 'W' || t.e.jname)
         .map((t) => signed(t.Iin, 3))
         .join(' ');
-      rows.push(kv('Junction ΣI<sub>in</sub>', `${terms} = <span class="ok">${fmtI(clean(c.junction.sum))}</span>`));
+      rows.push(kv(String.raw`Junction: $\sum \qI_{\text{in}}$`, `${terms} = <span class="ok">${fmtI(clean(c.junction.sum))}</span>`));
     }
     for (const l of c.loops) {
       const terms = l.terms
@@ -229,8 +229,8 @@ export default defineLab({
         .join(' ');
       rows.push(kv(`Loop: ${l.name}`, `${terms} = <span class="ok">${fmtV(clean(l.sum))}</span>`));
     }
-    rows.push(kv('P batteries Σ εI', qv('qP', fmtP(c.Pbat))));
-    rows.push(kv('P resistors Σ I²R', qv('qP', fmtP(c.Pres))));
+    rows.push(kv(String.raw`Batteries: $\sum \varepsilon\qI$`, qv('qP', fmtP(c.Pbat))));
+    rows.push(kv(String.raw`Resistors: $\sum \qI^2\qR$`, qv('qP', fmtP(c.Pres))));
     return rows.join('');
   },
   readout(state, computed) {
@@ -238,9 +238,9 @@ export default defineLab({
     if (!c) return '';
     const bat = c.edges.find((e) => e.type === 'V');
     return cells([
-      [c.Req != null ? 'R_eq' : 'Battery 1 current', c.Req != null ? fmtOhm(c.Req) : fmtI(c.sol.I[bat.id]), c.Req != null ? 'qR' : 'qI'],
+      [c.Req != null ? String.raw`$R_{\text{eq}}$` : 'Battery 1 current', c.Req != null ? fmtOhm(c.Req) : fmtI(c.sol.I[bat.id]), c.Req != null ? 'qR' : 'qI'],
       ['Battery current', fmtI(c.sol.I[bat.id]), 'qI'],
-      ['Loop rule max |ΣΔV|', fmtV(c.loopMax), 'ok'],
+      [String.raw`Loop rule, max $|\sum \Delta V|$`, fmtV(c.loopMax), 'ok'],
       ['Power delivered', fmtP(c.Pbat), 'qP'],
     ]);
   },
@@ -252,27 +252,41 @@ export default defineLab({
     if (c.layout.id === 'series') {
       return {
         title: 'Series: one path, one current',
-        body: `The same ${fmtI(I('R1'))} passes through every resistor, so the voltage divides in proportion to R: ΔV₂/ΔV₃ = R₂/R₃ = ${(v('R2') / v('R3')).toFixed(2)}. Adding a resistor in series always raises R_eq and lowers I.`,
+        body: [
+          `The same ${fmtI(I('R1'))} passes through every resistor, so the voltage divides in proportion to the resistance:`,
+          eq(String.raw`\frac{\Delta V_2}{\Delta V_3} = \frac{R_2}{R_3} = ${(v('R2') / v('R3')).toFixed(2)}`),
+          String.raw`Adding a resistor in series always raises $R_{\text{eq}}$ and lowers $I$.`,
+        ],
       };
     }
     if (c.layout.id === 'parallel') {
       return {
         title: 'Parallel: same voltage, currents add',
-        body: `Each branch sits directly across the battery, so each gets the full ε and I_k = ε/R_k. At the junction I = I₁ + I₂ + I₃ = ${fmtI(I('E1'))}. R_eq = ${fmtOhm(c.Req)} is smaller than the smallest branch — adding a branch always lowers R_eq.`,
+        body: [
+          String.raw`Each branch sits directly across the battery, so each gets the full $\varepsilon$ and carries $I_k = \varepsilon/R_k$; at the junction those currents add.`,
+          `$R_{\\text{eq}}$ = ${fmtOhm(c.Req)} is smaller than the smallest branch — adding a branch always lowers it.`,
+        ],
       };
     }
     if (c.layout.id === 'combo') {
       return {
         title: 'Reduce from the inside out',
-        body: `R₂ ∥ R₃ = ${fmtOhm((v('R2') * v('R3')) / (v('R2') + v('R3')))}, then add R₁ in series: R_eq = ${fmtOhm(c.Req)}. The full current ${fmtI(I('E1'))} goes through R₁, then splits: more through the smaller of R₂ and R₃.`,
+        body: [
+          eq(String.raw`R_{\text{eq}} = R_1 + \frac{R_2R_3}{R_2+R_3}`),
+          `$R_2 \\parallel R_3$ = ${fmtOhm((v('R2') * v('R3')) / (v('R2') + v('R3')))}, and $R_1$ adds in series. The full current ${fmtI(I('E1'))} runs through $R_1$ and then splits, with more going through the smaller of $R_2$ and $R_3$.`,
+        ],
       };
     }
     const neg = c.edges.filter((e) => e.type === 'R' && I(e.id) < -1e-4).map((e) => `I${'₀₁₂₃₄'[e.n]} = ${fmtI(I(e.id))}`);
     return {
-      title: 'No single R_eq — use Kirchhoff',
-      body: `Two batteries in different branches cannot be reduced to one resistor. Unknowns I₁, I₂, I₃: one junction rule at the top node plus one loop rule per loop gives three equations. ${
-        neg.length ? `The solution has ${neg.join(', ')} — negative just means that current really runs opposite the direction assumed (the dots show it).` : 'Every current came out positive, so the assumed directions were right.'
-      } Walk a loop: − → + across a battery is +ε, along the current through a resistor is −IR.`,
+      title: String.raw`No single $R_{\text{eq}}$ — use Kirchhoff`,
+      body: [
+        String.raw`Two batteries in different branches cannot be reduced to one resistor. With unknowns $I_1$, $I_2$, $I_3$, the junction rule at the top node and one loop rule per loop — the three equations at the top of this panel — pin them down.`,
+        neg.length
+          ? `The solution has ${neg.join(', ')} — a negative current just means it really runs opposite to the direction assumed (the dots show which way).`
+          : 'Every current came out positive, so the assumed directions were right.',
+        String.raw`Walking a loop: $- \to +$ across a battery is $+\varepsilon$, and along the current through a resistor is $-IR$.`,
+      ],
     };
   },
 });

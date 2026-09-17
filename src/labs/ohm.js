@@ -136,25 +136,25 @@ export default defineLab({
     if (!o) return '';
     return [
       kv('Material', o.mat.name),
-      kv('ρ(T)', `${sciHTML(o.rho)} Ω·m`),
-      kv('R = ρL/A', fmtR(o.Rgeo)),
-      kv('R used', fmtR(o.R)),
-      kv('I = V/R', fmtI(o.I)),
-      kv('J = I/A', `${sciHTML(o.J)} A/m²`),
-      kv('v<sub>d</sub> = J/(nq)', `${o.vd.toExponential(2)} m/s`),
-      kv('E in wire', fmtE(o.E)),
-      kv('P = IV', fmtP(o.P)),
-      kv('e⁻ / s', sciHTML(o.Ne_per_s, 2)),
+      kv(String.raw`$\rho(T)$`, `${sciHTML(o.rho)} Ω·m`),
+      kv(String.raw`$R = \rho L/A$`, fmtR(o.Rgeo)),
+      kv(String.raw`$R$ used`, fmtR(o.R)),
+      kv(String.raw`$I = V/R$`, fmtI(o.I)),
+      kv(String.raw`$J = I/A$`, `${sciHTML(o.J)} A/m²`),
+      kv(String.raw`$v_d = J/(nq)$`, `${o.vd.toExponential(2)} m/s`),
+      kv(String.raw`$E$ in the wire`, fmtE(o.E)),
+      kv(String.raw`$P = IV$`, fmtP(o.P)),
+      kv(String.raw`electrons per second`, sciHTML(o.Ne_per_s, 2)),
     ].join('');
   },
   readout(state, computed) {
     const o = computed.ohm;
     if (!o) return '';
     return cells([
-      ['R', fmtR(o.R), ''],
-      ['I', fmtI(o.I), ''],
-      ['v_d', `${o.vd.toExponential(1)} m/s`, ''],
-      ['P', fmtP(o.P), ''],
+      [String.raw`$R$`, fmtR(o.R), ''],
+      [String.raw`$I$`, fmtI(o.I), ''],
+      [String.raw`$v_d$`, `${o.vd.toExponential(1)} m/s`, ''],
+      [String.raw`$P$`, fmtP(o.P), ''],
     ]);
   },
   coach: (state, computed) => coachOhm(state, computed),

@@ -3,7 +3,7 @@ import { defineLab } from './define.js';
 import { M } from '../scene/manim.js';
 import { imageOf, principalRays, fmtCm } from '../physics/optics.js';
 import { wipe, label, line, arrowAt, tick, drawBundle, frameCamera } from '../scene/opticsBench.js';
-import { kv, cells } from '../ui/shared.js';
+import { kv, cells, eq } from '../ui/shared.js';
 
 const SCENARIOS = [
   { id: 'concave-out', name: 'Concave, object beyond C — real, reduced', type: 'concave', fAbs: 12, do: 36, ho: 8 },
@@ -173,13 +173,13 @@ export default defineLab({
     const m = computed.mir;
     if (!m) return '';
     return [
-      kv('f (R = 2f)', `${fmtCm(m.f)} (R = ${fmtCm(2 * m.f)})`),
-      kv('d_o', fmtCm(state.do)),
-      kv('d_i', m.infinite ? '∞' : `${fmtCm(m.di)} ${m.di > 0 ? '(in front)' : '(behind)'}`),
-      kv('1/d_o + 1/d_i', m.infinite ? `1/f = ${(1 / m.f).toFixed(4)} cm⁻¹` : `${(1 / state.do + 1 / m.di).toFixed(4)} cm⁻¹`),
-      kv('1/f', `${(1 / m.f).toFixed(4)} cm⁻¹`),
-      kv('m = −d_i/d_o', m.infinite ? '∞' : m.m.toFixed(3)),
-      kv('h_i = m h_o', m.infinite ? '∞' : fmtCm(m.hi)),
+      kv(String.raw`$f$ ($R = 2f$)`, `${fmtCm(m.f)} ($R$ = ${fmtCm(2 * m.f)})`),
+      kv(String.raw`$d_o$`, fmtCm(state.do)),
+      kv(String.raw`$d_i$`, m.infinite ? '∞' : `${fmtCm(m.di)} ${m.di > 0 ? '(in front)' : '(behind)'}`),
+      kv(String.raw`$1/d_o + 1/d_i$`, m.infinite ? `$1/f$ = ${(1 / m.f).toFixed(4)} cm⁻¹` : `${(1 / state.do + 1 / m.di).toFixed(4)} cm⁻¹`),
+      kv(String.raw`$1/f$`, `${(1 / m.f).toFixed(4)} cm⁻¹`),
+      kv(String.raw`$m = -d_i/d_o$`, m.infinite ? '∞' : m.m.toFixed(3)),
+      kv(String.raw`$h_i = m h_o$`, m.infinite ? '∞' : fmtCm(m.hi)),
       kv('Image', m.type),
     ].join('');
   },
@@ -187,35 +187,44 @@ export default defineLab({
     const m = computed.mir;
     if (!m) return '';
     return cells([
-      ['d_i', m.infinite ? '∞' : fmtCm(m.di), m.real ? 'ok' : ''],
-      ['m', m.infinite ? '∞' : m.m.toFixed(2), ''],
+      [String.raw`$d_i$`, m.infinite ? '∞' : fmtCm(m.di), m.real ? 'ok' : ''],
+      [String.raw`$m$`, m.infinite ? '∞' : m.m.toFixed(2), ''],
       ['Image', m.type, m.real ? '' : 'warn'],
-      ['f', fmtCm(m.f), ''],
+      [String.raw`$f$`, fmtCm(m.f), ''],
     ]);
   },
   coach(state, computed) {
     const m = computed.mir;
     if (state.type === 'convex') {
       return {
-        title: 'Convex mirror — f is negative',
-        body: 'The reflected rays spread apart (solid). Traced backward (dashed) they meet behind the mirror: a virtual, upright, reduced image with d_i < 0. Car side mirrors do this — a wide field of view, and objects are closer than they appear because |m| < 1.',
+        title: String.raw`Convex mirror — $f$ is negative`,
+        body: [
+          String.raw`The reflected rays spread apart (solid). Traced backward (dashed) they meet behind the mirror, giving a virtual, upright, reduced image with $d_i < 0$.`,
+          String.raw`Car side mirrors do this: a wide field of view, and objects are closer than they appear because $|m| < 1$.`,
+        ],
       };
     }
     if (m?.infinite) {
       return {
-        title: 'Object at F — reflected rays leave parallel',
-        body: '1/d_i = 1/f − 1/d_o = 0, so the image is at infinity. A bulb at the focus of a concave mirror makes a searchlight beam. Nudge d_o either side of F and the image snaps from real/inverted to virtual/upright.',
+        title: String.raw`Object at $F$ — reflected rays leave parallel`,
+        body: [
+          eq(String.raw`\frac{1}{d_i} = \frac{1}{f} - \frac{1}{d_o} = 0 \quad\Longrightarrow\quad d_i = \infty`),
+          String.raw`A bulb at the focus of a concave mirror makes a searchlight beam. Nudge $d_o$ to either side of $F$ and the image snaps between real/inverted and virtual/upright.`,
+        ],
       };
     }
     if (m?.real) {
       return {
         title: 'Real image — the rays really cross in front',
-        body: `${m.type}. Gold: parallel → through F. Teal: aimed at C, reflects straight back. Blue: through F → parallel. All three reflected rays pass through one point, so light actually gathers there — you could put a screen at d_i = ${fmtCm(m.di)}.`,
+        body: [
+          `${m.type}. Gold: parallel, then through $F$. Teal: aimed at $C$, straight back. Blue: through $F$, then parallel.`,
+          `All three reflected rays pass through one point, so the light really does gather there — you could put a screen at $d_i$ = ${fmtCm(m.di)}.`,
+        ],
       };
     }
     return {
       title: 'Virtual image — behind the mirror',
-      body: `The object is inside F, so the reflected rays (solid) diverge and never meet. Your eye extends them backward (dashed) to a point ${fmtCm(-(m?.di ?? 0))} behind the mirror: ${m?.type}. That is a makeup or shaving mirror.`,
+      body: `The object is inside $F$, so the reflected rays (solid) diverge and never meet. Your eye extends them backward (dashed) to a point ${fmtCm(-(m?.di ?? 0))} behind the mirror: ${m?.type}. That is a shaving or makeup mirror.`,
     };
   },
 });

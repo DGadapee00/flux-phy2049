@@ -6,7 +6,7 @@ import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, MU0 } from '../physics/constants.js';
 import { PARTICLES, trajectory, cyclotronRadius, cyclotronPeriod, wireForce, parallelWireForceNumerical, lorentzForce } from '../physics/magforce.js';
 import { FparallelWires } from '../physics/bfield.js';
-import { kv, cells, matchClass, qv } from '../ui/shared.js';
+import { kv, cells, matchClass, qv, eq } from '../ui/shared.js';
 import { sciHTML, fmtForce } from '../ui/format.js';
 import { fmtB } from './biot.js';
 
@@ -424,50 +424,50 @@ export default defineLab({
     if (c.kind === 'wire') {
       const pct = c.formula > 0 ? Math.max(0, (1 - Math.abs(c.Fmag - c.formula) / c.formula) * 100) : 100;
       return [
-        kv('I', qv('qI', `${state.I.toFixed(1)} A`)),
-        kv('L, θ', `${state.L.toFixed(2)} m, ${state.theta.toFixed(0)}°`),
-        kv('B', fmtB(state.B)),
-        kv('F = I L × B (vector)', `(${fmtForce(c.F.x)}, ${fmtForce(c.F.y)}, ${fmtForce(c.F.z)})`),
-        kv('ILB sinθ', fmtForce(c.formula)),
+        kv(String.raw`$I$`, qv('qI', `${state.I.toFixed(1)} A`)),
+        kv(String.raw`$L$, $\theta$`, `${state.L.toFixed(2)} m, ${state.theta.toFixed(0)}°`),
+        kv(String.raw`$B$`, fmtB(state.B)),
+        kv(String.raw`$\vec{F} = I\vec{L}\times\vec{B}$`, `(${fmtForce(c.F.x)}, ${fmtForce(c.F.y)}, ${fmtForce(c.F.z)})`),
+        kv(String.raw`$ILB\sin\theta$`, fmtForce(c.formula)),
         kv('Match', `<span class="${matchClass(pct)}">${pct.toFixed(1)}%</span>`),
-        kv('Direction', c.Fmag < 1e-12 ? 'none — L ∥ B' : c.F.z > 0 ? '+ẑ (toward you)' : '−ẑ (away)'),
+        kv('Direction', c.Fmag < 1e-12 ? String.raw`none — $\vec{L} \parallel \vec{B}$` : c.F.z > 0 ? String.raw`$+\hat{z}$ (toward you)` : String.raw`$-\hat{z}$ (away)`),
       ].join('');
     }
     if (c.kind === 'parallel') {
       return [
-        kv('I₁, I₂', qv('qI', `${state.I1.toFixed(0)} A, ${state.I2.toFixed(0)} A`)),
-        kv('d', `${state.d.toFixed(2)} m`),
-        kv('B₁ at wire 2', fmtB(c.B1)),
-        kv('F/L numerical Σ I₂ dl × B₁', `${fmtForce(Math.abs(c.F.x))}/m`),
-        kv('μ₀I₁I₂/2πd', `${fmtForce(Math.abs(c.an))}/m`),
+        kv(String.raw`$I_1$, $I_2$`, qv('qI', `${state.I1.toFixed(0)} A, ${state.I2.toFixed(0)} A`)),
+        kv(String.raw`$d$`, `${state.d.toFixed(2)} m`),
+        kv(String.raw`$B_1$ at wire 2`, fmtB(c.B1)),
+        kv(String.raw`Numerical $\sum I_2\,d\vec{l}\times\vec{B}_1 / L$`, `${fmtForce(Math.abs(c.F.x))}/m`),
+        kv(String.raw`$\mu_0 I_1 I_2 / 2\pi d$`, `${fmtForce(Math.abs(c.an))}/m`),
         kv('Match', `<span class="${matchClass(c.pct)}">${c.pct.toFixed(1)}%</span>`),
         kv('Result', c.attract ? 'attract (same direction)' : 'repel (opposite)'),
       ].join('');
     }
     const r = c.run;
     const rows = [
-      kv('Particle', `${r.P.name}, q = ${r.P.q > 0 ? '+' : '−'}1.6×10<sup>−19</sup> C, m = ${sci(r.P.m)} kg`),
-      kv('v', fmtSpeed(state.v)),
-      kv('B', fmtB(state.B)),
+      kv('Particle', `${r.P.name}, $q$ = ${r.P.q > 0 ? '+' : '−'}1.6×10<sup>−19</sup> C, $m$ = ${sci(r.P.m)} kg`),
+      kv(String.raw`$v$`, fmtSpeed(state.v)),
+      kv(String.raw`$B$`, fmtB(state.B)),
     ];
     if (c.kind === 'selector') {
       const pass = Math.abs(state.v - r.vSelect) / r.vSelect < 0.01;
-      rows.push(kv('E', `${sciHTML(state.E, 2)} V/m`));
-      rows.push(kv('qE (electric)', fmtForce(r.FE)));
-      rows.push(kv('qvB (magnetic)', fmtForce(r.FB)));
-      rows.push(kv('Selected speed E/B', fmtSpeed(r.vSelect)));
+      rows.push(kv(String.raw`$E$`, `${sciHTML(state.E, 2)} V/m`));
+      rows.push(kv(String.raw`$qE$ (electric)`, fmtForce(r.FE)));
+      rows.push(kv(String.raw`$qvB$ (magnetic)`, fmtForce(r.FB)));
+      rows.push(kv(String.raw`Selected speed $E/B$`, fmtSpeed(r.vSelect)));
       rows.push(kv('Result', pass ? '<span class="ok">passes straight</span>' : `<span class="warn">deflects ${state.v > r.vSelect ? '(too fast: magnetic wins)' : '(too slow: electric wins)'}</span>`));
       return rows.join('');
     }
     const pct = r.rNum == null ? null : Math.max(0, (1 - Math.abs(r.rNum - r.rA) / r.rA) * 100);
-    if (state.pitch > 0) rows.push(kv('v⊥, v∥', `${fmtSpeed(r.vPerp)}, ${fmtSpeed(r.vPar)}`));
-    rows.push(kv('r = mv⊥/|q|B', fmtLen(r.rA)));
-    rows.push(kv('r numerical (orbit width / 2)', r.rNum == null ? 'orbit leaves the view' : fmtLen(r.rNum)));
+    if (state.pitch > 0) rows.push(kv(String.raw`$v_\perp$, $v_\parallel$`, `${fmtSpeed(r.vPerp)}, ${fmtSpeed(r.vPar)}`));
+    rows.push(kv(String.raw`$r = mv_\perp/|q|B$`, fmtLen(r.rA)));
+    rows.push(kv(String.raw`$r$ numerical (orbit width / 2)`, r.rNum == null ? 'orbit leaves the view' : fmtLen(r.rNum)));
     if (pct != null) rows.push(kv('Match', `<span class="${matchClass(pct)}">${pct.toFixed(2)}%</span>`));
-    rows.push(kv('T = 2πm/|q|B', fmtTime(r.T)));
-    if (state.pitch > 0) rows.push(kv('Pitch v∥T', fmtLen(r.vPar * r.T)));
-    rows.push(kv('|F| = |q|v⊥B', fmtForce(r.Fmag)));
-    rows.push(kv('|v| after the run / before', r.speedRatio.toFixed(6)));
+    rows.push(kv(String.raw`$T = 2\pi m/|q|B$`, fmtTime(r.T)));
+    if (state.pitch > 0) rows.push(kv(String.raw`Pitch $v_\parallel T$`, fmtLen(r.vPar * r.T)));
+    rows.push(kv(String.raw`$|\vec{F}| = |q|v_\perp B$`, fmtForce(r.Fmag)));
+    rows.push(kv(String.raw`$|\vec{v}|$ after the run / before`, r.speedRatio.toFixed(6)));
     return rows.join('');
   },
   readout(state, computed) {
@@ -475,16 +475,16 @@ export default defineLab({
     if (!c) return '';
     if (c.kind === 'wire') {
       return cells([
-        ['|F|', fmtForce(c.Fmag), ''],
-        ['ILB sinθ', fmtForce(c.formula), ''],
-        ['θ', `${state.theta.toFixed(0)}°`, ''],
-        ['I', `${state.I.toFixed(1)} A`, 'qI'],
+        [String.raw`$|\vec{F}|$`, fmtForce(c.Fmag), ''],
+        [String.raw`$ILB\sin\theta$`, fmtForce(c.formula), ''],
+        [String.raw`$\theta$`, `${state.theta.toFixed(0)}°`, ''],
+        [String.raw`$I$`, `${state.I.toFixed(1)} A`, 'qI'],
       ]);
     }
     if (c.kind === 'parallel') {
       return cells([
-        ['F/L numerical', `${fmtForce(Math.abs(c.F.x))}/m`, ''],
-        ['μ₀I₁I₂/2πd', `${fmtForce(Math.abs(c.an))}/m`, ''],
+        [String.raw`$F/L$ numerical`, `${fmtForce(Math.abs(c.F.x))}/m`, ''],
+        [String.raw`$\mu_0 I_1 I_2/2\pi d$`, `${fmtForce(Math.abs(c.an))}/m`, ''],
         ['Match', `${c.pct.toFixed(1)}%`, matchClass(c.pct)],
         ['Result', c.attract ? 'attract' : 'repel', ''],
       ]);
@@ -492,18 +492,18 @@ export default defineLab({
     const r = c.run;
     if (c.kind === 'selector') {
       return cells([
-        ['qE', fmtForce(r.FE), ''],
-        ['qvB', fmtForce(r.FB), ''],
-        ['E/B', fmtSpeed(r.vSelect), ''],
-        ['v', fmtSpeed(state.v), Math.abs(state.v - r.vSelect) / r.vSelect < 0.01 ? 'ok' : 'warn'],
+        [String.raw`$qE$`, fmtForce(r.FE), ''],
+        [String.raw`$qvB$`, fmtForce(r.FB), ''],
+        [String.raw`$E/B$`, fmtSpeed(r.vSelect), ''],
+        [String.raw`$v$`, fmtSpeed(state.v), Math.abs(state.v - r.vSelect) / r.vSelect < 0.01 ? 'ok' : 'warn'],
       ]);
     }
     const pct = r.rNum == null ? null : Math.max(0, (1 - Math.abs(r.rNum - r.rA) / r.rA) * 100);
     return cells([
-      ['r = mv⊥/|q|B', fmtLen(r.rA), ''],
-      ['r numerical', r.rNum == null ? '—' : fmtLen(r.rNum), ''],
+      [String.raw`$r = mv_\perp/|q|B$`, fmtLen(r.rA), ''],
+      [String.raw`$r$ numerical`, r.rNum == null ? '—' : fmtLen(r.rNum), ''],
       ['Match', pct == null ? '—' : `${pct.toFixed(2)}%`, pct == null ? '' : matchClass(pct)],
-      ['Period T', fmtTime(r.T), ''],
+      [String.raw`Period $T$`, fmtTime(r.T), ''],
     ]);
   },
   coach(state, computed) {
@@ -511,35 +511,57 @@ export default defineLab({
     if (!c) return { title: '', body: '' };
     if (c.kind === 'wire') {
       return {
-        title: 'Only the part of L perpendicular to B pushes',
-        body: `F = I L × B, magnitude ILB sinθ. At θ = 90° the force is largest; slide θ to 0° or 180° (wire along B) and it vanishes. Right-hand rule: fingers along I·L, curl toward B, thumb gives F. Flip the sign of I and F reverses.`,
+        title: String.raw`Only the part of $\vec{L}$ perpendicular to $\vec{B}$ pushes`,
+        body: [
+          eq(String.raw`\vec{F} = I\vec{L}\times\vec{B}, \qquad |\vec{F}| = ILB\sin\theta`),
+          String.raw`The force is largest at $\theta = 90^\circ$ and vanishes at $0^\circ$ or $180^\circ$, with the wire along $\vec{B}$. Right-hand rule: fingers along $I\vec{L}$, curl toward $\vec{B}$, thumb gives $\vec{F}$. Flip the sign of $I$ and $\vec{F}$ reverses.`,
+        ],
       };
     }
     if (c.kind === 'parallel') {
       return {
         title: c.attract ? 'Same direction → attract' : 'Opposite directions → repel',
-        body: `Wire 1 makes B₁ = μ₀I₁/2πd at wire 2 (teal, circling wire 1). Wire 2 then feels F = I₂ L × B₁. Newton’s third law gives wire 1 the equal and opposite push. Halve d and F/L doubles — it falls as 1/d, not 1/d².`,
+        body: [
+          String.raw`Wire 1 makes $B_1 = \mu_0 I_1/2\pi d$ at wire 2 (teal, circling wire 1), and wire 2 then feels $\vec{F} = I_2\vec{L}\times\vec{B}_1$:`,
+          eq(String.raw`\frac{F}{L} = \frac{\mu_0 I_1 I_2}{2\pi d}`),
+          String.raw`Newton's third law gives wire 1 the equal and opposite push. Halve $d$ and $F/L$ doubles — it falls as $1/d$, not $1/d^2$.`,
+        ],
       };
     }
     const r = c.run;
     if (c.kind === 'selector') {
       return {
-        title: 'Velocity selector: qE = qvB',
-        body: `The electric force qE does not care about speed; the magnetic force qvB does. They cancel only at v = E/B = ${strip(fmtSpeed(r.vSelect))}. Faster particles curve toward the magnetic force, slower ones toward the electric force. The charge cancels, so electrons are selected at the same speed.`,
+        title: String.raw`Velocity selector: $qE = qvB$`,
+        body: [
+          `The electric force $qE$ does not care about speed; the magnetic force $qvB$ does. They cancel at one speed only:`,
+          eq(String.raw`v = \frac{E}{B} = ${strip(fmtSpeed(r.vSelect))}`),
+          String.raw`Faster particles curve toward the magnetic force, slower ones toward the electric force. The charge cancels out, so electrons are selected at the same speed.`,
+        ],
       };
     }
     if (state.pitch > 0) {
       return {
-        title: 'Helix: B only turns v⊥',
-        body: 'v × B has no component along B, so v∥ is untouched and the particle drifts along B while it circles. r uses v⊥ = v cosα, the period T = 2πm/|q|B does not depend on speed, and the pitch is v∥T.',
+        title: String.raw`Helix: $\vec{B}$ only turns $v_\perp$`,
+        body: [
+          String.raw`$\vec{v}\times\vec{B}$ has no component along $\vec{B}$, so $v_\parallel$ is untouched and the particle drifts along $\vec{B}$ while it circles:`,
+          eq(String.raw`r = \frac{mv_\perp}{|q|B}, \qquad T = \frac{2\pi m}{|q|B}, \qquad \text{pitch} = v_\parallel T`),
+          String.raw`The period does not depend on the speed at all.`,
+        ],
       };
     }
     return {
-      title: r.P.q > 0 ? 'F ⊥ v: the speed never changes' : 'Negative charge: same |F|, opposite direction',
+      title: r.P.q > 0 ? String.raw`$\vec{F}\perp\vec{v}$: the speed never changes` : String.raw`Negative charge: same $|\vec{F}|$, opposite direction`,
       body:
         r.P.q > 0
-          ? `F = qv × B is always perpendicular to v, so it does no work — |v| after the run is ${r.speedRatio.toFixed(6)} of the start. It only turns v, giving a circle with r = mv/|q|B = ${strip(fmtLen(r.rA))}. Seen from above with B up, a positive charge goes clockwise.`
-          : `q < 0 flips v × B, so the electron curls counterclockwise (seen from above). Its mass is ~1840× smaller, which is why B only needs to be ${strip(fmtB(state.B))} for the same-size circle.`,
+          ? [
+              String.raw`$\vec{F} = q\vec{v}\times\vec{B}$ is always perpendicular to $\vec{v}$, so it does no work — $|\vec{v}|$ after the run is ${r.speedRatio.toFixed(6)} of the start. It only turns $\vec{v}$:`,
+              eq(String.raw`r = \frac{mv}{|q|B} = ${strip(fmtLen(r.rA))}`),
+              String.raw`Seen from above with $\vec{B}$ up, a positive charge goes clockwise.`,
+            ]
+          : [
+              String.raw`$q < 0$ flips $\vec{v}\times\vec{B}$, so the electron curls counterclockwise seen from above.`,
+              `Its mass is about 1840× smaller, which is why $B$ only needs to be ${fmtB(state.B)} for a circle of the same size.`,
+            ],
     };
   },
 });

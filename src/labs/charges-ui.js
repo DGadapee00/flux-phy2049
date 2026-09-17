@@ -119,7 +119,7 @@ export function renderChargeList(state, { gauss = false, fit = true } = {}) {
     chargeSig = sig;
     let html = '';
     if (small.length) {
-      html += `<li class="charge-item" style="cursor:default"><span class="badge out">${small.length} elements</span><span style="grid-column:2/-1;color:var(--text-muted);font-size:11px">Line/sheet approximation — drag one in the scene to break symmetry.</span></li>`;
+      html += `<li class="charge-item elements"><span class="badge out">${small.length} elements</span><span style="grid-column:2/-1;color:var(--text-muted);font-size:11px">Line/sheet approximation — drag one in the scene to break symmetry.</span></li>`;
     }
     html += big
       .map((c, i) => {
@@ -132,7 +132,7 @@ export function renderChargeList(state, { gauss = false, fit = true } = {}) {
           </li>`;
       })
       .join('');
-    chargeList.innerHTML = html || '<li class="charge-item" style="cursor:default;color:var(--text-dim)">No point charges</li>';
+    chargeList.innerHTML = html || '<li class="charge-item empty">No point charges</li>';
   } else {
     chargeList.querySelectorAll('[data-id]').forEach((item) => {
       const id = Number(item.dataset.id);

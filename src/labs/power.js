@@ -156,17 +156,17 @@ export default defineLab({
     if (!p) return '';
     if (state.power.mode === 'ac') {
       return cells([
-        ['V peak', fmtV(p.Vp), 'qV'],
-        ['I rms', fmtI(p.Irms), 'qI'],
-        ['P avg', fmtP(p.Pavg), 'qP'],
-        ['P(t) now', fmtP(p.Pinst), 'qP'],
+        [String.raw`$V_p$`, fmtV(p.Vp), 'qV'],
+        [String.raw`$I_{\text{rms}}$`, fmtI(p.Irms), 'qI'],
+        [String.raw`$P_{\text{avg}}$`, fmtP(p.Pavg), 'qP'],
+        [String.raw`$P(t)$ now`, fmtP(p.Pinst), 'qP'],
       ]);
     }
     return cells([
-      ['Voltage', fmtV(p.V), 'qV'],
-      ['Current', fmtI(p.I), 'qI'],
-      ['Resistance', fmtR(state.power.R), 'qR'],
-      ['Power', fmtP(p.P), 'qP'],
+      [String.raw`Voltage $V$`, fmtV(p.V), 'qV'],
+      [String.raw`Current $I$`, fmtI(p.I), 'qI'],
+      [String.raw`Resistance $R$`, fmtR(state.power.R), 'qR'],
+      [String.raw`Power $P$`, fmtP(p.P), 'qP'],
     ]);
   },
   plot(state, computed) {

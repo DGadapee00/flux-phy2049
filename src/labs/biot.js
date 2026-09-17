@@ -14,7 +14,7 @@ import {
   loopPoints,
   helixPoints,
 } from '../physics/bfield.js';
-import { kv, cells, matchClass, qv } from '../ui/shared.js';
+import { kv, cells, matchClass, qv, eq } from '../ui/shared.js';
 import { sciHTML } from '../ui/format.js';
 
 const SCENARIOS = [
@@ -54,7 +54,7 @@ function analyticB(state) {
       exact: rho < 1e-6 ? null : BwireFinite(state.I, -state.L / 2, state.L / 2, p),
       exactNote: 'finite wire',
       ideal: rho < 1e-6 ? null : BwireInfinite(state.I, rho),
-      idealNote: 'μ₀I/2πρ, infinite wire',
+      idealNote: String.raw`$\mu_0 I/2\pi\rho$, infinite wire`,
       onAxis: true,
     };
   }
@@ -66,7 +66,7 @@ function analyticB(state) {
     exact: onAxis ? BsolenoidFiniteAxis(n, state.I, state.L, state.R, p.y) : null,
     exactNote: 'finite solenoid, on axis',
     ideal: Bsolenoid(n, state.I),
-    idealNote: 'μ₀nI, long solenoid',
+    idealNote: String.raw`$\mu_0 n I$, long solenoid`,
     onAxis,
   };
 }
@@ -308,12 +308,12 @@ export default defineLab({
     const b = computed.biot;
     if (!b) return '';
     const pct = matchPct(b.magFull, b.an.exact);
-    const rows = [kv('I', qv('qI', `${state.I.toFixed(2)} A`)), kv('|B| numerical Σ dB', fmtB(b.magFull))];
-    if (b.playing) rows.push(kv(`|B| running (${b.nShow}/${b.pts.length} pts)`, fmtB(b.mag)));
+    const rows = [kv(String.raw`$I$`, qv('qI', `${state.I.toFixed(2)} A`)), kv(String.raw`Numerical $|\sum d\vec{B}|$`, fmtB(b.magFull))];
+    if (b.playing) rows.push(kv(`Running $|\\vec{B}|$ (${b.nShow}/${b.pts.length} pieces)`, fmtB(b.mag)));
     rows.push(kv(`Exact: ${b.an.exactNote}`, b.an.exact == null ? '— (move probe to the axis)' : fmtB(Math.abs(b.an.exact))));
     if (pct != null) rows.push(kv('Match', `<span class="${matchClass(pct)}">${pct.toFixed(1)}%</span>`));
     if (b.an.ideal != null) rows.push(kv(`Ideal: ${b.an.idealNote}`, fmtB(b.an.ideal)));
-    rows.push(kv('B<sub>x</sub>, B<sub>y</sub>, B<sub>z</sub>', `${fmtB(b.Bfull.x)}, ${fmtB(b.Bfull.y)}, ${fmtB(b.Bfull.z)}`));
+    rows.push(kv(String.raw`$B_x$, $B_y$, $B_z$`, `${fmtB(b.Bfull.x)}, ${fmtB(b.Bfull.y)}, ${fmtB(b.Bfull.z)}`));
     return rows.join('');
   },
   readout(state, computed) {
@@ -321,7 +321,7 @@ export default defineLab({
     if (!b) return '';
     const pct = matchPct(b.magFull, b.an.exact);
     return cells([
-      ['|B| Σ dB', fmtB(b.magFull), ''],
+      [String.raw`$|\sum d\vec{B}|$`, fmtB(b.magFull), ''],
       ['Exact', b.an.exact == null ? 'off axis' : fmtB(Math.abs(b.an.exact)), ''],
       ['Match', pct == null ? '—' : `${pct.toFixed(1)}%`, pct == null ? '' : matchClass(pct)],
       ['Ideal limit', b.an.ideal == null ? '—' : fmtB(b.an.ideal), ''],
@@ -333,26 +333,38 @@ export default defineLab({
       const ratio = b?.an.exact && b?.an.ideal ? (b.an.exact / b.an.ideal) * 100 : null;
       return {
         title: 'Right-hand rule around a wire',
-        body: `Thumb along I (the chevrons), fingers curl the way B points. For a finite wire B = (μ₀I/4πρ)(sinθ₂ − sinθ₁); as L → ∞ both angles go to ±90° and you get μ₀I/2πρ. Here the finite wire gives ${ratio ? ratio.toFixed(1) : '—'}% of the infinite-wire value — shrink L or move the probe out and watch that drop.`,
+        body: [
+          String.raw`Thumb along $I$ (the chevrons), fingers curl the way $\vec{B}$ points. For a finite wire`,
+          eq(String.raw`B = \frac{\mu_0 I}{4\pi\rho}(\sin\theta_2 - \sin\theta_1) \;\xrightarrow{\;L\to\infty\;}\; \frac{\mu_0 I}{2\pi\rho}`),
+          `This finite wire gives ${ratio ? ratio.toFixed(1) : '—'}% of the infinite-wire value — shrink $L$, or move the probe out, and watch that fall.`,
+        ],
       };
     }
     if (!b?.an.onAxis) {
       return {
         title: 'Off the axis — no closed form here',
-        body: 'The on-axis formula relies on symmetry: every dl is the same distance from the probe and the sideways dB pieces cancel. Off the axis they do not, so the numerical Σ dB is the answer. Use “Put probe on the axis” to compare with the formula again.',
+        body: String.raw`The on-axis formula relies on symmetry: every $d\vec{l}$ is the same distance from the probe, and the sideways $d\vec{B}$ pieces cancel. Off the axis they do not, so the numerical $\sum d\vec{B}$ is the answer. Use "Put probe on the axis" to compare with the formula again.`,
       };
     }
     if (state.kind === 'loop') {
       return {
         title: 'Loop on axis',
-        body: 'Every dl is the same distance from a point on the axis. The radial dB pieces cancel around the ring and the axial pieces add, giving μ₀IR²/2(R²+z²)^{3/2} — the same (R²+z²)^{3/2} as the charged ring. Current counterclockwise seen from above → B points up.',
+        body: [
+          String.raw`Every $d\vec{l}$ is the same distance from a point on the axis, so the radial $d\vec{B}$ pieces cancel around the ring and the axial ones add:`,
+          eq(String.raw`B_{\text{axis}} = \frac{\mu_0 I R^2}{2(R^2+z^2)^{3/2}}`),
+          String.raw`— the same $(R^2+z^2)^{3/2}$ that showed up for the charged ring. Current counterclockwise seen from above makes $\vec{B}$ point up.`,
+        ],
       };
     }
     const n = state.nTurns / state.L;
     const frac = b?.an.exact && b?.an.ideal ? (b.an.exact / b.an.ideal) * 100 : null;
     return {
-      title: 'Solenoid: μ₀nI is the long-solenoid limit',
-      body: `n = N/L = ${n.toFixed(1)} turns/m. At the center of this coil B is ${frac ? frac.toFixed(1) : '—'}% of μ₀nI because L is only ${(state.L / state.R).toFixed(1)}× R. Stretch L (keeping n by adding turns) and it approaches μ₀nI. Ampère’s law with a rectangular loop is the fast route to μ₀nI; it assumes B ≈ 0 outside.`,
+      title: String.raw`Solenoid: $\mu_0 n I$ is the long-solenoid limit`,
+      body: [
+        eq(String.raw`n = \frac{N}{L} = ${n.toFixed(1)}\ \text{turns/m}, \qquad B_{\text{center}} \to \mu_0 n I`),
+        `At the center of this coil $B$ is ${frac ? frac.toFixed(1) : '—'}% of $\\mu_0 nI$, because $L$ is only ${(state.L / state.R).toFixed(1)}× $R$. Stretch $L$, adding turns to hold $n$ fixed, and it approaches the limit.`,
+        String.raw`Ampère's law with a rectangular loop is the fast route to $\mu_0 nI$; it assumes $B \approx 0$ outside.`,
+      ],
     };
   },
 });

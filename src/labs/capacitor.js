@@ -134,15 +134,15 @@ export default defineLab({
     const r = computed.cap;
     if (!r) return '';
     return [
-      kv('κ', String(r.kappa)),
-      kv('C<sub>0</sub> (vacuum)', fmtC(r.C0)),
-      kv('C', fmtC(r.C)),
-      kv('V', fmtV(r.V)),
-      kv('q = C V', fmtCharge(r.Q)),
-      kv('E = V/d', fmtE(r.E)),
-      kv('σ = q/A', `${sciHTML(r.sigma)} C/m²`),
-      kv('U = ½CV²', fmtEnergy(r.U)),
-      kv('V<sub>bd</sub> = (DS)d', Number.isFinite(r.Vbd) ? fmtV(r.Vbd) : '—'),
+      kv(String.raw`$\kappa$`, String(r.kappa)),
+      kv(String.raw`$C_0$ (vacuum)`, fmtC(r.C0)),
+      kv(String.raw`$C = \kappa C_0$`, fmtC(r.C)),
+      kv(String.raw`$V$`, fmtV(r.V)),
+      kv(String.raw`$q = CV$`, fmtCharge(r.Q)),
+      kv(String.raw`$E = V/d$`, fmtE(r.E)),
+      kv(String.raw`$\sigma = q/A$`, `${sciHTML(r.sigma)} C/m²`),
+      kv(String.raw`$U = \tfrac{1}{2}CV^2$`, fmtEnergy(r.U)),
+      kv(String.raw`$V_{\text{bd}} = (\text{DS})\,d$`, Number.isFinite(r.Vbd) ? fmtV(r.Vbd) : '—'),
       kv('Breakdown', r.breakdown ? '<span class="bad">YES</span>' : '<span class="ok">no</span>'),
     ].join('');
   },
@@ -150,10 +150,10 @@ export default defineLab({
     const r = computed.cap;
     if (!r) return '';
     return cells([
-      ['C', fmtC(r.C), ''],
-      ['V', fmtV(r.V), r.breakdown ? 'bad' : ''],
-      ['q', fmtCharge(r.Q), ''],
-      ['U', fmtEnergy(r.U), r.breakdown ? 'bad' : 'ok'],
+      [String.raw`$C$`, fmtC(r.C), ''],
+      [String.raw`$V$`, fmtV(r.V), r.breakdown ? 'bad' : ''],
+      [String.raw`$q$`, fmtCharge(r.Q), ''],
+      [String.raw`$U$`, fmtEnergy(r.U), r.breakdown ? 'bad' : 'ok'],
     ]);
   },
   coach: (state, computed) => coachCap(state, computed),

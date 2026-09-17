@@ -250,22 +250,22 @@ export default defineLab({
       const rel = Math.abs((p.V ?? 0) - a.V) / Math.max(Math.abs(a.V), 1);
       const pct = Math.max(0, (1 - rel) * 100);
       return [
-        kv('Running V = Σ k dq/r', fmtV(p.V)),
-        kv('Analytic V', fmtV(a.V)),
+        kv(String.raw`Running $\sum k\,dq/r$`, fmtV(p.V)),
+        kv(String.raw`Analytic $V$`, fmtV(a.V)),
         kv('Match', `<span class="${matchClass(pct)}">${pct.toFixed(1)}%</span>`),
       ].join('');
     }
     const rel = Math.abs(p.mag - a.mag) / Math.max(a.mag, 1);
     const pct = Math.max(0, (1 - rel) * 100);
     return [
-      kv('Running E<sub>x</sub>', fmtE(p.x)),
-      kv('Running E<sub>y</sub>', fmtE(p.y)),
-      kv('Running |E|', fmtE(p.mag)),
-      kv('Analytic |E|', fmtE(a.mag)),
+      kv(String.raw`Running $\sum dE_x$`, fmtE(p.x)),
+      kv(String.raw`Running $\sum dE_y$`, fmtE(p.y)),
+      kv(String.raw`Running $|\vec{E}|$`, fmtE(p.mag)),
+      kv(String.raw`Analytic $|\vec{E}|$`, fmtE(a.mag)),
       kv('Match', `<span class="${matchClass(pct)}">${pct.toFixed(1)}%</span>`),
       kind === 'rod'
-        ? kv('θ', `${((I.analytic.theta * 180) / Math.PI).toFixed(1)}°  ·  r_end = ${fmtLen(I.analytic.rEnd)}`)
-        : kv('r to ring', fmtLen(I.analytic.r)),
+        ? kv(String.raw`$\theta$`, String.raw`${((I.analytic.theta * 180) / Math.PI).toFixed(1)}°  ·  $r_{\text{end}}$ = ${fmtLen(I.analytic.rEnd)}`)
+        : kv(String.raw`$r$ to the ring`, fmtLen(I.analytic.r)),
     ].join('');
   },
   readout(state, computed) {
@@ -278,19 +278,19 @@ export default defineLab({
       const rel = Math.abs((p.V ?? 0) - a.V) / Math.max(Math.abs(a.V), 1);
       const pct = Math.max(0, (1 - rel) * 100);
       return cells([
-        ['Σ dV', fmtV(p.V), ''],
-        ['Analytic V', fmtV(a.V), ''],
+        [String.raw`$\sum dV$`, fmtV(p.V), ''],
+        [String.raw`Analytic $V$`, fmtV(a.V), ''],
         ['Match', `${pct.toFixed(1)}%`, matchClass(pct)],
-        ['Note', 'V is a scalar', ''],
+        ['Note', String.raw`$V$ is a scalar`, ''],
       ]);
     }
     const rel = Math.abs(p.mag - a.mag) / Math.max(a.mag, 1);
     const pct = Math.max(0, (1 - rel) * 100);
     return cells([
-      ['Σ dE (running)', fmtE(p.mag), ''],
-      ['Analytic |E|', fmtE(a.mag), ''],
-      ['E_x (should → 0)', fmtE(p.x), Math.abs(p.x) < 0.08 * Math.max(p.mag, 1) ? 'ok' : ''],
-      ['E_y', fmtE(p.y), ''],
+      [String.raw`$\sum d\vec{E}$ (running)`, fmtE(p.mag), ''],
+      [String.raw`Analytic $|\vec{E}|$`, fmtE(a.mag), ''],
+      [String.raw`$E_x$ (should $\to 0$)`, fmtE(p.x), Math.abs(p.x) < 0.08 * Math.max(p.mag, 1) ? 'ok' : ''],
+      [String.raw`$E_y$`, fmtE(p.y), ''],
     ]);
   },
   coach: (state) => coachIntegral(state),

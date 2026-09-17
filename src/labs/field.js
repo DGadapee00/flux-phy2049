@@ -70,11 +70,11 @@ export default defineLab({
     const E = computed.probeE || { x: 0, y: 0, z: 0 };
     const mag = Math.hypot(E.x, E.y, E.z);
     const rows = [
-      kv('|E<sub>net</sub>|', fmtE(mag)),
-      kv('E<sub>x</sub>', fmtE(E.x)),
-      kv('E<sub>y</sub>', fmtE(E.y)),
-      kv('E<sub>z</sub>', fmtE(E.z)),
-      kv('Probe', fmtPoint(state.probe)),
+      kv(String.raw`$|\vec{E}_{\text{net}}|$`, fmtE(mag)),
+      kv(String.raw`$E_x$`, fmtE(E.x)),
+      kv(String.raw`$E_y$`, fmtE(E.y)),
+      kv(String.raw`$E_z$`, fmtE(E.z)),
+      kv(String.raw`Probe $P$`, fmtPoint(state.probe)),
     ];
     for (const row of computed.contrib || []) {
       const name = row.id === 'uniform' ? 'uniform E' : fmtCharge(row.q);
@@ -86,10 +86,10 @@ export default defineLab({
     const E = computed.probeE || { x: 0, y: 0, z: 0 };
     const mag = Math.hypot(E.x, E.y, E.z);
     return cells([
-      ['|E_net|', fmtE(mag), ''],
-      ['E_x', fmtE(E.x), ''],
-      ['E_y', fmtE(E.y), ''],
-      ['E_z', fmtE(E.z), ''],
+      [String.raw`$|\vec{E}_{\text{net}}|$`, fmtE(mag), ''],
+      [String.raw`$E_x$`, fmtE(E.x), ''],
+      [String.raw`$E_y$`, fmtE(E.y), ''],
+      [String.raw`$E_z$`, fmtE(E.z), ''],
     ]);
   },
   coach: (state, computed) => coachField(state.charges, computed),

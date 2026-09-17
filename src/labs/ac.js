@@ -3,7 +3,7 @@ import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
 import { Arrow, M, fatLine, updateFatLine, disposeTree } from '../scene/manim.js';
 import { acState, vOfT, iOfT } from '../physics/ac.js';
-import { kv, cells, qv, tex } from '../ui/shared.js';
+import { kv, cells, qv, tex, eq } from '../ui/shared.js';
 import { fmtV, fmtI, fmtR, fmtL, fmtC, fmtHz, fmtP } from '../ui/format.js';
 
 const SCENARIOS = [
@@ -279,20 +279,20 @@ export default defineLab({
     const rows = [
       kv(tex(String.raw`\qV_{\text{rms}}`), qv('qV', fmtV(a.Vrms))),
       kv(tex(String.raw`\qI_{\text{rms}}=\qV_{\text{rms}}/Z`), qv('qI', fmtI(a.Irms))),
-      kv('|Z|', `${a.Z.toFixed(2)} Ω`),
-      kv('φ (V leads I)', `${deg >= 0 ? '+' : '−'}${Math.abs(deg).toFixed(1)}°`),
-      kv('X<sub>L</sub> = ωL', a.hasL ? `${a.XL.toFixed(2)} Ω` : '—'),
-      kv('X<sub>C</sub> = 1/ωC', a.hasC ? `${a.XC.toFixed(2)} Ω` : '—'),
-      kv('V<sub>R</sub> = I R (rms)', fmtV(a.VR)),
+      kv(String.raw`$|Z|$`, `${a.Z.toFixed(2)} Ω`),
+      kv(String.raw`$\varphi$ ($V$ leads $I$)`, `${deg >= 0 ? '+' : '−'}${Math.abs(deg).toFixed(1)}°`),
+      kv(String.raw`$X_L = \omega L$`, a.hasL ? `${a.XL.toFixed(2)} Ω` : '—'),
+      kv(String.raw`$X_C = 1/\omega C$`, a.hasC ? `${a.XC.toFixed(2)} Ω` : '—'),
+      kv(String.raw`$V_R = IR$ (rms)`, fmtV(a.VR)),
     ];
-    if (a.hasL) rows.push(kv('V<sub>L</sub> = I X<sub>L</sub> (rms)', fmtV(a.VL)));
-    if (a.hasC) rows.push(kv('V<sub>C</sub> = I X<sub>C</sub> (rms)', fmtV(a.VC)));
-    rows.push(kv('√(V<sub>R</sub>² + (V<sub>L</sub>−V<sub>C</sub>)²)', `${fmtV(Math.hypot(a.VR, a.VL - a.VC))} = V<sub>rms</sub>`));
+    if (a.hasL) rows.push(kv(String.raw`$V_L = IX_L$ (rms)`, fmtV(a.VL)));
+    if (a.hasC) rows.push(kv(String.raw`$V_C = IX_C$ (rms)`, fmtV(a.VC)));
+    rows.push(kv(String.raw`$\sqrt{V_R^2 + (V_L-V_C)^2}$`, String.raw`${fmtV(Math.hypot(a.VR, a.VL - a.VC))} = $V_{\text{rms}}$`));
     if (a.f0 != null) {
-      rows.push(kv('f₀ = 1/(2π√(LC))', fmtHz(a.f0)));
-      if (a.Q != null) rows.push(kv('Q = ω₀L/R', a.Q.toFixed(2)));
+      rows.push(kv(String.raw`$f_0 = 1/2\pi\sqrt{LC}$`, fmtHz(a.f0)));
+      if (a.Q != null) rows.push(kv(String.raw`$Q = \omega_0 L/R$`, a.Q.toFixed(2)));
     }
-    rows.push(kv('P<sub>avg</sub> = I<sub>rms</sub> V<sub>rms</sub> cosφ', qv('qP', fmtP(a.Pavg))));
+    rows.push(kv(String.raw`$P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}}\cos\varphi$`, qv('qP', fmtP(a.Pavg))));
     return rows.join('');
   },
   readout(state, computed) {
@@ -300,10 +300,10 @@ export default defineLab({
     if (!a) return '';
     const near = a.f0 != null && Math.abs(state.f - a.f0) / a.f0 < 0.03;
     return cells([
-      ['I rms', fmtI(a.Irms), 'qI'],
-      ['|Z|', `${a.Z.toFixed(1)} Ω`, near ? 'ok' : ''],
-      ['φ', `${((a.phi * 180) / Math.PI).toFixed(0)}°`, Math.abs(a.phi) < 0.05 ? 'ok' : ''],
-      ['f₀', a.f0 == null ? '—' : fmtHz(a.f0), near ? 'ok' : ''],
+      [String.raw`$I_{\text{rms}}$`, fmtI(a.Irms), 'qI'],
+      [String.raw`$|Z|$`, `${a.Z.toFixed(1)} Ω`, near ? 'ok' : ''],
+      [String.raw`$\varphi$`, `${((a.phi * 180) / Math.PI).toFixed(0)}°`, Math.abs(a.phi) < 0.05 ? 'ok' : ''],
+      [String.raw`$f_0$`, a.f0 == null ? '—' : fmtHz(a.f0), near ? 'ok' : ''],
     ]);
   },
   plot(state, computed) {
@@ -312,41 +312,50 @@ export default defineLab({
   },
   coach(state, computed) {
     const a = computed.ac;
-    if (!a) return { title: 'AC', body: '' };
+    if (!a) return { title: 'AC', body: [eq(String.raw`Z = \sqrt{R^2 + (X_L-X_C)^2}`)] };
     const deg = Math.abs((a.phi * 180) / Math.PI).toFixed(0);
     if (a.hasL && a.hasC) {
       if (Math.abs(state.f - a.f0) / a.f0 < 0.04) {
         return {
-          title: 'Resonance — X_L = X_C, Z = R',
-          body: `ω₀ = 1/√(LC), f₀ = ${a.f0.toFixed(1)} Hz. V_L and V_C are equal and opposite, so in the phasor chain they cancel and V_R alone reaches V: φ = 0, I = V/R is as large as it gets. Each of V_L and V_C is still Q = ${a.Q?.toFixed(1)} times V — the parts can see more voltage than the source.`,
+          title: String.raw`Resonance — $X_L = X_C$, $Z = R$`,
+          body: [
+            `At $f_0$ = ${a.f0.toFixed(1)} Hz, $V_L$ and $V_C$ are equal and opposite: in the phasor chain they cancel and $V_R$ alone reaches $V$, so $\\varphi = 0$ and $I = V/R$ is as large as it gets.`,
+            `Each of $V_L$ and $V_C$ is still $Q$ = ${a.Q?.toFixed(1)} times $V$ — the parts can see more voltage than the source does.`,
+          ],
         };
       }
       if (a.phi > 0) {
         return {
           title: 'Above resonance — inductive',
-          body: `X_L > X_C, so the teal V_L outruns the gold V_C and the chain swings V ahead of I by φ = ${deg}°. Lower f toward f₀ = ${a.f0.toFixed(1)} Hz and watch I grow.`,
+          body: `$X_L > X_C$, so the teal $V_L$ outruns the gold $V_C$ and the chain swings $V$ ahead of $I$ by $\\varphi$ = ${deg}°. Lower $f$ toward $f_0$ = ${a.f0.toFixed(1)} Hz and watch $I$ grow.`,
         };
       }
       return {
         title: 'Below resonance — capacitive',
-        body: `X_C > X_L, so V_C wins and V lags I by ${deg}° (current leads). Raise f toward f₀ = ${a.f0.toFixed(1)} Hz: X_C = 1/ωC falls, X_L = ωL rises, and they meet there.`,
+        body: `$X_C > X_L$, so $V_C$ wins and $V$ lags $I$ by ${deg}° — the current leads. Raise $f$ toward $f_0$ = ${a.f0.toFixed(1)} Hz: $X_C = 1/\\omega C$ falls, $X_L = \\omega L$ rises, and they meet there.`,
       };
     }
     if (a.hasC) {
       return {
         title: 'RC — current leads voltage',
-        body: `X_C = 1/ωC. V_R (along I) and V_C (90° behind I) form a right triangle whose hypotenuse is V, so V lags I by ${deg}°. High f: X_C → 0, the capacitor acts like a wire. Low f: X_C → ∞, it acts like a gap.`,
+        body: [
+          `$V_R$ (along $I$) and $V_C$ (90° behind $I$) form a right triangle whose hypotenuse is $V$, so $V$ lags $I$ by ${deg}°.`,
+          String.raw`At high $f$, $X_C \to 0$ and the capacitor acts like a wire; at low $f$, $X_C \to \infty$ and it acts like a gap.`,
+        ],
       };
     }
     if (a.hasL) {
       return {
         title: 'RL — voltage leads current',
-        body: `X_L = ωL. V_L is 90° ahead of I, so V leads I by ${deg}°. High f: X_L grows and the inductor chokes the current. Average power is still I_rms V_rms cosφ — only the resistor dissipates.`,
+        body: [
+          `$V_L$ is 90° ahead of $I$, so $V$ leads $I$ by ${deg}°.`,
+          String.raw`At high $f$, $X_L$ grows and the inductor chokes the current. The average power is still $I_{\text{rms}}V_{\text{rms}}\cos\varphi$ — only the resistor dissipates.`,
+        ],
       };
     }
     return {
       title: 'Resistor only — in phase',
-      body: 'No reactance: Z = R, φ = 0, and V and I turn together. This is the Ch 42 case: P_avg = I_rms V_rms.',
+      body: String.raw`No reactance, so $Z = R$ and $\varphi = 0$: $V$ and $I$ turn together, and the Ch 42 result $P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}}$ applies unchanged.`,
     };
   },
 });

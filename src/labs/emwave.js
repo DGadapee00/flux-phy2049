@@ -5,7 +5,7 @@ import { Arrow, M, fatLine, updateFatLine } from '../scene/manim.js';
 import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, C_SHEET } from '../physics/constants.js';
 import { planeWave, spectrumBand, wavelengthRGB } from '../physics/emwave.js';
-import { kv, cells } from '../ui/shared.js';
+import { kv, cells, eq } from '../ui/shared.js';
 import { fmtE, fmtHz, fmtWaveLen, fmtIrr, sciHTML } from '../ui/format.js';
 import { fmtB } from './biot.js';
 
@@ -195,13 +195,13 @@ export default defineLab({
     if (!w) return '';
     return [
       kv('Band', w.band.name),
-      kv('λ', fmtWaveLen(state.lambda)),
-      kv('f = c/λ', fmtHz(w.f)),
-      kv('c = 1/√(μ₀ε₀)', `${sciHTML(w.c, 3)} m/s (sheet ${sciHTML(C_SHEET)})`),
-      kv('E₀', fmtE(state.E0)),
-      kv('B₀ = E₀/c', fmtB(w.B0)),
-      kv('I = ½ c ε₀ E₀²', fmtIrr(w.Iavg)),
-      kv('Direction of S = E × B', '+x̂ (ŷ × ẑ = x̂)'),
+      kv(String.raw`$\lambda$`, fmtWaveLen(state.lambda)),
+      kv(String.raw`$f = c/\lambda$`, fmtHz(w.f)),
+      kv(String.raw`$c = 1/\sqrt{\mu_0\varepsilon_0}$`, `${sciHTML(w.c, 3)} m/s (sheet ${sciHTML(C_SHEET)})`),
+      kv(String.raw`$E_0$`, fmtE(state.E0)),
+      kv(String.raw`$B_0 = E_0/c$`, fmtB(w.B0)),
+      kv(String.raw`$I = \tfrac{1}{2}c\varepsilon_0 E_0^2$`, fmtIrr(w.Iavg)),
+      kv(String.raw`direction of $\vec{S} = \vec{E}\times\vec{B}$`, String.raw`$+\hat{x}$ ($\hat{y}\times\hat{z} = \hat{x}$)`),
     ].join('');
   },
   readout(state, computed) {
@@ -209,17 +209,21 @@ export default defineLab({
     if (!w) return '';
     return cells([
       ['Band', w.band.name, w.band.id === 'vis' ? 'ok' : ''],
-      ['f', fmtHz(w.f), ''],
-      ['B₀', fmtB(w.B0), ''],
-      ['I avg', fmtIrr(w.Iavg), ''],
+      [String.raw`$f$`, fmtHz(w.f), ''],
+      [String.raw`$B_0$`, fmtB(w.B0), ''],
+      [String.raw`$I_{\text{avg}}$`, fmtIrr(w.Iavg), ''],
     ]);
   },
   coach(state, computed) {
     const w = computed.em;
     const band = w?.band?.name || '';
     return {
-      title: `${band}: E, B and the travel direction form a right-handed triad`,
-      body: `E is along ŷ and B along ẑ, in phase, with E/B = c at every instant — so B₀ = E₀/c is tiny (${w ? fmtB(w.B0).replace(/<[^>]+>/g, '') : '—'} here). The energy flows along S = (E × B)/μ₀ = +x̂. Its average is the intensity I = ½cε₀E₀²: double E₀ and I goes up four times. Sliding λ across the spectrum changes f = c/λ but not c, and not the geometry.`,
+      title: `${band}: $\\vec{E}$, $\\vec{B}$ and the travel direction form a right-handed triad`,
+      body: [
+        `$\\vec{E}$ is along $\\hat{y}$ and $\\vec{B}$ along $\\hat{z}$, in phase, with $E/B = c$ at every instant — which is why $B_0 = E_0/c$ is so small (${w ? fmtB(w.B0) : '—'} here). The energy flows along $\\vec{S} = (\\vec{E}\\times\\vec{B})/\\mu_0$, and its average is the intensity:`,
+        eq(String.raw`I = \tfrac{1}{2}c\varepsilon_0 E_0^2`),
+        String.raw`Double $E_0$ and $I$ goes up four times. Sliding $\lambda$ across the spectrum changes $f = c/\lambda$, but not $c$ and not the geometry.`,
+      ],
     };
   },
 });

@@ -128,15 +128,15 @@ export default defineLab({
     const W = computed.Wfield ?? 0;
     const g = computed.grad;
     const rows = [
-      kv('V at probe (B)', fmtV(V)),
-      kv('V at A', fmtV(VA)),
-      kv('ΔV = V<sub>B</sub> − V<sub>A</sub>', fmtV(V - VA)),
-      kv('PE<sub>E</sub> = q V', fmtEnergy(PE)),
-      kv('W<sub>field</sub> A→B', fmtEnergy(W)),
+      kv(String.raw`$V$ at the probe ($B$)`, fmtV(V)),
+      kv(String.raw`$V$ at $A$`, fmtV(VA)),
+      kv(String.raw`$\Delta V = V_B - V_A$`, fmtV(V - VA)),
+      kv(String.raw`$PE_E = qV$`, fmtEnergy(PE)),
+      kv(String.raw`$W_{\text{field}}$, $A \to B$`, fmtEnergy(W)),
     ];
     if (g) {
-      rows.push(kv('E<sub>x</sub>', fmtE(g.Ex)));
-      rows.push(kv('−dV/dx', fmtE(g.negdVdx)));
+      rows.push(kv(String.raw`$E_x$`, fmtE(g.Ex)));
+      rows.push(kv(String.raw`$-dV/dx$`, fmtE(g.negdVdx)));
     }
     for (const row of computed.Vcontrib || []) {
       const name = row.id === 'uniform' ? 'uniform' : fmtCharge(row.q);
@@ -148,10 +148,10 @@ export default defineLab({
     const V = computed.V ?? 0;
     const VA = computed.VA ?? 0;
     return cells([
-      ['V (probe)', fmtV(V), ''],
-      ['PE_E', fmtEnergy(computed.PE ?? 0), ''],
-      ['ΔV (A→B)', fmtV(V - VA), ''],
-      ['W_field', fmtEnergy(computed.Wfield ?? 0), ''],
+      [String.raw`$V$ at the probe`, fmtV(V), ''],
+      [String.raw`$PE_E$`, fmtEnergy(computed.PE ?? 0), ''],
+      [String.raw`$\Delta V\ (A \to B)$`, fmtV(V - VA), ''],
+      [String.raw`$W_{\text{field}}$`, fmtEnergy(computed.Wfield ?? 0), ''],
     ]);
   },
   plot(state, computed) {

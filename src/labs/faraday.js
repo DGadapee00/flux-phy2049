@@ -5,7 +5,7 @@ import { Arrow, M, fatLine, disposeTree } from '../scene/manim.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import { loopPoints } from '../physics/bfield.js';
 import { expandingLoop, slidingBar, generator, dipoleLoop, inducedCurrent, lenz } from '../physics/faraday.js';
-import { kv, cells, qv } from '../ui/shared.js';
+import { kv, cells, qv, eq } from '../ui/shared.js';
 import { fmtV, fmtI, fmtWb, fmtLen } from '../ui/format.js';
 import { fmtB } from './biot.js';
 
@@ -422,27 +422,27 @@ export default defineLab({
     const f = computed.far;
     if (!f) return '';
     const rows = [
-      kv('Φ<sub>B</sub>', fmtWb(f.Phi)),
-      kv('dΦ/dt', `${fmtWb(f.dPhi_dt)}/s`),
-      kv('ε = −dΦ/dt', qv('qV', fmtV(f.emf))),
-      kv('I = ε/R', qv('qI', fmtI(f.I))),
+      kv(String.raw`$\Phi_B$`, fmtWb(f.Phi)),
+      kv(String.raw`$d\Phi_B/dt$`, `${fmtWb(f.dPhi_dt)}/s`),
+      kv(String.raw`$\mathcal{E} = -d\Phi_B/dt$`, qv('qV', fmtV(f.emf))),
+      kv(String.raw`$I = \mathcal{E}/R$`, qv('qI', fmtI(f.I))),
       kv('Lenz', f.L.text),
     ];
     if (state.kind === 'magnet') {
-      rows.push(kv('Magnet y', fmtLen(f.z)));
-      rows.push(kv('v<sub>y</sub>', `${f.vz >= 0 ? '+' : '−'}${Math.abs(f.vz).toFixed(2)} m/s`));
+      rows.push(kv(String.raw`magnet $y$`, fmtLen(f.z)));
+      rows.push(kv(String.raw`$v_y$`, `${f.vz >= 0 ? '+' : '−'}${Math.abs(f.vz).toFixed(2)} m/s`));
     }
     if (state.kind === 'expand') {
-      rows.push(kv('R', fmtLen(f.R)));
-      rows.push(kv('Ṙ', `${f.Rdot >= 0 ? '+' : '−'}${Math.abs(f.Rdot).toFixed(3)} m/s`));
+      rows.push(kv(String.raw`$R$`, fmtLen(f.R)));
+      rows.push(kv(String.raw`$dR/dt$`, `${f.Rdot >= 0 ? '+' : '−'}${Math.abs(f.Rdot).toFixed(3)} m/s`));
     }
     if (state.kind === 'bar') {
-      rows.push(kv('x', fmtLen(f.x)));
-      rows.push(kv('v', `${f.v >= 0 ? '+' : '−'}${Math.abs(f.v).toFixed(2)} m/s`));
+      rows.push(kv(String.raw`$x$`, fmtLen(f.x)));
+      rows.push(kv(String.raw`$v$`, `${f.v >= 0 ? '+' : '−'}${Math.abs(f.v).toFixed(2)} m/s`));
     }
     if (state.kind === 'generator') {
-      rows.push(kv('θ = ωt', `${((f.theta * 180) / Math.PI).toFixed(0)}°`));
-      rows.push(kv('N B A ω (peak ε)', fmtV(state.N * state.B * loopAreaR(state.R) * state.omega)));
+      rows.push(kv(String.raw`$\theta = \omega t$`, `${((f.theta * 180) / Math.PI).toFixed(0)}°`));
+      rows.push(kv(String.raw`$NBA\omega$ (peak $\mathcal{E}$)`, fmtV(state.N * state.B * loopAreaR(state.R) * state.omega)));
     }
     return rows.join('');
   },
@@ -450,10 +450,10 @@ export default defineLab({
     const f = computed.far;
     if (!f) return '';
     return cells([
-      ['Φ_B', fmtWb(f.Phi), f.Phi >= 0 ? '' : ''],
-      ['ε', fmtV(f.emf), 'qV'],
-      ['I induced', fmtI(f.I), 'qI'],
-      ['Lenz B', f.L.inducedB > 0 ? '+ŷ' : f.L.inducedB < 0 ? '−ŷ' : '0', ''],
+      [String.raw`$\Phi_B$`, fmtWb(f.Phi), ''],
+      [String.raw`$\mathcal{E}$`, fmtV(f.emf), 'qV'],
+      [String.raw`induced $I$`, fmtI(f.I), 'qI'],
+      [String.raw`Lenz $\vec{B}$`, f.L.inducedB > 0 ? String.raw`$+\hat{y}$` : f.L.inducedB < 0 ? String.raw`$-\hat{y}$` : '0', ''],
     ]);
   },
   coach(state, computed) {
@@ -461,24 +461,39 @@ export default defineLab({
     if (state.kind === 'magnet') {
       return {
         title: 'A changing flux, not “the magnet hitting the loop”',
-        body: `The dipole’s flux through the loop is Φ = (μ₀ m / 2) R²/(R²+z²)^{3/2}. Moving it changes z, so dΦ/dt ≠ 0 and ε appears. ${f?.L.text}. That current’s field tries to keep Φ from changing — Lenz’s law.`,
+        body: [
+          String.raw`The dipole's flux through the loop is`,
+          eq(String.raw`\Phi_B = \frac{\mu_0 m}{2}\frac{R^2}{(R^2+z^2)^{3/2}}`),
+          `Moving the magnet changes $z$, so $d\\Phi_B/dt \\neq 0$ and an emf appears. ${f?.L.text}. That current's own field tries to keep $\\Phi_B$ from changing — Lenz's law.`,
+        ],
       };
     }
     if (state.kind === 'expand') {
       return {
-        title: 'Area changing in a constant B',
-        body: 'B is uniform and constant; the loop’s area is not. Φ = B π R² so ε = −B 2π R Ṙ. Growing the loop increases +Φ, so the induced current is clockwise (from +y) and its field is −ŷ.',
+        title: String.raw`Area changing in a constant $\vec{B}$`,
+        body: [
+          String.raw`$\vec{B}$ is uniform and constant; the loop's area is not:`,
+          eq(String.raw`\Phi_B = B\pi R^2 \quad\Longrightarrow\quad \mathcal{E} = -B\,2\pi R\,\dot{R}`),
+          String.raw`Growing the loop increases $+\Phi_B$, so the induced current runs clockwise seen from $+y$ and its field points along $-\hat{y}$.`,
+        ],
       };
     }
     if (state.kind === 'bar') {
       return {
-        title: 'Motional emf ε = B ℓ v',
-        body: 'Charges in the moving bar feel F = q v × B and pile up until qE cancels it: ε = B ℓ v. Same number as −dΦ/dt with Φ = B ℓ x. The rails close the circuit so a current can flow.',
+        title: String.raw`Motional emf $\mathcal{E} = B\ell v$`,
+        body: [
+          String.raw`Charges in the moving bar feel $\vec{F} = q\vec{v}\times\vec{B}$ and pile up until the electric force cancels it:`,
+          eq(String.raw`\mathcal{E} = B\ell v = -\frac{d\Phi_B}{dt}, \qquad \Phi_B = B\ell x`),
+          'The rails close the circuit, so a current can actually flow.',
+        ],
       };
     }
     return {
       title: 'Generator — a rotating loop',
-      body: 'Φ = NBA cos ωt, so ε = NBA ω sin ωt. Peak emf when the flux is changing fastest (loop edge-on to B). Run a current through the same loop in B and the torque tries to kill the rotation — that opposing torque is back emf in a motor (Ch 50).',
+      body: [
+        eq(String.raw`\Phi_B = NBA\cos\omega t \quad\Longrightarrow\quad \mathcal{E} = NBA\omega\sin\omega t`),
+        String.raw`The emf peaks where the flux is changing fastest — the loop edge-on to $\vec{B}$, not where the flux is largest. Run a current through the same loop in $\vec{B}$ and the torque fights the rotation; that is back emf in a motor (Ch 50).`,
+      ],
     };
   },
 });

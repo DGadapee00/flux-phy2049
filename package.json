@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/physics/selftest.js && node scripts/problems-check.mjs"
+    "test": "node scripts/tex-check.mjs && node src/physics/selftest.js && node scripts/problems-check.mjs"
   },
   "dependencies": {
     "katex": "^0.16.47",

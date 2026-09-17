@@ -9,6 +9,14 @@ export function sciHTML(x, digits = 2) {
   return `${mant}×10<sup>${exp}</sup>`;
 }
 
+/** Scientific notation as TeX, for prose that needs a number inside math: 2.3\times10^{-4}. */
+export function sciTex(x, digits = 2) {
+  if (!Number.isFinite(x)) return '-';
+  if (Math.abs(x) < 1e-18) return '0';
+  const [m, e] = Number(x).toExponential(digits).split('e');
+  return `${Number(m)}\\times 10^{${Number(e)}}`;
+}
+
 export function sciText(x, digits = 2) {
   if (!Number.isFinite(x)) return '—';
   if (Math.abs(x) < 1e-18) return '0';

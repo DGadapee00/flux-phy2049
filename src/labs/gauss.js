@@ -190,24 +190,24 @@ export default defineLab({
     const PhiShow = state.anim.playing && g ? g.runningPhi : g?.Phi;
     const rows = [];
     if (!g) return '';
-    rows.push(kv('Numerical Σ E·ΔA', fmtPhi(PhiShow)));
+    rows.push(kv(String.raw`Numerical $\sum \vec{E}\cdot\hat{n}\,\Delta A$`, fmtPhi(PhiShow)));
     if (closed) {
-      rows.push(kv('Q<sub>in</sub>/ε<sub>0</sub>', fmtPhi(g.PhiG)));
+      rows.push(kv(String.raw`$Q_{\text{in}}/\varepsilon_0$`, fmtPhi(g.PhiG)));
       rows.push(kv('Match', `<span class="${matchClass(g.match.pct)}">${g.match.pct.toFixed(1)}%</span>`));
-      rows.push(kv('Q<sub>in</sub>', fmtCharge(g.Qin)));
+      rows.push(kv(String.raw`$Q_{\text{in}}$`, fmtCharge(g.Qin)));
     } else {
       const A = g.area;
       const ca = Math.cos(state.surface.tilt || 0);
       const E = Math.hypot(state.extraE.x, state.extraE.y, state.extraE.z);
-      rows.push(kv('|E| A cosθ', fmtPhi(E * A * ca)));
-      rows.push(kv('A', `${A.toFixed(3)} m²`));
-      rows.push(kv('cosθ', ca.toFixed(3)));
+      rows.push(kv(String.raw`$|\vec{E}|\,A\cos\theta$`, fmtPhi(E * A * ca)));
+      rows.push(kv(String.raw`$A$`, `${A.toFixed(3)} m²`));
+      rows.push(kv(String.raw`$\cos\theta$`, ca.toFixed(3)));
     }
     if (g.PhiWall || g.PhiCap) {
-      rows.push(kv('Φ_wall', fmtPhi(g.PhiWall)));
-      rows.push(kv('Φ_caps', fmtPhi(g.PhiCap)));
+      rows.push(kv(String.raw`$\Phi_{\text{wall}}$`, fmtPhi(g.PhiWall)));
+      rows.push(kv(String.raw`$\Phi_{\text{caps}}$`, fmtPhi(g.PhiCap)));
     }
-    if (coach.canFindE && coach.Eguess != null) rows.push(kv('|E| from Gauss', fmtE(coach.Eguess)));
+    if (coach.canFindE && coach.Eguess != null) rows.push(kv(String.raw`$|\vec{E}|$ from Gauss`, fmtE(coach.Eguess)));
     if (coach.formula) rows.push(kv('Use', coach.formula));
     return rows.join('');
   },
@@ -217,9 +217,9 @@ export default defineLab({
     const closed = g.closed;
     const PhiShow = state.anim.playing ? g.runningPhi : g.Phi;
     return cells([
-      ['Φ numerical', fmtPhi(PhiShow), ''],
+      [String.raw`$\Phi_E$ numerical`, fmtPhi(PhiShow), ''],
       [
-        closed ? 'Q_in / ε₀' : '|E|A cosθ',
+        closed ? String.raw`$Q_{\text{in}}/\varepsilon_0$` : String.raw`$|\vec{E}|A\cos\theta$`,
         closed
           ? fmtPhi(g.PhiG)
           : fmtPhi(Math.hypot(state.extraE.x, state.extraE.y, state.extraE.z) * g.area * Math.cos(state.surface.tilt || 0)),

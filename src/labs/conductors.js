@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { defineLab } from './define.js';
 import { conductorField, imageGrounded, imageIsolatedNeutral, sigmaUniform, sigmaSphere, EoutsideSphere } from '../physics/conductors.js';
 import { fmtE, fmtCharge } from '../ui/format.js';
-import { kv, cells } from '../ui/shared.js';
+import { kv, cells, eq } from '../ui/shared.js';
 import { sceneScale } from '../engine/frame.js';
 import { POS_COLOR, NEG_COLOR } from '../scene/manim.js';
 
@@ -223,22 +223,22 @@ export default defineLab({
     if (!E) return '';
     const rows = [
       kv('Region', E.region),
-      kv('|E| at probe', fmtE(E.mag)),
-      kv('E<sub>x</sub>', fmtE(E.x)),
-      kv('Probe', `(${state.probe.x.toFixed(2)}, ${state.probe.y.toFixed(2)}, ${state.probe.z.toFixed(2)}) m`),
+      kv(String.raw`$|\vec{E}|$ at the probe`, fmtE(E.mag)),
+      kv(String.raw`$E_x$`, fmtE(E.x)),
+      kv(String.raw`Probe $P$`, `(${state.probe.x.toFixed(2)}, ${state.probe.y.toFixed(2)}, ${state.probe.z.toFixed(2)}) m`),
     ];
-    if (computed.sigma != null) rows.push(kv('σ = Q/4πR²', `${computed.sigma.toExponential(2)} C/m²`));
+    if (computed.sigma != null) rows.push(kv(String.raw`$\sigma = Q/4\pi R^2$`, `${computed.sigma.toExponential(2)} C/m²`));
     if (state.kind === 'grounded' || state.kind === 'neutral') {
-      rows.push(kv('σ facing q (θ = 0)', `${sigmaSphere(state, { x: 1, y: 0, z: 0 }).toExponential(2)} C/m²`));
-      rows.push(kv('σ far side (θ = π)', `${sigmaSphere(state, { x: -1, y: 0, z: 0 }).toExponential(2)} C/m²`));
+      rows.push(kv(String.raw`$\sigma$ facing $q$ ($\theta = 0$)`, `${sigmaSphere(state, { x: 1, y: 0, z: 0 }).toExponential(2)} C/m²`));
+      rows.push(kv(String.raw`$\sigma$ far side ($\theta = \pi$)`, `${sigmaSphere(state, { x: -1, y: 0, z: 0 }).toExponential(2)} C/m²`));
     }
     if (state.kind === 'grounded' && computed.image) {
-      rows.push(kv("q' = −(R/d)q", fmtCharge(computed.image.q)));
-      rows.push(kv("d' = R²/d", `${computed.image.x.toFixed(3)} m`));
+      rows.push(kv(String.raw`$q' = -(R/d)\,q$`, fmtCharge(computed.image.q)));
+      rows.push(kv(String.raw`$d' = R^2/d$`, `${computed.image.x.toFixed(3)} m`));
     }
     if (state.kind === 'neutral' && computed.image) {
-      rows.push(kv("image q'", fmtCharge(computed.image.image.q)));
-      rows.push(kv('center (so Q_net = 0)', fmtCharge(computed.image.center.q)));
+      rows.push(kv(String.raw`image $q'$`, fmtCharge(computed.image.image.q)));
+      rows.push(kv(String.raw`at the center (so $Q_{\text{net}} = 0$)`, fmtCharge(computed.image.center.q)));
     }
     if (state.kind === 'cage') {
       rows.push(kv('Inner surface', fmtCharge(-state.q)));
@@ -251,9 +251,9 @@ export default defineLab({
     if (!E) return '';
     return cells([
       ['Region', E.region, E.region === 'metal' ? 'ok' : ''],
-      ['|E|', fmtE(E.mag), E.region === 'metal' ? 'ok' : ''],
-      ['E_x', fmtE(E.x), ''],
-      ['R', `${state.R.toFixed(2)} m`, ''],
+      [String.raw`$|\vec{E}|$`, fmtE(E.mag), E.region === 'metal' ? 'ok' : ''],
+      [String.raw`$E_x$`, fmtE(E.x), ''],
+      [String.raw`$R$`, `${state.R.toFixed(2)} m`, ''],
     ]);
   },
   coach(state, computed) {
@@ -261,24 +261,35 @@ export default defineLab({
     if (state.kind === 'uniform') {
       return {
         title: 'Charge lives on the surface',
-        body: 'Free electrons run until E = 0 everywhere inside the metal. Gauss: a surface inside the conductor encloses Q_in = 0, so E = 0. Outside, the sphere looks like a point Q at the center: E = kQ/r². σ = Q/(4πR²) is uniform only because of spherical symmetry.',
+        body: [
+          String.raw`Free electrons run until $\vec{E} = 0$ everywhere inside the metal. A Gaussian surface drawn inside the conductor then encloses $Q_{\text{in}} = 0$. Outside, the sphere looks like a point charge at the center:`,
+          eq(String.raw`E = 0 \;(r<R), \qquad E = \frac{kQ}{r^2} \;(r>R)`),
+          String.raw`$\sigma = Q/(4\pi R^2)$ is uniform here only because the conductor is a sphere.`,
+        ],
       };
     }
     if (state.kind === 'cage') {
       return {
         title: 'Faraday cage',
-        body: 'A Gaussian surface drawn in the metal has Q_in = 0, so E = 0 in the conductor no matter what charge sits in the cavity. The inner surface carries −q (to cancel the cavity charge). If the shell is isolated the outer surface carries +q, and the field outside is the same as a point q at the center.',
+        body: [
+          String.raw`A Gaussian surface drawn inside the metal encloses $Q_{\text{in}} = 0$, so $\vec{E} = 0$ in the conductor no matter what sits in the cavity. The surfaces carry`,
+          eq(String.raw`q_{\text{inner}} = -q, \qquad q_{\text{outer}} = +q`),
+          String.raw`(the outer one only if the shell is isolated), and the field outside is the same as a point charge $q$ at the center.`,
+        ],
       };
     }
     if (E?.region === 'metal') {
       return {
-        title: 'E = 0 in the metal — exact',
-        body: 'The image charge is placed so the sphere is an equipotential. Superposition of q and q′ then gives identically zero field for r < R. Gauss cannot give you the nonuniform σ on the surface, but it still says the flux through a Gaussian surface in the metal is zero.',
+        title: String.raw`$\vec{E} = 0$ in the metal — exactly`,
+        body: String.raw`The image charge is placed so that the sphere is an equipotential. Superposing $q$ and $q'$ then gives identically zero field for $r < R$. Gauss cannot hand you the non-uniform $\sigma$ on the surface, but it still says the flux through any surface drawn in the metal is zero.`,
       };
     }
     return {
       title: 'Image charge for a sphere',
-      body: `q′ = −(R/d) q sits at d′ = R²/d. For a grounded sphere that is the whole story. For a neutral isolated sphere we put −q′ at the center so the net charge on the conductor stays 0. This is exact for a sphere — not for a cube.`,
+      body: [
+        eq(String.raw`q' = -\frac{R}{d}\,q \quad\text{at}\quad d' = \frac{R^2}{d}`),
+        String.raw`For a grounded sphere that is the whole story. For a neutral isolated sphere, put $-q'$ at the center as well, so the net charge on the conductor stays zero. This construction is exact for a sphere — not for a cube.`,
+      ],
     };
   },
 });

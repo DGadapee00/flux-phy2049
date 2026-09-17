@@ -57,10 +57,10 @@ export default defineLab({
     if (sel && F) {
       const mag = Math.hypot(F.x, F.y, F.z);
       rows.push(kv('Selected', fmtCharge(sel.q)));
-      rows.push(kv('|F<sub>net</sub>|', fmtForce(mag)));
-      rows.push(kv('F<sub>x</sub>', fmtForce(F.x)));
-      rows.push(kv('F<sub>y</sub>', fmtForce(F.y)));
-      rows.push(kv('F<sub>z</sub>', fmtForce(F.z)));
+      rows.push(kv(String.raw`$|\vec{F}_{\text{net}}|$`, fmtForce(mag)));
+      rows.push(kv(String.raw`$F_x$`, fmtForce(F.x)));
+      rows.push(kv(String.raw`$F_y$`, fmtForce(F.y)));
+      rows.push(kv(String.raw`$F_z$`, fmtForce(F.z)));
     } else {
       rows.push(kv('Need', 'two or more charges'));
     }
@@ -72,9 +72,9 @@ export default defineLab({
     const mag = F ? Math.hypot(F.x, F.y, F.z) : 0;
     return cells([
       ['Selected', sel ? fmtCharge(sel.q) : '—', ''],
-      ['|F_net|', F ? fmtForce(mag) : '—', ''],
-      ['F_x', F ? fmtForce(F.x) : '—', ''],
-      ['F_y', F ? fmtForce(F.y) : '—', ''],
+      [String.raw`$|\vec{F}_{\text{net}}|$`, F ? fmtForce(mag) : '—', ''],
+      [String.raw`$F_x$`, F ? fmtForce(F.x) : '—', ''],
+      [String.raw`$F_y$`, F ? fmtForce(F.y) : '—', ''],
     ]);
   },
   coach: (state) => coachForce(state.charges),

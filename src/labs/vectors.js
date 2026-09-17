@@ -3,7 +3,7 @@ import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
 import { Arrow, M, fatLine, fatSegments, disposeTree } from '../scene/manim.js';
 import { dot, len, normalize } from '../physics/vec.js';
-import { kv, cells } from '../ui/shared.js';
+import { kv, cells, eq } from '../ui/shared.js';
 
 /** Vectors are dimensionless here; draw 1 unit as 4 scene units so |a| ≈ 1 fits on screen. */
 const S = 4;
@@ -190,45 +190,51 @@ export default defineLab({
     if (!v) return '';
     const deg = (v.phi * 180) / Math.PI;
     return [
-      kv('a<sub>x</sub>, a<sub>y</sub>, a<sub>z</sub>', `${a.x.toFixed(2)}, ${a.y.toFixed(2)}, ${a.z.toFixed(2)}`),
-      kv('b<sub>x</sub>, b<sub>y</sub>, b<sub>z</sub>', `${b.x.toFixed(2)}, ${b.y.toFixed(2)}, ${b.z.toFixed(2)}`),
-      kv('|a|', v.ma.toFixed(3)),
-      kv('|b|', v.mb.toFixed(3)),
-      kv('a · b (components)', v.adb.toFixed(3)),
-      kv('|a||b|cosφ', v.fromCos.toFixed(3)),
-      kv('φ', `${deg.toFixed(1)}°`),
-      kv('α = cos⁻¹(a<sub>x</sub>/|a|)', `${((v.alpha * 180) / Math.PI).toFixed(1)}°`),
-      kv('β = cos⁻¹(a<sub>y</sub>/|a|)', `${((v.beta * 180) / Math.PI).toFixed(1)}°`),
+      kv(String.raw`$a_x$, $a_y$, $a_z$`, `${a.x.toFixed(2)}, ${a.y.toFixed(2)}, ${a.z.toFixed(2)}`),
+      kv(String.raw`$b_x$, $b_y$, $b_z$`, `${b.x.toFixed(2)}, ${b.y.toFixed(2)}, ${b.z.toFixed(2)}`),
+      kv(String.raw`$|\vec{a}|$`, v.ma.toFixed(3)),
+      kv(String.raw`$|\vec{b}|$`, v.mb.toFixed(3)),
+      kv(String.raw`$\vec{a}\cdot\vec{b}$ (components)`, v.adb.toFixed(3)),
+      kv(String.raw`$|\vec{a}||\vec{b}|\cos\varphi$`, v.fromCos.toFixed(3)),
+      kv(String.raw`$\varphi$`, `${deg.toFixed(1)}°`),
+      kv(String.raw`$\alpha = \cos^{-1}(a_x/|\vec{a}|)$`, `${((v.alpha * 180) / Math.PI).toFixed(1)}°`),
+      kv(String.raw`$\beta = \cos^{-1}(a_y/|\vec{a}|)$`, `${((v.beta * 180) / Math.PI).toFixed(1)}°`),
     ].join('');
   },
   readout(state, computed) {
     const v = computed.vec;
     if (!v) return '';
     return cells([
-      ['|a|', v.ma.toFixed(2), ''],
-      ['|b|', v.mb.toFixed(2), ''],
-      ['a · b', v.adb.toFixed(2), v.adb < 0 ? 'warn' : 'ok'],
-      ['φ', `${((v.phi * 180) / Math.PI).toFixed(0)}°`, ''],
+      [String.raw`$|\vec{a}|$`, v.ma.toFixed(2), ''],
+      [String.raw`$|\vec{b}|$`, v.mb.toFixed(2), ''],
+      [String.raw`$\vec{a}\cdot\vec{b}$`, v.adb.toFixed(2), v.adb < 0 ? 'warn' : 'ok'],
+      [String.raw`$\varphi$`, `${((v.phi * 180) / Math.PI).toFixed(0)}°`, ''],
     ]);
   },
   coach(state, computed) {
     const v = computed.vec;
-    if (!v) return { title: 'Vectors', body: 'Drag the tips.' };
+    if (!v) return { title: 'Vectors', body: 'Drag the tips of the arrows.' };
     if (Math.abs(v.adb) < 0.05) {
       return {
-        title: 'Perpendicular — dot product is 0',
-        body: 'a · b = 0 ⇔ φ = 90°. On the sheet, a · x̂ = a_x = |a| cos α. The two ways of writing the dot product (components vs |a||b|cosφ) always agree — that’s the check in the live table.',
+        title: 'Perpendicular — the dot product is zero',
+        body: [
+          eq(String.raw`\vec{a}\cdot\vec{b} = 0 \iff \varphi = 90^\circ`),
+          String.raw`On the sheet, $\vec{a}\cdot\hat{x} = a_x = |\vec{a}|\cos\alpha$. The two ways of writing the dot product — components, or $|\vec{a}||\vec{b}|\cos\varphi$ — always agree, and that is the check in the live table.`,
+        ],
       };
     }
     if (v.adb < 0) {
       return {
         title: 'Obtuse — negative work, negative flux pieces',
-        body: 'φ > 90° so cosφ < 0 and a · b < 0. Same sign rule as E · n̂ on a Gaussian tile: inward flux is negative. The magnitude is still |a||b||cosφ|.',
+        body: String.raw`$\varphi > 90^\circ$, so $\cos\varphi < 0$ and $\vec{a}\cdot\vec{b} < 0$. It is the same sign rule as $\vec{E}\cdot\hat{n}$ on a Gaussian tile, where inward flux counts negative. The size is still $|\vec{a}||\vec{b}||\cos\varphi|$.`,
       };
     }
     return {
       title: 'Components first, then the angle',
-      body: 'Write a = a_x x̂ + a_y ŷ + a_z ẑ. |a| = √(a·a). The angle with the x-axis is α = cos⁻¹(a_x/|a|). Adding vectors is adding components — that is Exam 1, and it is how F_net and E_net are built later.',
+      body: [
+        eq(String.raw`\vec{a} = a_x\hat{x} + a_y\hat{y} + a_z\hat{z}, \qquad |\vec{a}| = \sqrt{\vec{a}\cdot\vec{a}}`),
+        String.raw`The angle with the $x$-axis is $\alpha = \cos^{-1}(a_x/|\vec{a}|)$. Adding vectors is adding components — that is Exam 1, and it is how $\vec{F}_{\text{net}}$ and $\vec{E}_{\text{net}}$ get built later.`,
+      ],
     };
   },
   pointer: {

@@ -35,6 +35,8 @@ Press **P** (or the yellow **Practice** button) for the problem bank: 179 genera
 
 Links open a specific version: `#/e2/field?p=e2.36a.collinear&s=0`. Progress is saved in this browser only. Authoring, answer-key notes and the checks: [PROBLEMS.md](PROBLEMS.md).
 
+Every panel is typeset: the law at the top of the equation panel, the live rows under it, the explainer at the bottom, and the readout across the bottom of the screen all render their symbols with KaTeX, with the central equation of an explainer set on its own line.
+
 ## Setting up by hand
 
 Every number in a setup is typed, not approximated: each charge has a box for **q** in μC, and a row of **x, y, z** boxes in the unit the scene is drawn at. The probe (P) and, in Potential, point A get the same rows. Every slider in the app has a box beside it for an exact value, and typing a value past a slider's end widens the slider rather than clamping it.

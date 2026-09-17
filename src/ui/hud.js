@@ -1,5 +1,5 @@
 import { EXAMS, examById, LAB_META } from '../data/catalog.js';
-import { setLawEl } from './shared.js';
+import { setLawEl, prose, mathText } from './shared.js';
 import { drawVx, drawAC, drawVI } from './plot.js';
 import { resetChargeListSig } from '../labs/charges-ui.js';
 import { sceneScale, workPlane, lenLabel, PLANE_AXES } from '../engine/frame.js';
@@ -62,6 +62,8 @@ export function createHUD(api) {
   function renderLegend(lab) {
     const host = $('legend-host');
     const L = lab?.legend;
+    // The legend sits over the bottom-left corner; the equation panel stops short of it.
+    document.body.classList.toggle('has-legend', !!L);
     if (!L) {
       host.innerHTML = '';
       host.hidden = true;
@@ -202,7 +204,7 @@ export function createHUD(api) {
       $('eq-live').innerHTML = '';
       $('readout').innerHTML = '';
       $('insight-title').textContent = examById(state.examId)?.title || '';
-      $('insight-body').textContent = (examById(state.examId)?.coming || []).join(', ');
+      $('insight-body').innerHTML = prose((examById(state.examId)?.coming || []).join(', '));
       $('mini-plot').hidden = true;
       return;
     }
@@ -219,8 +221,8 @@ export function createHUD(api) {
     });
 
     const coach = computed.coach || lab.coach(state, computed) || { title: '', body: '' };
-    $('insight-title').textContent = coach.title || '';
-    $('insight-body').textContent = coach.body || '';
+    $('insight-title').innerHTML = mathText(coach.title || '');
+    $('insight-body').innerHTML = prose(coach.body || '');
 
     setLaw(lab.law(state, computed));
     $('eq-live').innerHTML = lab.liveRows(state, computed);

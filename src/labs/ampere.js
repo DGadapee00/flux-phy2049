@@ -5,7 +5,7 @@ import { Arrow, M, fatLine, fatSegments, disposeTree } from '../scene/manim.js';
 import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, MU0 } from '../physics/constants.js';
 import { BlongWire, amperianLoop, enclosedFraction } from '../physics/bfield.js';
-import { kv, cells, matchClass, qv } from '../ui/shared.js';
+import { kv, cells, matchClass, qv, eq } from '../ui/shared.js';
 import { sciHTML } from '../ui/format.js';
 import { fmtB } from './biot.js';
 
@@ -324,61 +324,80 @@ export default defineLab({
   liveRows(state, computed) {
     const a = computed.amp;
     if (!a) return '';
-    const rows = [kv('∮ B·dl numerical (Σ over n)', fmtCirc(a.circ))];
+    const rows = [kv(String.raw`Numerical $\sum \vec{B}\cdot\Delta\vec{l}$`, fmtCirc(a.circ))];
     if (state.anim.playing) rows.push(kv(`Running (${a.cut}/${a.n} pieces)`, fmtCirc(a.running)));
-    rows.push(kv('μ₀ I<sub>enc</sub>', fmtCirc(a.target)));
+    rows.push(kv(String.raw`$\mu_0 I_{\text{enc}}$`, fmtCirc(a.target)));
     rows.push(kv('Match', `<span class="${matchClass(a.pct)}">${a.pct.toFixed(1)}%</span>`));
     a.enc.forEach(({ w, frac }, k) => {
       const where = frac >= 1 - 1e-9 ? 'inside' : frac <= 1e-9 ? 'outside' : `${(frac * 100).toFixed(1)}% of J inside`;
-      rows.push(kv(`I<sub>${k + 1}</sub> (${where})`, qv('qI', `${(w.I * frac).toFixed(2)} A counted`)));
+      rows.push(kv(`$I_${k + 1}$ (${where})`, qv('qI', `${(w.I * frac).toFixed(2)} A counted`)));
     });
-    rows.push(kv('I<sub>enc</sub>', qv('qI', `${a.Ienc.toFixed(2)} A`)));
-    rows.push(kv('B along dl on the loop', `${fmtB(a.BtMin)} … ${fmtB(a.BtMax)}`));
-    if (a.Bsym != null) rows.push(kv('B = μ₀I<sub>enc</sub>/2πr', fmtB(a.Bsym)));
+    rows.push(kv(String.raw`$I_{\text{enc}}$`, qv('qI', `${a.Ienc.toFixed(2)} A`)));
+    rows.push(kv(String.raw`$\vec{B}\cdot d\vec{l}$ along the loop`, `${fmtB(a.BtMin)} … ${fmtB(a.BtMax)}`));
+    if (a.Bsym != null) rows.push(kv(String.raw`$B = \mu_0 I_{\text{enc}}/2\pi r$`, fmtB(a.Bsym)));
     return rows.join('');
   },
   readout(state, computed) {
     const a = computed.amp;
     if (!a) return '';
     return cells([
-      ['∮ B·dl', fmtCirc(state.anim.playing ? a.running : a.circ), ''],
-      ['μ₀ I_enc', fmtCirc(a.target), ''],
+      [String.raw`$\oint \vec{B}\cdot d\vec{l}$`, fmtCirc(state.anim.playing ? a.running : a.circ), ''],
+      [String.raw`$\mu_0 I_{\text{enc}}$`, fmtCirc(a.target), ''],
       ['Match', `${a.pct.toFixed(1)}%`, matchClass(a.pct)],
-      ['I_enc', `${a.Ienc.toFixed(2)} A`, 'qI'],
+      [String.raw`$I_{\text{enc}}$`, `${a.Ienc.toFixed(2)} A`, 'qI'],
     ]);
   },
   coach(state, computed) {
     const a = computed.amp;
-    if (!a) return { title: 'Ampère’s law', body: '' };
+    if (!a) return { title: 'Ampère’s law', body: [eq(String.raw`\oint \vec{B}\cdot d\vec{l} = \mu_0 I_{\text{enc}}`)] };
     const thickInside = state.wires.some((w) => w.a > 0 && Math.hypot(w.x - state.cx, w.z - state.cz) + state.r <= w.a + 1e-9);
     const anyOutsideField = a.enc.some((t) => t.frac < 1e-9 && Math.abs(t.w.I) > 0);
     if (thickInside) {
       return {
-        title: 'Inside the wire: only part of I is enclosed',
-        body: `With uniform J the loop encloses I·r²/a² = ${a.Ienc.toFixed(2)} A. Symmetry still holds, so B(2πr) = μ₀I r²/a² and B = μ₀Ir/(2πa²) — it grows linearly with r inside and falls as 1/r outside. Slide r past a and watch I_enc stop growing.`,
+        title: String.raw`Inside the wire: only part of $I$ is enclosed`,
+        body: [
+          `With uniform current density the loop encloses $I\\,r^2/a^2$ = ${a.Ienc.toFixed(2)} A. Symmetry still holds, so`,
+          eq(String.raw`B\,(2\pi r) = \mu_0 I\frac{r^2}{a^2} \quad\Longrightarrow\quad B = \frac{\mu_0 I r}{2\pi a^2}`),
+          String.raw`$B$ grows linearly with $r$ inside the wire and falls as $1/r$ outside. Slide $r$ past $a$ and watch $I_{\text{enc}}$ stop growing.`,
+        ],
       };
     }
     if (Math.abs(a.Ienc) < 1e-9 && anyOutsideField) {
       return {
-        title: 'B ≠ 0 on the loop, but ∮ B·dl = 0',
-        body: 'The wire is outside, so I_enc = 0. On the near side B runs against dl (blue); on the far side it runs along dl (gold) but is weaker over a longer stretch. Those pieces cancel exactly. Zero circulation does not mean zero field.',
+        title: String.raw`$\vec{B} \neq 0$ on the loop, but $\oint \vec{B}\cdot d\vec{l} = 0$`,
+        body: [
+          String.raw`The wire is outside, so $I_{\text{enc}} = 0$. On the near side $\vec{B}$ runs against $d\vec{l}$ (blue); on the far side it runs along $d\vec{l}$ (gold) but is weaker over a longer stretch, and the two cancel exactly.`,
+          String.raw`Zero circulation does not mean zero field.`,
+        ],
       };
     }
     if (a.concentric && state.wires.length === 1) {
       return {
-        title: 'Symmetry lets you pull B out of the integral',
-        body: `Every piece is the same distance from the wire, so B·dl = B dl all the way around (the loop is uniformly gold). Then ∮ B·dl = B(2πr) = μ₀I_enc gives B = ${fmtB(a.Bsym).replace(/<[^>]+>/g, '')}. That step is only legal because B is constant on the loop.`,
+        title: String.raw`Symmetry lets you pull $B$ out of the integral`,
+        body: [
+          String.raw`Every piece is the same distance from the wire, so $\vec{B}\cdot d\vec{l} = B\,dl$ all the way around — the loop is uniformly gold. Then`,
+          eq(String.raw`B\,(2\pi r) = \mu_0 I_{\text{enc}} \quad\Longrightarrow\quad B = \frac{\mu_0 I_{\text{enc}}}{2\pi r}`),
+          `which gives ${fmtB(a.Bsym)}. That first step is legal only because $B$ is constant on the loop.`,
+        ],
       };
     }
     if (state.wires.length > 1) {
       return {
-        title: 'I_enc is a signed sum',
-        body: `Right-hand rule with the loop direction: current up counts +, current down counts −. Here I_enc = ${a.enc.map((t) => `${t.w.I >= 0 ? '+' : '−'}${Math.abs(t.w.I * t.frac).toFixed(1)}`).join(' ')} A = ${a.Ienc.toFixed(2)} A. The law is exact, but B on the loop is lopsided, so you cannot solve for B with Ampère alone.`,
+        title: String.raw`$I_{\text{enc}}$ is a signed sum`,
+        body: [
+          String.raw`Right-hand rule with the loop direction: current up counts $+$, current down counts $-$. Here`,
+          eq(String.raw`I_{\text{enc}} = ${a.enc.map((t) => `${t.w.I >= 0 ? '+' : '-'}${Math.abs(t.w.I * t.frac).toFixed(1)}`).join(' ')} = ${a.Ienc.toFixed(2)}\ \text{A}`),
+          String.raw`The law is exact, but $B$ on the loop is lopsided, so Ampère alone will not give you $B$.`,
+        ],
       };
     }
     return {
-      title: 'Still μ₀I_enc — but you cannot solve for B',
-      body: `The circulation is unchanged (${a.pct.toFixed(1)}% match) because the same current is enclosed. B along dl now ranges from ${fmtB(a.BtMin).replace(/<[^>]+>/g, '')} to ${fmtB(a.BtMax).replace(/<[^>]+>/g, '')}, so B(2πr) is not the integral. Ampère is always true; it is only useful when symmetry makes B constant on the loop.`,
+      title: String.raw`Still $\mu_0 I_{\text{enc}}$ — but you cannot solve for $B$`,
+      body: [
+        `The circulation is unchanged (${a.pct.toFixed(1)}% match) because the same current is enclosed. But $\\vec{B}\\cdot d\\vec{l}$ now ranges from ${fmtB(a.BtMin)} to ${fmtB(a.BtMax)}, so`,
+        eq(String.raw`\oint \vec{B}\cdot d\vec{l} \neq B\,(2\pi r)`),
+        String.raw`Ampère's law is always true; it is only *useful* when symmetry makes $B$ constant on the loop.`,
+      ],
     };
   },
 });

@@ -3,7 +3,7 @@ import { defineLab } from './define.js';
 import { M } from '../scene/manim.js';
 import { imageOf, principalRays, twoLenses, traceRay, fmtCm } from '../physics/optics.js';
 import { RAY_COLORS, wipe, label, line, arrowAt, tick, drawBundle, frameCamera } from '../scene/opticsBench.js';
-import { kv, cells } from '../ui/shared.js';
+import { kv, cells, eq } from '../ui/shared.js';
 
 /** Microscope: final virtual image at the 25 cm near point. Telescope: final image at infinity. */
 const NEAR_POINT = 25;
@@ -282,8 +282,8 @@ export default defineLab({
     } else if (L.i2) {
       h.draw.add(label('final image at ∞ — rays leave parallel', state.sep + 30, -11));
     }
-    tick(h.draw, state.fAbs, 'F_o', M.gold);
-    tick(h.draw, state.sep - state.f2, 'F_e', M.gold);
+    tick(h.draw, state.fAbs, '<i>F</i><sub>o</sub>', M.gold);
+    tick(h.draw, state.sep - state.f2, '<i>F</i><sub>e</sub>', M.gold);
   },
   law(state) {
     if (state.mode === 'tele') {
@@ -299,31 +299,31 @@ export default defineLab({
     if (!L) return '';
     if (L.mode !== 'single') {
       const rows = [
-        kv('f_o objective, f_e eyepiece', `${fmtCm(state.fAbs)}, ${fmtCm(state.f2)}`),
+        kv(String.raw`$f_o$ objective, $f_e$ eyepiece`, `${fmtCm(state.fAbs)}, ${fmtCm(state.f2)}`),
         kv('Separation', fmtCm(state.sep)),
-        kv('d_o', fmtCm(state.do)),
-        kv('Intermediate image d_i1', L.i1?.infinite ? '∞' : fmtCm(L.i1.di)),
-        kv('Eyepiece object distance', Number.isFinite(L.do2) ? fmtCm(L.do2) : '∞'),
-        kv('Final image (from eyepiece)', !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di)),
+        kv(String.raw`$d_o$`, fmtCm(state.do)),
+        kv(String.raw`intermediate image $d_{i1}$`, L.i1?.infinite ? '∞' : fmtCm(L.i1.di)),
+        kv(String.raw`eyepiece object distance $d_{o2}$`, Number.isFinite(L.do2) ? fmtCm(L.do2) : '∞'),
+        kv(String.raw`final image $d_{i2}$`, !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di)),
       ];
       if (L.mode === 'tele') {
-        rows.push(kv('M_θ traced (chief ray)', L.angularM.toFixed(2)));
-        rows.push(kv('−f_o/f_e', L.angularIdeal.toFixed(2)));
+        rows.push(kv(String.raw`$M_\theta$ traced (chief ray)`, L.angularM.toFixed(2)));
+        rows.push(kv(String.raw`$-f_o/f_e$`, L.angularIdeal.toFixed(2)));
       } else {
-        rows.push(kv('M = m_o m_e (exact)', Number.isFinite(L.M) ? L.M.toFixed(1) : '∞'));
-        rows.push(kv('Tube length L = sep − f_o − f_e', fmtCm(L.tube)));
-        rows.push(kv('−(L/f_o)(25 cm/f_e) estimate', L.microEstimate.toFixed(1)));
+        rows.push(kv(String.raw`$M = m_o m_e$ (exact)`, Number.isFinite(L.M) ? L.M.toFixed(1) : '∞'));
+        rows.push(kv(String.raw`tube length $L = s - f_o - f_e$`, fmtCm(L.tube)));
+        rows.push(kv(String.raw`$-(L/f_o)(25\,\text{cm}/f_e)$ estimate`, L.microEstimate.toFixed(1)));
       }
       return rows.join('');
     }
     return [
-      kv('f', fmtCm(L.f)),
-      kv('d_o', fmtCm(state.do)),
-      kv('d_i', L.infinite ? '∞' : `${fmtCm(L.di)} ${L.di > 0 ? '(far side)' : '(object side)'}`),
-      kv('1/d_o + 1/d_i', L.infinite ? `1/f = ${(1 / L.f).toFixed(4)} cm⁻¹` : `${(1 / state.do + 1 / L.di).toFixed(4)} cm⁻¹`),
-      kv('1/f', `${(1 / L.f).toFixed(4)} cm⁻¹`),
-      kv('m = −d_i/d_o', L.infinite ? '∞' : L.m.toFixed(3)),
-      kv('h_i', L.infinite ? '∞' : fmtCm(L.hi)),
+      kv(String.raw`$f$`, fmtCm(L.f)),
+      kv(String.raw`$d_o$`, fmtCm(state.do)),
+      kv(String.raw`$d_i$`, L.infinite ? '∞' : `${fmtCm(L.di)} ${L.di > 0 ? '(far side)' : '(object side)'}`),
+      kv(String.raw`$1/d_o + 1/d_i$`, L.infinite ? `$1/f$ = ${(1 / L.f).toFixed(4)} cm⁻¹` : `${(1 / state.do + 1 / L.di).toFixed(4)} cm⁻¹`),
+      kv(String.raw`$1/f$`, `${(1 / L.f).toFixed(4)} cm⁻¹`),
+      kv(String.raw`$m = -d_i/d_o$`, L.infinite ? '∞' : L.m.toFixed(3)),
+      kv(String.raw`$h_i$`, L.infinite ? '∞' : fmtCm(L.hi)),
       kv('Image', L.type),
     ].join('');
   },
@@ -332,25 +332,25 @@ export default defineLab({
     if (!L) return '';
     if (L.mode === 'tele') {
       return cells([
-        ['M_θ (traced)', L.angularM.toFixed(2), ''],
-        ['−f_o/f_e', L.angularIdeal.toFixed(2), ''],
+        [String.raw`$M_\theta$ (traced)`, L.angularM.toFixed(2), ''],
+        [String.raw`$-f_o/f_e$`, L.angularIdeal.toFixed(2), ''],
         ['Final image', !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di), L.i2?.infinite ? 'ok' : ''],
         ['Separation', fmtCm(state.sep), ''],
       ]);
     }
     if (L.mode === 'micro') {
       return cells([
-        ['M exact', Number.isFinite(L.M) ? L.M.toFixed(1) : '∞', ''],
+        [String.raw`$M$ exact`, Number.isFinite(L.M) ? L.M.toFixed(1) : '∞', ''],
         ['Estimate', L.microEstimate.toFixed(1), ''],
         ['Intermediate', L.i1?.infinite ? '∞' : fmtCm(L.i1.di), ''],
         ['Final image', !L.i2 || L.i2.infinite ? '∞' : fmtCm(L.i2.di), ''],
       ]);
     }
     return cells([
-      ['d_i', L.infinite ? '∞' : fmtCm(L.di), L.real ? 'ok' : ''],
-      ['m', L.infinite ? '∞' : L.m.toFixed(2), ''],
+      [String.raw`$d_i$`, L.infinite ? '∞' : fmtCm(L.di), L.real ? 'ok' : ''],
+      [String.raw`$m$`, L.infinite ? '∞' : L.m.toFixed(2), ''],
       ['Image', L.type, L.real ? '' : 'warn'],
-      ['f', fmtCm(L.f), ''],
+      [String.raw`$f$`, fmtCm(L.f), ''],
     ]);
   },
   coach(state, computed) {
@@ -359,40 +359,51 @@ export default defineLab({
       const relaxed = L?.i2?.infinite || (L?.i2 && Math.abs(L.i2.di) > 400);
       return {
         title: 'Telescope — it magnifies angles',
-        body: `The objective (f_o = ${fmtCm(state.fAbs)}) images the distant object near its focus. ${
-          relaxed
-            ? 'That image sits at the eyepiece focus, so every ray leaves parallel — a relaxed eye sees it at infinity.'
-            : 'Press “Focus for a relaxed eye” to move the eyepiece so that image lands on its focus.'
-        } Compare the ray angles going in and coming out: the traced M_θ is ${L?.angularM.toFixed(2)}, close to −f_o/f_e = ${L?.angularIdeal.toFixed(2)}. Negative means the view is inverted.`,
+        body: [
+          `The objective ($f_o$ = ${fmtCm(state.fAbs)}) images the distant object near its focus. ${
+            relaxed
+              ? 'That image sits at the eyepiece focus, so every ray leaves parallel — a relaxed eye sees it at infinity.'
+              : 'Press “Focus for a relaxed eye” to move the eyepiece so that image lands on its focus.'
+          }`,
+          eq(String.raw`M_\theta \approx -\frac{f_o}{f_e} = ${L?.angularIdeal.toFixed(2)}`),
+          `Compare the ray angles going in and coming out: the traced value is ${L?.angularM.toFixed(2)}. The minus sign means the view is inverted.`,
+        ],
       };
     }
     if (state.mode === 'micro') {
       return {
         title: 'Microscope — two stages of magnification',
-        body: `The object sits just outside f_o, so the objective throws a large real, inverted image (m_o = ${L?.i1 ? L.i1.m.toFixed(1) : '—'}). That image lands just inside the eyepiece focus, and the eyepiece works as a magnifying glass on it. Total M = m_o·m_e = ${Number.isFinite(L?.M) ? L.M.toFixed(1) : '—'}; the textbook −(L/f_o)(25 cm/f_e) = ${L?.microEstimate.toFixed(1)} is the same idea with the final image at infinity.`,
+        body: [
+          `The object sits just outside $f_o$, so the objective throws a large real, inverted image ($m_o$ = ${L?.i1 ? L.i1.m.toFixed(1) : '—'}). That image lands just inside the eyepiece focus, and the eyepiece works as a magnifying glass on it.`,
+          eq(String.raw`M = m_o m_e = ${Number.isFinite(L?.M) ? L.M.toFixed(1) : '\infty'}`),
+          `The textbook estimate $-(L/f_o)(25\\,\\text{cm}/f_e)$ = ${L?.microEstimate.toFixed(1)} is the same idea with the final image at infinity.`,
+        ],
       };
     }
     if (state.type === 'div') {
       return {
-        title: 'Diverging lens — f is negative',
-        body: 'Every refracted ray (solid) spreads away from the axis. Traced backward (dashed) they meet on the object side: a virtual, upright, reduced image. Gold: parallel in, leaves as if from the near F. Teal: straight through the center. Blue: aimed at the far F, leaves parallel.',
+        title: String.raw`Diverging lens — $f$ is negative`,
+        body: [
+          String.raw`Every refracted ray (solid) spreads away from the axis. Traced backward (dashed) they meet on the object side: a virtual, upright, reduced image.`,
+          String.raw`Gold: parallel in, leaving as if from the near $F$. Teal: straight through the centre. Blue: aimed at the far $F$, leaving parallel.`,
+        ],
       };
     }
     if (L?.infinite) {
       return {
-        title: 'Object at F — rays leave parallel',
-        body: 'A point source at the focus makes a parallel beam (a collimator or searchlight). Slide d_o inside F and the image turns virtual and enlarged — a magnifying glass.',
+        title: String.raw`Object at $F$ — rays leave parallel`,
+        body: String.raw`A point source at the focus makes a parallel beam — a collimator, or a searchlight. Slide $d_o$ inside $F$ and the image turns virtual and enlarged: a magnifying glass.`,
       };
     }
     if (L?.real) {
       return {
         title: 'Real image — light really gathers on the far side',
-        body: `${L.type}. Gold: parallel → through F. Teal: through the center, undeviated. Blue: through the near F → parallel. All three cross at d_i = ${fmtCm(L.di)}, where a screen would show the image.`,
+        body: `${L.type}. Gold: parallel, then through $F$. Teal: straight through the centre. Blue: through the near $F$, then parallel. All three cross at $d_i$ = ${fmtCm(L.di)}, where a screen would show the image.`,
       };
     }
     return {
-      title: 'Magnifying glass — object inside F',
-      body: `The refracted rays (solid) still diverge after the lens, so they never cross. Extend them backward (dashed) and they meet ${fmtCm(-(L?.di ?? 0))} in front of the lens: ${L?.type}. That upright enlarged image is what your eye sees.`,
+      title: String.raw`Magnifying glass — object inside $F$`,
+      body: `The refracted rays (solid) still diverge after the lens, so they never cross. Extend them backward (dashed) and they meet ${fmtCm(-(L?.di ?? 0))} in front of the lens: ${L?.type}. That upright, enlarged image is what your eye sees.`,
     };
   },
 });

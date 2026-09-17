@@ -3,7 +3,7 @@ import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
 import { Arrow, M, fatLine, disposeTree } from '../scene/manim.js';
 import { MEDIA, mediaById, snell, fmtDeg } from '../physics/optics.js';
-import { kv, cells } from '../ui/shared.js';
+import { kv, cells, eq } from '../ui/shared.js';
 
 const SCENARIOS = [
   { id: 'tir', name: 'Water → air, 55° — TIR', n1: 'water', n2: 'air', theta: 55 },
@@ -190,24 +190,24 @@ export default defineLab({
     const r = computed.ref;
     if (!r) return '';
     return [
-      kv('n₁', `${r.m1.n} (${r.m1.name})`),
-      kv('n₂', `${r.m2.n} (${r.m2.name})`),
-      kv('θ₁', fmtDeg(r.th1)),
-      kv('θᵣ = θ₁', fmtDeg(r.thetaR)),
-      kv('θ₂', r.tir ? 'none — TIR' : fmtDeg(r.theta2)),
-      kv('θ_c', r.thetaC == null ? 'none (n₁ ≤ n₂)' : fmtDeg(r.thetaC)),
-      kv('n₁ sinθ₁', (r.m1.n * Math.sin(r.th1)).toFixed(3)),
-      kv('n₂ sinθ₂', r.tir ? '—' : (r.m2.n * Math.sin(r.theta2)).toFixed(3)),
+      kv(String.raw`$n_1$`, `${r.m1.n} (${r.m1.name})`),
+      kv(String.raw`$n_2$`, `${r.m2.n} (${r.m2.name})`),
+      kv(String.raw`$\theta_1$`, fmtDeg(r.th1)),
+      kv(String.raw`$\theta_r = \theta_1$`, fmtDeg(r.thetaR)),
+      kv(String.raw`$\theta_2$`, r.tir ? 'none — TIR' : fmtDeg(r.theta2)),
+      kv(String.raw`$\theta_c$`, r.thetaC == null ? String.raw`none ($n_1 \le n_2$)` : fmtDeg(r.thetaC)),
+      kv(String.raw`$n_1\sin\theta_1$`, (r.m1.n * Math.sin(r.th1)).toFixed(3)),
+      kv(String.raw`$n_2\sin\theta_2$`, r.tir ? '—' : (r.m2.n * Math.sin(r.theta2)).toFixed(3)),
     ].join('');
   },
   readout(state, computed) {
     const r = computed.ref;
     if (!r) return '';
     return cells([
-      ['θ₁', fmtDeg(r.th1), ''],
-      ['θ₂', r.tir ? 'TIR' : fmtDeg(r.theta2), r.tir ? 'bad' : 'ok'],
-      ['θ_c', r.thetaC == null ? '—' : fmtDeg(r.thetaC), ''],
-      ['n₁ sinθ₁', (r.m1.n * Math.sin(r.th1)).toFixed(3), ''],
+      [String.raw`$\theta_1$`, fmtDeg(r.th1), ''],
+      [String.raw`$\theta_2$`, r.tir ? 'TIR' : fmtDeg(r.theta2), r.tir ? 'bad' : 'ok'],
+      [String.raw`$\theta_c$`, r.thetaC == null ? '—' : fmtDeg(r.thetaC), ''],
+      [String.raw`$n_1\sin\theta_1$`, (r.m1.n * Math.sin(r.th1)).toFixed(3), ''],
     ]);
   },
   coach(state, computed) {
@@ -216,24 +216,36 @@ export default defineLab({
     if (r.tir) {
       return {
         title: 'Total internal reflection',
-        body: `n₁ > n₂ and θ₁ = ${fmtDeg(r.th1)} is past θ_c = ${fmtDeg(r.thetaC)}. sinθ₂ would have to exceed 1, so there is no transmitted ray. Fiber optics and diamond sparkle are this law. Drop θ₁ below θ_c and the teal ray returns.`,
+        body: [
+          `Here $n_1 > n_2$ and $\\theta_1$ = ${fmtDeg(r.th1)} is past the critical angle ${fmtDeg(r.thetaC)}:`,
+          eq(String.raw`\sin\theta_2 = \frac{n_1}{n_2}\sin\theta_1 > 1 \quad\text{— impossible}`),
+          String.raw`so there is no transmitted ray at all. Fibre optics and the sparkle of diamond are this one line. Drop $\theta_1$ below $\theta_c$ and the teal ray returns.`,
+        ],
       };
     }
     if (r.m2.n > r.m1.n) {
       return {
         title: 'Into a slower medium — toward the normal',
-        body: `n₂ > n₁ so θ₂ < θ₁. Light bends toward the normal. Check the live row: n₁ sinθ₁ = n₂ sinθ₂. The reflected gold/blue pair always has θᵣ = θ₁, even when a transmitted ray exists.`,
+        body: [
+          String.raw`$n_2 > n_1$, so $\theta_2 < \theta_1$ and the light bends toward the normal:`,
+          eq(String.raw`n_1\sin\theta_1 = n_2\sin\theta_2`),
+          String.raw`Compare the two live rows — they are equal. The reflected ray always has $\theta_r = \theta_1$, even when a transmitted ray exists.`,
+        ],
       };
     }
     if (r.m2.n < r.m1.n) {
       return {
         title: 'Into a faster medium — away from the normal',
-        body: `θ₂ > θ₁. Push θ₁ up and θ₂ races toward 90°. At θ_c = ${fmtDeg(r.thetaC)} the transmitted ray skims the interface; beyond that, TIR.`,
+        body: [
+          String.raw`$\theta_2 > \theta_1$: push $\theta_1$ up and $\theta_2$ races toward $90^\circ$.`,
+          eq(String.raw`\theta_c = \sin^{-1}\frac{n_2}{n_1} = ${fmtDeg(r.thetaC).replace('°', '^\circ')}`),
+          'At that angle the transmitted ray skims along the interface; past it, total internal reflection.',
+        ],
       };
     }
     return {
-      title: 'Same n — no bend',
-      body: 'n₁ = n₂ so θ₂ = θ₁. The interface is optically invisible. Reflection is still there (θᵣ = θ₁) but refraction does not change direction.',
+      title: String.raw`Same $n$ — no bend`,
+      body: String.raw`$n_1 = n_2$, so $\theta_2 = \theta_1$ and the interface is optically invisible. The reflection is still there, with $\theta_r = \theta_1$, but refraction changes nothing.`,
     };
   },
 });
