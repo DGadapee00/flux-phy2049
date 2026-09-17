@@ -13,9 +13,10 @@ npm install
 npm start
 ```
 
-Opens at http://localhost:5174/ — and on an existing clone, `git pull` first. (The folder is
-`flux-phy2049`; `gauss-lab` is only the old package name, from before the rename. If an old
-`gauss-lab` folder is still lying around, starting the server in it serves the old app.)
+Opens at http://localhost:5174/
+
+Already have a clone? `git pull` inside `flux-phy2049` before starting, so the server is running
+the current code.
 
 ```bash
 npm test                 # physics self-test (no browser) — analytic vs numerical, relative tolerances
