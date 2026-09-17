@@ -7,12 +7,15 @@ Private repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only �
 ## Run
 
 ```bash
-cd gauss-lab
+git clone https://github.com/DGadapee00/flux-phy2049.git
+cd flux-phy2049
 npm install
 npm start
 ```
 
-Opens at http://localhost:5174/
+Opens at http://localhost:5174/ — and on an existing clone, `git pull` first. (The folder is
+`flux-phy2049`; `gauss-lab` is only the old package name, from before the rename. If an old
+`gauss-lab` folder is still lying around, starting the server in it serves the old app.)
 
 ```bash
 npm test                 # physics self-test (no browser) — analytic vs numerical, relative tolerances
