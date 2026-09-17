@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import { allForces, pairForce } from '../physics/field.js';
-import { Arrow, M, disposeTree } from './manim.js';
+import { Arrow, M, disposeTree, markAnswer } from './manim.js';
 
 const _dir = new THREE.Vector3();
 
@@ -61,7 +61,7 @@ export class ForceView {
     _dir.set(F.x, F.y, F.z).normalize();
     const L = (0.22 + 0.38 * Math.tanh(mag / 0.25)) * u * scale;
     const origin = new THREE.Vector3(c.x * u, c.y * u, c.z * u);
-    const arrow = new Arrow(_dir.clone(), origin, L, color, 0.26, 0.18, 0.03 * Math.max(0.8, scale));
+    const arrow = markAnswer(new Arrow(_dir.clone(), origin, L, color, 0.26, 0.18, 0.03 * Math.max(0.8, scale)));
     this.group.add(arrow);
   }
 }

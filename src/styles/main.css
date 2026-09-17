@@ -349,10 +349,10 @@ body {
 /* ---------- Equation panel ---------- */
 
 .eq-panel {
-  top: 196px;
+  top: var(--below-brand, 196px);
   left: 16px;
   width: min(360px, calc(100vw - 360px));
-  max-height: calc(100vh - 260px);
+  max-height: calc(100vh - var(--below-brand, 196px) - 64px);
   overflow: auto;
   padding: 14px 16px;
   display: flex;

@@ -75,6 +75,16 @@ const TIP_GEO = new THREE.ConeGeometry(1, 1, 16, 1).translate(0, -0.5, 0);
  * Manim-style vector: solid shaft, tip whose size stays fixed as length changes.
  * Drop-in for THREE.ArrowHelper (same constructor order, setDirection/setLength/setColor).
  */
+/**
+ * Objects that show an answer outright (the field arrow at a probe, force arrows) also live on
+ * this layer only. Practice blind mode turns the layer off on the camera until the problem is solved.
+ */
+export const ANSWER_LAYER = 1;
+export function markAnswer(obj) {
+  obj.traverse((o) => o.layers.set(ANSWER_LAYER));
+  return obj;
+}
+
 export class Arrow extends THREE.Object3D {
   constructor(dir = new THREE.Vector3(1, 0, 0), origin = new THREE.Vector3(), length = 1, color = M.white, headLength, headWidth, shaft = 0.028) {
     super();

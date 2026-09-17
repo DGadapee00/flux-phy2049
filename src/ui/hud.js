@@ -90,7 +90,7 @@ export function createHUD(api) {
     const host = $('lab-controls');
     if (!lab) {
       const coming = (exam?.coming || []).join(', ') || 'coming next';
-      host.innerHTML = `<p class="tiny">Exam ${exam?.n} labs (${coming}) ship next. The eight electrostatics labs are under Exams 1–3.</p>`;
+      host.innerHTML = `<p class="tiny">The ${coming} labs aren’t built yet. The wave-optics practice problems are ready: press <b>P</b> or use Practice.</p>`;
       mountedId = '';
       renderToggles(null);
       renderLegend(null);
@@ -120,7 +120,16 @@ export function createHUD(api) {
   });
 
   window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      api.escape();
+      return;
+    }
     if (e.target.matches('input, select, textarea')) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'p' || e.key === 'P') {
+      api.togglePractice();
+      return;
+    }
     if (e.key === '[') {
       api.shiftExam(-1);
       return;

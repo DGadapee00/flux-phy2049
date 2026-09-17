@@ -11,6 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/src/styles/main.css" />
+    <link rel="stylesheet" href="/src/styles/practice.css" />
   </head>
   <body>
     <div id="app">
@@ -33,7 +34,15 @@
         </div>
         <nav class="exam-tabs" id="exam-tabs" aria-label="Exams"></nav>
         <nav class="lab-tabs" id="lab-tabs" role="tablist" aria-label="Labs"></nav>
+        <div class="practice-row">
+          <button type="button" class="practice-btn" id="btn-practice" aria-expanded="false" aria-controls="problems">
+            <span>Practice</span><kbd>P</kbd>
+          </button>
+          <span class="practice-stat" id="practice-stat"></span>
+        </div>
       </header>
+
+      <aside class="hud panel problems" id="problems" aria-label="Practice problems" hidden></aside>
 
       <aside class="hud panel eq-panel" id="eq-panel">
         <div class="law" id="law-line"></div>

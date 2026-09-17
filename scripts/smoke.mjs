@@ -361,9 +361,89 @@ await page.waitForFunction(() => window.__gauss?.state?.lab === 'faraday', null,
 const back = await page.evaluate(() => window.__gauss.state.lab);
 if (back !== 'faraday') mismatches.push({ name: 'history.back', got: back, exp: 'faraday' });
 
+// ---------------------------------------------------------------- practice
+// Every problem with a lab setup loads into the running app without errors (worksheet + one sampled seed).
+const loadErrors = errors.length;
+const loaded = await page.evaluate(async () => {
+  const { PROBLEMS, instance, applyProblem } = await import('/src/problems/index.js');
+  const { loadLab } = await import('/src/labs/load.js');
+  const g = window.__gauss;
+  const bad = [];
+  let n = 0;
+  for (const tpl of PROBLEMS.filter((t) => t.sim)) {
+    for (const seed of [0, 1]) {
+      try {
+        const lab = await loadLab(tpl.lab);
+        const slice = lab.defaultState();
+        applyProblem(lab, slice, instance(tpl, seed));
+        n++;
+      } catch (e) {
+        bad.push(`${tpl.id}@${seed}: ${e.message}`);
+      }
+    }
+  }
+  return { n, bad, current: g.state.lab };
+});
+if (loaded.bad.length) mismatches.push({ name: 'problems load into their labs', got: loaded.bad.slice(0, 5), exp: 'no throws' });
+
+// Real flow through the UI: URL opens a problem blind, a wrong answer gets feedback, a right one lifts the veil.
+await page.evaluate(() => {
+  try {
+    localStorage.removeItem('flux.problems.v1');
+    localStorage.removeItem('flux.exam.v1');
+  } catch {}
+  location.hash = '#/e4/circuits?p=e4.44.two-loop&s=0';
+});
+await page.waitForFunction(() => window.__gauss.practice.current()?.id === 'e4.44.two-loop' && window.__gauss.state.lab === 'circuits', null, { timeout: 10000 });
+await page.waitForTimeout(500);
+const blindBefore = await page.evaluate(() => ({
+  blind: document.body.classList.contains('problem-blind'),
+  readoutHidden: getComputedStyle(document.getElementById('readout')).visibility === 'hidden',
+  veiled: document.querySelectorAll('#label-layer .veiled').length,
+  answerLayerOff: !window.__gauss.camera.layers.isEnabled(1),
+  e1: window.__gauss.state.values?.E1,
+}));
+if (!blindBefore.blind || !blindBefore.readoutHidden || blindBefore.veiled === 0 || !blindBefore.answerLayerOff) mismatches.push({ name: 'practice: blind mode on load', got: blindBefore, exp: 'blind, readout hidden, labels veiled' });
+if (blindBefore.e1 !== 12) mismatches.push({ name: 'practice: problem numbers loaded into lab', got: blindBefore.e1, exp: 12 });
+await page.fill('[data-input="0"]', '23.08');
+await page.fill('[data-input="1"]', '1.846 A');
+await page.fill('[data-input="2"]', '0.4615');
+await page.click('[data-act="check"]');
+const afterWrong = await page.evaluate(() => ({
+  blind: document.body.classList.contains('problem-blind'),
+  fb: [...document.querySelectorAll('.pb-part .pb-fb')].map((el) => el.textContent),
+}));
+if (!afterWrong.blind || !/10\^1/.test(afterWrong.fb[0]) || !/sign/i.test(afterWrong.fb[2])) mismatches.push({ name: 'practice: feedback on wrong parts, still blind', got: afterWrong, exp: 'power of ten on I1, sign on I3' });
+await page.fill('[data-input="0"]', '2.308');
+await page.fill('[data-input="2"]', '-0.4615');
+await page.click('[data-act="check"]');
+await page.waitForTimeout(400);
+const solved = await page.evaluate(() => ({
+  blind: document.body.classList.contains('problem-blind'),
+  finished: window.__gauss.practice.current()?.finished,
+  labAgrees: document.querySelectorAll('.pb-labval .agree').length,
+  record: window.__gauss.practice.progress.get('e4.44.two-loop'),
+}));
+if (solved.blind || !solved.finished || solved.labAgrees !== 3 || solved.record?.box !== 1 || solved.record?.clean !== 0) mismatches.push({ name: 'practice: solved, lab agrees, recorded (not clean)', got: solved, exp: 'unblind, 3 lab checks agree, box 1' });
+
+// Practice exam: start, answer nothing, submit; results render and every problem is due again.
+await page.keyboard.press('Escape');
+await page.evaluate(() => (location.hash = '#/e1/force'));
+await page.waitForFunction(() => window.__gauss.state.lab === 'force');
+await page.keyboard.press('p');
+await page.click('[data-act="exam-start"]');
+await page.waitForFunction(() => window.__gauss.practice.current()?.mode === 'exam', null, { timeout: 10000 });
+const examInfo = await page.evaluate(() => ({ nav: document.querySelectorAll('.pb-examnav button').length, timer: document.getElementById('pb-timer')?.textContent }));
+page.once('dialog', (d) => d.accept());
+await page.click('.pb-head [data-act="exam-submit"]');
+await page.waitForSelector('.pb-table', { timeout: 5000 }).catch(() => {});
+const examDone = await page.evaluate(() => ({ score: document.querySelector('.problems .pb-h')?.textContent, rows: document.querySelectorAll('.pb-table tr').length }));
+if (examInfo.nav !== 8 || !/^(50|49):/.test(examInfo.timer || '') || examDone.score !== 'Score 0%' || examDone.rows < 2) mismatches.push({ name: 'practice exam: 8 problems, timer, results', got: { examInfo, examDone }, exp: '8, 50:00, Score 0%' });
+const practice = { loaded: loaded.n, blindBefore, afterWrong, solved, examInfo, examDone, newErrors: errors.length - loadErrors };
+
 console.log(
   JSON.stringify(
-    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, faraday, ac, emwave, polar, refraction, mirrors, lenses, back, mismatches, errors },
+    { title, canvasOk, field, integral, force, potential, capacitor, ohm, power, off, outside, added, cube, sweep, vectors, conductors, biot, circuits, ampere, magforce, faraday, ac, emwave, polar, refraction, mirrors, lenses, back, practice, mismatches, errors },
     null,
     2,
   ),

@@ -23,6 +23,18 @@ node scripts/contact.mjs [regex]     # tile those screenshots into contact sheet
 
 The self-test checks the code against independent methods rather than against itself: Biot–Savart sums vs closed forms, Ampère loops, Boris-integrated orbits, image-charge surface potentials, Kirchhoff rules on every circuit layout, −ΔΦ/Δt for Faraday, an RK4 simulation of each AC circuit vs its phasor current, and paraxial ray tracing that must land every principal ray on the computed image.
 
+## Practice
+
+Press **P** (or the yellow **Practice** button) for the problem bank: 179 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each.
+
+1. **Open a problem.** It loads its own setup into the matching lab. While it's unsolved, the lab's numbers are hidden: the readout, the equation panel, value labels in the scene, and the arrows that would show a direction answer. The geometry stays visible.
+2. **Answer and check.** Numbers accept `2.5e-6`, `2.5 × 10^-6`, or `2.5 μC`. A wrong part says why when it can (sign, power of ten, factor of 2, wrong quadrant), and you can try again. Derivations take a typed formula (`2k lam/R`); sketch parts are compared with a rubric.
+3. **The lab checks you.** Once it's solved, the lab's own value appears next to each answer. Change the setup to explore; **Reset to the problem** puts it back. **Peek** reveals the numbers early, but that attempt then won't count as a clean solve.
+4. **Spaced review.** A clean solve (right on the first check, no hints, no peeking) schedules the problem further out: 1, 3, 7, 16, 35 days. A miss brings it back in 10 minutes. **Review due** mixes whatever is due across every exam. Your first attempt uses the worksheet's numbers when a sheet exists; after that the numbers change each time.
+5. **Practice exam.** 8 problems across the exam's chapters, weighted toward what you haven't mastered, with a 50-minute timer, no hints and no feedback until you submit. Results show a score by chapter, and each problem opens with its worked solution.
+
+Links open a specific version: `#/e2/field?p=e2.36a.collinear&s=0`. Progress is saved in this browser only. Authoring, answer-key notes and the checks: [PROBLEMS.md](PROBLEMS.md).
+
 ## Exams
 
 | Unit | Hash | Labs |
@@ -34,7 +46,7 @@ The self-test checks the code against independent methods rather than against it
 | Exam 5 · Ch 48–52 | `#/e5/faraday` | Faraday, AC |
 | Exam 6 · Ch 53–57 | `#/e6/emwave` | EM wave, Polarization |
 | Exam 7 · Ch 58–62 | `#/e7/refraction` | Refraction, Mirrors, Lenses |
-| Wave | `#/wave` | Coming — interference, diffraction, thin film |
+| Wave | `#/wave` | Labs coming (interference, diffraction, thin film); practice problems are ready |
 
 ### Exam 4 labs
 
@@ -63,6 +75,7 @@ Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops 
 
 ## Controls
 
+- **P** opens Practice, **Esc** closes it
 - Exam tabs **1–7 W**, or `[` / `]`; Back / Forward walk through the labs you visited
 - Labs in the current exam: keys `1–9`
 - Drag to orbit (Ohm / Power / Circuits / Refraction / Mirrors / Lenses lock rotation), scroll to zoom

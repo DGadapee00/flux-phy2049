@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, disposeTree } from '../scene/manim.js';
+import { Arrow, M, fatLine, disposeTree, markAnswer } from '../scene/manim.js';
 import { UNITS_PER_METER, MU0 } from '../physics/constants.js';
 import {
   Bpolyline,
@@ -209,7 +209,7 @@ export default defineLab({
   init(ctx) {
     const group = new THREE.Group();
     ctx.scene.add(group);
-    const Barrow = new Arrow(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 1, M.teal, 0.32, 0.24, 0.045);
+    const Barrow = markAnswer(new Arrow(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 1, M.teal, 0.32, 0.24, 0.045));
     group.add(Barrow);
     group.visible = false;
     return { group, Barrow, wire: null, guides: null, wireKey: '', guideKey: '' };
