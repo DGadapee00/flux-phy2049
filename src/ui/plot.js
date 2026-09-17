@@ -1,8 +1,8 @@
-const BLUE = '#58C4DD';
-const YELLOW = '#F4D345';
-const GOLD = '#F0AC5F';
-const RED = '#FC6255';
-const WHITE = '#ECE6E2';
+const BLUE = '#5BA8C9';
+const YELLOW = '#D4B07A';
+const GOLD = '#C4A882';
+const RED = '#C45B5B';
+const WHITE = '#E6EDF4';
 const SERIF = "italic 13px KaTeX_Math, 'Latin Modern Math', 'Cambria Math', serif";
 
 /** Resize the backing store to CSS size × DPR so strokes stay crisp; returns a context in CSS pixels. */

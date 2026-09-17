@@ -180,7 +180,7 @@ export default defineLab({
     group.add(fatLine([PX, PY - RD - 0.3, 0, PX, PY + RD + 0.3, 0], { color: 0x666666, width: 1.4 }));
 
     const arrow = (color, shaft) => new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(PX, PY, 0), 1, color, 0.3, 0.22, shaft);
-    const arrows = { V: arrow(M.blue, 0.04), I: arrow(M.yellow, 0.04), VR: arrow(M.green, 0.028), VL: arrow(M.teal, 0.028), VC: arrow(M.gold, 0.028) };
+    const arrows = { V: arrow(M.accent, 0.04), I: arrow(M.eVec, 0.04), VR: arrow(M.match, 0.028), VL: arrow(M.bVec, 0.028), VC: arrow(M.purple, 0.028) };
     Object.values(arrows).forEach((a) => group.add(a));
     const projV = fatLine([0, 0, 0, 1, 0, 0], { color: M.blue, width: 1.4, opacity: 0.55 });
     const projI = fatLine([0, 0, 0, 1, 0, 0], { color: M.yellow, width: 1.4, opacity: 0.55 });
@@ -191,7 +191,7 @@ export default defineLab({
       I: label(qv('qI', '<i>I</i>'), 0, 0),
       VR: label('<span style="color:#83C167"><i>V</i><sub>R</sub></span>', 0, 0),
       VL: label('<span style="color:#5CD0B3"><i>V</i><sub>L</sub></span>', 0, 0),
-      VC: label('<span style="color:#F0AC5F"><i>V</i><sub>C</sub></span>', 0, 0),
+      VC: label('<span style="color:#8878A8"><i>V</i><sub>C</sub></span>', 0, 0),
       title: label('<small>phasors · vertical shadow = instantaneous value</small>', PX, PY + RD + 0.75),
       src: label('', CX0 - 1.05, (CY0 + CY1) / 2),
       R: label('', -4.2, CY1 + 0.62),
@@ -233,7 +233,7 @@ export default defineLab({
     setHTML(h.labels.src, `${qv('qV', `<i>V</i><sub>rms</sub> = ${fmtV(a.Vrms)}`)}<small>${fmtHz(state.f)}</small>`);
     setHTML(h.labels.R, qv('qR', `<i>R</i> = ${fmtR(state.R).replace('.000', '')}`));
     setHTML(h.labels.L, `<span style="color:#5CD0B3"><i>L</i> = ${fmtL(state.L)}</span>`);
-    setHTML(h.labels.C, `<span style="color:#F0AC5F"><i>C</i> = ${fmtC(state.C)}</span>`);
+    setHTML(h.labels.C, `<span style="color:#8878A8"><i>C</i> = ${fmtC(state.C)}</span>`);
     h.labels.L.visible = a.hasL;
     h.labels.C.visible = a.hasC;
 

@@ -13,9 +13,13 @@ const _q = new THREE.Quaternion();
 const _c = new THREE.Color();
 const _b = new THREE.Color();
 
-const NEUTRAL = new THREE.Color(0x2c2e33);
-const OUT = new THREE.Color(M.yellow);
-const IN = new THREE.Color(M.blue);
+const NEUTRAL = new THREE.Color(M.fluxZero);
+/** The surface is graphite first; the flux colour tints it rather than replacing it, so a sphere
+ *  at uniform outward flux still reads as smoked mesh instead of a solid slab of colour. */
+const GRAPHITE = new THREE.Color(M.graphite);
+const TINT = 0.38;
+const OUT = new THREE.Color(M.fluxOut);
+const IN = new THREE.Color(M.fluxIn);
 
 export class PatchView {
   constructor(scene) {
@@ -39,9 +43,9 @@ export class PatchView {
     this.wire = new THREE.Mesh(
       new THREE.SphereGeometry(1, 24, 16),
       new THREE.MeshBasicMaterial({
-        color: M.blue,
+        color: M.textMuted,
         transparent: true,
-        opacity: 0.3,
+        opacity: 0.18,
         wireframe: true,
       }),
     );
@@ -107,19 +111,20 @@ export class PatchView {
       this.mesh.setMatrixAt(i, _m);
 
       if (!showFlux) {
-        _c.set(M.blueE);
+        _c.set(M.graphite); // smoked graphite when the flux colouring is off
       } else if (anim.playing && i > iCut) {
-        _c.set(0x16171a);
+        _c.set(0x0f141a);
       } else if (anim.playing && i === iCut) {
-        _c.set(0xffffff);
+        _c.set(M.white);
       } else {
         fluxColor(samples[i].En, maxEn, _c, _b);
+        _c.lerpColors(GRAPHITE, _c, TINT);
       }
       this.mesh.setColorAt(i, _c);
     }
     this.mesh.instanceMatrix.needsUpdate = true;
     if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
-    this.mesh.material.opacity = showFlux ? 0.62 : 0.22;
+    this.mesh.material.opacity = showFlux ? 0.62 : 0.24;
     this.wire.visible = !showFlux;
   }
 }

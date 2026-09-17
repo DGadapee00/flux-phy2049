@@ -1,32 +1,49 @@
 /* 3Blue1Brown / Manim look: near-black ground, flat panels, Computer Modern math, Manim palette. */
 :root {
-  --bg: #0b0c0e;
-  --panel: rgba(14, 15, 18, 0.88);
-  --panel-solid: #121316;
-  --border: rgba(236, 230, 226, 0.1);
-  --border-hover: rgba(236, 230, 226, 0.24);
-  --text: #ece6e2;
-  --text-muted: #aaa39e;
-  --text-dim: #77716c;
+  /* Instrument Dark: near-black ground, flat graphite panels, low-saturation instrument colours. */
+  --void: #0b0e12;
+  --surface: #12161c;
+  --surface-2: #181d25;
+  --text-math: #d5dde8;
+  --match: #6fcfb0;
+  --sink: #d9897a;
+  --q-pos: #c45b5b;
+  --q-neg: #5b8fc4;
+  --grid-line: rgba(90, 140, 170, 0.14);
+  --e-vec: #d4b07a;
+  --b-vec: #6aa8b0;
+  --flux-in: #4a6d8c;
+  --flux-zero: #c9d0d6;
+  --flux-out: #c4a882;
 
-  --blue: #58c4dd;
-  --blue-d: #29abca;
-  --blue-e: #1c758a;
-  --teal: #5cd0b3;
-  --green: #83c167;
-  --yellow: #f4d345;
-  --gold: #f0ac5f;
-  --red: #fc6255;
+  --bg: var(--void);
+  --panel: rgba(18, 22, 28, 0.94);
+  --panel-solid: var(--surface);
+  --border: #2a3340;
+  --border-hover: #3c4859;
+  --text: #e6edf4;
+  --text-muted: #8b96a8;
+  --text-dim: #6a7486;
 
-  --accent: var(--blue);
-  --accent-soft: rgba(88, 196, 221, 0.12);
-  --pos: var(--red);
-  --pos-soft: rgba(252, 98, 85, 0.12);
-  --neg: var(--blue);
-  --neg-soft: rgba(88, 196, 221, 0.12);
-  --ok: var(--green);
-  --warn: var(--yellow);
-  --danger: var(--red);
+  /* Legacy palette names, remapped onto the instrument set. Nothing here is gold any more. */
+  --blue: #5ba8c9;
+  --blue-d: #4e93b2;
+  --blue-e: #35607a;
+  --teal: var(--b-vec);
+  --green: var(--match);
+  --yellow: var(--accent);
+  --gold: var(--sink);
+  --red: var(--q-pos);
+
+  --accent: #5ba8c9;
+  --accent-soft: rgba(91, 168, 201, 0.12);
+  --pos: var(--q-pos);
+  --pos-soft: rgba(196, 91, 91, 0.12);
+  --neg: var(--q-neg);
+  --neg-soft: rgba(91, 143, 196, 0.12);
+  --ok: var(--match);
+  --warn: var(--sink);
+  --danger: var(--sink);
 
   --radius: 6px;
   --radius-sm: 4px;
@@ -35,6 +52,7 @@
   --math: KaTeX_Math, 'Latin Modern Math', 'Cambria Math', serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 
 *,
 *::before,
@@ -172,7 +190,7 @@ body {
 
 .exam-tab.active {
   color: var(--yellow);
-  background: rgba(244, 211, 69, 0.1);
+  background: rgba(91, 168, 201, 0.1);
 }
 
 .lab-tabs {
@@ -324,12 +342,12 @@ body {
   font-size: 15px;
   font-weight: 400;
   color: var(--yellow);
-  background: rgba(244, 211, 69, 0.08);
-  border-color: rgba(244, 211, 69, 0.4);
+  background: rgba(91, 168, 201, 0.08);
+  border-color: rgba(91, 168, 201, 0.4);
 }
 
 .btn.accent:hover {
-  background: rgba(244, 211, 69, 0.15);
+  background: rgba(91, 168, 201, 0.15);
 }
 
 .btn.pos {
@@ -457,7 +475,7 @@ sup {
 .insight-title {
   font-family: var(--serif);
   font-size: 15px;
-  color: var(--yellow);
+  color: var(--text);
   margin-bottom: 4px;
 }
 
@@ -661,8 +679,8 @@ select {
 }
 
 .charge-item.selected {
-  border-color: rgba(244, 211, 69, 0.55);
-  background: rgba(244, 211, 69, 0.05);
+  border-color: rgba(91, 168, 201, 0.55);
+  background: rgba(91, 168, 201, 0.05);
 }
 
 .badge {
@@ -685,7 +703,7 @@ select {
 
 .badge.on {
   color: var(--warn);
-  background: rgba(244, 211, 69, 0.14);
+  background: rgba(91, 168, 201, 0.14);
 }
 
 .charge-item input[type='range'] {
@@ -807,19 +825,19 @@ select {
 .legend-bar {
   height: 8px;
   border-radius: 2px;
-  background: linear-gradient(90deg, #58c4dd, #2c2e33 50%, #f4d345);
+  background: linear-gradient(90deg, var(--flux-in), var(--flux-zero) 50%, var(--flux-out));
 }
 
 .legend-v {
-  background: linear-gradient(90deg, #1c758a, #58c4dd 20%, #5cd0b3 40%, #83c167 60%, #f4d345 80%, #fc6255);
+  background: linear-gradient(90deg, var(--flux-in), var(--accent) 25%, var(--flux-zero) 50%, var(--e-vec) 75%, var(--q-pos));
 }
 
 .legend-sigma {
-  background: linear-gradient(90deg, #58c4dd, #3a3d44 50%, #fc6255);
+  background: linear-gradient(90deg, var(--q-neg), var(--flux-zero) 50%, var(--q-pos));
 }
 
 .legend-bdl {
-  background: linear-gradient(90deg, #58c4dd, #2c2e33 50%, #f4d345);
+  background: linear-gradient(90deg, var(--flux-in), var(--flux-zero) 50%, var(--flux-out));
 }
 
 .qB {
@@ -971,11 +989,11 @@ input[type='checkbox'] {
 }
 
 .charge-label.pos {
-  color: #ffb3ab;
+  color: var(--sink);
 }
 
 .charge-label.neg {
-  color: #b4e6f2;
+  color: var(--accent);
 }
 
 .charge-label.small {
@@ -1004,7 +1022,7 @@ input[type='checkbox'] {
 }
 
 .qI {
-  color: var(--yellow);
+  color: var(--text-math);
 }
 
 .qR {
@@ -1020,7 +1038,7 @@ input[type='checkbox'] {
 }
 
 .readout .value.qI {
-  color: var(--yellow);
+  color: var(--text-math);
 }
 
 .readout .value.qR {

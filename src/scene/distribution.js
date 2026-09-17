@@ -58,9 +58,8 @@ export class DistributionView {
     const bodyMat = () =>
       new THREE.MeshStandardMaterial({
         color: bodyColor,
-        emissive: bodyColor,
-        emissiveIntensity: 0.3,
-        roughness: 0.6,
+        metalness: 0.1,
+        roughness: 0.85,
         transparent: true,
         opacity: 0.45,
         depthWrite: false,

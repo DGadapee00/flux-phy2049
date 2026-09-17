@@ -30,8 +30,8 @@ function sigmaSphereMesh(w, h) {
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     vertexColors: true,
-    metalness: 0.15,
-    roughness: 0.45,
+    metalness: 0.12,
+    roughness: 0.88,
     transparent: true,
     opacity: 0.62,
     side: THREE.DoubleSide,

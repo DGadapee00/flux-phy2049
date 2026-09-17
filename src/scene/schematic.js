@@ -34,7 +34,7 @@ export class SchematicView {
     this.parts = [];
     this.items = [];
     this.key = '';
-    this.dotTex = makeChargeTexture(M.yellow, 0);
+    this.dotTex = makeChargeTexture(M.current, 0);
     this.nodeTex = makeChargeTexture(M.white, 0);
     this._c = new THREE.Color();
   }

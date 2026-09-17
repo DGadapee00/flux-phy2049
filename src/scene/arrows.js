@@ -13,12 +13,12 @@ const _c = new THREE.Color();
 
 const SHAFT = new THREE.CylinderGeometry(1, 1, 1, 8, 1).translate(0, 0.5, 0);
 const TIP = new THREE.ConeGeometry(1, 1, 12, 1).translate(0, -0.5, 0);
-const SHAFT_R = 0.032;
-const TIP_L = 0.22;
-const TIP_R = 0.085;
+const SHAFT_R = 0.018;
+const TIP_L = 0.16;
+const TIP_R = 0.055;
 
 function makeInstanced(geo, color) {
-  const mat = new THREE.MeshBasicMaterial({ color, toneMapped: false });
+  const mat = new THREE.MeshBasicMaterial({ color, toneMapped: false, transparent: true, opacity: 0.55 });
   const mesh = new THREE.InstancedMesh(geo, mat, MAX);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.frustumCulled = false;
@@ -96,7 +96,7 @@ export class ArrowView {
           _d.multiplyScalar(1 / mag);
           const L = (0.05 + 0.09 * Math.tanh(mag / extraEScale)) * u;
           _p.set(p.x * u, p.y * u, p.z * u);
-          _c.set(s.En >= 0 ? M.yellow : M.blue);
+          _c.set(s.En >= 0 ? M.eVec : M.fluxIn);
           this.E.push(_p, _d, L, _c);
         }
       }

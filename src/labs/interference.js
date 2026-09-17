@@ -169,13 +169,13 @@ export default defineLab({
     ctx.scene.add(group);
 
     // Source, bench axis, barrier and screen frame.
-    group.add(fatLine([X_SOURCE * u, 0, 0, X_SCREEN * u, 0, 0], { color: 0x4a4a4a, width: 1.2 }));
-    const barrier = fatSegments(segmentCapacity(8), { color: M.white, width: 3 });
+    group.add(fatLine([X_SOURCE * u, 0, 0, X_SCREEN * u, 0, 0], { color: M.gridLine, width: 1, opacity: 0.5 }));
+    const barrier = fatSegments(segmentCapacity(8), { color: M.textMuted, width: 2 });
     group.add(barrier);
     group.add(
       fatLine(
         [X_SCREEN * u, -SCREEN_H * u, 0, X_SCREEN * u, SCREEN_H * u, 0],
-        { color: 0x8a8a8a, width: 2 },
+        { color: M.textMuted, width: 1.2, opacity: 0.7 },
       ),
     );
 
@@ -193,13 +193,13 @@ export default defineLab({
     screen.position.set((X_SCREEN + SCREEN_W / 2) * u, 0, 0);
     group.add(screen);
 
-    const rays = fatSegments(segmentCapacity(8), { color: M.gold, width: 1.6 });
+    const rays = fatSegments(segmentCapacity(8), { color: M.eVec, width: 1.2, opacity: 0.85 });
     group.add(rays);
-    const pathMark = fatSegments(segmentCapacity(4), { color: M.teal, width: 2.4 });
+    const pathMark = fatSegments(segmentCapacity(4), { color: M.bVec, width: 1.6 });
     group.add(pathMark);
     // The marker that points at the answer (which fringe is order m) is an answer, so it hides
     // in blind mode along with the readout.
-    const marker = fatSegments(segmentCapacity(4), { color: M.gold, width: 3 });
+    const marker = fatSegments(segmentCapacity(4), { color: M.accent, width: 2 });
     markAnswer(marker);
     group.add(marker);
 

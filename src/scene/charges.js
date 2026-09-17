@@ -61,7 +61,7 @@ export class ChargeView {
       const a = (i / 64) * Math.PI * 2;
       pts.push(Math.cos(a), 0, Math.sin(a));
     }
-    const ring = fatLine(pts, { color: M.yellow, width: 2.5 });
+    const ring = fatLine(pts, { color: M.accent, width: 1.4, opacity: 0.8 });
     ring.visible = false;
 
     // Drop line to the floor so height reads clearly in 3D.

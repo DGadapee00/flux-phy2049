@@ -218,11 +218,11 @@ export default defineLab({
     const u = UNITS_PER_METER;
     const group = new THREE.Group();
     ctx.scene.add(group);
-    group.add(fatLine([X_SOURCE * u, 0, 0, X_SCREEN * u, 0, 0], { color: 0x4a4a4a, width: 1.2 }));
+    group.add(fatLine([X_SOURCE * u, 0, 0, X_SCREEN * u, 0, 0], { color: M.gridLine, width: 1, opacity: 0.5 }));
     // Built at full capacity: a grating comb needs far more segments than a single slit.
-    const barrier = fatSegments(segmentCapacity(64), { color: M.white, width: 3 });
+    const barrier = fatSegments(segmentCapacity(64), { color: M.textMuted, width: 2 });
     group.add(barrier);
-    group.add(fatLine([X_SCREEN * u, -SCREEN_H * u, 0, X_SCREEN * u, SCREEN_H * u, 0], { color: 0x8a8a8a, width: 2 }));
+    group.add(fatLine([X_SCREEN * u, -SCREEN_H * u, 0, X_SCREEN * u, SCREEN_H * u, 0], { color: M.textMuted, width: 1.2, opacity: 0.7 }));
 
     const canvas = document.createElement('canvas');
     canvas.width = TEX_W;
@@ -237,13 +237,13 @@ export default defineLab({
     screen.position.set((X_SCREEN + SCREEN_W / 2) * u, 0, 0);
     group.add(screen);
 
-    const rays = fatSegments(segmentCapacity(64), { color: M.gold, width: 1.6 });
+    const rays = fatSegments(segmentCapacity(64), { color: M.eVec, width: 1.2, opacity: 0.85 });
     group.add(rays);
-    const marker = fatSegments(segmentCapacity(8), { color: M.gold, width: 3 });
+    const marker = fatSegments(segmentCapacity(8), { color: M.accent, width: 2 });
     markAnswer(marker);
     group.add(marker);
     // A Line2 needs at least one segment up front; syncViews replaces these points every frame.
-    const envelope = fatLine([0, 0, 0, 0, 0, 0], { color: M.teal, width: 1.8, opacity: 0.9 });
+    const envelope = fatLine([0, 0, 0, 0, 0, 0], { color: M.bVec, width: 1.4, opacity: 0.75 });
     group.add(envelope);
 
     const labels = { source: label(''), aperture: label(''), order: label(''), note: label('') };

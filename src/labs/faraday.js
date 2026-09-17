@@ -247,8 +247,8 @@ export default defineLab({
     n.position.y = 0.28;
     s.position.y = -0.28;
     magnet.add(n, s);
-    const nLab = label('<span style="color:#fc6255">N</span>', 0.35, 0.28, 0);
-    const sLab = label('<span style="color:#58c4dd">S</span>', 0.35, -0.28, 0);
+    const nLab = label('<span style="color:#C45B5B">N</span>', 0.35, 0.28, 0);
+    const sLab = label('<span style="color:#5B8FC4">S</span>', 0.35, -0.28, 0);
     magnet.add(nLab, sLab);
     group.add(magnet);
 
@@ -331,7 +331,7 @@ export default defineLab({
         let dir = new THREE.Vector3(c.x - a.x, c.y - a.y, c.z - a.z).normalize();
         if (!ccw) dir.multiplyScalar(-1);
         const mid = new THREE.Vector3(a.x * u, a.y * u, a.z * u);
-        g.add(new Arrow(dir, mid, 0.45, M.yellow, 0.22, 0.22, 0.001));
+        g.add(new Arrow(dir, mid, 0.4, M.current, 0.18, 0.18, 0.001));
       }
       h.chevrons = g;
       h.loop.group.add(g);
@@ -398,7 +398,7 @@ export default defineLab({
           [new THREE.Vector3(x / 2, 0.02, z1), new THREE.Vector3(sgn, 0, 0)],
           [new THREE.Vector3(x / 2, 0.02, -z1), new THREE.Vector3(-sgn, 0, 0)],
         ];
-        for (const [p, d] of chev) h.bar.add(new Arrow(d, p.clone().addScaledVector(d, -0.25), 0.5, M.yellow, 0.3, 0.3, 0.001));
+        for (const [p, d] of chev) h.bar.add(new Arrow(d, p.clone().addScaledVector(d, -0.25), 0.44, M.current, 0.22, 0.22, 0.001));
       }
     }
 
