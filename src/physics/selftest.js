@@ -48,6 +48,20 @@ import { expandingLoop, slidingBar, generator, dipoleLoop, fluxDipoleLoop, induc
 import { acState } from './ac.js';
 import { planeWave, intensityAvg, spectrumBand } from './emwave.js';
 import { malusChain, malus } from './polarization.js';
+import {
+  doubleSlit,
+  doubleSlitIntensity,
+  singleSlit,
+  singleSlitIntensity,
+  grating,
+  gratingIntensity,
+  rayleigh,
+  airyIntensity,
+  besselJ1,
+  thinFilm,
+  michelson,
+  sinc,
+} from './waveoptics.js';
 import { snell, criticalAngle, imageOf, twoLenses, principalRays, traceRay } from './optics.js';
 
 let failed = 0;
@@ -731,6 +745,148 @@ function phasorError(p) {
   approx(phasorError({ R: 15, L, C: Cc, f: 1 / (2 * Math.PI * Math.sqrt(L * Cc)), Vrms: 120, hasL: true, hasC: true }), 0, 1e-3, 'RLC at resonance: matches the ODE');
   approx(phasorError({ R: 100, L: 0, C: 2.5e-5, f: 60, Vrms: 120, hasL: false, hasC: true }), 0, 1e-3, 'RC: matches the ODE (current leads)');
   approx(phasorError({ R: 40, L: 0.12, C: 0, f: 60, Vrms: 120, hasL: true, hasC: false }), 0, 1e-3, 'RL: matches the ODE (current lags)');
+}
+
+console.log('\nWave optics: interference, diffraction, thin films');
+
+// The fringe formulas against a direct sum of the two slits' fields — no shared algebra.
+{
+  const lambda = 600e-9;
+  const d = 0.2e-3;
+  const L = 2;
+  const ds = doubleSlit({ lambda, d, L });
+  approx(ds.dy, 6e-3, 1e-9, 'double slit: Δy = λL/d = 6.00 mm');
+  approx(ds.ySmall(3), 18e-3, 1e-9, 'double slit: y₃ = 3λL/d = 18.0 mm');
+  // Exact vs small-angle: at these numbers they agree to better than a part in 10⁴.
+  approx(ds.yBright(3), ds.ySmall(3), 1e-4, 'double slit: L tanθ ≈ mλL/d at small angles');
+
+  // Add the two slits as phasors and check the maxima land where thetaBright says.
+  const amp = (theta) => {
+    const k = (2 * Math.PI) / lambda;
+    let re = 0;
+    let im = 0;
+    for (const y of [-d / 2, d / 2]) {
+      const phase = -k * y * Math.sin(theta);
+      re += Math.cos(phase);
+      im += Math.sin(phase);
+    }
+    return (re * re + im * im) / 4;
+  };
+  for (const m of [0, 1, 2]) {
+    const th = ds.thetaBright(m);
+    approx(amp(th), 1, 1e-9, `double slit: two-phasor sum is maximal at the m = ${m} bright angle`);
+    approx(doubleSlitIntensity(th, { lambda, d }), 1, 1e-9, `double slit: I is 1 at m = ${m}`);
+  }
+  for (const m of [0, 1]) {
+    const th = ds.thetaDark(m);
+    approx(amp(th), 0, 1e-9, `double slit: the phasors cancel at the m = ${m} dark angle`);
+  }
+  ok(ds.thetaBright(ds.maxOrder + 1) === null, 'double slit: an order past sinθ = 1 does not exist');
+}
+
+// Single slit: the sinc² zeros must sit exactly on a sinθ = mλ, and the envelope must kill
+// the two-slit orders where d/a is an integer (the classic "missing order").
+{
+  const lambda = 633e-9;
+  const a = 0.1e-3;
+  const L = 2;
+  const ss = singleSlit({ lambda, a, L });
+  approx(ss.width, 25.32e-3, 1e-3, 'single slit: central width 2λL/a = 25.3 mm');
+  approx((ss.theta1 * 180) / Math.PI, 0.3627, 1e-3, 'single slit: first minimum at 0.363°');
+  for (const m of [1, 2, 3]) {
+    approx(singleSlitIntensity(ss.thetaDark(m), { lambda, a }), 0, 1e-12, `single slit: I = 0 at the m = ${m} minimum`);
+  }
+  approx(singleSlitIntensity(0, { lambda, a }), 1, 1e-12, 'single slit: I = 1 straight ahead');
+  // Numerically, the first side lobe sits near sinθ = 1.43 λ/a and is about 4.7% of the peak.
+  let best = 0;
+  let bestTh = 0;
+  for (let i = 1; i < 4000; i++) {
+    const th = ss.thetaDark(1) + ((ss.thetaDark(2) - ss.thetaDark(1)) * i) / 4000;
+    const I = singleSlitIntensity(th, { lambda, a });
+    if (I > best) { best = I; bestTh = th; }
+  }
+  approx(best, 0.0472, 0.02, 'single slit: first side lobe is ≈4.7% of the peak');
+  approx((Math.sin(bestTh) * a) / lambda, 1.4303, 0.01, 'single slit: that lobe sits at sinθ ≈ 1.43 λ/a');
+
+  const missing = doubleSlit({ lambda, d: 3 * a, L, a });
+  approx(doubleSlitIntensity(missing.thetaBright(3), { lambda, d: 3 * a, a }), 0, 1e-12, 'double slit: the m = 3 order is missing when d = 3a');
+}
+
+// Grating: sharper than two slits, same maxima; m_max from d/λ.
+{
+  const g = grating({ lambda: 500e-9, linesPerM: 600e3, N: 12 });
+  approx(g.d, 1.6667e-6, 1e-4, 'grating: 600 lines/mm → d = 1.667 μm');
+  approx((g.thetaOrder(2) * 180) / Math.PI, 36.87, 1e-4, 'grating: m = 2 at 36.87°');
+  ok(g.maxOrder === 3, 'grating: highest order is 3');
+  ok(g.thetaOrder(4) === null, 'grating: m = 4 would need sinθ > 1');
+  for (const m of [0, 1, 2, 3]) {
+    approx(gratingIntensity(g.thetaOrder(m), { lambda: 500e-9, d: g.d, N: 12 }), 1, 1e-6, `grating: full brightness at m = ${m}`);
+  }
+  // N slits put N−2 subsidiary maxima between orders, and the principal peak narrows as 1/N.
+  const halfWidth = (N) => {
+    const gg = grating({ lambda: 500e-9, linesPerM: 600e3, N });
+    let th = 0;
+    while (gratingIntensity(th, { lambda: 500e-9, d: gg.d, N }) > 0.5) th += 1e-7;
+    return th;
+  };
+  const w8 = halfWidth(8);
+  const w32 = halfWidth(32);
+  approx(w8 / w32, 4, 0.03, 'grating: the principal maximum narrows as 1/N');
+}
+
+// Rayleigh / Airy: θ_min must be the first zero of the Airy pattern.
+{
+  const r = rayleigh({ lambda: 550e-9, D: 5e-3, L: 10e3 });
+  approx(r.thetaMin, 1.342e-4, 1e-3, 'Rayleigh: θ_min = 1.22λ/D = 1.34×10⁻⁴ rad');
+  approx(r.separation, 1.342, 1e-3, 'Rayleigh: 1.34 m at 10 km');
+  approx(airyIntensity(r.thetaMin, { lambda: 550e-9, D: 5e-3 }), 0, 2e-6, 'Airy: intensity vanishes at θ_min');
+  approx(airyIntensity(0, { lambda: 550e-9, D: 5e-3 }), 1, 1e-9, 'Airy: peak is 1 on axis');
+  // J₁ against its known zeros and a value from tables.
+  approx(besselJ1(3.8317059702), 0, 1e-9, 'J₁ zero at 3.8317');
+  approx(besselJ1(7.0155866698), 0, 1e-9, 'J₁ zero at 7.0156');
+  approx(besselJ1(1), 0.4400505857, 1e-9, 'J₁(1) = 0.44005');
+  approx(besselJ1(15), 0.2051040386, 2e-3, 'J₁(15) from the asymptotic branch');
+}
+
+// Thin films: count the shifts, then check against a direct phase sum of the two reflections.
+{
+  // Soap film in air: one shift (air→film only), so λ/4 is bright.
+  const soap = thinFilm({ nFilm: 1.33, nSub: 1, lambda: 600e-9 });
+  ok(soap.shifts === 1, 'soap film in air: one phase-shifting reflection');
+  approx(soap.tBright, 112.78e-9, 1e-3, 'soap film: thinnest bright film is 112.8 nm');
+  approx(soap.tDark, 225.56e-9, 1e-3, 'soap film: thinnest dark film is 225.6 nm');
+
+  // MgF₂ on glass: two shifts, so λ/4 is now the dark one — that is how a coating kills a reflection.
+  const ar = thinFilm({ nFilm: 1.38, nSub: 1.5, lambda: 550e-9 });
+  ok(ar.shifts === 2, 'MgF₂ on glass: two phase-shifting reflections');
+  approx(ar.tDark, 99.64e-9, 1e-3, 'AR coating: a quarter-wave layer cancels the reflection');
+  approx(ar.tBright, 199.28e-9, 1e-3, 'AR coating: a half-wave layer reflects strongly');
+
+  // The reflectance model must agree with adding the two reflected waves by hand.
+  for (const film of [soap, ar]) {
+    const { nFilm, nSub, lambda } = film === soap
+      ? { nFilm: 1.33, nSub: 1, lambda: 600e-9 }
+      : { nFilm: 1.38, nSub: 1.5, lambda: 550e-9 };
+    for (const t of [40e-9, 99.64e-9, 150e-9, 225.56e-9]) {
+      const f = thinFilm({ nFilm, nSub, lambda, t });
+      const extra = f.shifts % 2 === 1 ? Math.PI : 0;
+      const delta = (2 * Math.PI * 2 * nFilm * t) / lambda + extra;
+      const byHand = (2 + 2 * Math.cos(delta)) / 4; // |1 + e^{iδ}|² / 4
+      // Absolute, not relative: reflectance runs 0…1 and one of these thicknesses sits on a zero.
+      approx(f.reflectance - byHand, 0, 1e-12, `thin film: reflectance matches the phasor sum at t = ${(t * 1e9).toFixed(0)} nm`);
+    }
+    approx(thinFilm({ nFilm, nSub, lambda, t: film.tBright }).reflectance, 1, 1e-9, 'thin film: the bright thickness reflects fully');
+    approx(thinFilm({ nFilm, nSub, lambda, t: film.tDark }).reflectance, 0, 1e-12, 'thin film: the dark thickness cancels');
+  }
+}
+
+// Michelson: the path changes by twice the mirror travel.
+{
+  const m = michelson({ dd: 0.1e-3, lambda: 632.8e-9 });
+  approx(m.N, 316.06, 1e-4, 'Michelson: 316 fringes for a 0.1 mm mirror move at 632.8 nm');
+  approx(m.pathChange, 0.2e-3, 1e-12, 'Michelson: the path changes by 2Δd');
+  approx(sinc(0), 1, 1e-12, 'sinc(0) = 1');
+  approx(sinc(Math.PI), 0, 1e-12, 'sinc(π) = 0');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

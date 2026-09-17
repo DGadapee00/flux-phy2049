@@ -33,7 +33,7 @@ The self-test checks the code against independent methods rather than against it
 
 ## Practice
 
-Press **P** (or the yellow **Practice** button) for the problem bank: 179 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each.
+Press **P** (or the yellow **Practice** button) for the problem bank: 179 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
 
 1. **Open a problem.** It loads its own setup into the matching lab — the charges, distances and coordinates exactly as the question states them, with the scene scaled to fit (the note under the problem says what one grid square is worth). Nothing is rescaled, so the lab is reading the problem you are working. While it's unsolved, the lab's numbers are hidden: the readout, the equation panel, value labels in the scene, and the arrows that would show a direction answer. The geometry stays visible.
 2. **Symbols before numbers.** Most multi-step problems open with the formula, not the arithmetic: type the answer in symbols (`k*q/r^2`, `2k lam/R` — Greek names and the constants `k`, `eps0`, `mu0`, `pi`, `c`, `g` all work) and the panel reads the units off what you've typed and prints them under the box, `units: N/C ✓` or `units: C/m — this one should come out in N/C`. That's the exam habit of writing the problem in units first and checking it lands in the right place, confirmed while you write it. The numeric boxes stay locked until the formula is right, so the numbers go into an expression you've already justified. A practice exam turns the lock off.
@@ -63,7 +63,7 @@ The number plane is labeled in real distance and the ticks change with the view,
 | Exam 5 · Ch 48–52 | `#/e5/faraday` | Faraday, AC |
 | Exam 6 · Ch 53–57 | `#/e6/emwave` | EM wave, Polarization |
 | Exam 7 · Ch 58–62 | `#/e7/refraction` | Refraction, Mirrors, Lenses |
-| Wave | `#/wave` | Labs coming (interference, diffraction, thin film); practice problems are ready |
+| Wave optics · Ch 63–65 | `#/wave` | Interference, Diffraction, Thin film |
 
 ### Exam 4 labs
 
@@ -87,6 +87,17 @@ The number plane is labeled in real distance and the ticks change with the view,
 - **Refraction** (`#/e7/refraction`) — Snell n₁ sinθ₁ = n₂ sinθ₂, θᵣ = θ₁, TIR past θ_c = sin⁻¹(n₂/n₁). Rotation locked.
 - **Mirrors** (`#/e7/mirrors`) — 1/f = 1/d_o + 1/d_i, m = −d_i/d_o. Concave f>0 / convex f<0. Three principal rays.
 - **Lenses** (`#/e7/lenses`) — same equation. Converging / diverging, plus Keplerian telescope and compound-microscope two-lens scenarios.
+
+### Wave optics labs
+
+The bench in these three cannot be drawn to scale — slits sit tenths of a millimetre apart and the
+screen is metres away — so the geometry is stretched and **the pattern is not**: every band on the
+screen is painted pixel by pixel from the real I(θ) for the λ, d, a and L in the panel, and the
+spacing you measure there is the Δy the panel reports.
+
+- **Interference** (`#/wave/interference`) — Young's double slit. d sinθ = mλ, Δy = λL/d, the path-difference triangle at the slits, and any order marked on the screen. Switch on a finite slit width and the single-slit envelope appears over the fringes — at a = d/3 the m = 3 order goes missing, which you can watch happen.
+- **Diffraction** (`#/wave/diffraction`) — three modes. Single slit (a sinθ = mλ for the *dark* fringes, central width 2λL/a, with the sinc² traced beside the screen), grating (d = 1/N, every order drawn out to m_max = ⌊d/λ⌋, peaks narrowing as 1/N), and Rayleigh resolution (θ_min = 1.22λ/D, two Airy patterns you can slide together until they merge).
+- **Thin film** (`#/wave/thinfilm`) — the two reflected rays, each labelled with whether it flips by half a wavelength, the extra path 2nt, and t_min for bright and for dark. The swatch above the film is the colour it sends back in white light. Anti-reflection coating and soap bubble are both scenarios.
 
 Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up. Faraday uses the same loop convention for Lenz. The EM wave uses E ŷ, B ẑ, travel +x̂ so ŷ × ẑ = x̂.
 

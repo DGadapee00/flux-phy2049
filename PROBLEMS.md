@@ -22,6 +22,7 @@ node scripts/problems-check.mjs --samples 200 --list   # deeper run, with notes 
 | `src/problems/kit.js` | Authoring helpers: `problem`, `range`, `choice`, `num`, `mc`, `tf`, `sym`, `self`, `kase`, `charge`, `layout`, constants |
 | `src/problems/engine.js` | Seeded sampling, `instance`, `render`, `grade`, number parser, expression parser, symbolic grader, `checkUnits`. No DOM and no Three.js |
 | `src/physics/units.js` | Dimensional analysis: `parseUnit`, `formatDim`, `dimEqual`. A dimension is the exponent vector [M, L, T, I], so N/C and V/m compare equal |
+| `src/physics/waveoptics.js` | Ch 63–65: double and single slit, gratings, Rayleigh/Airy, thin films, and the intensity profiles the wave labs paint |
 | `src/problems/simbridge.js` | `applyProblem(lab, slice, inst)` loads an instance into a lab's state slice; `headlessCtx()` is for Node |
 | `src/problems/index.js` | `PROBLEMS`, `problemById`, `problemsForExam`, `problemsForLab`, `CHAPTER_ORDER`, `CHAPTER_TITLES` |
 | `src/problems/progress.js` | Per-problem history, Leitner-box spaced review, `pickSet` for mixed sets and practice exams. No DOM; storage is injected |
@@ -29,7 +30,7 @@ node scripts/problems-check.mjs --samples 200 --list   # deeper run, with notes 
 | `src/ui/problems.js`, `src/styles/practice.css` | The Practice panel (§4) |
 | `scripts/problems-check.mjs` | Test runner (see §3) |
 
-Coverage by exam: e1 18 · e2 46 · e3 29 · e4 24 · e5 19 · e6 18 · e7 14 · wave 11. Every chapter has at least one template. Ch 36–37 reproduce Montgomery's practice sheets, and those cases carry the printed key.
+Coverage by exam: e1 18 · e2 46 · e3 29 · e4 24 · e5 19 · e6 18 · e7 14 · wave 11. Every chapter has at least one template, and every exam now has labs — the wave-optics templates drive Interference, Diffraction and Thin film. Ch 36–37 reproduce Montgomery's practice sheets, and those cases carry the printed key.
 
 **Answer-key issues found** (they show up as NOTE lines in `--list`):
 

@@ -680,9 +680,7 @@ export function createPractice(api) {
 
   function bannerHTML(cur) {
     if (cur.mode === 'exam') return '';
-    if (!cur.tpl.lab) {
-      return cur.tpl.exam === 'wave' ? `<div class="pb-banner quiet">No lab for wave optics yet — this one is pencil and paper.</div>` : '';
-    }
+    if (!cur.tpl.lab) return '';
     const labTitle = LAB_META[cur.tpl.lab]?.title || cur.tpl.lab;
     if (api.labId() !== cur.tpl.lab) {
       return `<div class="pb-banner warn"><span>The ${esc(labTitle)} lab for this problem isn't on screen.</span><button type="button" class="linkish" data-act="restore">Show it</button></div>`;

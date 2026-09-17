@@ -70,8 +70,8 @@ export const EXAMS = [
     title: 'Wave optics',
     chapters: '63–65',
     date: 'Final 12/9',
-    labs: [],
-    coming: ['Interference', 'Diffraction', 'Thin film'],
+    labs: ['interference', 'diffraction', 'thinfilm'],
+    coming: [],
   },
 ];
 
@@ -90,6 +90,9 @@ export const LAB_META = {
   ac: { id: 'ac', exam: 'e5', title: 'AC' },
   emwave: { id: 'emwave', exam: 'e6', title: 'EM wave' },
   polar: { id: 'polar', exam: 'e6', title: 'Polarization' },
+  interference: { id: 'interference', exam: 'wave', title: 'Interference' },
+  diffraction: { id: 'diffraction', exam: 'wave', title: 'Diffraction' },
+  thinfilm: { id: 'thinfilm', exam: 'wave', title: 'Thin film' },
   refraction: { id: 'refraction', exam: 'e7', title: 'Refraction' },
   mirrors: { id: 'mirrors', exam: 'e7', title: 'Mirrors' },
   lenses: { id: 'lenses', exam: 'e7', title: 'Lenses' },

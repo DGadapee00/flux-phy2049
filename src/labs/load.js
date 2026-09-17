@@ -20,6 +20,9 @@ const loaders = {
   refraction: () => import('./refraction.js'),
   mirrors: () => import('./mirrors.js'),
   lenses: () => import('./lenses.js'),
+  interference: () => import('./interference.js'),
+  diffraction: () => import('./diffraction.js'),
+  thinfilm: () => import('./thinfilm.js'),
 };
 
 const cache = new Map();

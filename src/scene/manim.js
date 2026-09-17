@@ -179,6 +179,29 @@ export function updateFatLine(line, flat) {
   line.frustumCulled = false;
 }
 
+/**
+ * Rewrite a fatSegments() line in place, and say how many segments it can ever hold.
+ *
+ * A Line2/LineSegments2 buffer cannot grow after its first draw: the renderer records how many
+ * instances the first upload had (`_maxInstanceCount`) and never draws past it, however many
+ * setPositions() puts in afterwards. So build the line once at its widest with segmentCapacity(),
+ * then refill it through here — the segments you do not use collapse to a point and vanish.
+ */
+export function setFatSegments(line, flat) {
+  const buf = line.geometry.attributes.instanceStart.data;
+  const arr = buf.array;
+  const n = Math.min(flat.length, arr.length);
+  for (let i = 0; i < n; i++) arr[i] = flat[i];
+  for (let i = n; i < arr.length; i++) arr[i] = 0; // zero-length segments draw nothing
+  buf.needsUpdate = true;
+  line.frustumCulled = false;
+}
+
+/** A zero-filled positions array for `count` segments, to build a line at its full capacity. */
+export function segmentCapacity(count) {
+  return new Array(count * 6).fill(0);
+}
+
 export function disposeTree(root) {
   root.traverse((o) => {
     if (o.geometry && o.geometry !== SHAFT_GEO && o.geometry !== TIP_GEO) o.geometry.dispose();

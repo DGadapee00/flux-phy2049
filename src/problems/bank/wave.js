@@ -1,16 +1,16 @@
 /**
  * Wave optics · Ch 63 (interference), 64 (diffraction), 65 (thin films). On the final exam.
- * No lab yet (catalog 'wave' is "coming"), so lab is null; when the Interference / Diffraction /
- * Thin film labs land, set lab + sim here and the check script will start comparing.
+ * Each template loads the Interference, Diffraction or Thin film lab into its own numbers, and
+ * `read` hands back the lab's value for every answer so the check script compares the two.
  */
 import { problem, kase, range, choice, num, mc, sym, DEG , texNum } from '../kit.js';
 
-const W = { exam: 'wave', lab: null };
+const W = { exam: 'wave' };
 
 export default [
   // ================================================================= 63
   problem({
-    ...W, id: 'wave.63.double-slit', ch: '63', title: 'Double-slit bright fringes', kind: 'numeric', topics: ['interference'],
+    ...W, lab: 'interference', id: 'wave.63.double-slit', ch: '63', title: 'Double-slit bright fringes', kind: 'numeric', topics: ['interference'],
     vars: { lam: range(400, 700, 5, 'nm', 1e-9), d: range(0.05, 1, 0.05, 'mm', 1e-3), L: range(0.5, 5, 0.1, 'm'), m: range(1, 5, 1) },
     derive: ($) => ({ y: ($.m * $.lam * $.L) / $.d, dy: ($.lam * $.L) / $.d }),
     text: (T) => `Light of wavelength ${T.lam} nm passes through two slits ${T.d} mm apart onto a screen ${T.L} m away. Find the position of the m = ${T.m} bright fringe and the fringe spacing.`,
@@ -24,10 +24,15 @@ export default [
       String.raw`$y = \dfrac{m\lambda L}{d} = ${texNum($.y * 1e3)}\ \text{mm}$`,
       String.raw`$\Delta y = \dfrac{\lambda L}{d} = ${texNum($.dy * 1e3)}\ \text{mm}$`,
     ],
+    sim: {
+      scenario: 'young',
+      setup: (st, $) => void Object.assign(st, { lam: $.lam, d: $.d, L: $.L, m: $.m, envelope: false }),
+      read: (c) => ({ y: c.interf.y, dy: c.interf.dy, dy_sym: c.interf.dy }),
+    },
     cases: [kase('hand', { lam: 600, d: 0.2, L: 2, m: 3 }, { y: 18, dy: 6 })],
   }),
   problem({
-    ...W, id: 'wave.63.find-lambda', ch: '63', title: 'Wavelength from fringe spacing', kind: 'numeric', topics: ['interference'],
+    ...W, lab: 'interference', id: 'wave.63.find-lambda', ch: '63', title: 'Wavelength from fringe spacing', kind: 'numeric', topics: ['interference'],
     vars: { dy: range(1, 10, 0.1, 'mm', 1e-3), d: range(0.1, 1, 0.05, 'mm', 1e-3), L: range(0.5, 5, 0.1, 'm') },
     derive: ($) => ({ lam: ($.dy * $.d) / $.L }),
     valid: ($) => $.lam > 3.5e-7 && $.lam < 8e-7,
@@ -37,10 +42,16 @@ export default [
       num('lam', ($) => $.lam, 'nm', { scale: 1e-9, label: String.raw`$\lambda$` }),
     ],
     steps: ($, f) => [String.raw`$\lambda = \dfrac{\Delta y\,d}{L} = ${texNum($.lam * 1e9)}\ \text{nm}$`],
+    sim: {
+      scenario: 'young',
+      // The lab is driven by λ, so set it to the answer and let the lab reproduce the stated Δy.
+      setup: (st, $) => void Object.assign(st, { lam: $.lam, d: $.d, L: $.L, m: 1, envelope: false }),
+      read: (c, st, $) => ({ '@fringe spacing': [c.interf.dy, $.dy] }),
+    },
     cases: [kase('hand', { dy: 4.5, d: 0.25, L: 1.5 }, { lam: 750 })],
   }),
   problem({
-    ...W, id: 'wave.63.dark-angle', ch: '63', title: 'Angle of a dark fringe', kind: 'numeric', topics: ['interference'],
+    ...W, lab: 'interference', id: 'wave.63.dark-angle', ch: '63', title: 'Angle of a dark fringe', kind: 'numeric', topics: ['interference'],
     vars: { lam: range(400, 700, 5, 'nm', 1e-9), d: range(0.01, 0.5, 0.01, 'mm', 1e-3), m: range(0, 4, 1) },
     derive: ($) => {
       const s = (($.m + 0.5) * $.lam) / $.d;
@@ -53,6 +64,11 @@ export default [
     steps: ($, f) => [
       String.raw`$\sin\theta = \dfrac{(m + \tfrac{1}{2})\lambda}{d} = ${texNum($.s)} \;\Longrightarrow\; \theta$ = ${f($.th)}°`,
     ],
+    sim: {
+      scenario: 'young',
+      setup: (st, $) => void Object.assign(st, { lam: $.lam, d: $.d, L: 2, m: $.m, envelope: false }),
+      read: (c, st, $) => ({ th: (c.interf.ds.thetaDark($.m) * 180) / Math.PI }),
+    },
     cases: [kase('first dark', { lam: 500, d: 0.1, m: 0 }, { th: 0.1432 })],
   }),
   problem({
@@ -76,7 +92,7 @@ export default [
 
   // ================================================================= 64
   problem({
-    ...W, id: 'wave.64.single-slit', ch: '64', title: 'Single-slit central maximum', kind: 'numeric', topics: ['diffraction'],
+    ...W, lab: 'diffraction', id: 'wave.64.single-slit', ch: '64', title: 'Single-slit central maximum', kind: 'numeric', topics: ['diffraction'],
     vars: { lam: range(400, 700, 1, 'nm', 1e-9), a: range(0.02, 1, 0.01, 'mm', 1e-3), L: range(0.5, 5, 0.1, 'm') },
     derive: ($) => ({ th: (Math.asin($.lam / $.a) * 180) / Math.PI, w: (2 * $.lam * $.L) / $.a }),
     text: (T) => `Light of wavelength ${T.lam} nm passes through a single slit ${T.a} mm wide onto a screen ${T.L} m away. Find the angle of the first dark fringe and the width of the central bright maximum.`,
@@ -90,10 +106,15 @@ export default [
       String.raw`$\sin\theta_1 = \dfrac{\lambda}{a} \;\Longrightarrow\; \theta_1$ = ${f($.th)}°`,
       String.raw`$w = \dfrac{2\lambda L}{a} = ${texNum($.w * 1e3)}\ \text{mm}$`,
     ],
+    sim: {
+      scenario: 'single',
+      setup: (st, $) => void Object.assign(st, { mode: 'slit', lam: $.lam, a: $.a, L: $.L }),
+      read: (c) => ({ th: c.diff.theta1Deg, w: c.diff.width, w_sym: c.diff.width }),
+    },
     cases: [kase('HeNe', { lam: 633, a: 0.1, L: 2 }, { th: 0.3627, w: 25.32 })],
   }),
   problem({
-    ...W, id: 'wave.64.grating', ch: '64', title: 'Diffraction grating', kind: 'numeric', level: 2, topics: ['diffraction', 'grating'],
+    ...W, lab: 'diffraction', id: 'wave.64.grating', ch: '64', title: 'Diffraction grating', kind: 'numeric', level: 2, topics: ['diffraction', 'grating'],
     vars: { N: range(100, 1200, 50, 'lines/mm', 1e3), lam: range(400, 700, 5, 'nm', 1e-9), m: range(1, 3, 1) },
     derive: ($) => {
       const d = 1 / $.N;
@@ -108,10 +129,15 @@ export default [
       String.raw`$\sin\theta = \dfrac{m\lambda}{d} \;\Longrightarrow\; \theta$ = ${f($.th)}°`,
       String.raw`$m_{\max} = \left\lfloor \dfrac{d}{\lambda} \right\rfloor = ${texNum($.mmax)}$`,
     ],
+    sim: {
+      scenario: 'grating',
+      setup: (st, $) => void Object.assign(st, { mode: 'grating', lam: $.lam, linesPerMM: $.N / 1e3, m: $.m, L: 2 }),
+      read: (c) => ({ d: c.diff.d, th: c.diff.thetaOrderDeg, mmax: c.diff.maxOrder }),
+    },
     cases: [kase('hand', { N: 600, lam: 500, m: 2 }, { d: 1.6667, th: 36.87, mmax: 3 })],
   }),
   problem({
-    ...W, id: 'wave.64.rayleigh', ch: '64', title: 'Resolving power (Rayleigh)', kind: 'numeric', topics: ['diffraction', 'resolution'],
+    ...W, lab: 'diffraction', id: 'wave.64.rayleigh', ch: '64', title: 'Resolving power (Rayleigh)', kind: 'numeric', topics: ['diffraction', 'resolution'],
     vars: { D: range(1, 500, 1, 'mm', 1e-3), lam: range(400, 700, 10, 'nm', 1e-9), L: range(0.1, 100, 0.1, 'km', 1e3) },
     derive: ($) => {
       const th = (1.22 * $.lam) / $.D;
@@ -127,6 +153,11 @@ export default [
       String.raw`$\theta = \dfrac{1.22\lambda}{D} = ${texNum($.th)}\ \text{rad}$`,
       String.raw`$s = \theta L = ${texNum($.s)}\ \text{m}$`,
     ],
+    sim: {
+      scenario: 'rayleigh',
+      setup: (st, $) => void Object.assign(st, { mode: 'rayleigh', lam: $.lam, D: $.D, Lobj: $.L, sepFactor: 1 }),
+      read: (c) => ({ th: c.diff.thetaMin, s: c.diff.separation, s_sym: c.diff.separation }),
+    },
     cases: [kase('eye', { D: 5, lam: 550, L: 10 }, { th: 1.342e-4, s: 1.342 })],
   }),
   problem({
@@ -140,7 +171,7 @@ export default [
 
   // ================================================================= 65
   problem({
-    ...W, id: 'wave.65.thin-film', ch: '65', title: 'Minimum thin-film thickness', kind: 'numeric', level: 3, topics: ['thin-film', 'interference'],
+    ...W, lab: 'thinfilm', id: 'wave.65.thin-film', ch: '65', title: 'Minimum thin-film thickness', kind: 'numeric', level: 3, topics: ['thin-film', 'interference'],
     vars: {
       nf: range(1.2, 2.4, 0.01, ''),
       sub: choice([1, 'air (a soap film or bubble)'], [1.33, 'water'], [1.5, 'glass (n = 1.50)'], [1.9, 'a high-index layer (n = 1.90)']),
@@ -169,6 +200,11 @@ export default [
       `Phase-shifting reflections: ${f($.shifts)}`,
       String.raw`$t_{\min} = ${texNum($.t * 1e9)}\ \text{nm}$`,
     ],
+    sim: {
+      scenario: 'soap',
+      setup: (st, $) => void Object.assign(st, { nf: $.nf, ns: $.sub, lam: $.lam, t: $.t }),
+      read: (c) => ({ shifts: c.film.shifts, t: c.film.reflectance > 0.5 ? c.film.tBright : c.film.tDark }),
+    },
     cases: [
       kase('soap bubble, bright', { nf: 1.33, sub: 1, want: 1, lam: 600 }, { shifts: 1, t: 112.78 }),
       kase('MgF₂ AR coating, dark', { nf: 1.38, sub: 1.5, want: -1, lam: 550 }, { shifts: 2, t: 99.64 }),
