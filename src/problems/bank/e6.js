@@ -1,5 +1,5 @@
 /** Exam 6 · Ch 53 (EM waves), 54 (spectrum), 55 (intensity), 56 (polarization), 57 (intro to optics). */
-import { problem, kase, range, choice, num, mc, EPS0, C_LIGHT, DEG, AXES6, axisCode } from '../kit.js';
+import { problem, kase, range, choice, num, mc, EPS0, C_LIGHT, DEG, AXES6, axisCode , texNum } from '../kit.js';
 import { BANDS, spectrumBand } from '../../physics/emwave.js';
 import { MEDIA } from '../../physics/optics.js';
 
@@ -15,7 +15,10 @@ export default [
     derive: ($) => ({ f: C_LIGHT / $.lam, T: $.lam / C_LIGHT }),
     text: (T) => `Light has a wavelength of ${T.lam} nm in vacuum. Find its frequency and period.`,
     parts: [num('f', ($) => $.f, 'Hz'), num('T', ($) => $.T, 's')],
-    steps: ($, f) => [`f = c/λ = ${f($.f)} Hz`, `T = 1/f = ${f($.T)} s`],
+    steps: ($, f) => [
+      String.raw`$f = \dfrac{c}{\lambda} = ${texNum($.f)}\ \text{Hz}$`,
+      String.raw`$T = \dfrac{1}{f} = ${texNum($.T)}\ \text{s}$`,
+    ],
     sim: {
       scenario: 'green',
       setup: (s, $) => void (s.lambda = $.lam),
@@ -29,7 +32,7 @@ export default [
     derive: ($) => ({ B0: $.E0 / C_LIGHT }),
     text: (T) => `An EM wave in vacuum has an electric field amplitude of ${T.E0} V/m. What is its magnetic field amplitude?`,
     parts: [num('B0', ($) => $.B0, 'T')],
-    steps: ($, f) => [`B₀ = E₀/c = ${f($.B0)} T`],
+    steps: ($, f) => [String.raw`$B_0 = \dfrac{E_0}{c} = ${texNum($.B0)}\ \text{T}$`],
     sim: {
       scenario: 'green',
       setup: (s, $) => void (s.E0 = $.E0),
@@ -49,8 +52,8 @@ export default [
     valid: ($) => Math.abs($.Ed) !== Math.abs($.Bd),
     text: (T) => `At some instant, a plane wave's E points ${T.Ed} and its B points ${T.Bd}. Which way is the wave traveling?`,
     parts: [mc('dir', AXES6.filter(([v]) => v !== 0), ($) => $.code)],
-    hints: ['The wave travels along S = (E × B)/μ₀.'],
-    steps: () => ['Use the right-hand rule for E × B. In the lab, E is along ŷ and B along ẑ, so ŷ × ẑ = x̂.'],
+    hints: [String.raw`The wave travels along $\vec{S} = \dfrac{\vec{E}\times\vec{B}}{\mu_0}$.`],
+    steps: () => [String.raw`Use the right-hand rule for $\vec{E}\times\vec{B}$. In the lab $\vec{E}$ is along $\hat{y}$ and $\vec{B}$ along $\hat{z}$, so $\hat{y}\times\hat{z} = \hat{x}$.`],
     sim: { scenario: 'green' },
     cases: [kase('lab', { Ed: 2, Bd: 3 }, { dir: 1 })],
   }),
@@ -63,7 +66,12 @@ export default [
     },
     text: (T) => `E(x, t) = ${T.E0} sin[(${T.k} × 10⁶ rad/m)x − ωt] ŷ V/m in vacuum. Find λ, ω, f and B₀.`,
     parts: [num('lam', ($) => $.lam, 'm', { label: 'λ' }), num('w', ($) => $.w, 'rad/s', { label: 'ω' }), num('f', ($) => $.f, 'Hz'), num('B0', ($) => $.B0, 'T', { label: 'B₀' })],
-    steps: ($, f) => [`λ = 2π/k = ${f($.lam)} m`, `ω = ck = ${f($.w)} rad/s`, `f = ω/2π = ${f($.f)} Hz`, `B₀ = E₀/c = ${f($.B0)} T`],
+    steps: ($, f) => [
+      String.raw`$\lambda = \dfrac{2\pi}{k} = ${texNum($.lam)}\ \text{m}$`,
+      String.raw`$\omega = ck = ${texNum($.w)}\ \text{rad/s}$`,
+      String.raw`$f = \dfrac{\omega}{2\pi} = ${texNum($.f)}\ \text{Hz}$`,
+      String.raw`$B_0 = \dfrac{E_0}{c} = ${texNum($.B0)}\ \text{T}$`,
+    ],
     cases: [kase('hand', { k: 10, E0: 30 }, { lam: 6.2832e-7, w: 3e15, f: 4.7746e14, B0: 1e-7 })],
   }),
 
@@ -100,7 +108,7 @@ export default [
     derive: ($) => ({ I: 0.5 * C_LIGHT * EPS0 * $.E0 ** 2 }),
     text: (T) => `What is the average intensity of an EM wave with E₀ = ${T.E0} V/m?`,
     parts: [num('I', ($) => $.I, 'W/m²')],
-    steps: ($, f) => [`I = ½cε₀E₀² = ${f($.I)} W/m²`],
+    steps: ($, f) => [String.raw`$I = \tfrac{1}{2}c\varepsilon_0 E_0^2 = ${texNum($.I)}\ \text{W/m}^2$`],
     sim: {
       scenario: 'sun',
       setup: (s, $) => void (s.E0 = $.E0),
@@ -117,7 +125,10 @@ export default [
     },
     text: (T) => `Sunlight reaching a surface has an intensity of ${T.I} W/m². Find E₀ and B₀.`,
     parts: [num('E0', ($) => $.E0, 'V/m'), num('B0', ($) => $.B0, 'T')],
-    steps: ($, f) => [`E₀ = √(2I/(cε₀)) = ${f($.E0)} V/m`, `B₀ = E₀/c = ${f($.B0)} T`],
+    steps: ($, f) => [
+      String.raw`$E_0 = \sqrt{\dfrac{2I}{c\varepsilon_0}} = ${texNum($.E0)}\ \text{V/m}$`,
+      String.raw`$B_0 = \dfrac{E_0}{c} = ${texNum($.B0)}\ \text{T}$`,
+    ],
     sim: {
       scenario: 'sun',
       setup: (s, $) => void (s.E0 = $.E0),
@@ -134,7 +145,10 @@ export default [
     },
     text: (T) => `A ${T.P} W source radiates equally in all directions. Find the intensity and E₀ ${T.r} m away.`,
     parts: [num('I', ($) => $.I, 'W/m²'), num('E0', ($) => $.E0, 'V/m')],
-    steps: ($, f) => [`I = P/(4πr²) = ${f($.I)} W/m²`, `E₀ = √(2I/(cε₀)) = ${f($.E0)} V/m`],
+    steps: ($, f) => [
+      String.raw`$I = \dfrac{P}{4\pi r^2} = ${texNum($.I)}\ \text{W/m}^2$`,
+      String.raw`$E_0 = \sqrt{\dfrac{2I}{c\varepsilon_0}} = ${texNum($.E0)}\ \text{V/m}$`,
+    ],
     cases: [kase('hand', { P: 100, r: 2 }, { I: 1.989, E0: 38.72 })],
   }),
   problem({
@@ -143,7 +157,10 @@ export default [
     derive: ($) => ({ p: ($.surf * $.I) / C_LIGHT, F: ($.surf * $.I * $.A) / C_LIGHT }),
     text: (T) => `Light of intensity ${T.I} W/m² hits a ${T.A} m² sail head-on. The sail ${T.surf}. Find the radiation pressure and the force.`,
     parts: [num('p', ($) => $.p, 'Pa'), num('F', ($) => $.F, 'N')],
-    steps: ($, f) => [`p = I/c (absorbed) or 2I/c (reflected) = ${f($.p)} Pa`, `F = pA = ${f($.F)} N`],
+    steps: ($, f) => [
+      String.raw`$p = \dfrac{I}{c}$ if absorbed, $\dfrac{2I}{c}$ if reflected $= ${texNum($.p)}\ \text{Pa}$`,
+      String.raw`$F = pA = ${texNum($.F)}\ \text{N}$`,
+    ],
     cases: [kase('reflecting', { I: 1360, A: 100, surf: 2 }, { p: 9.067e-6, F: 9.067e-4 })],
   }),
 
@@ -154,7 +171,10 @@ export default [
     derive: ($) => ({ I1: $.I0 / 2, I: ($.I0 / 2) * Math.cos($.th * DEG) ** 2 }),
     text: (T) => `Unpolarized light of intensity ${T.I0} W/m² passes through two polarizers whose axes are ${T.th}° apart. Find the intensity after each one.`,
     parts: [num('I1', ($) => $.I1, 'W/m²', { label: 'After the first' }), num('I', ($) => $.I, 'W/m²', { label: 'After the second', abs: 1e-6 })],
-    steps: ($, f) => [`The first polarizer passes half: ${f($.I1)} W/m²`, `Malus: I = I₁cos²θ = ${f($.I)} W/m²`],
+    steps: ($, f) => [
+      String.raw`The first polarizer passes half: $${texNum($.I1)}\ \text{W/m}^2$`,
+      String.raw`Malus: $I = I_1\cos^2\theta = ${texNum($.I)}\ \text{W/m}^2$`,
+    ],
     sim: {
       scenario: '45',
       setup: (s, $) => void Object.assign(s, { n: 2, a: 0, b: $.th }),
@@ -168,8 +188,10 @@ export default [
     derive: ($) => ({ I: ($.I0 / 2) * Math.cos($.a * DEG) ** 2 * Math.cos(($.b - $.a) * DEG) ** 2 }),
     text: (T) => `Unpolarized light (${T.I0} W/m²) passes through three polarizers with axes at 0°, ${T.a}° and ${T.b}°. Find the final intensity.`,
     parts: [num('I', ($) => $.I, 'W/m²', { abs: 1e-6 })],
-    hints: ['Apply Malus using the angle between each pair of neighboring filters.'],
-    steps: ($, f) => [`I = (I₀/2)cos²(${f($.a)}°)cos²(${f($.b - $.a)}°) = ${f($.I)} W/m²`],
+    hints: ['Apply Malus using the angle between each pair of neighbouring filters.'],
+    steps: ($, f) => [
+      String.raw`$I = \tfrac{1}{2}I_0\cos^2(${f($.a)}^\circ)\cos^2(${f($.b - $.a)}^\circ) = ${texNum($.I)}\ \text{W/m}^2$`,
+    ],
     sim: {
       scenario: 'three',
       setup: (s, $) => void Object.assign(s, { n: 3, a: 0, b: $.a, c: $.b }),
@@ -183,7 +205,9 @@ export default [
     derive: ($) => ({ I: $.I0 * Math.cos($.th * DEG) ** 2 }),
     text: (T) => `Vertically polarized light of intensity ${T.I0} W/m² hits a polarizer whose axis is ${T.th}° from vertical. Find the transmitted intensity.`,
     parts: [num('I', ($) => $.I, 'W/m²', { abs: 1e-6 })],
-    steps: ($, f) => [`I = I₀cos²θ = ${f($.I)} W/m² (no factor of ½ — the light is already polarized)`],
+    steps: ($, f) => [
+      String.raw`$I = I_0\cos^2\theta = ${texNum($.I)}\ \text{W/m}^2$ — no factor of $\tfrac{1}{2}$, because the light is already polarized`,
+    ],
     sim: {
       scenario: '45',
       setup: (s, $) => void Object.assign(s, { n: 2, a: 0, b: $.th }),
@@ -200,8 +224,11 @@ export default [
     },
     valid: ($) => $.m1 !== $.m2,
     text: (T, $) => `Light in ${T.m1} (n = ${nOf($.m1)}) reflects off ${T.m2} (n = ${nOf($.m2)}). At what angle of incidence is the reflected light completely polarized, and what is the refraction angle then?`,
-    parts: [num('tB', ($) => $.tB, '°', { label: 'θ_B', abs: 0.2, tol: 0.005 }), num('tr', ($) => $.tr, '°', { label: 'θ_refracted', abs: 0.2, tol: 0.005 })],
-    steps: ($, f) => [`tan θ_B = n₂/n₁ → θ_B = ${f($.tB)}°`, `The reflected and refracted rays are 90° apart → θ_r = ${f($.tr)}°`],
+    parts: [num('tB', ($) => $.tB, '°', { label: String.raw`$\theta_B$`, abs: 0.2, tol: 0.005 }), num('tr', ($) => $.tr, '°', { label: String.raw`$\theta$ refracted`, abs: 0.2, tol: 0.005 })],
+    steps: ($, f) => [
+      String.raw`$\tan\theta_B = \dfrac{n_2}{n_1} \;\Longrightarrow\; \theta_B$ = ${f($.tB)}°`,
+      String.raw`The reflected and refracted rays are $90^\circ$ apart, so $\theta_r$ = ${f($.tr)}°`,
+    ],
     sim: {
       scenario: 'air-glass',
       setup: (s, $) => void Object.assign(s, { n1: $.m1, n2: $.m2, theta: Math.round($.tB * 2) / 2 }),
@@ -217,7 +244,11 @@ export default [
     derive: ($) => ({ n: nOf($.m), v: C_LIGHT / nOf($.m), ln: $.lam / nOf($.m), f: C_LIGHT / $.lam }),
     text: (T, $) => `Light with a vacuum wavelength of ${T.lam} nm enters ${T.m} (n = ${$.n}). Find its speed, its wavelength, and its frequency in the ${T.m}.`,
     parts: [num('v', ($) => $.v, 'm/s'), num('ln', ($) => $.ln, 'nm', { scale: 1e-9, label: 'λ in the medium' }), num('f', ($) => $.f, 'Hz')],
-    steps: ($, f) => [`v = c/n = ${f($.v)} m/s`, `λ_n = λ₀/n = ${f($.ln * 1e9)} nm`, `f doesn't change: ${f($.f)} Hz`],
+    steps: ($, f) => [
+      String.raw`$v = \dfrac{c}{n} = ${texNum($.v)}\ \text{m/s}$`,
+      String.raw`$\lambda_n = \dfrac{\lambda_0}{n} = ${texNum($.ln * 1e9)}\ \text{nm}$`,
+      String.raw`$f$ does not change: ${f($.f)} Hz`,
+    ],
     sim: { scenario: 'air-water', setup: (s, $) => void Object.assign(s, { n1: 'air', n2: $.m }) },
     cases: [kase('water', { m: 'water', lam: 600 }, { v: 2.2556e8, ln: 451.1, f: 5e14 })],
   }),
@@ -226,7 +257,7 @@ export default [
     vars: { q: choice([1, 'speed'], [2, 'wavelength'], [3, 'frequency'], [4, 'color we perceive']) },
     text: (T) => `Light passes from air into glass. What happens to its ${T.q}?`,
     parts: [mc('ans', [[-1, 'Decreases'], [0, 'Stays the same'], [1, 'Increases']], ($) => ($.q <= 2 ? -1 : 0))],
-    steps: () => ['v = c/n and λ = λ₀/n both drop. Frequency (and so the perceived color) is set by the source and stays the same.'],
+    steps: () => [String.raw`$v = c/n$ and $\lambda = \lambda_0/n$ both drop. The frequency — and so the perceived colour — is set by the source and stays the same.`],
     cases: [kase('frequency', { q: 3 }, { ans: 0 })],
   }),
   problem({
@@ -244,7 +275,7 @@ export default [
     derive: ($) => ({ N: 360 / $.a - 1 }),
     text: (T) => `Two plane mirrors meet at ${T.a}. How many images of an object between them do you see?`,
     parts: [num('N', ($) => $.N, 'images', { tol: 0 })],
-    steps: ($, f) => [`N = 360°/α − 1 = ${f($.N)}`],
+    steps: ($, f) => [String.raw`$N = \dfrac{360^\circ}{\alpha} - 1 = ${texNum($.N)}$`],
     cases: [kase('60°', { a: 60 }, { N: 5 })],
   }),
 ];

@@ -62,6 +62,14 @@ problem({
 - Choice parts: `correct` is a value, an array (with `multi`), or a function of `$`.
 - `sym(id, 'k*lam*L/(d*sqrt(d^2+L^2/4))', ['lam','L','d'], get)`: students type things like `2k lam/R` or `kQ/r^2` (Greek letters are fine). The grader compares the two expressions at random points.
 - `read` may also return `'@label': [got, want]` for checks that aren't answers (e.g. "V at the point ≈ 0").
+- Text is typeset. The statement, part labels, hints, worked steps and rubrics are rendered with the panel markup (`$…$` for inline math, see 2b), so a step reads as one line of mathematics:
+
+  ```js
+  steps: ($, f) => [String.raw`$F = \dfrac{k|q_1q_2|}{r^2} = ${texNum($.F)}\ \text{N}$`]
+  ```
+
+  Use `texNum(x)` for a number *inside* `$…$` — the `f` formatter passed to `steps` writes unicode superscripts (`2.5 × 10⁻⁶`), which KaTeX cannot read. Keep `f` for numbers in the prose outside the math.
+
 - `layout(slice, { charges, probe, pathA, plane, select })` loads the problem's own numbers: the positions in metres and the charges exactly as stated, plus a `view` (`{ upm, plane }`) that scales the scene to them. A distance in the question is the distance on screen, so the lab can be rebuilt by hand from the text. It returns the note shown under the problem ("Set to the problem's own numbers · 1 grid square = 10 cm").
 
   This replaced `fitLayout`, which scaled positions into a fixed-size scene and compensated on the charges (×s² for E, ×s for V and F). The answer was right, but the separation on screen was never the separation in the question, so the sim could not be used alongside the worked problem.
@@ -104,5 +112,5 @@ A deliberate formula error and a flipped direction answer were each caught by (1
 1. Pick the bank file for the exam. Write each worksheet problem as a template whose `cases[0]` is the worksheet's numbers, with the printed key in `key`.
 2. If the key looks wrong, work it by hand. If the key really is wrong, keep the correct `want` and explain in `note` (see 36B #2).
 3. Choose ranges that match the worksheet's style and use `valid()` to avoid degenerate cases. Sliders no longer bound a setup — every slider has a box that takes an exact value and widens its range — but keep the numbers in a range the lab can draw.
-4. Attach `sim` when a lab can show the setup, and add `read` whenever the lab computes the same quantity. That comparison is the strongest test here.
+4. Attach `sim` when a lab can show the setup, and add `read` whenever the lab computes the same quantity. That comparison is the strongest test here. Write the statement, hints and steps with `$…$` math; `node scripts/problems-check.mjs` fails on anything KaTeX cannot parse.
 5. Run `node scripts/problems-check.mjs --only <id-prefix> --samples 300`.

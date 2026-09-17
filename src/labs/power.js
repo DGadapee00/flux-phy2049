@@ -98,7 +98,7 @@ export default defineLab({
       b.classList.toggle('active', b.dataset.mode === state.power.mode);
     });
     $('pwr-V').value = state.power.mode === 'ac' ? state.power.Vrms : state.power.V;
-    $('pwr-V-label').textContent = state.power.mode === 'ac' ? 'V_rms' : 'Voltage V';
+    $('pwr-V-label').innerHTML = state.power.mode === 'ac' ? '<i>V</i><sub>rms</sub>' : 'Voltage <i>V</i>';
     $('pwr-V-val').textContent = fmtV(state.power.mode === 'ac' ? state.power.Vrms : state.power.V);
     $('pwr-R').value = state.power.R;
     $('pwr-R-val').textContent = fmtR(state.power.R);

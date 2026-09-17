@@ -116,10 +116,10 @@ export default defineLab({
             <button type="button" data-type="conv" class="active">Converging f&gt;0</button>
             <button type="button" data-type="div">Diverging f&lt;0</button>
           </div>
-          ${slider('len-f', '|f|')}
-          ${slider('len-do', 'Object distance d_o')}
-          ${slider('len-ho', 'Object height h_o')}
-          ${slider('len-f2', 'Eyepiece f_e')}
+          ${slider('len-f', '<i>|f|</i>')}
+          ${slider('len-do', 'Object distance <i>d</i><sub>o</sub>')}
+          ${slider('len-ho', 'Object height <i>h</i><sub>o</sub>')}
+          ${slider('len-f2', 'Eyepiece <i>f</i><sub>e</sub>')}
           ${slider('len-sep', 'Lens separation')}
           <button type="button" class="btn ghost" id="len-focus"></button>
           <p class="tiny" id="len-note"></p>
@@ -170,7 +170,7 @@ export default defineLab({
       if (document.activeElement !== el) el.value = v;
       $(`${id}-val`).textContent = text;
     };
-    $('len-f-label').textContent = two ? 'Objective f_o' : '|f|';
+    $('len-f-label').innerHTML = two ? 'Objective <i>f</i><sub>o</sub>' : '<i>|f|</i>';
     set('len-f', state.fAbs, two ? 2 : 6, two ? 60 : 50, 0.5, fmtCm(state.fAbs));
     set('len-do', state.do, tele ? 200 : two ? 4.2 : 4, tele ? 5000 : two ? 20 : 80, tele ? 10 : 0.1, fmtCm(state.do));
     set('len-ho', state.ho, tele ? 10 : 1, tele ? 200 : 16, 0.5, fmtCm(state.ho));

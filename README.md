@@ -35,7 +35,7 @@ Press **P** (or the yellow **Practice** button) for the problem bank: 179 genera
 
 Links open a specific version: `#/e2/field?p=e2.36a.collinear&s=0`. Progress is saved in this browser only. Authoring, answer-key notes and the checks: [PROBLEMS.md](PROBLEMS.md).
 
-Every panel is typeset: the law at the top of the equation panel, the live rows under it, the explainer at the bottom, and the readout across the bottom of the screen all render their symbols with KaTeX, with the central equation of an explainer set on its own line.
+Every panel is typeset — including the practice panel, where the statement, hints and worked steps are set as mathematics rather than as ASCII. In the labs: the law at the top of the equation panel, the live rows under it, the explainer at the bottom, and the readout across the bottom of the screen all render their symbols with KaTeX, with the central equation of an explainer set on its own line.
 
 ## Setting up by hand
 

@@ -72,14 +72,14 @@ export default defineLab({
             </div>
           </label>
           <label class="field">
-            <span>Object distance d_o</span>
+            <span>Object distance <i>d</i><sub>o</sub></span>
             <div class="slider-row">
               <input type="range" id="mir-do" min="4" max="70" step="0.5" value="36" />
               <span class="mono val" id="mir-do-val">36 cm</span>
             </div>
           </label>
           <label class="field">
-            <span>Object height h_o</span>
+            <span>Object height <i>h</i><sub>o</sub></span>
             <div class="slider-row">
               <input type="range" id="mir-ho" min="2" max="16" step="0.5" value="8" />
               <span class="mono val" id="mir-ho-val">8.0 cm</span>

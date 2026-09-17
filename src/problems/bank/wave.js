@@ -3,7 +3,7 @@
  * No lab yet (catalog 'wave' is "coming"), so lab is null; when the Interference / Diffraction /
  * Thin film labs land, set lab + sim here and the check script will start comparing.
  */
-import { problem, kase, range, choice, num, mc, DEG } from '../kit.js';
+import { problem, kase, range, choice, num, mc, DEG , texNum } from '../kit.js';
 
 const W = { exam: 'wave', lab: null };
 
@@ -15,8 +15,11 @@ export default [
     derive: ($) => ({ y: ($.m * $.lam * $.L) / $.d, dy: ($.lam * $.L) / $.d }),
     text: (T) => `Light of wavelength ${T.lam} nm passes through two slits ${T.d} mm apart onto a screen ${T.L} m away. Find the position of the m = ${T.m} bright fringe and the fringe spacing.`,
     parts: [num('y', ($) => $.y, 'mm', { scale: 1e-3, label: `y_m` }), num('dy', ($) => $.dy, 'mm', { scale: 1e-3, label: 'Δy' })],
-    hints: ['Bright fringes: d sin θ = mλ. For small angles, y = mλL/d.'],
-    steps: ($, f) => [`y = mλL/d = ${f($.y * 1e3)} mm`, `Δy = λL/d = ${f($.dy * 1e3)} mm`],
+    hints: [String.raw`Bright fringes: $d\sin\theta = m\lambda$. For small angles, $y = \dfrac{m\lambda L}{d}$.`],
+    steps: ($, f) => [
+      String.raw`$y = \dfrac{m\lambda L}{d} = ${texNum($.y * 1e3)}\ \text{mm}$`,
+      String.raw`$\Delta y = \dfrac{\lambda L}{d} = ${texNum($.dy * 1e3)}\ \text{mm}$`,
+    ],
     cases: [kase('hand', { lam: 600, d: 0.2, L: 2, m: 3 }, { y: 18, dy: 6 })],
   }),
   problem({
@@ -26,7 +29,7 @@ export default [
     valid: ($) => $.lam > 3.5e-7 && $.lam < 8e-7,
     text: (T) => `Neighboring bright fringes are ${T.dy} mm apart on a screen ${T.L} m from a double slit with d = ${T.d} mm. What is the wavelength?`,
     parts: [num('lam', ($) => $.lam, 'nm', { scale: 1e-9, label: 'λ' })],
-    steps: ($, f) => [`λ = Δy·d/L = ${f($.lam * 1e9)} nm`],
+    steps: ($, f) => [String.raw`$\lambda = \dfrac{\Delta y\,d}{L} = ${texNum($.lam * 1e9)}\ \text{nm}$`],
     cases: [kase('hand', { dy: 4.5, d: 0.25, L: 1.5 }, { lam: 750 })],
   }),
   problem({
@@ -39,8 +42,10 @@ export default [
     valid: ($) => $.s < 0.95,
     text: (T) => `For a double slit with d = ${T.d} mm and λ = ${T.lam} nm, at what angle is the m = ${T.m} dark fringe (m = 0 is the first dark fringe)?`,
     parts: [num('th', ($) => $.th, '°', { label: 'θ', abs: 0.002 })],
-    hints: ['Dark fringes: d sin θ = (m + ½)λ'],
-    steps: ($, f) => [`sin θ = (m + ½)λ/d = ${f($.s)} → θ = ${f($.th)}°`],
+    hints: [String.raw`Dark fringes: $d\sin\theta = \left(m + \tfrac{1}{2}\right)\lambda$`],
+    steps: ($, f) => [
+      String.raw`$\sin\theta = \dfrac{(m + \tfrac{1}{2})\lambda}{d} = ${texNum($.s)} \;\Longrightarrow\; \theta$ = ${f($.th)}°`,
+    ],
     cases: [kase('first dark', { lam: 500, d: 0.1, m: 0 }, { th: 0.1432 })],
   }),
   problem({
@@ -48,7 +53,7 @@ export default [
     vars: { change: choice([1, 'the slit separation d is decreased'], [2, 'the wavelength is increased'], [3, 'the screen is moved closer'], [4, 'the whole setup is submerged in water']) },
     text: (T) => `In a double-slit experiment, ${T.change}. What happens to the fringe spacing?`,
     parts: [mc('ans', [[1, 'It increases'], [-1, 'It decreases'], [0, 'It stays the same']], ($) => ({ 1: 1, 2: 1, 3: -1, 4: -1 })[$.change])],
-    steps: () => ['Δy = λL/d. In water the wavelength becomes λ/n, so the spacing shrinks.'],
+    steps: () => [String.raw`$\Delta y = \dfrac{\lambda L}{d}$. In water the wavelength becomes $\lambda/n$, so the spacing shrinks.`],
     cases: [kase('water', { change: 4 }, { ans: -1 })],
   }),
   problem({
@@ -57,8 +62,8 @@ export default [
     derive: ($) => ({ N: (2 * $.dd) / $.lam }),
     text: (T) => `One mirror of a Michelson interferometer moves ${T.dd} mm, using ${T.lam} nm light. How many bright fringes pass the detector?`,
     parts: [num('N', ($) => $.N, 'fringes', { abs: 1, tol: 0.005 })],
-    hints: ['The light path changes by twice the mirror\'s displacement.'],
-    steps: ($, f) => [`N = 2Δd/λ = ${f($.N)}`],
+    hints: ["The light path changes by twice the mirror's displacement."],
+    steps: ($, f) => [String.raw`$N = \dfrac{2\Delta d}{\lambda} = ${texNum($.N)}$`],
     cases: [kase('HeNe', { dd: 0.1, lam: 632.8 }, { N: 316.06 })],
   }),
 
@@ -69,8 +74,11 @@ export default [
     derive: ($) => ({ th: (Math.asin($.lam / $.a) * 180) / Math.PI, w: (2 * $.lam * $.L) / $.a }),
     text: (T) => `Light of wavelength ${T.lam} nm passes through a single slit ${T.a} mm wide onto a screen ${T.L} m away. Find the angle of the first dark fringe and the width of the central bright maximum.`,
     parts: [num('th', ($) => $.th, '°', { label: 'θ₁', abs: 0.002 }), num('w', ($) => $.w, 'mm', { scale: 1e-3, label: 'Central width' })],
-    hints: ['Dark fringes: a sin θ = mλ (m = 1, 2, …). The central maximum spans from −θ₁ to +θ₁.'],
-    steps: ($, f) => [`sin θ₁ = λ/a → θ₁ = ${f($.th)}°`, `w = 2λL/a = ${f($.w * 1e3)} mm`],
+    hints: [String.raw`Dark fringes: $a\sin\theta = m\lambda$ for $m = 1, 2, \dots$. The central maximum spans from $-\theta_1$ to $+\theta_1$.`],
+    steps: ($, f) => [
+      String.raw`$\sin\theta_1 = \dfrac{\lambda}{a} \;\Longrightarrow\; \theta_1$ = ${f($.th)}°`,
+      String.raw`$w = \dfrac{2\lambda L}{a} = ${texNum($.w * 1e3)}\ \text{mm}$`,
+    ],
     cases: [kase('HeNe', { lam: 633, a: 0.1, L: 2 }, { th: 0.3627, w: 25.32 })],
   }),
   problem({
@@ -83,8 +91,12 @@ export default [
     },
     valid: ($) => $.s < 0.98 && $.d / $.lam - $.mmax > 0.01,
     text: (T) => `A grating has ${T.N} lines/mm and is lit with ${T.lam} nm light. Find the line spacing, the angle of the m = ${T.m} maximum, and the highest order you can see.`,
-    parts: [num('d', ($) => $.d, 'μm', { scale: 1e-6, label: 'd' }), num('th', ($) => $.th, '°', { label: 'θ_m', abs: 0.05, tol: 0.005 }), num('mmax', ($) => $.mmax, '', { label: 'Highest order', tol: 0 })],
-    steps: ($, f) => [`d = 1/N = ${f($.d * 1e6)} μm`, `sin θ = mλ/d → θ = ${f($.th)}°`, `m_max = floor(d/λ) = ${f($.mmax)}`],
+    parts: [num('d', ($) => $.d, 'μm', { scale: 1e-6, label: 'd' }), num('th', ($) => $.th, '°', { label: String.raw`$\theta_m$`, abs: 0.05, tol: 0.005 }), num('mmax', ($) => $.mmax, '', { label: 'Highest order', tol: 0 })],
+    steps: ($, f) => [
+      String.raw`$d = \dfrac{1}{N} = ${texNum($.d * 1e6)}\ \mu\text{m}$`,
+      String.raw`$\sin\theta = \dfrac{m\lambda}{d} \;\Longrightarrow\; \theta$ = ${f($.th)}°`,
+      String.raw`$m_{\max} = \left\lfloor \dfrac{d}{\lambda} \right\rfloor = ${texNum($.mmax)}$`,
+    ],
     cases: [kase('hand', { N: 600, lam: 500, m: 2 }, { d: 1.6667, th: 36.87, mmax: 3 })],
   }),
   problem({
@@ -95,8 +107,11 @@ export default [
       return { th, s: th * $.L };
     },
     text: (T) => `An aperture ${T.D} mm across views objects ${T.L} km away in ${T.lam} nm light. Find the minimum resolvable angle and the smallest separation it can resolve at that distance.`,
-    parts: [num('th', ($) => $.th, 'rad', { label: 'θ_min' }), num('s', ($) => $.s, 'm', { label: 'Separation' })],
-    steps: ($, f) => [`θ = 1.22λ/D = ${f($.th)} rad`, `s = θL = ${f($.s)} m`],
+    parts: [num('th', ($) => $.th, 'rad', { label: String.raw`$\theta_{\min}$` }), num('s', ($) => $.s, 'm', { label: 'Separation' })],
+    steps: ($, f) => [
+      String.raw`$\theta = \dfrac{1.22\lambda}{D} = ${texNum($.th)}\ \text{rad}$`,
+      String.raw`$s = \theta L = ${texNum($.s)}\ \text{m}$`,
+    ],
     cases: [kase('eye', { D: 5, lam: 550, L: 10 }, { th: 1.342e-4, s: 1.342 })],
   }),
   problem({
@@ -104,7 +119,7 @@ export default [
     vars: { change: choice([1, 'the slit is made wider'], [2, 'red light is replaced with blue'], [3, 'the grating has more lines per mm']) },
     text: (T) => `What happens to the angular spread of the pattern when ${T.change}?`,
     parts: [mc('ans', [[1, 'It spreads out more'], [-1, 'It narrows'], [0, 'No change']], ($) => ({ 1: -1, 2: -1, 3: 1 })[$.change])],
-    steps: () => ['sin θ ∝ λ/a (slit) or λ/d (grating): a wider slit or a shorter wavelength narrows the pattern; smaller d (more lines/mm) spreads it out.'],
+    steps: () => [String.raw`$\sin\theta \propto \lambda/a$ for a slit, or $\lambda/d$ for a grating: a wider slit or a shorter wavelength narrows the pattern, and a smaller $d$ (more lines per mm) spreads it out.`],
     cases: [kase('wider', { change: 1 }, { ans: -1 })],
   }),
 
@@ -129,10 +144,16 @@ export default [
     text: (T) => `A film with n = ${T.nf} sits in air on top of ${T.sub}. Light of ${T.lam} nm arrives at normal incidence. What is the minimum nonzero film thickness that makes this wavelength ${T.want}?`,
     parts: [
       mc('shifts', [[0, 'None'], [1, 'One'], [2, 'Two']], ($) => $.shifts, { label: 'How many reflections have a half-wave phase shift?' }),
-      num('t', ($) => $.t, 'nm', { scale: 1e-9, label: 't_min' }),
+      num('t', ($) => $.t, 'nm', { scale: 1e-9, label: String.raw`$t_{\min}$` }),
     ],
-    hints: ['A reflection off a higher-n medium adds a half-wavelength shift.', 'Use λ_film = λ/n. One shift: bright at 2t = (m + ½)λ_film. Zero or two shifts: bright at 2t = mλ_film.'],
-    steps: ($, f) => [`Phase-shifting reflections: ${f($.shifts)}`, `t_min = ${f($.t * 1e9)} nm`],
+    hints: [
+      String.raw`A reflection off a higher-$n$ medium adds a half-wavelength shift.`,
+      String.raw`Use $\lambda_{\text{film}} = \lambda/n$. One shift: bright at $2t = \left(m + \tfrac{1}{2}\right)\lambda_{\text{film}}$. Zero or two shifts: bright at $2t = m\lambda_{\text{film}}$.`,
+    ],
+    steps: ($, f) => [
+      `Phase-shifting reflections: ${f($.shifts)}`,
+      String.raw`$t_{\min} = ${texNum($.t * 1e9)}\ \text{nm}$`,
+    ],
     cases: [
       kase('soap bubble, bright', { nf: 1.33, sub: 1, want: 1, lam: 600 }, { shifts: 1, t: 112.78 }),
       kase('MgF₂ AR coating, dark', { nf: 1.38, sub: 1.5, want: -1, lam: 550 }, { shifts: 2, t: 99.64 }),
@@ -145,7 +166,7 @@ export default [
     valid: ($) => $.from !== $.to,
     text: (T) => `Light traveling in ${T.from} reflects off a boundary with ${T.to}. Does the reflected wave pick up a half-wavelength (180°) phase shift?`,
     parts: [mc('ans', [[1, 'Yes'], [0, 'No']], ($) => ($.to > $.from ? 1 : 0))],
-    steps: () => ['There is a 180° shift only when the light reflects off a medium with a higher index of refraction.'],
+    steps: () => [String.raw`There is a $180^\circ$ shift only when the light reflects off a medium with a higher index of refraction.`],
     cases: [kase('air → glass', { from: 1, to: 1.5 }, { ans: 1 })],
   }),
 ];

@@ -30,20 +30,31 @@ export function tex(src, display = false) {
  * Text outside the delimiters passes through as HTML — every string here is authored in this repo,
  * and several carry `<sup>`/`<sub>` from the number formatters.
  */
-export function mathText(s) {
+export function mathText(s, escape = false) {
+  const keep = escape ? escapeHTML : (x) => x;
   const str = s == null ? '' : String(s);
-  if (str.indexOf('$') < 0) return str;
+  if (str.indexOf('$') < 0) return keep(str);
   let out = '';
   let i = 0;
   for (;;) {
     const a = str.indexOf('$', i);
-    if (a < 0) return out + str.slice(i);
+    if (a < 0) return out + keep(str.slice(i));
     const b = str.indexOf('$', a + 1);
-    if (b < 0) return out + str.slice(i);
-    out += str.slice(i, a) + tex(str.slice(a + 1, b));
+    if (b < 0) return out + keep(str.slice(i));
+    out += keep(str.slice(i, a)) + tex(str.slice(a + 1, b));
     i = b + 1;
   }
 }
+
+const HTML_ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+export const escapeHTML = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => HTML_ESC[c]);
+
+/**
+ * Prose that may carry math but never markup: everything outside `$…$` is escaped. Problem
+ * statements, worked steps and hints go through this — they are prose, and they contain `<` and
+ * `>` often enough ("$q < 0$", "r > R") that passing them through as HTML would be a mistake.
+ */
+export const mathProse = (s) => mathText(s, true);
 
 /** A displayed (centered) equation inside an explainer body. */
 export const eq = (src) => ({ eq: src });

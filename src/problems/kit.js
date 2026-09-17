@@ -147,5 +147,19 @@ export function layout(s, { charges = [], probe = null, pathA = null, plane = 'x
   return `Set to the problem's own numbers · 1 grid square = ${lenLabel(1 / upm)}`;
 }
 
+/**
+ * A number for the inside of `$…$`: three significant figures, scientific as TeX rather than with
+ * the unicode superscripts `sig()` uses (KaTeX cannot read those). Steps and hints are typeset —
+ * see PROBLEMS.md — so a worked line can be one piece of mathematics, numbers and all.
+ */
+export function texNum(x, n = 3) {
+  if (!Number.isFinite(x)) return '-';
+  if (x === 0 || Math.abs(x) < 1e-300) return '0';
+  const a = Math.abs(x);
+  if (a >= 0.01 && a < 1e5) return String(Number(x.toPrecision(n))).replace('-', '-');
+  const [m, e] = x.toExponential(n - 1).split('e');
+  return `${Number(m)}\\times 10^{${Number(e)}}`;
+}
+
 export const mag = (v) => Math.hypot(v.x, v.y, v.z || 0);
 export const angleDeg = (x, y) => ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;

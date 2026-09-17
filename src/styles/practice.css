@@ -628,6 +628,25 @@ body.problem-blind .problems {
   color: var(--text);
 }
 
+/*
+ * KaTeX renders at 1.21em by default, which makes a typeset formula tower over the sentence it
+ * sits in. Bring it back to the size of the prose, and give a wrapped line room to breathe.
+ */
+.pb-text .katex,
+.pb-steps .katex,
+.pb-hints .katex,
+.pb-label .katex,
+.pb-rubric .katex,
+.pb-opt .katex,
+.pb-want .katex {
+  font-size: 1.06em;
+}
+
+.pb-steps li,
+.pb-hints li {
+  line-height: 1.7;
+}
+
 .pb-key {
   font-size: 11.5px;
   color: var(--text-muted);

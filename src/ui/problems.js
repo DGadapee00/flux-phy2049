@@ -15,6 +15,7 @@ import { PROBLEMS, problemById, problemsForExam, CHAPTER_ORDER, CHAPTER_TITLES }
 import { instance, render, grade, expected, sig, withinTol, compile } from '../problems/engine.js';
 import { createProgress, pickSet, MASTERED_BOX, INTERVAL_DAYS } from '../problems/progress.js';
 import { examById, LAB_META } from '../data/catalog.js';
+import { mathProse } from './shared.js';
 
 const EXAM_MINUTES = 50;
 const EXAM_SIZE = 8;
@@ -22,6 +23,8 @@ const MIXED_SIZE = 5;
 
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+/** Bank prose: escaped, with `$…$` typeset — the same markup the lab panels use. */
+const prose = (s) => mathProse(s);
 
 const KIND_LABEL = { numeric: 'Numeric', conceptual: 'Concept', derivation: 'Derivation' };
 const STATUS_LABEL = {
@@ -572,7 +575,7 @@ export function createPractice(api) {
     const locked = cur.finished;
     const res = exam ? null : cur.results[part.id];
     const state = !res ? '' : res.empty ? ' empty' : res.correct ? ' ok' : ' bad';
-    const label = esc(partLabel(part, r, cur.tpl.parts.length));
+    const label = prose(partLabel(part, r, cur.tpl.parts.length));
     const review = cur.mode === 'review';
     const fb = !res ? '' : res.empty ? (review ? 'No answer given.' : 'Answer this part.') : res.correct ? '' : res.feedback || (review || cur.finished ? 'Incorrect.' : 'Not yet — try again.');
     const mark = !res || res.empty ? '' : res.correct ? '✓' : '✗';
@@ -608,7 +611,7 @@ export function createPractice(api) {
           const on = picked.includes(oi);
           const showKey = cur.revealed || (cur.finished && cur.mode !== 'exam');
           const cls = showKey && want.includes(o.value) ? ' key' : showKey && on ? ' wrong' : '';
-          return `<label class="pb-opt${cls}"><input type="${type}" name="pb-c-${i}" data-choice="${i}" value="${oi}" ${on ? 'checked' : ''} ${locked ? 'disabled' : ''} /><span>${esc(o.label)}</span></label>`;
+          return `<label class="pb-opt${cls}"><input type="${type}" name="pb-c-${i}" data-choice="${i}" value="${oi}" ${on ? 'checked' : ''} ${locked ? 'disabled' : ''} /><span>${prose(o.label)}</span></label>`;
         })
         .join('');
       return `<fieldset class="pb-part choice${state}" data-part="${esc(part.id)}">
@@ -621,7 +624,7 @@ export function createPractice(api) {
     // self-check
     const s = cur.self[part.id] || {};
     if (exam) {
-      return `<div class="pb-part self"><div class="pb-label">${esc(part.label)}</div><p class="pb-dim">Work this one on paper; you'll compare it with the rubric after the exam.</p></div>`;
+      return `<div class="pb-part self"><div class="pb-label">${prose(part.label)}</div><p class="pb-dim">Work this one on paper; you'll compare it with the rubric after the exam.</p></div>`;
     }
     let inner;
     if (!s.shown && !cur.revealed) {
@@ -633,9 +636,9 @@ export function createPractice(api) {
             ? ''
             : `<div class="pb-row"><button type="button" class="btn" data-self="${esc(part.id)}:1">I had this</button><button type="button" class="btn ghost" data-self="${esc(part.id)}:0">I missed something</button></div>`
           : `<div class="pb-fb ${s.ok ? 'good' : ''}">${s.ok ? 'Marked as matching the rubric.' : 'Marked as missing something — read the rubric again.'}</div>`;
-      inner = `<div class="pb-rubric">${esc(part.rubric)}</div>${verdict}`;
+      inner = `<div class="pb-rubric">${prose(part.rubric)}</div>${verdict}`;
     }
-    return `<div class="pb-part self" data-part="${esc(part.id)}"><div class="pb-label">${esc(part.label)}</div>${inner}</div>`;
+    return `<div class="pb-part self" data-part="${esc(part.id)}"><div class="pb-label">${prose(part.label)}</div>${inner}</div>`;
   }
 
   function bannerHTML(cur) {
@@ -662,7 +665,7 @@ export function createPractice(api) {
   function solutionHTML(cur) {
     if (!(cur.finished || cur.revealed) || cur.mode === 'exam') return '';
     const tpl = cur.tpl;
-    const steps = cur.view.steps.map((s) => `<li>${esc(s)}</li>`).join('');
+    const steps = cur.view.steps.map((s) => `<li>${prose(s)}</li>`).join('');
     let verdict = '';
     if (cur.mode === 'review') {
       verdict = cur.correct ? 'You got this one on the exam.' : 'Here is the worked solution.';
@@ -699,7 +702,7 @@ export function createPractice(api) {
   function problemHTML(cur) {
     const tpl = cur.tpl;
     const exam = cur.mode === 'exam';
-    const hints = exam ? '' : cur.view.hints.slice(0, cur.hints).map((h) => `<li>${esc(h)}</li>`).join('');
+    const hints = exam ? '' : cur.view.hints.slice(0, cur.hints).map((h) => `<li>${prose(h)}</li>`).join('');
     const moreHints = !exam && !cur.finished && cur.hints < cur.view.hints.length;
     const src = cur.seed === 0 && tpl.src ? ` · ${esc(tpl.src)}` : '';
 
@@ -744,7 +747,7 @@ export function createPractice(api) {
     return `${head}
       <div class="pb-kicker">Ch ${esc(tpl.ch)} · ${esc(CHAPTER_TITLES[tpl.ch] || '')} · ${levelDots(tpl.level)} ${KIND_LABEL[tpl.kind] || ''}${src}</div>
       <h2 class="pb-h">${esc(tpl.title)}</h2>
-      <p class="pb-text">${esc(cur.view.text)}</p>
+      <p class="pb-text">${prose(cur.view.text)}</p>
       ${cur.note ? `<p class="pb-note">${esc(cur.note)}</p>` : ''}
       ${bannerHTML(cur)}
       <form class="pb-parts" onsubmit="return false">${tpl.parts.map((p, i) => partHTML(cur, p, i)).join('')}</form>

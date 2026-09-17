@@ -1,5 +1,5 @@
 /** Exam 3 · Ch 38–39 (potential), 40 (capacitors), 41 (current, resistance), 42 (power). */
-import { problem, kase, range, choice, SIGN, num, mc, sym, K, EPS0, QE, ME, MP, POSNEG, charge, layout } from '../kit.js';
+import { problem, kase, range, choice, SIGN, num, mc, sym, K, EPS0, QE, ME, MP, POSNEG, charge, layout, texNum } from '../kit.js';
 import { DIELECTRICS } from '../../physics/capacitor.js';
 import { MATERIALS } from '../../physics/circuit.js';
 
@@ -22,8 +22,8 @@ export default [
     derive: ($) => ({ V: (K * $.s * $.q) / $.r }),
     text: (T) => `Find the electric potential ${T.r} m from a ${T.s} ${T.q} μC point charge (V = 0 at infinity).`,
     parts: [num('V', ($) => $.V, 'V')],
-    hints: ['V is a scalar and keeps the sign of q.'],
-    steps: ($, f) => [`V = kq/r = ${f($.V)} V`],
+    hints: [String.raw`$V$ is a scalar and keeps the sign of $q$.`],
+    steps: ($, f) => [String.raw`$V = \dfrac{kq}{r} = ${texNum($.V)}\ \text{V}$`],
     sim: {
       scenario: 'v-plus',
       setup: potSetup(($) => [charge($.s * $.q, 0, 0)], ($) => ({ x: $.r, y: 0 }), ($) => ({ x: 2 * $.r, y: 0 })),
@@ -41,9 +41,12 @@ export default [
     },
     valid: ($) => Math.abs($.rA - $.rB) > 0.05,
     text: (T) => `A ${T.sQ} ${T.Q} μC charge is fixed at the origin. A ${T.s0} ${T.q0} μC test charge moves from ${T.rA} m to ${T.rB} m from it. How much work does the electric field do?`,
-    parts: [num('W', ($) => $.W, 'J', { label: 'W_field (signed)' }), mc('ke', [[1, 'Its kinetic energy increases'], [-1, 'Its kinetic energy decreases']], ($) => Math.sign($.W), { label: 'If only the field acts…' })],
-    hints: ['W_field = −qΔV = −q(V_B − V_A)'],
-    steps: ($, f) => [`V_A = ${f($.VA)} V, V_B = ${f($.VB)} V`, `W = −q(V_B − V_A) = ${f($.W)} J`],
+    parts: [num('W', ($) => $.W, 'J', { label: String.raw`$W_{\text{field}}$ (signed)` }), mc('ke', [[1, 'Its kinetic energy increases'], [-1, 'Its kinetic energy decreases']], ($) => Math.sign($.W), { label: 'If only the field acts…' })],
+    hints: [String.raw`$W_{\text{field}} = -q\,\Delta V = -q(V_B - V_A)$`],
+    steps: ($, f) => [
+      String.raw`$V_A = ${texNum($.VA)}\ \text{V}$, $V_B = ${texNum($.VB)}\ \text{V}$`,
+      String.raw`$W = -q(V_B - V_A) = ${texNum($.W)}\ \text{J}$`,
+    ],
     sim: {
       scenario: 'v-plus',
       setup(s, $) {
@@ -62,10 +65,13 @@ export default [
       const dV = -$.E * $.dir * $.d;
       return { dV, W: -$.s * $.q * dV };
     },
-    text: (T) => `In a uniform ${T.E} N/C field, a ${T.s} ${T.q} μC charge moves ${T.d} cm ${T.dir} the field direction. Find ΔV = V_B − V_A and the work done by the field.`,
-    parts: [num('dV', ($) => $.dV, 'V', { label: 'ΔV' }), num('W', ($) => $.W, 'J', { label: 'W_field' })],
-    hints: ['ΔV = −E·Δr. Moving along E lowers the potential.'],
-    steps: ($, f) => [`ΔV = −E d cos θ = ${f($.dV)} V`, `W = −qΔV = ${f($.W)} J`],
+    text: (T) => `In a uniform ${T.E} N/C field, a ${T.s} ${T.q} μC charge moves ${T.d} cm ${T.dir} the field direction. Find $\Delta V = V_B - V_A$ and the work done by the field.`,
+    parts: [num('dV', ($) => $.dV, 'V', { label: 'ΔV' }), num('W', ($) => $.W, 'J', { label: String.raw`$W_{\text{field}}$` })],
+    hints: [String.raw`$\Delta V = -\vec{E}\cdot\Delta\vec{r}$ — moving along $\vec{E}$ lowers the potential.`],
+    steps: ($, f) => [
+      String.raw`$\Delta V = -Ed\cos\theta = ${texNum($.dV)}\ \text{V}$`,
+      String.raw`$W = -q\,\Delta V = ${texNum($.W)}\ \text{J}$`,
+    ],
     sim: {
       scenario: 'v-plates',
       setup(s, $) {
@@ -85,7 +91,10 @@ export default [
     derive: ($) => ({ m: $.p > 0 ? MP : ME, K: QE * $.V, v: Math.sqrt((2 * QE * $.V) / ($.p > 0 ? MP : ME)) }),
     text: (T) => `${T.p} starts from rest and is accelerated through a potential difference of ${T.V} V. Find its kinetic energy (J and eV) and its final speed.`,
     parts: [num('KJ', ($) => $.K, 'J', { label: 'K (J)' }), num('KeV', ($) => $.V, 'eV', { label: 'K (eV)' }), num('v', ($) => $.v, 'm/s')],
-    steps: ($, f) => [`K = |q|ΔV = ${f($.K)} J = ${f($.V)} eV`, `v = √(2K/m) = ${f($.v)} m/s`],
+    steps: ($, f) => [
+      String.raw`$K = |q|\,\Delta V = ${texNum($.K)}\ \text{J} = ${texNum($.V)}\ \text{eV}$`,
+      String.raw`$v = \sqrt{\dfrac{2K}{m}} = ${texNum($.v)}\ \text{m/s}$`,
+    ],
     cases: [kase('hand', { p: -1, V: 100 }, { KJ: 1.6e-17, KeV: 100, v: 5.927e6 })],
   }),
   problem({
@@ -93,8 +102,8 @@ export default [
     vars: { q1: range(0.5, 10, 0.5, 'μC', 1e-6), s1: SIGN, q2: range(0.5, 10, 0.5, 'μC', 1e-6), s2: SIGN, r: range(0.05, 2, 0.05, 'm') },
     derive: ($) => ({ U: (K * $.s1 * $.q1 * $.s2 * $.q2) / $.r }),
     text: (T) => `A ${T.s1} ${T.q1} μC charge and a ${T.s2} ${T.q2} μC charge are ${T.r} m apart. What is their electric potential energy? How much work did an external agent do to bring them together from far away, at rest?`,
-    parts: [num('U', ($) => $.U, 'J', { label: 'U' }), num('W', ($) => $.U, 'J', { label: 'W_ext' })],
-    steps: ($, f) => [`U = kq₁q₂/r = ${f($.U)} J, and W_ext = ΔU = U`],
+    parts: [num('U', ($) => $.U, 'J', { label: 'U' }), num('W', ($) => $.U, 'J', { label: String.raw`$W_{\text{ext}}$` })],
+    steps: ($, f) => [String.raw`$U = \dfrac{kq_1q_2}{r} = ${texNum($.U)}\ \text{J}$, and $W_{\text{ext}} = \Delta U = U$`],
     sim: {
       scenario: 'v-plus',
       setup(s, $) {
@@ -119,7 +128,11 @@ export default [
         [6, 'Where equipotentials are closer together, E is weaker'],
       ], [1, 2, 3], { multi: true }),
     ],
-    steps: () => ['ΔV = 0 along an equipotential, so W = −qΔV = 0.', 'E is perpendicular to equipotentials and points downhill in V (Eₓ = −dV/dx).', 'A point has only one potential, so equipotentials never cross. Closely spaced equipotentials mean a steep V, so E is stronger there.'],
+    steps: () => [
+      String.raw`$\Delta V = 0$ along an equipotential, so $W = -q\,\Delta V = 0$.`,
+      String.raw`$\vec{E}$ is perpendicular to the equipotentials and points downhill in $V$, since $E_x = -dV/dx$.`,
+      String.raw`A point has only one potential, so equipotentials never cross. Closely spaced ones mean a steep $V$, so $\vec{E}$ is stronger there.`,
+    ],
     sim: { scenario: 'v-dipole' },
     cases: [kase('all true ones', {}, { ans: [1, 2, 3] })],
   }),
@@ -129,8 +142,11 @@ export default [
     derive: ($) => ({ Ex: -(2 * $.a * $.x0 + $.b) }),
     text: (T) => `The potential along the x-axis is V(x) = ${T.a}x² + ${T.b}x + 5 (V, with x in m). Find Eₓ at x = ${T.x0} m.`,
     parts: [sym('Ex_sym', '-(2*a*x0 + b)', ['a', 'b', 'x0'], ($) => $.Ex, { label: 'Eₓ as a formula (use a, b, x0)' }), num('Ex', ($) => $.Ex, 'V/m', { abs: 0.01 })],
-    hints: ['Eₓ = −dV/dx'],
-    steps: ($, f) => ['Eₓ = −dV/dx = −(2ax + b)', `At x = x₀: Eₓ = ${f($.Ex)} V/m`],
+    hints: [String.raw`$E_x = -\dfrac{dV}{dx}$`],
+    steps: ($, f) => [
+      String.raw`$E_x = -\dfrac{dV}{dx} = -(2ax + b)$`,
+      String.raw`At $x = x_0$: $E_x = ${texNum($.Ex)}\ \text{V/m}$`,
+    ],
     cases: [kase('hand', { a: 3, b: -4, x0: 2 }, { Ex: -8 })],
   }),
 
@@ -142,7 +158,7 @@ export default [
     text: (T) => `q₁ = ${T.q1} μC (${T.s1}) is at (−${T.a} m, 0) and q₂ = ${T.q2} μC (${T.s2}) is at (0, ${T.b} m). Find the potential at the origin.`,
     parts: [num('V', ($) => $.V, 'V', { abs: 1 })],
     hints: ['Potentials add as scalars — no components needed.'],
-    steps: ($, f) => [`V = k(q₁/a + q₂/b) = ${f($.V)} V`],
+    steps: ($, f) => [String.raw`$V = k\left(\dfrac{q_1}{a} + \dfrac{q_2}{b}\right) = ${texNum($.V)}\ \text{V}$`],
     sim: {
       scenario: 'v-ch39a',
       setup: potSetup(($) => [charge($.s1 * $.q1, -$.a, 0), charge($.s2 * $.q2, 0, $.b)], () => ({ x: 0, y: 0 }), ($) => ({ x: $.a / 2, y: 0 })),
@@ -156,7 +172,10 @@ export default [
     derive: ($) => ({ x: ($.d * $.q1) / ($.q1 + $.q2) }),
     text: (T) => `A +${T.q1} μC charge is at x = 0 and a −${T.q2} μC charge is at x = ${T.d} m. Where between them is V = 0?`,
     parts: [num('x', ($) => $.x, 'm'), mc('E0', [[1, 'Yes, E = 0 there too'], [0, 'No, E is not zero there']], 0, { label: 'Is E zero at that point?' })],
-    steps: ($, f) => [`kq₁/x = k|q₂|/(d − x) → x = d·q₁/(q₁ + |q₂|) = ${f($.x)} m`, 'Between opposite charges, both fields point toward the negative charge, so E ≠ 0.'],
+    steps: ($, f) => [
+      String.raw`$\dfrac{kq_1}{x} = \dfrac{k|q_2|}{d-x} \;\Longrightarrow\; x = \dfrac{dq_1}{q_1 + |q_2|} = ${texNum($.x)}\ \text{m}$`,
+      String.raw`Between opposite charges both fields point toward the negative one, so $\vec{E} \neq 0$ there.`,
+    ],
     sim: {
       scenario: 'v-dipole',
       setup: potSetup(($) => [charge($.q1, 0, 0), charge(-$.q2, $.d, 0)], ($) => ({ x: $.x, y: 0 }), ($) => ({ x: -$.d / 2, y: 0 })),
@@ -170,8 +189,10 @@ export default [
     derive: ($) => ({ V: (K * $.Q) / Math.hypot($.a, $.y) }),
     text: (T) => `A ring of radius ${T.a} m carries ${T.Q} μC. Find V on its axis, ${T.y} m from the center.`,
     parts: [sym('V_sym', 'k*Q/sqrt(a^2 + y^2)', ['Q', 'a', 'y'], ($) => $.V, { label: 'V as a formula' }), num('V', ($) => $.V, 'V')],
-    hints: ['Every dq is the same distance from P, and V is a scalar, so nothing cancels.'],
-    steps: ($, f) => [`V = ∫k dq/r = kQ/√(a² + y²) = ${f($.V)} V`],
+    hints: [String.raw`Every $dq$ is the same distance from $P$, and $V$ is a scalar, so nothing cancels.`],
+    steps: ($, f) => [
+      String.raw`$V = \displaystyle\int \frac{k\,dq}{r} = \frac{kQ}{\sqrt{a^2+y^2}} = ${texNum($.V)}\ \text{V}$`,
+    ],
     sim: {
       scenario: 'ring',
       setup(s, $) {
@@ -190,8 +211,11 @@ export default [
     },
     text: (T) => `A line charge of length ${T.L} m and λ = ${T.lam} μC/m lies on the x-axis, centered on the origin. Find V at (0, ${T.d} m).`,
     parts: [sym('V_sym', 'k*lam*ln((sqrt(L^2/4 + d^2) + L/2)/(sqrt(L^2/4 + d^2) - L/2))', ['lam', 'L', 'd'], ($) => $.V, { label: 'V as a formula' }), num('V', ($) => $.V, 'V')],
-    hints: ['∫ dx/√(x² + d²) = ln(x + √(x² + d²))'],
-    steps: ($, f) => ['V = kλ∫dx/√(x² + d²) over −L/2..L/2 = kλ ln[(√(L²/4 + d²) + L/2)/(√(L²/4 + d²) − L/2)]', `V = ${f($.V)} V`],
+    hints: [String.raw`$\displaystyle\int \frac{dx}{\sqrt{x^2+d^2}} = \ln\!\left(x + \sqrt{x^2+d^2}\right)$`],
+    steps: ($, f) => [
+      String.raw`$V = k\lambda\displaystyle\int_{-L/2}^{L/2} \frac{dx}{\sqrt{x^2+d^2}} = k\lambda\ln\!\left[\frac{\sqrt{L^2/4 + d^2} + L/2}{\sqrt{L^2/4 + d^2} - L/2}\right]$`,
+      String.raw`$V = ${texNum($.V)}\ \text{V}$`,
+    ],
     sim: {
       scenario: 'rod',
       setup(s, $) {
@@ -210,8 +234,11 @@ export default [
     },
     text: (T, $, f) => `A conducting sphere of radius ${T.R} m carries ${T.Q} μC. Find the potential ${f($.r)} m from its center.`,
     parts: [num('V', ($) => $.V, 'V'), mc('inside', [[1, 'Constant, equal to kQ/R'], [2, 'Zero'], [3, 'kQ/r, growing toward the center']], 1, { label: 'Inside the sphere, V is…' })],
-    hints: ['E = 0 inside, so V doesn\'t change there.'],
-    steps: ($, f) => [`r ≥ R: V = kQ/r;  r ≤ R: V = kQ/R.  V = ${f($.V)} V`],
+    hints: [String.raw`$\vec{E} = 0$ inside, so $V$ does not change there.`],
+    steps: ($, f) => [
+      String.raw`$r \ge R$: $V = \dfrac{kQ}{r}$.  $r \le R$: $V = \dfrac{kQ}{R}$.`,
+      String.raw`$V = ${texNum($.V)}\ \text{V}$`,
+    ],
     sim: { scenario: 'uniform', setup: (s, $) => void Object.assign(s, { Q: $.Q, R: Math.min(0.55, $.R) }) },
     cases: [kase('hand', { Q: 2, R: 0.35, f: 0.6 }, { V: 51360, inside: 1 })],
   }),
@@ -226,7 +253,12 @@ export default [
     },
     text: (T) => `An air-filled parallel-plate capacitor (treat as vacuum) has plates of area ${T.A} m² separated by ${T.d} mm and is connected to a ${T.V} V battery. Find C, Q, E between the plates, and the stored energy.`,
     parts: [num('C', ($) => $.C, 'pF', { scale: 1e-12 }), num('Q', ($) => $.Q, 'C'), num('E', ($) => $.E, 'V/m'), num('U', ($) => $.U, 'J')],
-    steps: ($, f) => [`C = ε₀A/d = ${f($.C)} F`, `Q = CV = ${f($.Q)} C`, `E = V/d = ${f($.E)} V/m`, `U = ½CV² = ${f($.U)} J`],
+    steps: ($, f) => [
+      String.raw`$C = \dfrac{\varepsilon_0 A}{d} = ${texNum($.C)}\ \text{F}$`,
+      String.raw`$Q = CV = ${texNum($.Q)}\ \text{C}$`,
+      String.raw`$E = \dfrac{V}{d} = ${texNum($.E)}\ \text{V/m}$`,
+      String.raw`$U = \tfrac{1}{2}CV^2 = ${texNum($.U)}\ \text{J}$`,
+    ],
     sim: {
       scenario: 'cap-12v',
       setup(s, $) {
@@ -246,7 +278,11 @@ export default [
     },
     text: (T) => `A vacuum capacitor (A = ${T.A} m², d = ${T.d} mm) stays connected to a ${T.V} V battery while a slab of ${T.m} fills the gap. Find the new C and Q, and the factor by which E between the plates changes.`,
     parts: [num('C', ($) => $.C, 'pF', { scale: 1e-12 }), num('Q', ($) => $.Q, 'C'), num('Efac', () => 1, '× E₀', { tol: 0.001, label: 'E / E₀' })],
-    steps: ($, f) => [`C = κC₀ = ${f($.C)} F`, `V stays fixed, so Q = κC₀V = ${f($.Q)} C`, 'E = V/d is unchanged (factor 1)'],
+    steps: ($, f) => [
+      String.raw`$C = \kappa C_0 = ${texNum($.C)}\ \text{F}$`,
+      String.raw`$V$ stays fixed, so $Q = \kappa C_0 V = ${texNum($.Q)}\ \text{C}$`,
+      String.raw`$E = V/d$ is unchanged — a factor of 1`,
+    ],
     sim: {
       scenario: 'cap-nylon',
       setup(s, $) {
@@ -267,7 +303,11 @@ export default [
     },
     text: (T) => `A vacuum capacitor (A = ${T.A} m², d = ${T.d} mm) is charged to ${T.V0} V and then disconnected. A slab of ${T.m} is slid in to fill the gap. Find the new voltage and stored energy.`,
     parts: [num('V', ($) => $.V, 'V'), num('U', ($) => $.U, 'J'), mc('where', [[1, 'The energy went into pulling the slab in (work on the slab)'], [2, 'Charge leaked away'], [3, 'The energy increased']], 1, { label: 'Where did the missing energy go?' })],
-    steps: ($, f) => [`Q stays fixed at ${f($.Q)} C and C becomes κC₀`, `V = V₀/κ = ${f($.V)} V`, `U = U₀/κ = ${f($.U)} J (it was ${f($.U0)} J)`],
+    steps: ($, f) => [
+      String.raw`$Q$ stays fixed at ${f($.Q)} C, and $C$ becomes $\kappa C_0$`,
+      String.raw`$V = \dfrac{V_0}{\kappa} = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$U = \dfrac{U_0}{\kappa} = ${texNum($.U)}\ \text{J}$ (it was ${f($.U0)} J)`,
+    ],
     sim: {
       scenario: 'cap-isolated',
       setup(s, $) {
@@ -286,10 +326,18 @@ export default [
       const Q1 = Ceq * $.V;
       return { C23, Ceq, Q1, V1: Q1 / $.C1, V2: Q1 / C23 };
     },
-    text: (T) => `C₁ = ${T.C1} μF is in series with the parallel pair C₂ = ${T.C2} μF and C₃ = ${T.C3} μF, across a ${T.V} V battery. Find C_eq, the charge on C₁, and the voltage across C₂.`,
+    text: (T) => `C₁ = ${T.C1} μF is in series with the parallel pair C₂ = ${T.C2} μF and C₃ = ${T.C3} μF, across a ${T.V} V battery. Find $C_{\\text{eq}}$, the charge on C₁, and the voltage across C₂.`,
     parts: [num('Ceq', ($) => $.Ceq, 'μF', { scale: 1e-6 }), num('Q1', ($) => $.Q1, 'μC', { scale: 1e-6 }), num('V2', ($) => $.V2, 'V')],
-    hints: ['Parallel capacitors add; series capacitors add as reciprocals.', 'Capacitors in series carry the same charge.'],
-    steps: ($, f) => [`C₂₃ = ${f($.C23 * 1e6)} μF`, `C_eq = ${f($.Ceq * 1e6)} μF`, `Q₁ = C_eq V = ${f($.Q1 * 1e6)} μC`, `V₂ = Q₁/C₂₃ = ${f($.V2)} V`],
+    hints: [
+      String.raw`Parallel capacitors add; series capacitors add as reciprocals, $\dfrac{1}{C} = \sum \dfrac{1}{C_i}$.`,
+      'Capacitors in series carry the same charge.',
+    ],
+    steps: ($, f) => [
+      String.raw`$C_{23} = ${texNum($.C23 * 1e6)}\ \mu\text{F}$`,
+      String.raw`$C_{\text{eq}} = ${texNum($.Ceq * 1e6)}\ \mu\text{F}$`,
+      String.raw`$Q_1 = C_{\text{eq}}V = ${texNum($.Q1 * 1e6)}\ \mu\text{C}$`,
+      String.raw`$V_2 = \dfrac{Q_1}{C_{23}} = ${texNum($.V2)}\ \text{V}$`,
+    ],
     cases: [kase('hand', { C1: 6, C2: 4, C3: 2, V: 12 }, { Ceq: 3, Q1: 36, V2: 6 })],
   }),
   problem({
@@ -298,7 +346,10 @@ export default [
     derive: ($) => ({ U: 0.5 * $.C * $.V ** 2, Q: $.C * $.V }),
     text: (T) => `A defibrillator's ${T.C} μF capacitor is charged to ${T.V} kV. How much charge and energy does it store?`,
     parts: [num('Q', ($) => $.Q, 'C'), num('U', ($) => $.U, 'J')],
-    steps: ($, f) => [`Q = CV = ${f($.Q)} C`, `U = ½CV² = ${f($.U)} J`],
+    steps: ($, f) => [
+      String.raw`$Q = CV = ${texNum($.Q)}\ \text{C}$`,
+      String.raw`$U = \tfrac{1}{2}CV^2 = ${texNum($.U)}\ \text{J}$`,
+    ],
     sim: {
       scenario: 'cap-defib',
       setup(s, $) {
@@ -325,7 +376,10 @@ export default [
     },
     text: (T) => `A charged parallel-plate capacitor ${T.mode}. Then ${T.act}. By what factor does ${T.qty} change?`,
     parts: [num('f', ($) => $.f, '× original', { tol: 0.001 })],
-    hints: ['Battery connected: V is fixed. Isolated: Q is fixed.', 'C = κε₀A/d, E = V/d, U = ½CV² = Q²/2C'],
+    hints: [
+      String.raw`Battery connected: $V$ is fixed. Isolated: $Q$ is fixed.`,
+      String.raw`$C = \dfrac{\kappa\varepsilon_0 A}{d}$, $E = \dfrac{V}{d}$, $U = \tfrac{1}{2}CV^2 = \dfrac{Q^2}{2C}$`,
+    ],
     steps: ($, f) => [`Factor = ${f($.f)}`],
     cases: [kase('battery, d×2, U', { act: 1, mode: 1, qty: 'U' }, { f: 0.5 }), kase('isolated, κ, V', { act: 4, mode: 2, qty: 'V' }, { f: 0.5 }), kase('isolated, d×2, E', { act: 1, mode: 2, qty: 'E' }, { f: 1 })],
   }),
@@ -340,7 +394,10 @@ export default [
     },
     text: (T, $, f) => `A ${T.m} wire (ρ = ${f($.rho)} Ω·m) is ${T.L} m long with a ${T.A} mm² cross section. Find its resistance and the current when ${T.V} V is applied.`,
     parts: [num('R', ($) => $.R, 'Ω'), num('I', ($) => $.I, 'A')],
-    steps: ($, f) => [`R = ρL/A = ${f($.R)} Ω`, `I = V/R = ${f($.I)} A`],
+    steps: ($, f) => [
+      String.raw`$R = \dfrac{\rho L}{A} = ${texNum($.R)}\ \Omega$`,
+      String.raw`$I = \dfrac{V}{R} = ${texNum($.I)}\ \text{A}$`,
+    ],
     sim: {
       scenario: 'ohm-cu100',
       setup(s, $) {
@@ -359,7 +416,7 @@ export default [
     },
     text: (T, $, f) => `A ${T.m} wire (α = ${f($.alpha)} /°C) has R₀ = ${f($.R0)} Ω at 20 °C. What is its resistance at ${T.T} °C?`,
     parts: [num('R', ($) => $.R, 'Ω')],
-    steps: ($, f) => [`R = R₀[1 + α(T − 20 °C)] = ${f($.R)} Ω`],
+    steps: ($, f) => [String.raw`$R = R_0\left[1 + \alpha(T - 20\,^\circ\text{C})\right] = ${texNum($.R)}\ \Omega$`],
     sim: {
       scenario: 'ohm-hot',
       setup(s, $) {
@@ -379,7 +436,12 @@ export default [
     },
     text: (T) => `A copper wire (ρ = 1.72×10⁻⁸ Ω·m, n = 8.5×10²⁸ electrons/m³) is ${T.L} m long with a ${T.A} mm² cross section, across ${T.V} V. Find the current, the current density, the field inside the wire, and the electron drift speed.`,
     parts: [num('I', ($) => $.I, 'A'), num('J', ($) => $.J, 'A/m²'), num('E', ($) => $.E, 'V/m'), num('vd', ($) => $.vd, 'm/s')],
-    steps: ($, f) => [`I = V/R = ${f($.I)} A`, `J = I/A = ${f($.J)} A/m²`, `E = V/L = ${f($.E)} V/m`, `v_d = I/(neA) = ${f($.vd)} m/s — very slow`],
+    steps: ($, f) => [
+      String.raw`$I = \dfrac{V}{R} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$J = \dfrac{I}{A} = ${texNum($.J)}\ \text{A/m}^2$`,
+      String.raw`$E = \dfrac{V}{L} = ${texNum($.E)}\ \text{V/m}$`,
+      String.raw`$v_d = \dfrac{I}{neA} = ${texNum($.vd)}\ \text{m/s}$ — very slow`,
+    ],
     sim: {
       scenario: 'ohm-cu100',
       setup(s, $) {
@@ -395,7 +457,10 @@ export default [
     derive: ($) => ({ I: $.Q / $.t, N: $.Q / $.t / QE }),
     text: (T) => `${T.Q} C of charge passes through a wire in ${T.t} min. What is the average current, and how many electrons pass each second?`,
     parts: [num('I', ($) => $.I, 'A'), num('N', ($) => $.N, 'electrons/s')],
-    steps: ($, f) => [`I = ΔQ/Δt = ${f($.I)} A`, `N = I/e = ${f($.N)} per second`],
+    steps: ($, f) => [
+      String.raw`$I = \dfrac{\Delta Q}{\Delta t} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$N = \dfrac{I}{e} = ${texNum($.N)}$ per second`,
+    ],
     cases: [kase('hand', { Q: 30, t: 2 }, { I: 0.25, N: 1.5625e18 })],
   }),
   problem({
@@ -404,8 +469,8 @@ export default [
     derive: ($) => ({ R: $.R0 * $.n ** 2 }),
     text: (T) => `A ${T.R0} Ω wire is drawn out to ${T.n} times its original length, keeping its volume the same. What is its new resistance?`,
     parts: [num('R', ($) => $.R, 'Ω')],
-    hints: ['Constant volume: A shrinks by the same factor that L grows.'],
-    steps: ($, f) => [`R = ρ(nL)/(A/n) = n²R₀ = ${f($.R)} Ω`],
+    hints: [String.raw`The volume is constant, so $A$ shrinks by the same factor that $L$ grows.`],
+    steps: ($, f) => [String.raw`$R = \dfrac{\rho(nL)}{A/n} = n^2 R_0 = ${texNum($.R)}\ \Omega$`],
     cases: [kase('double', { n: 2, R0: 10 }, { R: 40 })],
   }),
 
@@ -416,7 +481,10 @@ export default [
     derive: ($) => ({ R: $.V ** 2 / $.P, I: $.P / $.V }),
     text: (T) => `A bulb is rated ${T.P} W at ${T.V} V. Find its operating resistance and current.`,
     parts: [num('R', ($) => $.R, 'Ω'), num('I', ($) => $.I, 'A')],
-    steps: ($, f) => [`R = V²/P = ${f($.R)} Ω`, `I = P/V = ${f($.I)} A`],
+    steps: ($, f) => [
+      String.raw`$R = \dfrac{V^2}{P} = ${texNum($.R)}\ \Omega$`,
+      String.raw`$I = \dfrac{P}{V} = ${texNum($.I)}\ \text{A}$`,
+    ],
     sim: {
       scenario: 'pwr-60',
       setup(s, $) {
@@ -432,7 +500,11 @@ export default [
     derive: ($) => ({ Vp: $.Vrms * Math.SQRT2, Irms: $.Vrms / $.R, P: $.Vrms ** 2 / $.R }),
     text: (T) => `A ${T.R} Ω resistor is connected to a ${T.Vrms} V (rms) AC outlet. Find the peak voltage, the rms current, and the average power.`,
     parts: [num('Vp', ($) => $.Vp, 'V'), num('Irms', ($) => $.Irms, 'A'), num('P', ($) => $.P, 'W')],
-    steps: ($, f) => [`V_p = √2·V_rms = ${f($.Vp)} V`, `I_rms = V_rms/R = ${f($.Irms)} A`, `P_avg = I_rms V_rms = ${f($.P)} W`],
+    steps: ($, f) => [
+      String.raw`$V_p = \sqrt{2}\,V_{\text{rms}} = ${texNum($.Vp)}\ \text{V}$`,
+      String.raw`$I_{\text{rms}} = \dfrac{V_{\text{rms}}}{R} = ${texNum($.Irms)}\ \text{A}$`,
+      String.raw`$P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}} = ${texNum($.P)}\ \text{W}$`,
+    ],
     sim: {
       scenario: 'pwr-ac',
       setup(s, $) {
@@ -451,7 +523,10 @@ export default [
     },
     text: (T) => `A ${T.P} W appliance runs ${T.h} hours a day for ${T.days} days. At ${T.rate}¢ per kWh, how much energy does it use and what does it cost?`,
     parts: [num('kWh', ($) => $.kWh, 'kWh'), num('cost', ($) => $.cost, '$', { abs: 0.01 })],
-    steps: ($, f) => [`E = P·t = ${f($.kWh)} kWh`, `Cost = ${f($.cost)} dollars`],
+    steps: ($, f) => [
+      String.raw`$E = Pt = ${texNum($.kWh)}\ \text{kWh}$`,
+      `Cost = ${f($.cost)} dollars`,
+    ],
     cases: [kase('space heater', { P: 1500, h: 3, days: 30, rate: 15 }, { kWh: 135, cost: 20.25 })],
   }),
   problem({
@@ -467,8 +542,11 @@ export default [
     valid: ($) => $.P1 !== $.P2,
     text: (T) => `Bulb 1 is rated ${T.P1} W and bulb 2 is rated ${T.P2} W, both at 120 V. They are connected ${T.cfg} across 120 V. Find the power delivered to bulb 1, and say which bulb glows brighter.`,
     parts: [num('p1', ($) => $.p1, 'W', { label: 'P₁' }), mc('brighter', [[1, 'Bulb 1'], [2, 'Bulb 2']], ($) => ($.p1 > $.p2 ? 1 : 2), { label: 'Brighter' })],
-    hints: ['Find each R from its rating (R = V²/P). In series use P = I²R; in parallel each bulb gets its full 120 V.'],
-    steps: ($, f) => [`R₁ = ${f($.R1)} Ω, R₂ = ${f($.R2)} Ω`, `P₁ = ${f($.p1)} W, P₂ = ${f($.p2)} W`],
+    hints: [String.raw`Find each $R$ from its rating, $R = V^2/P$. In series use $P = I^2R$; in parallel each bulb gets its full 120 V.`],
+    steps: ($, f) => [
+      String.raw`$R_1 = ${texNum($.R1)}\ \Omega$, $R_2 = ${texNum($.R2)}\ \Omega$`,
+      String.raw`$P_1 = ${texNum($.p1)}\ \text{W}$, $P_2 = ${texNum($.p2)}\ \text{W}$`,
+    ],
     cases: [kase('series', { P1: 60, P2: 100, cfg: 1 }, { p1: 23.44, brighter: 1 }), kase('parallel', { P1: 60, P2: 100, cfg: 2 }, { p1: 60, brighter: 2 })],
   }),
   problem({
@@ -480,7 +558,11 @@ export default [
     },
     text: (T) => `A heater with R = ${T.R} Ω on ${T.V} V runs for ${T.t} min in ${T.m} kg of water (c = 4186 J/kg·°C). Find its power, the energy delivered, and the temperature rise (assume no losses).`,
     parts: [num('P', ($) => $.P, 'W'), num('Q', ($) => $.Q, 'J'), num('dT', ($) => $.dT, '°C')],
-    steps: ($, f) => [`P = V²/R = ${f($.P)} W`, `Q = Pt = ${f($.Q)} J`, `ΔT = Q/(mc) = ${f($.dT)} °C`],
+    steps: ($, f) => [
+      String.raw`$P = \dfrac{V^2}{R} = ${texNum($.P)}\ \text{W}$`,
+      String.raw`$Q = Pt = ${texNum($.Q)}\ \text{J}$`,
+      String.raw`$\Delta T = \dfrac{Q}{mc} = ${texNum($.dT)}\,^\circ\text{C}$`,
+    ],
     sim: {
       scenario: 'pwr-heater',
       setup(s, $) {
@@ -497,7 +579,7 @@ export default [
     text: (T) => `Appliances of ${T.P1} W, ${T.P2} W and ${T.P3} W run at the same time on one 120 V household circuit with a ${T.Imax} breaker. What total current do they draw? Does the breaker trip?`,
     parts: [num('I', ($) => $.I, 'A'), mc('trip', [[1, 'Yes, it trips'], [0, 'No']], ($) => ($.I > $.Imax ? 1 : 0), { label: 'Does it trip?' })],
     hints: ['Household outlets are in parallel, so the currents add.'],
-    steps: ($, f) => [`I = ΣP/V = ${f($.I)} A`],
+    steps: ($, f) => [String.raw`$I = \dfrac{\sum P}{V} = ${texNum($.I)}\ \text{A}$`],
     cases: [kase('kitchen', { P1: 1200, P2: 800, P3: 500, Imax: 15 }, { I: 20.83, trip: 1 })],
   }),
 ];

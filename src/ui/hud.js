@@ -121,8 +121,8 @@ export function createHUD(api) {
     $('brand-sub').textContent = exam
       ? `PHY 2049 · Exam ${exam.n === 8 ? 'final' : exam.n} · Ch ${exam.chapters}`
       : 'PHY 2049';
-    $('setup-hint').textContent = lab?.hint || exam?.coming?.join(' · ') || '';
-    $('hint-action').textContent = lab?.hint || '';
+    $('setup-hint').innerHTML = mathText(lab?.hint || exam?.coming?.join(' · ') || '');
+    $('hint-action').innerHTML = mathText(lab?.hint || '');
     $('hint-orbit').textContent = lab && lab.orbit === false ? 'Rotation locked' : 'Drag to orbit';
     fillScenarios(lab);
     lawKey = '';

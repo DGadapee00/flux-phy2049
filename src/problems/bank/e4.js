@@ -1,5 +1,5 @@
 /** Exam 4 · Ch 43–44 (DC circuits, Kirchhoff, RC), 45 (magnetism), 46 (magnetic force), 47 (B from currents). */
-import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, MU0, QE, ME, MP, DEG, AXES6, axisCode } from '../kit.js';
+import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, MU0, QE, ME, MP, DEG, AXES6, axisCode , texNum } from '../kit.js';
 
 const E4 = { exam: 'e4' };
 const PART = choice(['proton', 'a proton'], ['electron', 'an electron']);
@@ -19,9 +19,14 @@ export default [
       const I = $.E / Req;
       return { Req, I, V2: I * $.R2, P: $.E * I };
     },
-    text: (T) => `A ${T.E} V battery drives R₁ = ${T.R1} Ω, R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω in series. Find R_eq, the current, the voltage across R₂, and the power delivered by the battery.`,
+    text: (T) => `A ${T.E} V battery drives R₁ = ${T.R1} Ω, R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω in series. Find $R_{\\text{eq}}$, the current, the voltage across R₂, and the power delivered by the battery.`,
     parts: [num('Req', ($) => $.Req, 'Ω'), num('I', ($) => $.I, 'A'), num('V2', ($) => $.V2, 'V'), num('P', ($) => $.P, 'W')],
-    steps: ($, f) => [`R_eq = ${f($.Req)} Ω`, `I = ε/R_eq = ${f($.I)} A (the same through every resistor)`, `V₂ = IR₂ = ${f($.V2)} V`, `P = εI = ${f($.P)} W`],
+    steps: ($, f) => [
+      String.raw`$R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
+      String.raw`$I = \dfrac{\varepsilon}{R_{\text{eq}}} = ${texNum($.I)}\ \text{A}$ — the same through every resistor`,
+      String.raw`$V_2 = IR_2 = ${texNum($.V2)}\ \text{V}$`,
+      String.raw`$P = \varepsilon I = ${texNum($.P)}\ \text{W}$`,
+    ],
     sim: {
       scenario: 'series',
       setup: (s, $) => vals(s, { E1: $.E, R1: $.R1, R2: $.R2, R3: $.R3 }),
@@ -36,9 +41,13 @@ export default [
       const Req = 1 / (1 / $.R1 + 1 / $.R2 + 1 / $.R3);
       return { Req, I: $.E / Req, I2: $.E / $.R2 };
     },
-    text: (T) => `R₁ = ${T.R1} Ω, R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω are in parallel across a ${T.E} V battery. Find R_eq, the total current, and the current through R₂.`,
+    text: (T) => `R₁ = ${T.R1} Ω, R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω are in parallel across a ${T.E} V battery. Find $R_{\\text{eq}}$, the total current, and the current through R₂.`,
     parts: [num('Req', ($) => $.Req, 'Ω'), num('I', ($) => $.I, 'A'), num('I2', ($) => $.I2, 'A')],
-    steps: ($, f) => [`1/R_eq = Σ1/R → R_eq = ${f($.Req)} Ω`, `I = ${f($.I)} A`, `Each branch has the full ${f($.E)} V, so I₂ = ${f($.I2)} A`],
+    steps: ($, f) => [
+      String.raw`$\dfrac{1}{R_{\text{eq}}} = \sum \dfrac{1}{R_i} \;\Longrightarrow\; R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
+      String.raw`$I = ${texNum($.I)}\ \text{A}$`,
+      String.raw`Each branch has the full ${f($.E)} V, so $I_2 = ${texNum($.I2)}\ \text{A}$`,
+    ],
     sim: {
       scenario: 'parallel',
       setup: (s, $) => vals(s, { E1: $.E, R1: $.R1, R2: $.R2, R3: $.R3 }),
@@ -55,9 +64,13 @@ export default [
       const I1 = $.E / Req;
       return { Rp, Req, I1, Vp: I1 * Rp, I3: (I1 * Rp) / $.R3 };
     },
-    text: (T) => `R₁ = ${T.R1} Ω is in series with the parallel pair R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω, across a ${T.E} V battery. Find R_eq, the current through R₁, and the current through R₃.`,
+    text: (T) => `R₁ = ${T.R1} Ω is in series with the parallel pair R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω, across a ${T.E} V battery. Find $R_{\\text{eq}}$, the current through R₁, and the current through R₃.`,
     parts: [num('Req', ($) => $.Req, 'Ω'), num('I1', ($) => $.I1, 'A'), num('I3', ($) => $.I3, 'A')],
-    steps: ($, f) => [`R₂∥R₃ = ${f($.Rp)} Ω → R_eq = ${f($.Req)} Ω`, `I₁ = ${f($.I1)} A`, `V across the pair = ${f($.Vp)} V → I₃ = ${f($.I3)} A`],
+    steps: ($, f) => [
+      String.raw`$R_2 \parallel R_3 = ${texNum($.Rp)}\ \Omega \;\Longrightarrow\; R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
+      String.raw`$I_1 = ${texNum($.I1)}\ \text{A}$`,
+      String.raw`$V$ across the pair $= ${texNum($.Vp)}\ \text{V} \;\Longrightarrow\; I_3 = ${texNum($.I3)}\ \text{A}$`,
+    ],
     sim: {
       scenario: 'combo',
       setup: (s, $) => vals(s, { E1: $.E, R1: $.R1, R2: $.R2, R3: $.R3 }),
@@ -70,7 +83,10 @@ export default [
     vars: { how: choice([1, 'in series with'], [2, 'in parallel with']), qty: choice([1, 'the total resistance'], [2, 'the current from the battery']) },
     text: (T) => `A third resistor is added ${T.how} two resistors already connected across a battery. What happens to ${T.qty}?`,
     parts: [mc('ans', [[1, 'It increases'], [-1, 'It decreases'], [0, 'It stays the same']], ($) => ($.how === 1 ? 1 : -1) * ($.qty === 1 ? 1 : -1))],
-    steps: () => ['A resistor in series adds resistance; a resistor in parallel adds another path, so R_eq drops.', 'I = ε/R_eq moves the opposite way.'],
+    steps: () => [
+      String.raw`A resistor in series adds resistance; one in parallel adds another path, so $R_{\\text{eq}}$ drops.`,
+      String.raw`$I = \varepsilon/R_{\text{eq}}$ moves the opposite way.`,
+    ],
     cases: [kase('parallel, current', { how: 2, qty: 2 }, { ans: 1 })],
   }),
 
@@ -84,8 +100,15 @@ export default [
     },
     text: (T) => `Left branch: ε₁ = ${T.E1} V in series with R₁ = ${T.R1} Ω. Middle branch: R₂ = ${T.R2} Ω. Right branch: ε₂ = ${T.E2} V in series with R₃ = ${T.R3} Ω. Both batteries have their + terminal toward the top junction. Taking I₁ and I₃ as flowing into the top junction and I₂ as flowing down through R₂, find all three currents (signed).`,
     parts: [num('I1', ($) => $.I1, 'A', { abs: 0.005 }), num('I2', ($) => $.I2, 'A', { abs: 0.005 }), num('I3', ($) => $.I3, 'A', { abs: 0.005 })],
-    hints: ['Junction: I₁ + I₃ = I₂', 'Left loop: ε₁ − I₁R₁ − I₂R₂ = 0. Right loop: ε₂ − I₃R₃ − I₂R₂ = 0.', 'A negative answer just means the current flows opposite to the direction you assumed.'],
-    steps: ($, f) => [`Top-junction potential = ${f($.Vm)} V`, `I₁ = ${f($.I1)} A, I₂ = ${f($.I2)} A, I₃ = ${f($.I3)} A`],
+    hints: [
+      String.raw`Junction: $I_1 + I_3 = I_2$`,
+      String.raw`Left loop: $\varepsilon_1 - I_1R_1 - I_2R_2 = 0$. Right loop: $\varepsilon_2 - I_3R_3 - I_2R_2 = 0$.`,
+      'A negative answer just means the current flows opposite to the direction you assumed.',
+    ],
+    steps: ($, f) => [
+      String.raw`Potential at the top junction $= ${texNum($.Vm)}\ \text{V}$`,
+      String.raw`$I_1 = ${texNum($.I1)}\ \text{A}$, $I_2 = ${texNum($.I2)}\ \text{A}$, $I_3 = ${texNum($.I3)}\ \text{A}$`,
+    ],
     sim: {
       scenario: 'twoloop',
       setup: (s, $) => vals(s, { E1: $.E1, E2: $.E2, R1: $.R1, R2: $.R2, R3: $.R3 }),
@@ -102,7 +125,11 @@ export default [
     },
     text: (T) => `A battery with emf ${T.E} V and internal resistance ${T.r} Ω drives a ${T.R} Ω load. Find the current, the terminal voltage, and the power wasted inside the battery.`,
     parts: [num('I', ($) => $.I, 'A'), num('V', ($) => $.V, 'V'), num('Pr', ($) => $.Pr, 'W')],
-    steps: ($, f) => [`I = ε/(R + r) = ${f($.I)} A`, `V = ε − Ir = ${f($.V)} V`, `P_r = I²r = ${f($.Pr)} W`],
+    steps: ($, f) => [
+      String.raw`$I = \dfrac{\varepsilon}{R + r} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$V = \varepsilon - Ir = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$P_r = I^2 r = ${texNum($.Pr)}\ \text{W}$`,
+    ],
     cases: [kase('hand', { E: 12, r: 0.5, R: 5.5 }, { I: 2, V: 11, Pr: 2 })],
   }),
   problem({
@@ -115,8 +142,12 @@ export default [
     },
     text: (T, $, f) => `An uncharged ${T.C} μF capacitor is connected through ${T.R} kΩ to a ${T.E} V battery at t = 0. Find the time constant, and the charge and current at t = ${f($.t)} s.`,
     parts: [num('tau', ($) => $.tau, 's', { label: 'τ' }), num('q', ($) => $.q, 'C'), num('I', ($) => $.I, 'A')],
-    hints: ['q(t) = Cε(1 − e^{−t/τ}),  I(t) = (ε/R)e^{−t/τ}'],
-    steps: ($, f) => [`τ = RC = ${f($.tau)} s`, `q = ${f($.q)} C`, `I = ${f($.I)} A`],
+    hints: [String.raw`$q(t) = C\varepsilon\left(1 - e^{-t/\tau}\right)$ and $I(t) = \dfrac{\varepsilon}{R}e^{-t/\tau}$`],
+    steps: ($, f) => [
+      String.raw`$\tau = RC = ${texNum($.tau)}\ \text{s}$`,
+      String.raw`$q = ${texNum($.q)}\ \text{C}$`,
+      String.raw`$I = ${texNum($.I)}\ \text{A}$`,
+    ],
     cases: [kase('hand', { R: 10, C: 100, E: 12, n: 1 }, { tau: 1, q: 7.585e-4, I: 4.415e-4 })],
   }),
   problem({
@@ -125,7 +156,9 @@ export default [
     derive: ($) => ({ tau: $.R * $.C, t: -$.R * $.C * Math.log($.f) }),
     text: (T) => `A charged ${T.C} μF capacitor discharges through ${T.R} kΩ. How long until its charge falls to ${T.f} of the starting value?`,
     parts: [num('t', ($) => $.t, 's')],
-    steps: ($, f) => [`q = q₀e^{−t/RC} → t = −RC ln(${f($.f)}) = ${f($.t)} s`],
+    steps: ($, f) => [
+      String.raw`$q = q_0 e^{-t/RC} \;\Longrightarrow\; t = -RC\ln(${texNum($.f)}) = ${texNum($.t)}\ \text{s}$`,
+    ],
     cases: [kase('hand', { R: 2, C: 50, f: 0.25 }, { t: 0.1386 })],
   }),
   problem({
@@ -155,7 +188,7 @@ export default [
     derive: ($) => ({ F: QE * $.v * $.B * Math.sin($.th * DEG) }),
     text: (T) => `${T.p} moves at ${T.v} × 10⁶ m/s at ${T.th}° to a ${T.B} T magnetic field. What is the magnitude of the magnetic force on it?`,
     parts: [num('F', ($) => $.F, 'N')],
-    steps: ($, f) => [`F = |q|vB sin θ = ${f($.F)} N`],
+    steps: ($, f) => [String.raw`$F = |q|vB\sin\theta = ${texNum($.F)}\ \text{N}$`],
     sim: {
       scenario: 'helix',
       setup(s, $) {
@@ -178,8 +211,11 @@ export default [
     },
     text: (T) => `${T.p} moves in the ${T.vdir} direction through a magnetic field that points ${T.Bdir}. Which way is the magnetic force?`,
     parts: [mc('dir', AXES6, ($) => $.code)],
-    hints: ['F = q v × B; for a negative charge, flip the result.', 'x̂ × ŷ = ẑ, ŷ × ẑ = x̂, ẑ × x̂ = ŷ'],
-    steps: () => ['Point your fingers along v and curl them toward B; your thumb gives v × B. Reverse it for an electron.'],
+    hints: [
+      String.raw`$\vec{F} = q\vec{v}\times\vec{B}$; for a negative charge, flip the result.`,
+      String.raw`$\hat{x}\times\hat{y} = \hat{z}$, $\hat{y}\times\hat{z} = \hat{x}$, $\hat{z}\times\hat{x} = \hat{y}$`,
+    ],
+    steps: () => [String.raw`Point your fingers along $\vec{v}$ and curl them toward $\vec{B}$; your thumb gives $\vec{v}\times\vec{B}$. Reverse it for an electron.`],
     cases: [kase('proton +x in +y', { p: 'proton', vdir: 1, Bdir: 2 }, { dir: 3 }), kase('electron +z in +y', { p: 'electron', vdir: 3, Bdir: 2 }, { dir: 1 })],
   }),
   problem({
@@ -188,7 +224,10 @@ export default [
     derive: ($) => ({ r: (pm($.p) * $.v) / (QE * $.B), T: (2 * Math.PI * pm($.p)) / (QE * $.B) }),
     text: (T) => `${T.p} moves at ${T.v} × 10⁶ m/s perpendicular to a uniform ${T.B} T field. Find the radius of its path and its period.`,
     parts: [num('r', ($) => $.r, 'm'), num('T', ($) => $.T, 's'), mc('dep', [[1, 'The period does not depend on speed'], [2, 'Faster particles take longer to go around'], [3, 'Faster particles go around sooner']], 1, { label: 'How does T depend on v?' })],
-    steps: ($, f) => [`qvB = mv²/r → r = mv/(|q|B) = ${f($.r)} m`, `T = 2πr/v = 2πm/(|q|B) = ${f($.T)} s (no v)`],
+    steps: ($, f) => [
+      String.raw`$qvB = \dfrac{mv^2}{r} \;\Longrightarrow\; r = \dfrac{mv}{|q|B} = ${texNum($.r)}\ \text{m}$`,
+      String.raw`$T = \dfrac{2\pi r}{v} = \dfrac{2\pi m}{|q|B} = ${texNum($.T)}\ \text{s}$ — no $v$ in it`,
+    ],
     sim: {
       scenario: 'proton',
       setup(s, $) {
@@ -204,7 +243,7 @@ export default [
     derive: ($) => ({ v: $.E / $.B }),
     text: (T) => `Crossed fields E = ${T.E} × 10⁵ V/m and B = ${T.B} T. What speed passes straight through? Does the answer depend on the particle's charge or mass?`,
     parts: [num('v', ($) => $.v, 'm/s'), mc('dep', [[0, 'No, it is the same for any charge and mass'], [1, 'Yes, it depends on q'], [2, 'Yes, it depends on m']], 0, { label: 'Depends on q or m?' })],
-    steps: ($, f) => [`qE = qvB → v = E/B = ${f($.v)} m/s`],
+    steps: ($, f) => [String.raw`$qE = qvB \;\Longrightarrow\; v = \dfrac{E}{B} = ${texNum($.v)}\ \text{m/s}$`],
     sim: {
       scenario: 'selector',
       setup(s, $) {
@@ -220,7 +259,7 @@ export default [
     derive: ($) => ({ F: $.I * $.L * $.B * Math.sin($.th * DEG) }),
     text: (T) => `A ${T.L} m wire carrying ${T.I} A makes ${T.th}° with a ${T.B} T field. Find the force on it.`,
     parts: [num('F', ($) => $.F, 'N')],
-    steps: ($, f) => [`F = ILB sin θ = ${f($.F)} N`],
+    steps: ($, f) => [String.raw`$F = ILB\sin\theta = ${texNum($.F)}\ \text{N}$`],
     sim: {
       scenario: 'wire',
       setup(s, $) {
@@ -239,7 +278,10 @@ export default [
     },
     text: (T) => `${T.p} is accelerated from rest through ${T.V} V and then enters a ${T.B} T field at right angles. Find its speed and the radius of its path.`,
     parts: [num('v', ($) => $.v, 'm/s'), num('r', ($) => $.r, 'm')],
-    steps: ($, f) => [`½mv² = |q|V → v = ${f($.v)} m/s`, `r = mv/(|q|B) = ${f($.r)} m`],
+    steps: ($, f) => [
+      String.raw`$\tfrac{1}{2}mv^2 = |q|V \;\Longrightarrow\; v = ${texNum($.v)}\ \text{m/s}$`,
+      String.raw`$r = \dfrac{mv}{|q|B} = ${texNum($.r)}\ \text{m}$`,
+    ],
     cases: [kase('hand', { p: 'proton', V: 1000, B: 0.1 }, { v: 4.377e5, r: 0.04569 })],
   }),
   problem({
@@ -251,7 +293,10 @@ export default [
     },
     text: (T) => `A square coil ${T.a} cm on a side has ${T.N} turns and carries ${T.I} A. Its normal makes ${T.th}° with a ${T.B} T field. Find its magnetic moment and the torque on it.`,
     parts: [num('mu', ($) => $.mu, 'A·m²', { label: 'μ' }), num('tau', ($) => $.tau, 'N·m', { label: 'τ', abs: 1e-6 })],
-    steps: ($, f) => [`μ = NIA = ${f($.mu)} A·m²`, `τ = μB sin θ = ${f($.tau)} N·m`],
+    steps: ($, f) => [
+      String.raw`$\mu = NIA = ${texNum($.mu)}\ \text{A}\cdot\text{m}^2$`,
+      String.raw`$\tau = \mu B\sin\theta = ${texNum($.tau)}\ \text{N}\cdot\text{m}$`,
+    ],
     cases: [kase('hand', { N: 50, I: 2, a: 10, B: 0.3, th: 90 }, { mu: 1, tau: 0.3 })],
   }),
 
@@ -262,7 +307,7 @@ export default [
     derive: ($) => ({ B: (MU0 * $.I) / (2 * Math.PI * $.rho) }),
     text: (T) => `How strong is the magnetic field ${T.rho} cm from a long straight wire carrying ${T.I} A?`,
     parts: [num('B', ($) => $.B, 'T')],
-    steps: ($, f) => [`B = μ₀I/(2πρ) = ${f($.B)} T`],
+    steps: ($, f) => [String.raw`$B = \dfrac{\mu_0 I}{2\pi\rho} = ${texNum($.B)}\ \text{T}$`],
     sim: {
       scenario: 'wire',
       setup(s, $) {
@@ -281,8 +326,8 @@ export default [
     },
     text: (T) => `A long wire runs along the y-axis carrying current ${T.Id === 'upward' ? 'in the +y direction' : 'in the −y direction'}. What is the direction of B at a point ${T.at} of the wire?`,
     parts: [mc('dir', AXES6, ($) => $.code)],
-    hints: ['Thumb along I, fingers curl in the direction of B. Equivalently, B ∝ I dl × r̂.'],
-    steps: () => ['ŷ × x̂ = −ẑ, ŷ × ẑ = +x̂. Reverse the result for downward current.'],
+    hints: [String.raw`Thumb along $I$, fingers curl the way $\vec{B}$ points — equivalently $d\vec{B} \propto I\,d\vec{l}\times\hat{r}$.`],
+    steps: () => [String.raw`$\hat{y}\times\hat{x} = -\hat{z}$ and $\hat{y}\times\hat{z} = +\hat{x}$. Reverse the result for downward current.`],
     sim: {
       scenario: 'wire',
       setup(s, $) {
@@ -300,8 +345,10 @@ export default [
     derive: ($) => ({ B: (MU0 * $.N * $.I * $.R ** 2) / (2 * ($.R ** 2 + $.y ** 2) ** 1.5) }),
     text: (T) => `A flat circular coil of ${T.N} turns and radius ${T.R} cm carries ${T.I} A. Find B on its axis ${T.y} cm from the center.`,
     parts: [num('B', ($) => $.B, 'T')],
-    hints: ['At the center (y = 0), this reduces to μ₀NI/(2R).'],
-    steps: ($, f) => [`B = μ₀NIR² / [2(R² + y²)^{3/2}] = ${f($.B)} T`],
+    hints: [String.raw`At the center, $y = 0$, this reduces to $\dfrac{\mu_0 NI}{2R}$.`],
+    steps: ($, f) => [
+      String.raw`$B = \dfrac{\mu_0 N I R^2}{2(R^2+y^2)^{3/2}} = ${texNum($.B)}\ \text{T}$`,
+    ],
     sim: {
       scenario: 'loop',
       setup(s, $) {
@@ -319,7 +366,10 @@ export default [
     derive: ($) => ({ n: $.N / $.L, B: (MU0 * $.N * $.I) / $.L }),
     text: (T) => `A solenoid ${T.L} m long has ${T.N} turns and carries ${T.I} A. Find n and the field inside.`,
     parts: [num('n', ($) => $.n, 'turns/m'), num('B', ($) => $.B, 'T')],
-    steps: ($, f) => [`n = N/L = ${f($.n)} m⁻¹`, `B = μ₀nI = ${f($.B)} T`],
+    steps: ($, f) => [
+      String.raw`$n = \dfrac{N}{L} = ${texNum($.n)}\ \text{m}^{-1}$`,
+      String.raw`$B = \mu_0 n I = ${texNum($.B)}\ \text{T}$`,
+    ],
     sim: {
       scenario: 'solenoid',
       setup(s, $) {
@@ -337,7 +387,10 @@ export default [
     derive: ($) => ({ FL: (MU0 * $.I1 * $.I2) / (2 * Math.PI * $.d) }),
     text: (T) => `Two long parallel wires ${T.d} cm apart carry ${T.I1} A and ${T.I2} A in ${T.same}. Find the force per meter between them. Do they attract or repel?`,
     parts: [num('FL', ($) => $.FL, 'N/m', { label: 'F/L' }), mc('type', [[1, 'Attract'], [-1, 'Repel']], ($) => $.same, { label: 'Attract or repel?' })],
-    steps: ($, f) => [`F/L = μ₀I₁I₂/(2πd) = ${f($.FL)} N/m`, 'Parallel currents attract; antiparallel currents repel.'],
+    steps: ($, f) => [
+      String.raw`$\dfrac{F}{L} = \dfrac{\mu_0 I_1 I_2}{2\pi d} = ${texNum($.FL)}\ \text{N/m}$`,
+      'Parallel currents attract; antiparallel currents repel.',
+    ],
     sim: {
       scenario: 'parallel',
       setup(s, $) {
@@ -357,8 +410,11 @@ export default [
     valid: ($) => Math.abs($.f - 1) > 0.01 && $.r <= 0.8,
     text: (T, $, f) => `A long solid wire of radius ${T.a} m carries ${T.I} A spread uniformly over its cross section. Find B at r = ${f($.r)} m from the axis.`,
     parts: [num('B', ($) => $.B, 'T')],
-    hints: ['Inside, I_enc = I·r²/a².'],
-    steps: ($, f) => ['r < a: B = μ₀Ir/(2πa²).  r > a: B = μ₀I/(2πr).', `B = ${f($.B)} T`],
+    hints: [String.raw`Inside the wire, $I_{\text{enc}} = I\dfrac{r^2}{a^2}$.`],
+    steps: ($, f) => [
+      String.raw`$r < a$: $B = \dfrac{\mu_0 I r}{2\pi a^2}$.  $r > a$: $B = \dfrac{\mu_0 I}{2\pi r}$.`,
+      String.raw`$B = ${texNum($.B)}\ \text{T}$`,
+    ],
     sim: {
       scenario: 'thick',
       setup(s, $) {
@@ -383,7 +439,10 @@ export default [
     text: (T, $, f) => `Two long parallel wires ${T.d} cm apart carry ${T.I1} A and ${T.I2} A in ${T.same}. Find |B| at the point on the line between them that is ${f($.r1 * 100)} cm from wire 1.`,
     parts: [num('B', ($) => $.B, 'T', { abs: 1e-9 })],
     hints: ['Between the wires, parallel currents make opposite fields and antiparallel currents make fields in the same direction.'],
-    steps: ($, f) => [`B₁ = μ₀I₁/(2πr₁), B₂ = μ₀I₂/(2πr₂); combine them → ${f($.B)} T`],
+    steps: ($, f) => [
+      String.raw`$B_1 = \dfrac{\mu_0 I_1}{2\pi r_1}$, $B_2 = \dfrac{\mu_0 I_2}{2\pi r_2}$`,
+      String.raw`Combining them gives $B = ${texNum($.B)}\ \text{T}$`,
+    ],
     cases: [kase('opposite, midpoint', { I1: 10, I2: 10, same: -1, d: 20, f: 0.5 }, { B: 4e-5 })],
   }),
 ];

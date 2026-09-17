@@ -3,7 +3,7 @@
  * and Ch 37 (conductors). Cases tagged "#n" come from Montgomery's practice sheets and reproduce
  * the printed key; the notes flag the two key errors found.
  */
-import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, tf, sym, self, K, EPS0, QE, ME, MP, G, DEG, DIR_X, RADIAL, POSNEG, charge, layout, angleDeg } from '../kit.js';
+import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, tf, sym, self, K, EPS0, QE, ME, MP, G, DEG, DIR_X, RADIAL, POSNEG, charge, layout, angleDeg, texNum } from '../kit.js';
 
 const E2 = { exam: 'e2' };
 const A = { ...E2, ch: '36A' };
@@ -26,8 +26,8 @@ export default [
     derive: ($) => ({ Fang: ($.ang + (1 - $.s) * 90) % 360 }),
     text: (T) => `An electric field points ${T.ang}. An object with a net ${T.s} charge is placed in it. Which way is the force on the object?`,
     parts: [mc('dir', [[0, 'To the right'], [90, 'Upward'], [180, 'To the left'], [270, 'Downward'], [-1, 'No force']], ($) => $.Fang)],
-    hints: ['F = qE. The sign of q decides whether F is along E or opposite to it.'],
-    steps: () => ['A positive charge is pushed along E; a negative charge is pushed opposite to E.'],
+    hints: [String.raw`$\vec{F} = q\vec{E}$. The sign of $q$ decides whether $\vec{F}$ is along $\vec{E}$ or opposite to it.`],
+    steps: () => [String.raw`A positive charge is pushed along $\vec{E}$; a negative charge is pushed opposite to it.`],
     sim: {
       scenario: 'single-plus',
       setup(s, $) {
@@ -43,7 +43,7 @@ export default [
     ...A, id: 'e2.36a.proton-electron', lab: 'field', src: 'Practice 36A #5', title: 'Proton vs electron in the same field', kind: 'conceptual', topics: ['field-definition', 'kinematics'],
     text: () => 'A proton and an electron are placed in the same uniform electric field. Which has the greater acceleration?',
     parts: [mc('which', [[1, 'The proton'], [2, 'The electron'], [3, 'Both the same'], [4, 'Neither accelerates']], 2)],
-    steps: () => ['Both feel |F| = eE. Since a = F/m and mₑ ≈ m_p/1836, the electron\'s acceleration is about 1836 times larger.'],
+    steps: () => [String.raw`Both feel $|\vec{F}| = eE$. Since $a = F/m$ and $m_e \approx m_p/1836$, the electron's acceleration is about 1836 times larger.`],
     cases: [kase('#5', {}, { which: 2 }, { key: 'B' })],
   }),
   problem({
@@ -52,7 +52,7 @@ export default [
     text: (T) => `${T.p} moving to the right enters a uniform electric field directed ${T.Ed}. What path does it follow in the field?`,
     parts: [mc('path', [[1, 'Parabola curving upward'], [-1, 'Parabola curving downward'], [0, 'Straight line'], [2, 'Circular arc']], ($) => $.p * $.Ed)],
     hints: ['Constant force perpendicular to the initial velocity works like projectile motion.'],
-    steps: () => ['qE is constant, so the path is a parabola. A negative charge is pushed opposite to E.'],
+    steps: () => [String.raw`$q\vec{E}$ is constant, so the path is a parabola. A negative charge is pushed opposite to $\vec{E}$.`],
     cases: [kase('#6', { p: -1, Ed: 1 }, { path: -1 }, { key: 'D (trajectory Z)' })],
   }),
   problem({
@@ -75,8 +75,14 @@ export default [
     },
     text: (T) => `Three ${T.q} μC charges sit on three corners of a square of side ${T.d} cm: ${T.s1} at top-left, ${T.s2} at bottom-left, ${T.s3} at bottom-right. Find the net electric field at the empty top-right corner.`,
     parts: [num('E', ($) => $.E, 'N/C', { label: '|E|' }), num('th', ($) => $.th, '°', { label: 'Direction (from +x)', abs: 1, tol: 0.005, wrap: 360 })],
-    hints: ['Put the empty corner at (d, d) and the bottom-left charge at the origin.', 'The diagonal charge is √2·d away, so its field is k q/(2d²) with equal x and y components.'],
-    steps: ($, f) => [`Eₓ = ${f($.Ex)} N/C, E_y = ${f($.Ey)} N/C`, `|E| = ${f($.E)} N/C at ${f($.th)}°`],
+    hints: [
+      String.raw`Put the empty corner at $(d, d)$ and the bottom-left charge at the origin.`,
+      String.raw`The diagonal charge is $\sqrt{2}\,d$ away, so its field is $kq/2d^2$, with equal $x$ and $y$ components.`,
+    ],
+    steps: ($, f) => [
+      String.raw`$E_x$ = ${f($.Ex)} N/C, $E_y$ = ${f($.Ey)} N/C`,
+      String.raw`$|\vec{E}|$ = ${f($.E)} N/C at ${f($.th)}°`,
+    ],
     sim: {
       scenario: 'quad',
       setup: fieldSetup(($) => [charge($.s1 * $.q, 0, $.d), charge($.s2 * $.q, 0, 0), charge($.s3 * $.q, $.d, 0)], ($) => ({ x: $.d, y: $.d, z: 0 })),
@@ -90,7 +96,7 @@ export default [
     derive: ($) => ({ E: $.F / $.q }),
     text: (T) => `A ${T.F} N force acts on a ${T.q} μC charge in a uniform electric field. What is the field's magnitude?`,
     parts: [num('E', ($) => $.E, 'N/C')],
-    steps: ($, f) => [`E = F/q = ${f($.E)} N/C`],
+    steps: ($, f) => [String.raw`$E = \dfrac{F}{q} = ${texNum($.E)}\ \text{N/C}$`],
     cases: [kase('#8', { F: 6, q: 3 }, { E: 2e6 }, { key: '2 x 10^6 N/C' })],
   }),
   problem({
@@ -99,7 +105,10 @@ export default [
     derive: ($) => ({ a: (QE * $.E) / ($.p > 0 ? MP : ME) }),
     text: (T) => `A ${T.p} is placed in a ${T.E} N/C electric field that points in the +x direction. Find the magnitude and direction of its acceleration.`,
     parts: [num('a', ($) => $.a, 'm/s²'), mc('dir', [[1, '+x'], [-1, '−x']], ($) => $.p, { label: 'Direction' })],
-    steps: ($, f) => [`a = eE/m = ${f($.a)} m/s². A proton accelerates along E; an electron accelerates opposite to it.`],
+    steps: ($, f) => [
+      String.raw`$a = \dfrac{eE}{m} = ${texNum($.a)}\ \text{m/s}^2$`,
+      String.raw`A proton accelerates along $\vec{E}$; an electron accelerates opposite to it.`,
+    ],
     cases: [kase('#9', { p: 1, E: 700 }, { a: 6.707e10, dir: 1 }, { key: '6.7 x 10^10 m/s^2' })],
   }),
   problem({
@@ -108,7 +117,7 @@ export default [
     derive: ($) => ({ E: ($.m * $.a) / $.q }),
     text: (T) => `A small object carrying ${T.q} μC accelerates at ${T.a} m/s² on a frictionless surface, due only to an electric field. Its mass is ${T.m} g. Find the field strength.`,
     parts: [num('E', ($) => $.E, 'N/C')],
-    steps: ($, f) => [`E = ma/q = ${f($.E)} N/C (convert grams to kg and μC to C first)`],
+    steps: ($, f) => [String.raw`$E = \dfrac{ma}{q} = ${texNum($.E)}\ \text{N/C}$ (convert grams to kilograms and μC to C first)`],
     cases: [kase('#10', { q: 5, a: 0.005, m: 2 }, { E: 2 }, { key: '2 N/C' })],
   }),
   problem({
@@ -121,8 +130,12 @@ export default [
     valid: ($) => $.T > 0.005,
     text: (T) => `A ${T.m} kg insulating sphere with a ${T.s} ${T.q} μC charge hangs from a vertical silk thread. A uniform ${T.E} N/C field directed ${T.Ed} is switched on. What is the tension in the thread?`,
     parts: [num('T', ($) => $.T, 'N')],
-    hints: ['Take up as positive. The electric force on the sphere is q·E_y, with signs included.'],
-    steps: ($, f) => [`mg = ${f($.m * G)} N`, `F_E (up) = ${f($.Fup)} N`, `T = mg − F_E = ${f($.T)} N`],
+    hints: [String.raw`Take up as positive. The electric force on the sphere is $qE_y$, signs included.`],
+    steps: ($, f) => [
+      String.raw`$mg = ${texNum($.m * G)}\ \text{N}$`,
+      String.raw`$F_E$ (up) $= ${texNum($.Fup)}\ \text{N}$`,
+      String.raw`$T = mg - F_E = ${texNum($.T)}\ \text{N}$`,
+    ],
     cases: [kase('#11', { m: 0.05, q: 60, s: -1, E: 3000, Ed: -1 }, { T: 0.31 }, { key: '0.31 N' })],
   }),
   problem({
@@ -131,7 +144,7 @@ export default [
     derive: ($) => ({ E: ($.m * G) / $.q }),
     text: (T) => `A particle with a ${T.s} ${T.q} μC charge has a mass of ${T.m} × 10⁻³ kg. What electric field (magnitude and direction) will exactly balance its weight?`,
     parts: [num('E', ($) => $.E, 'N/C'), mc('dir', [[1, 'Upward'], [-1, 'Downward']], ($) => $.s, { label: 'Direction' })],
-    steps: ($, f) => [`|q|E = mg → E = ${f($.E)} N/C, pointing so that qE is upward`],
+    steps: ($, f) => [String.raw`$|q|E = mg \;\Longrightarrow\; E = ${texNum($.E)}\ \text{N/C}$, pointing so that $q\vec{E}$ is upward`],
     cases: [kase('#12', { q: 4, s: 1, m: 5 }, { E: 12250, dir: 1 }, { key: '12,250 N/C' })],
   }),
   problem({
@@ -140,7 +153,10 @@ export default [
     derive: ($) => ({ q: ($.m * G) / $.E }),
     text: (T) => `A ${T.m} g Styrofoam ball is in a ${T.E} N/C field pointing ${T.Ed}. What charge (magnitude and sign) must it carry to stay suspended?`,
     parts: [num('q', ($) => $.q, 'C', { label: '|q|' }), mc('sign', POSNEG, ($) => $.Ed, { label: 'Sign' })],
-    steps: ($, f) => [`|q| = mg/E = ${f($.q)} C. qE must point up, so q is positive if E points up and negative if E points down.`],
+    steps: ($, f) => [
+      String.raw`$|q| = \dfrac{mg}{E} = ${texNum($.q)}\ \text{C}$`,
+      String.raw`$q\vec{E}$ must point up, so $q$ is positive if $\vec{E}$ points up and negative if it points down.`,
+    ],
     cases: [kase('#13', { m: 0.12, E: 6000, Ed: -1 }, { q: 1.96e-7, sign: -1 }, { key: '1.96 x 10^-7 C' })],
   }),
   problem({
@@ -149,7 +165,10 @@ export default [
     derive: ($) => ({ E: (K * $.q) / $.r ** 2 }),
     text: (T) => `What are the magnitude and direction of the electric field ${T.r} m from a ${T.s} ${T.q} nC charged sphere?`,
     parts: [num('E', ($) => $.E, 'N/C'), mc('dir', [[1, 'Away from the sphere'], [-1, 'Toward the sphere']], ($) => $.s, { label: 'Direction' })],
-    steps: ($, f) => [`E = kq/r² = ${f($.E)} N/C. It points away from a positive charge and toward a negative one.`],
+    steps: ($, f) => [
+      String.raw`$E = \dfrac{kq}{r^2} = ${texNum($.E)}\ \text{N/C}$`,
+      String.raw`It points away from a positive charge and toward a negative one.`,
+    ],
     sim: {
       scenario: 'single-plus',
       setup: fieldSetup(($) => [charge($.s * $.q, 0, 0)], ($) => ({ x: $.r, y: 0, z: 0 })),
@@ -166,7 +185,10 @@ export default [
     derive: ($) => ({ q: ($.E * $.r ** 2) / K }),
     text: (T) => `${T.r} cm from a small object, the electric field points ${T.dir} the object with a strength of ${T.E} N/C. What is the object's charge?`,
     parts: [num('q', ($) => $.q, 'C', { label: '|q|' }), mc('sign', POSNEG, ($) => $.dir, { label: 'Sign' })],
-    steps: ($, f) => [`|q| = E r²/k = ${f($.q)} C. A field pointing toward the object means its charge is negative.`],
+    steps: ($, f) => [
+      String.raw`$|q| = \dfrac{Er^2}{k} = ${texNum($.q)}\ \text{C}$`,
+      String.raw`A field pointing toward the object means its charge is negative.`,
+    ],
     sim: {
       scenario: 'single-plus',
       setup: fieldSetup(($) => [charge($.dir * $.q, 0, 0)], ($) => ({ x: $.r, y: 0, z: 0 })),
@@ -180,8 +202,8 @@ export default [
     derive: ($) => ({ Ex: $.s1 / 0.49 - $.s2 / 0.09 }),
     text: (T) => `Charge 1 (${T.s1}) is on the left and charge 2 (${T.s2}) is on the right, with equal magnitudes. Point P lies between them, closer to charge 2. Which way does the net field at P point?`,
     parts: [mc('dir', DIR_X, ($) => Math.sign($.Ex))],
-    hints: ['The closer charge contributes the stronger field (1/r²).'],
-    steps: () => ['Each field points away from a positive charge and toward a negative one. The nearer charge wins unless both fields point the same way.'],
+    hints: [String.raw`The closer charge contributes the stronger field, as $1/r^2$.`],
+    steps: () => [String.raw`Each field points away from a positive charge and toward a negative one. The nearer charge wins unless both fields point the same way.`],
     sim: {
       scenario: 'two-plus',
       setup: fieldSetup(($) => [charge($.s1 * 1e-6, -0.5, 0), charge($.s2 * 1e-6, 0.5, 0)], () => ({ x: 0.2, y: 0, z: 0 })),
@@ -202,8 +224,12 @@ export default [
     valid: ($) => Math.abs($.xp) > 0.04 && Math.abs($.xp - $.x2) > 0.04,
     text: (T) => `q₁ = ${T.q1} μC (${T.s1}) is at the origin and q₂ = ${T.q2} μC (${T.s2}) is at x = ${T.x2} m. Find the net electric field at P, x = ${T.xp} m.`,
     parts: [num('E', ($) => Math.abs($.Ex), 'N/C', { label: '|E|' }), mc('dir', DIR_X, ($) => Math.sign($.Ex), { label: 'Direction' })],
-    hints: ['Write each field as a signed x component: E = kQ·sign(x_P − x_i)/(x_P − x_i)².'],
-    steps: ($, f) => [`From q₁: ${f($.E1)} N/C`, `From q₂: ${f($.E2)} N/C`, `Eₓ = ${f($.Ex)} N/C`],
+    hints: [String.raw`Write each field as a signed $x$ component: $E = kQ\,\dfrac{\text{sign}(x_P - x_i)}{(x_P - x_i)^2}$.`],
+    steps: ($, f) => [
+      String.raw`From $q_1$: ${f($.E1)} N/C`,
+      String.raw`From $q_2$: ${f($.E2)} N/C`,
+      String.raw`$E_x$ = ${f($.Ex)} N/C`,
+    ],
     sim: {
       scenario: 'dipole',
       setup: fieldSetup(($) => [charge($.Q1, 0, 0), charge($.Q2, $.x2, 0)], ($) => ({ x: $.xp, y: 0, z: 0 })),
@@ -222,8 +248,10 @@ export default [
     derive: ($) => ({ q2: $.q1 * (($.D + $.d) / $.D) ** 2 }),
     text: (T) => `A +${T.q1} μC charge is at x = 0 and an unknown q₂ is at x = +${T.d} cm. The net field is zero at x = −${T.D} m. Find q₂.`,
     parts: [num('q2', ($) => $.q2, 'μC', { scale: 1e-6, label: '|q₂|' }), mc('sign', POSNEG, -1, { label: 'Sign' })],
-    hints: ['P is outside both charges, so the fields can cancel only if the charges have opposite signs.'],
-    steps: ($, f) => [`k q₁/D² = k|q₂|/(D + d)² → |q₂| = ${f($.q2 * 1e6)} μC, negative`],
+    hints: [String.raw`$P$ is outside both charges, so the fields can cancel only if the charges have opposite signs.`],
+    steps: ($, f) => [
+      String.raw`$\dfrac{kq_1}{D^2} = \dfrac{k|q_2|}{(D+d)^2} \;\Longrightarrow\; |q_2| = ${texNum($.q2 * 1e6)}\ \mu\text{C}$, negative`,
+    ],
     sim: {
       scenario: 'dipole',
       setup: fieldSetup(($) => [charge($.q1, 0, 0), charge(-$.q2, $.d, 0)], ($) => ({ x: -$.D, y: 0, z: 0 })),
@@ -241,7 +269,11 @@ export default [
     },
     text: (T) => `q₁ = ${T.q1} μC (${T.s1}) is at x = −${T.a} cm, q₂ = ${T.q2} μC (${T.s2}) is at y = +${T.b} cm, and q₃ = ${T.q3} μC (${T.s3}) is at x = +${T.a} cm. Find the field at the origin.`,
     parts: [num('E', ($) => $.E, 'N/C', { label: '|E|' }), num('al', ($) => $.al, '°', { label: 'α (from +x)', abs: 1, tol: 0.005, wrap: 360 })],
-    steps: ($, f) => [`Eₓ = k(q₁ − q₃)/a² = ${f($.Ex)} N/C`, `E_y = −k q₂/b² = ${f($.Ey)} N/C`, `|E| = ${f($.E)} N/C at α = ${f($.al)}°`],
+    steps: ($, f) => [
+      String.raw`$E_x = \dfrac{k(q_1 - q_3)}{a^2} = ${texNum($.Ex)}\ \text{N/C}$`,
+      String.raw`$E_y = -\dfrac{kq_2}{b^2} = ${texNum($.Ey)}\ \text{N/C}$`,
+      String.raw`$|\vec{E}|$ = ${f($.E)} N/C at $\alpha$ = ${f($.al)}°`,
+    ],
     sim: {
       scenario: 'quad',
       setup: fieldSetup(($) => [charge($.s1 * $.q1, -$.a, 0), charge($.s2 * $.q2, 0, $.b), charge($.s3 * $.q3, $.a, 0)], () => ({ x: 0, y: 0, z: 0 })),
@@ -259,8 +291,11 @@ export default [
     valid: ($) => $.r2 > $.r1 / 2 + 0.01,
     text: (T) => `A dipole: −${T.q} μC and +${T.q} μC charges are ${T.r1} cm apart, with the positive charge on the ${T.pos}. Point P is ${T.r2} cm from each charge, below their midpoint. Find the field at P.`,
     parts: [num('E', ($) => $.E, 'N/C', { label: '|E|' }), mc('dir', [[1, '+x'], [-1, '−x'], [2, '+y'], [-2, '−y']], ($) => -$.pos, { label: 'Direction' })],
-    hints: ['The vertical components cancel. Each horizontal component is (kq/r₂²)·(r₁/2)/r₂.'],
-    steps: ($, f) => [`Each charge gives kq/r₂² = ${f((K * $.q) / $.r2 ** 2)} N/C`, `Adding the horizontal parts gives ${f($.E)} N/C, pointing from + toward −`],
+    hints: [String.raw`The vertical components cancel. Each horizontal component is $\dfrac{kq}{r_2^2}\cdot\dfrac{r_1/2}{r_2}$.`],
+    steps: ($, f) => [
+      String.raw`Each charge gives $\dfrac{kq}{r_2^2} = ${texNum((K * $.q) / $.r2 ** 2)}\ \text{N/C}$`,
+      String.raw`Adding the horizontal parts gives ${f($.E)} N/C, pointing from $+$ toward $-$`,
+    ],
     sim: {
       scenario: 'dipole',
       setup: fieldSetup(($) => [charge($.q, ($.pos * $.r1) / 2, 0), charge(-$.q, (-$.pos * $.r1) / 2, 0)], ($) => ({ x: 0, y: -$.h, z: 0 })),
@@ -276,7 +311,7 @@ export default [
     derive: ($) => ({ Q: $.lam * $.L }),
     text: (T) => `A uniform wire has λ = ${T.lam} μC/m. What is the total charge on ${T.L} m of it?`,
     parts: [num('Q', ($) => $.Q, 'C')],
-    steps: ($, f) => [`Q = λL = ${f($.Q)} C`],
+    steps: ($, f) => [String.raw`$Q = \lambda L = ${texNum($.Q)}\ \text{C}$`],
     cases: [kase('#1', { lam: 10, L: 0.25 }, { Q: 2.5e-6 }, { key: '2.5 x 10^-6 C' })],
   }),
   problem({
@@ -285,7 +320,7 @@ export default [
     derive: ($) => ({ L: $.Q / $.lam }),
     text: (T) => `A uniform wire carries ${T.Q} C in total with λ = ${T.lam} μC/m. How long is it?`,
     parts: [num('L', ($) => $.L, 'm')],
-    steps: ($, f) => [`L = Q/λ = ${f($.L)} m`],
+    steps: ($, f) => [String.raw`$L = \dfrac{Q}{\lambda} = ${texNum($.L)}\ \text{m}$`],
     cases: [kase('#2', { Q: 0.02, lam: 10 }, { L: 2000 }, { key: '0.2 m', note: 'ANSWER KEY ERROR: 0.02 C ÷ 1×10⁻⁵ C/m = 2000 m, not 0.2 m.' })],
   }),
   problem({
@@ -294,7 +329,7 @@ export default [
     derive: ($) => ({ R: Math.sqrt($.Q / (Math.PI * $.sig)) }),
     text: (T) => `A circular disk carries ${T.Q} μC with σ = ${T.sig} μC/m². What is its radius?`,
     parts: [num('R', ($) => $.R, 'm')],
-    steps: ($, f) => [`R = √(Q/(πσ)) = ${f($.R)} m`],
+    steps: ($, f) => [String.raw`$R = \sqrt{\dfrac{Q}{\pi\sigma}} = ${texNum($.R)}\ \text{m}$`],
     cases: [kase('#3', { Q: 2, sig: 5 }, { R: 0.357 }, { key: '0.36 m' })],
   }),
   problem({
@@ -305,7 +340,7 @@ export default [
     text: (T) => `A conducting spherical shell (outer radius ${T.Ro} m, inner radius ${T.Ri} m) has ${T.Q} μC on its outer surface. What is the surface charge density there?`,
     parts: [num('sigma', ($) => $.sigma, 'C/m²')],
     hints: ['Only the outer radius matters for the outer surface.'],
-    steps: ($, f) => [`σ = Q/(4πR_out²) = ${f($.sigma)} C/m²`],
+    steps: ($, f) => [String.raw`$\sigma = \dfrac{Q}{4\pi R_{\text{out}}^2} = ${texNum($.sigma)}\ \text{C/m}^2$`],
     sim: {
       scenario: 'uniform',
       setup(s, $) {
@@ -322,7 +357,7 @@ export default [
     derive: ($) => ({ Q: ($.rho * 4 * Math.PI * $.R ** 3) / 3 }),
     text: (T) => `A sphere of radius ${T.R} cm has a uniform ρ = ${T.rho} × 10⁻⁵ C/m³. What is its total charge?`,
     parts: [num('Q', ($) => $.Q, 'C')],
-    steps: ($, f) => [`Q = ρ·(4/3)πR³ = ${f($.Q)} C`],
+    steps: ($, f) => [String.raw`$Q = \rho\cdot\tfrac{4}{3}\pi R^3 = ${texNum($.Q)}\ \text{C}$`],
     cases: [kase('#5', { rho: 7, R: 5 }, { Q: 3.665e-8 }, { key: '3.66 x 10^-8 C' })],
   }),
   problem({
@@ -333,11 +368,19 @@ export default [
     parts: [
       self('setup', 'Sketch dq, r, θ and dE on the diagram.', 'dq = λ dx at x; r = √(x² + d²); dE points from dq toward P (if λ > 0); cos θ = d/r.'),
       mc('Ex', [[0, 'Eₓ = 0 by symmetry'], [1, 'Eₓ = kλL/d²'], [2, 'Eₓ depends on the sign of x']], 0, { label: 'x component' }),
-      sym('Ey_sym', 'k*lam*L/(d*sqrt(d^2 + L^2/4))', ['lam', 'L', 'd'], ($) => $.Ey, { label: 'E_y as a formula (use k, lam, L, d)' }),
-      num('Ey', ($) => $.Ey, 'N/C', { label: 'E_y (signed)' }),
+      sym('Ey_sym', 'k*lam*L/(d*sqrt(d^2 + L^2/4))', ['lam', 'L', 'd'], ($) => $.Ey, { label: String.raw`$E_y$ as a formula (use k, lam, L, d)` }),
+      num('Ey', ($) => $.Ey, 'N/C', { label: String.raw`$E_y$ (signed)` }),
     ],
-    hints: ['dE_y = kλd dx/(x² + d²)^{3/2}', '∫ dx/(x² + d²)^{3/2} = x/(d²√(x² + d²))'],
-    steps: ($, f) => ['dq = λ dx, r² = x² + d²', 'The dEₓ contributions cancel in ± pairs, so Eₓ = 0.', 'E_y = ∫_{−L/2}^{L/2} kλd dx/(x² + d²)^{3/2} = kλL / (d√(d² + L²/4))', `E_y = ${f($.Ey)} N/C`],
+    hints: [
+      String.raw`$dE_y = \dfrac{k\lambda d\,dx}{(x^2+d^2)^{3/2}}$`,
+      String.raw`$\displaystyle\int \frac{dx}{(x^2+d^2)^{3/2}} = \frac{x}{d^2\sqrt{x^2+d^2}}$`,
+    ],
+    steps: ($, f) => [
+      String.raw`$dq = \lambda\,dx$ and $r^2 = x^2 + d^2$`,
+      String.raw`The $dE_x$ contributions cancel in $\pm$ pairs, so $E_x = 0$.`,
+      String.raw`$E_y = \displaystyle\int_{-L/2}^{L/2} \frac{k\lambda d\,dx}{(x^2+d^2)^{3/2}} = \frac{k\lambda L}{d\sqrt{d^2 + L^2/4}}$`,
+      String.raw`$E_y = ${texNum($.Ey)}\ \text{N/C}$`,
+    ],
     sim: {
       scenario: 'rod',
       setup(s, $) {
@@ -353,12 +396,19 @@ export default [
     derive: ($) => ({ Ey: (K * $.Q * $.y) / ($.y ** 2 + $.a ** 2) ** 1.5 }),
     text: (T) => `A ring of radius a = ${T.a} m carries Q = ${T.Q} μC spread uniformly. Find the field on its axis, y = ${T.y} m from the center.`,
     parts: [
-      sym('Ey_sym', 'k*Q*y/(y^2 + a^2)^(3/2)', ['Q', 'y', 'a'], ($) => $.Ey, { label: 'E_y as a formula (use k, Q, y, a)' }),
-      num('Ey', ($) => $.Ey, 'N/C', { label: 'E_y (signed)' }),
+      sym('Ey_sym', 'k*Q*y/(y^2 + a^2)^(3/2)', ['Q', 'y', 'a'], ($) => $.Ey, { label: String.raw`$E_y$ as a formula (use k, Q, y, a)` }),
+      num('Ey', ($) => $.Ey, 'N/C', { label: String.raw`$E_y$ (signed)` }),
       mc('maxat', [[1, 'At the center (y = 0)'], [2, 'At y = a/√2'], [3, 'At y = a'], [4, 'Very far away']], 2, { label: 'Where on the axis is |E| largest?' }),
     ],
-    hints: ['Every dq is the same distance √(y² + a²) from P.', 'Components perpendicular to the axis cancel; the axial part carries a factor y/r.'],
-    steps: ($, f) => ['dE_y = k dq·y/(y² + a²)^{3/2}; summing gives kQy/(y² + a²)^{3/2}', `E_y = ${f($.Ey)} N/C`, 'd|E|/dy = 0 at y = a/√2'],
+    hints: [
+      String.raw`Every $dq$ is the same distance $\sqrt{y^2+a^2}$ from $P$.`,
+      String.raw`Components perpendicular to the axis cancel; the axial part carries a factor $y/r$.`,
+    ],
+    steps: ($, f) => [
+      String.raw`$dE_y = \dfrac{k\,dq\,y}{(y^2+a^2)^{3/2}}$, and summing over the ring gives $\dfrac{kQy}{(y^2+a^2)^{3/2}}$`,
+      String.raw`$E_y = ${texNum($.Ey)}\ \text{N/C}$`,
+      String.raw`$\dfrac{d|\vec{E}|}{dy} = 0$ at $y = a/\sqrt{2}$`,
+    ],
     sim: {
       scenario: 'ring',
       setup(s, $) {
@@ -378,8 +428,14 @@ export default [
       sym('Ex_sym', 'k*lam*L/(d*(L + d))', ['lam', 'L', 'd'], ($) => $.Ex, { label: 'Eₓ as a formula' }),
       num('Ex', ($) => $.Ex, 'N/C'),
     ],
-    hints: ['There are no components to cancel here.', '∫₀ᴸ dx/(L + d − x)² = 1/d − 1/(L + d)'],
-    steps: ($, f) => ['E = kλ[1/d − 1/(L + d)] = kλL/(d(L + d))', `E = ${f($.Ex)} N/C along +x`],
+    hints: [
+      'There are no components to cancel here.',
+      String.raw`$\displaystyle\int_0^L \frac{dx}{(L+d-x)^2} = \frac{1}{d} - \frac{1}{L+d}$`,
+    ],
+    steps: ($, f) => [
+      String.raw`$E = k\lambda\left[\dfrac{1}{d} - \dfrac{1}{L+d}\right] = \dfrac{k\lambda L}{d(L+d)}$`,
+      String.raw`$E = ${texNum($.Ex)}\ \text{N/C}$ along $+x$`,
+    ],
     cases: [kase('hand', { lam: 10, L: 1, d: 0.5 }, { Ex: 119.8 })],
   }),
   problem({
@@ -390,12 +446,18 @@ export default [
     parts: [
       self('setup', 'Label dq, R, θ and dE.', 'dq = λR dθ at angle θ; dE points from dq toward P, i.e. along −(cos θ, sin θ).'),
       mc('Ex', [[0, 'Eₓ = 0: the cos θ terms cancel from 0 to π'], [1, 'Eₓ = 2kλ/R']], 0, { label: 'Show that Eₓ = 0' }),
-      sym('E_sym', '2*k*lam/R', ['lam', 'R'], ($) => $.E, { label: '|E_y| as a formula' }),
+      sym('E_sym', '2*k*lam/R', ['lam', 'R'], ($) => $.E, { label: String.raw`$|E_y|$ as a formula` }),
       num('E', ($) => $.E, 'N/C', { label: '|E|' }),
       mc('dir', [[-2, '−y (away from the arc)'], [2, '+y (toward the arc)']], -2, { label: 'Direction' }),
     ],
-    hints: ['dE = kλR dθ/R² = (kλ/R) dθ', '∫₀^π sin θ dθ = 2 and ∫₀^π cos θ dθ = 0'],
-    steps: ($, f) => ['Eₓ = −(kλ/R)∫cos θ dθ = 0', `E_y = −(kλ/R)∫sin θ dθ = −2kλ/R = −${f($.E)} N/C`],
+    hints: [
+      String.raw`$dE = \dfrac{k\lambda R\,d\theta}{R^2} = \dfrac{k\lambda}{R}\,d\theta$`,
+      String.raw`$\displaystyle\int_0^\pi \sin\theta\,d\theta = 2$ and $\displaystyle\int_0^\pi \cos\theta\,d\theta = 0$`,
+    ],
+    steps: ($, f) => [
+      String.raw`$E_x = -\dfrac{k\lambda}{R}\displaystyle\int \cos\theta\,d\theta = 0$`,
+      String.raw`$E_y = -\dfrac{k\lambda}{R}\displaystyle\int \sin\theta\,d\theta = -\dfrac{2k\lambda}{R} = -${texNum($.E)}\ \text{N/C}$`,
+    ],
     cases: [kase('hand', { lam: 10, R: 0.2 }, { E: 898.8, dir: -2 })],
   }),
   problem({
@@ -409,8 +471,11 @@ export default [
       num('E', ($) => $.E, 'N/C'),
       num('sheet', ($) => $.sig / (2 * EPS0), 'N/C', { label: 'Limit R → ∞ (infinite sheet)' }),
     ],
-    hints: ['Use the ring result, then substitute u = s² + r².'],
-    steps: ($, f) => ['E = ∫₀ᴿ kσ2πr·s dr/(s² + r²)^{3/2} = 2πkσ[1 − s/√(s² + R²)]', `E = ${f($.E)} N/C; for an infinite sheet, σ/2ε₀ = ${f($.sig / (2 * EPS0))} N/C`],
+    hints: [String.raw`Use the ring result, then substitute $u = s^2 + r^2$.`],
+    steps: ($, f) => [
+      String.raw`$E = \displaystyle\int_0^R \frac{k\sigma\,2\pi r s\,dr}{(s^2+r^2)^{3/2}} = 2\pi k\sigma\left[1 - \frac{s}{\sqrt{s^2+R^2}}\right]$`,
+      String.raw`$E = ${texNum($.E)}\ \text{N/C}$; for an infinite sheet $\dfrac{\sigma}{2\varepsilon_0} = ${texNum($.sig / (2 * EPS0))}\ \text{N/C}$`,
+    ],
     cases: [kase('hand', { sig: 10, R: 0.3, s: 0.2 }, { E: 251.5, sheet: 564.97 })],
   }),
 
@@ -419,7 +484,7 @@ export default [
     ...Cc, id: 'e2.36c.zero-flux', lab: 'gauss', src: 'Practice 36C #1', title: 'Zero flux vs zero field', kind: 'conceptual', topics: ['flux', 'gauss'],
     text: () => 'True or false: if the electric flux through a closed surface is zero, the electric field on that surface must be zero.',
     parts: [tf('tf', false)],
-    steps: () => ['False. Zero flux means zero enclosed charge; field lines from an outside charge still enter and leave the surface.'],
+    steps: () => [String.raw`False. Zero flux means zero *enclosed* charge; field lines from an outside charge still enter and leave the surface, and $\vec{E}$ on it is not zero.`],
     sim: {
       scenario: 'outside',
       read: (c) => ({ '@Φ ≈ 0 with a charge outside (fraction of q/ε₀)': [c.gauss.Phi * EPS0 / 1.5e-6, 0] }),
@@ -431,12 +496,12 @@ export default [
     vars: { n1: range(-3, 3, 1, '', 1, { exclude: [0] }), n2: range(-3, 3, 1, '', 1, { exclude: [0] }), n3: range(-3, 3, 1, '', 1, { exclude: [0] }) },
     text: (T) => `Charges q₁ = ${T.n1}q, q₂ = ${T.n2}q and q₃ = ${T.n3}q sit in a row. Surface a encloses q₁ only, b encloses q₁ and q₂, c encloses q₂ and q₃, and d encloses all three. Give the flux through each surface in units of q/ε₀.`,
     parts: [
-      num('a', ($) => $.n1, 'q/ε₀', { abs: 0.01, label: 'Φ_a' }),
-      num('b', ($) => $.n1 + $.n2, 'q/ε₀', { abs: 0.01, label: 'Φ_b' }),
-      num('c', ($) => $.n2 + $.n3, 'q/ε₀', { abs: 0.01, label: 'Φ_c' }),
-      num('d', ($) => $.n1 + $.n2 + $.n3, 'q/ε₀', { abs: 0.01, label: 'Φ_d' }),
+      num('a', ($) => $.n1, 'q/ε₀', { abs: 0.01, label: String.raw`$\Phi_a$` }),
+      num('b', ($) => $.n1 + $.n2, 'q/ε₀', { abs: 0.01, label: String.raw`$\Phi_b$` }),
+      num('c', ($) => $.n2 + $.n3, 'q/ε₀', { abs: 0.01, label: String.raw`$\Phi_c$` }),
+      num('d', ($) => $.n1 + $.n2 + $.n3, 'q/ε₀', { abs: 0.01, label: String.raw`$\Phi_d$` }),
     ],
-    steps: () => ['Φ = q_enc/ε₀ for each surface. Charges outside a surface contribute nothing, whatever its shape.'],
+    steps: () => [String.raw`$\Phi_E = \dfrac{q_{\text{enc}}}{\varepsilon_0}$ for each surface. Charges outside a surface contribute nothing, whatever its shape.`],
     sim: {
       scenario: 'one-in-one-out',
       setup(s, $) {
@@ -462,7 +527,10 @@ export default [
         [5, 'Neither surface has excess charge, because the conductor is neutral'],
       ], [4], { multi: true }),
     ],
-    steps: () => ['E = 0 inside the metal → a Gaussian surface in the metal encloses zero charge → the inner surface holds −q.', 'The conductor is neutral, so the outer surface holds +q.'],
+    steps: () => [
+      String.raw`$\vec{E} = 0$ inside the metal, so a Gaussian surface drawn there encloses zero charge and the inner surface must hold $-q$.`,
+      String.raw`The conductor is neutral overall, so the outer surface holds $+q$.`,
+    ],
     sim: {
       scenario: 'cage',
       setup(s, $) {
@@ -477,8 +545,10 @@ export default [
     derive: ($) => ({ Phi: $.E * Math.PI * $.r ** 2 * Math.sin($.th * DEG) }),
     text: (T) => `A hoop of radius ${T.r} cm is in a uniform ${T.E} N/C field. The plane of the hoop makes ${T.th}° with the field lines. Find the flux through it.`,
     parts: [num('Phi', ($) => $.Phi, 'N·m²/C', { label: 'Φ' })],
-    hints: ['The given angle is measured from the plane, not from the area vector n̂.'],
-    steps: ($, f) => [`The angle between E and n̂ is 90° − θ, so Φ = EA sin θ = ${f($.Phi)} N·m²/C`],
+    hints: [String.raw`The given angle is measured from the plane, not from the area vector $\hat{n}$.`],
+    steps: ($, f) => [
+      String.raw`The angle between $\vec{E}$ and $\hat{n}$ is $90^\circ - \theta$, so $\Phi_E = EA\sin\theta = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
+    ],
     sim: {
       scenario: 'uniform-square',
       setup(s, $) {
@@ -495,8 +565,10 @@ export default [
     derive: ($) => ({ Phi: ($.m * $.a * $.b ** 3) / 3 }),
     text: (T) => `A rectangle in the x–y plane spans 0 ≤ x ≤ b and 0 ≤ y ≤ a (b = ${T.b} m, a = ${T.a} m). The field is E = m x² ẑ with m = ${T.m} N/(C·m²). Find the flux.`,
     parts: [sym('Phi_sym', 'm*a*b^3/3', ['m', 'a', 'b'], ($) => $.Phi, { label: 'Φ as a formula' }), num('Phi', ($) => $.Phi, 'N·m²/C')],
-    hints: ['Use strips of constant x: dA = a dx.'],
-    steps: ($, f) => [`Φ = ∫₀ᵇ m x²·a dx = m a b³/3 = ${f($.Phi)} N·m²/C`],
+    hints: [String.raw`Use strips of constant $x$: $dA = a\,dx$.`],
+    steps: ($, f) => [
+      String.raw`$\Phi_E = \displaystyle\int_0^b m x^2 a\,dx = \frac{mab^3}{3} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
+    ],
     cases: [kase('hand', { m: 100, a: 1, b: 0.5 }, { Phi: 4.1667 })],
   }),
   problem({
@@ -505,8 +577,10 @@ export default [
     derive: ($) => ({ Phi: Math.PI * $.a * $.R ** 2 + ((4 * Math.PI) / 5) * $.b * $.R ** 2.5 }),
     text: (T) => `A hoop of radius R = ${T.R} m is perpendicular to E(r) = (a + b√r) x̂, where r is measured from its center; a = ${T.a} N/C, b = ${T.b} N/(C·m^½). Find the flux.`,
     parts: [sym('Phi_sym', 'pi*a*R^2 + 4*pi/5*b*R^(5/2)', ['a', 'b', 'R'], ($) => $.Phi, { label: 'Φ as a formula' }), num('Phi', ($) => $.Phi, 'N·m²/C')],
-    hints: ['Use rings: dA = 2πr dr.', '∫ r^{3/2} dr = (2/5) r^{5/2}'],
-    steps: ($, f) => [`Φ = ∫₀ᴿ (a + b√r) 2πr dr = πaR² + (4π/5) b R^{5/2} = ${f($.Phi)} N·m²/C`],
+    hints: [String.raw`Use rings: $dA = 2\pi r\,dr$.`, String.raw`$\displaystyle\int r^{3/2}\,dr = \tfrac{2}{5}r^{5/2}$`],
+    steps: ($, f) => [
+      String.raw`$\Phi_E = \displaystyle\int_0^R (a + b\sqrt{r})\,2\pi r\,dr = \pi a R^2 + \frac{4\pi}{5}bR^{5/2} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
+    ],
     cases: [kase('hand', { a: 100, b: 50, R: 1 }, { Phi: 439.82 })],
   }),
   problem({
@@ -530,8 +604,15 @@ export default [
       num('Ed', ($) => Math.abs($.Ed), 'N/C', { label: (T, $, f) => `|E| at r = ${f($.rd * 100)} cm` }),
       mc('Ed_dir', RADIAL, ($) => Math.sign($.Qout), { label: 'Its direction' }),
     ],
-    hints: ['E = 0 inside the metal. Use that to find the charge on the inner surface.', 'Outside everything, only the total charge matters.'],
-    steps: ($, f) => [`Inner surface = −q₁ = ${f(-$.Q1 * 1e6)} μC; outer surface = q₁ + q₂ = ${f($.Qout * 1e6)} μC`, `R₁ < r < R₂: E = kq₁/r² = ${f($.Eb)} N/C`, `r > R₃: E = k(q₁ + q₂)/r² = ${f($.Ed)} N/C`],
+    hints: [
+      String.raw`$\vec{E} = 0$ inside the metal — use that to find the charge on the inner surface.`,
+      'Outside everything, only the total charge matters.',
+    ],
+    steps: ($, f) => [
+      String.raw`inner surface $= -q_1 = ${texNum(-$.Q1 * 1e6)}\ \mu\text{C}$, outer surface $= q_1 + q_2 = ${texNum($.Qout * 1e6)}\ \mu\text{C}$`,
+      String.raw`$R_1 < r < R_2$: $E = \dfrac{kq_1}{r^2} = ${texNum($.Eb)}\ \text{N/C}$`,
+      String.raw`$r > R_3$: $E = \dfrac{k(q_1+q_2)}{r^2} = ${texNum($.Ed)}\ \text{N/C}$`,
+    ],
     cases: [kase('#7', { q1: 5, s1: 1, q2: 8, s2: -1, R1: 10, R2: 20, R3: 30, fb: 0.5, fd: 35 / 30 }, { Qin: -5, Qout: -3, Eb: 1.998e6, Eb_dir: 1, Emetal: 0, Ed: 2.201e5, Ed_dir: -1 }, { key: 'A) −5 μC, −3 μC  C) 2×10⁶  E) 2.2×10⁵ N/C' })],
   }),
   problem({
@@ -544,8 +625,11 @@ export default [
     valid: ($) => Math.abs($.f - 1) > 0.01,
     text: (T, $, f) => `A non-conducting sphere of radius ${T.R} cm has ${T.Q} μC spread uniformly through its volume. What is |E| at ${f($.r * 100)} cm from the center?`,
     parts: [num('E', ($) => $.E, 'N/C')],
-    hints: ['Inside, the enclosed charge is Q(r/R)³.'],
-    steps: ($, f) => ['Inside: E = kQr/R³. Outside: E = kQ/r².', `E = ${f($.E)} N/C`],
+    hints: [String.raw`Inside, the enclosed charge is $Q(r/R)^3$.`],
+    steps: ($, f) => [
+      String.raw`Inside: $E = \dfrac{kQr}{R^3}$. Outside: $E = \dfrac{kQ}{r^2}$.`,
+      String.raw`$E = ${texNum($.E)}\ \text{N/C}$`,
+    ],
     cases: [kase('#8', { Q: 15, R: 20, f: 0.6 }, { E: 2.022e6 }, { key: '2.0 x 10^6 N/C' })],
   }),
   problem({
@@ -554,7 +638,10 @@ export default [
     derive: ($) => ({ E: (2 * K * $.Q) / ($.Lw * $.r) }),
     text: (T) => `A ${T.Lw} m wire carries ${T.Q} μC spread uniformly. Use Gauss's law to find |E| ${T.r} cm from the wire, far from its ends.`,
     parts: [num('E', ($) => $.E, 'N/C')],
-    steps: ($, f) => [`λ = Q/L; a cylindrical Gaussian surface gives E·2πrℓ = λℓ/ε₀ → E = 2kλ/r = ${f($.E)} N/C`],
+    steps: ($, f) => [
+      String.raw`$\lambda = Q/L$, and a cylindrical Gaussian surface gives $E\,(2\pi r\ell) = \dfrac{\lambda\ell}{\varepsilon_0}$`,
+      String.raw`$E = \dfrac{2k\lambda}{r} = ${texNum($.E)}\ \text{N/C}$`,
+    ],
     cases: [kase('#9', { Q: 4, Lw: 50, r: 20 }, { E: 7190 }, { key: '7.2 x 10^3 N/C' })],
   }),
   problem({
@@ -563,8 +650,11 @@ export default [
     derive: ($) => ({ E: ($.n * $.sig) / (2 * EPS0) }),
     text: (T) => `Surface charge density σ = ${T.sig} nC/m². Find |E| for ${T.n}.`,
     parts: [num('E', ($) => $.E, 'N/C'), mc('dep', [[1, 'Falls off as 1/r'], [2, 'Falls off as 1/r²'], [3, 'Does not depend on distance']], 3, { label: 'How does it depend on distance from the plane?' })],
-    hints: ['Pillbox: both caps carry flux for a single sheet.'],
-    steps: ($, f) => ['Single sheet: E = σ/2ε₀. Between plates, the two fields add: E = σ/ε₀.', `E = ${f($.E)} N/C, independent of distance`],
+    hints: ['With a pillbox, both caps carry flux for a single sheet.'],
+    steps: ($, f) => [
+      String.raw`One sheet gives $E = \dfrac{\sigma}{2\varepsilon_0}$; between the plates the two fields add to $E = \dfrac{\sigma}{\varepsilon_0}$.`,
+      String.raw`$E = ${texNum($.E)}\ \text{N/C}$, independent of the distance`,
+    ],
     sim: { scenario: 'sheet-pill' },
     cases: [kase('hand', { sig: 10, n: 2 }, { E: 1130, dep: 3 })],
   }),
@@ -574,7 +664,7 @@ export default [
     ...C37, id: 'e2.37.where-charge-goes', lab: 'conductors', src: 'Practice 37 #1', title: 'Where excess charge goes', kind: 'conceptual', topics: ['conductors'],
     text: () => 'A +4 μC charge is placed on a solid conducting sphere. What happens to that charge?',
     parts: [mc('ans', [[1, 'It stays where it was placed'], [2, 'It spreads through the volume'], [3, 'It moves to the surface and spreads out uniformly'], [4, 'It depends on the sign']], 3)],
-    steps: () => ['Like charges repel until E = 0 inside the metal, so all excess charge ends up on the surface (uniformly, for a sphere).'],
+    steps: () => [String.raw`Like charges repel until $\vec{E} = 0$ inside the metal, so all the excess charge ends up on the surface — uniformly, for a sphere.`],
     sim: { scenario: 'uniform', setup: (s) => void (s.Q = 4e-6) },
     cases: [kase('#1', {}, { ans: 3 }, { key: 'C' })],
   }),
@@ -583,7 +673,7 @@ export default [
     vars: { sit: choice([1, 'a solid conducting sphere carrying +4 μC'], [2, 'a solid aluminum cube in an upward external field']) },
     text: (T) => `In electrostatic equilibrium, what is the electric field inside the material of ${T.sit}?`,
     parts: [mc('ans', [[1, 'The same as outside'], [2, 'Pointing outward'], [3, 'Pointing inward'], [4, 'Zero'], [5, 'Smaller than outside, but not zero']], 4)],
-    steps: () => ['Free charges rearrange until the field inside the conductor is exactly zero.'],
+    steps: () => [String.raw`Free charges rearrange until the field inside the conductor is exactly zero, $\vec{E} = 0$.`],
     sim: {
       scenario: 'uniform',
       setup(s) {
@@ -597,14 +687,14 @@ export default [
     ...C37, id: 'e2.37.empty-cavity', lab: 'conductors', src: 'Practice 37 #3', title: 'Field in an empty cavity', kind: 'conceptual', topics: ['conductors', 'gauss'],
     text: () => 'A +4 μC charge is placed on a hollow conducting sphere with nothing inside. What is the field inside the empty cavity?',
     parts: [mc('ans', [[1, 'Set by the net charge'], [2, 'Pointing outward'], [3, 'Pointing inward'], [4, 'Zero']], 4)],
-    steps: () => ['There is no charge in the cavity and all the excess sits on the outer surface, so E = 0 in the cavity.'],
+    steps: () => [String.raw`There is no charge in the cavity and all the excess sits on the outer surface, so $\vec{E} = 0$ in the cavity.`],
     cases: [kase('#3', {}, { ans: 4 }, { key: 'D' })],
   }),
   problem({
     ...C37, id: 'e2.37.surface-field', lab: 'conductors', src: 'Practice 37 #4', title: 'Field direction at a conductor surface', kind: 'conceptual', topics: ['conductors', 'field-lines'],
     text: () => 'Field lines leaving the surface of a conductor in equilibrium are:',
     parts: [mc('ans', [[1, 'Always perpendicular to the surface'], [2, 'Always parallel to the surface'], [3, 'Along the surface'], [4, 'At random angles']], 1)],
-    steps: () => ['Any component along the surface would push charges around, so in equilibrium E is perpendicular to the surface.'],
+    steps: () => [String.raw`Any component along the surface would push charges around, so in equilibrium $\vec{E}$ is perpendicular to the surface.`],
     sim: { scenario: 'neutral' },
     cases: [kase('#4', {}, { ans: 1 }, { key: 'A' })],
   }),
@@ -613,7 +703,7 @@ export default [
     vars: { Ed: UPDOWN, face: choice([1, 'top'], [-1, 'bottom']) },
     text: (T) => `A neutral aluminum cube rests on a wooden table in a uniform external field directed ${T.Ed}. What is the charge on its ${T.face} face?`,
     parts: [mc('ans', [[1, 'Positive'], [-1, 'Negative'], [0, 'Neutral'], [2, 'Cannot tell']], ($) => $.Ed * $.face)],
-    steps: () => ['Electrons move opposite to E. The face that E points toward is left positive, and the opposite face becomes negative.'],
+    steps: () => [String.raw`Electrons move opposite to $\vec{E}$: the face that $\vec{E}$ points toward is left positive, and the opposite face becomes negative.`],
     cases: [kase('#5', { Ed: 1, face: 1 }, { ans: 1 }, { key: 'A' })],
   }),
   problem({
@@ -621,7 +711,10 @@ export default [
     vars: { q: range(1, 10, 1, 'μC', 1e-6), s: SIGN, Q: range(-10, 10, 1, 'μC', 1e-6) },
     text: (T) => `A small sphere with ${T.q} μC (${T.s}) sits inside a conducting shell without touching it. The shell's own net charge is ${T.Q} μC. After equilibrium, what charge is on the shell's inner surface, and on its outer surface?`,
     parts: [num('inner', ($) => -$.s * $.q, 'μC', { scale: 1e-6, abs: 0.01, label: 'Inner surface' }), num('outer', ($) => $.s * $.q + $.Q, 'μC', { scale: 1e-6, abs: 0.01, label: 'Outer surface' })],
-    steps: () => ['E = 0 in the metal → the inner surface is −q.', 'Charge conservation: outer = Q_shell + q.'],
+    steps: () => [
+      String.raw`$\vec{E} = 0$ in the metal, so the inner surface carries $-q$.`,
+      String.raw`Charge conservation then gives the outer surface $Q_{\text{shell}} + q$.`,
+    ],
     sim: {
       scenario: 'cage',
       setup(s, $) {
@@ -641,7 +734,7 @@ export default [
     ...C37, id: 'e2.37.lightning-car', lab: 'conductors', src: 'Practice 37 #10', title: 'Inside a car struck by lightning', kind: 'conceptual', topics: ['conductors', 'applications'],
     text: () => 'When a car is struck by lightning, the electric field inside the car is:',
     parts: [mc('ans', [[1, 'Zero'], [2, 'Huge, and it lasts longer than the strike'], [3, 'Small but not zero'], [4, 'Huge but brief']], 1)],
-    steps: () => ['The metal body is a closed conductor. Charge stays on its outer surface, so it shields the inside like a Faraday cage and E inside is (ideally) zero.'],
+    steps: () => [String.raw`The metal body is a closed conductor. Charge stays on its outer surface, so it shields the inside like a Faraday cage and $\vec{E}$ inside is ideally zero.`],
     sim: { scenario: 'cage' },
     cases: [kase('#10', {}, { ans: 1 }, { key: 'A' })],
   }),

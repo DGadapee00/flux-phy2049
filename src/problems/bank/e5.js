@@ -1,5 +1,5 @@
 /** Exam 5 · Ch 48 (Faraday/Lenz), 49 (inductance, RL), 50 (motors, transformers, transmission), 51 (applications), 52 (AC circuits). */
-import { problem, kase, range, choice, num, mc, MU0, DEG } from '../kit.js';
+import { problem, kase, range, choice, num, mc, MU0, DEG , texNum } from '../kit.js';
 
 const E5 = { exam: 'e5' };
 const acSet = (s, o) => Object.assign(s, o);
@@ -12,7 +12,7 @@ export default [
     derive: ($) => ({ A: Math.PI * $.r ** 2, Phi: $.B * Math.PI * $.r ** 2 * Math.cos($.th * DEG) }),
     text: (T) => `A circular loop of radius ${T.r} cm sits in a uniform ${T.B} T field. The loop's normal makes ${T.th}° with B. Find the magnetic flux through the loop.`,
     parts: [num('Phi', ($) => $.Phi, 'Wb', { abs: 1e-9 })],
-    steps: ($, f) => [`Φ_B = BA cos θ = ${f($.Phi)} Wb`],
+    steps: ($, f) => [String.raw`$\Phi_B = BA\cos\theta = ${texNum($.Phi)}\ \text{Wb}$`],
     sim: { scenario: 'expand', setup: (s, $) => void Object.assign(s, { B: Math.min(1, $.B), R0: Math.min(0.5, $.r) }) },
     cases: [kase('hand', { B: 0.5, r: 10, th: 60 }, { Phi: 7.854e-3 })],
   }),
@@ -25,7 +25,10 @@ export default [
     },
     text: (T) => `A ${T.N}-turn coil of radius ${T.r} cm (resistance ${T.R} Ω) is perpendicular to a field that increases steadily by ${T.dB} T in ${T.dt} s. Find the induced emf and current.`,
     parts: [num('emf', ($) => $.emf, 'V', { label: '|ε|' }), num('I', ($) => $.I, 'A')],
-    steps: ($, f) => [`|ε| = N A ΔB/Δt = ${f($.emf)} V`, `I = ε/R = ${f($.I)} A`],
+    steps: ($, f) => [
+      String.raw`$|\mathcal{E}| = NA\dfrac{\Delta B}{\Delta t} = ${texNum($.emf)}\ \text{V}$`,
+      String.raw`$I = \dfrac{\mathcal{E}}{R} = ${texNum($.I)}\ \text{A}$`,
+    ],
     cases: [kase('hand', { N: 50, r: 5, dB: 0.4, dt: 0.2, R: 4 }, { emf: 0.7854, I: 0.19635 })],
   }),
   problem({
@@ -39,8 +42,13 @@ export default [
     },
     text: (T) => `A bar slides at a steady ${T.v} m/s along rails ${T.L} m apart in a ${T.B} T field perpendicular to the rails. The circuit resistance is ${T.R} Ω. Find the emf, the current, the force needed to keep the bar moving, and the power delivered.`,
     parts: [num('emf', ($) => $.emf, 'V'), num('I', ($) => $.I, 'A'), num('F', ($) => $.F, 'N'), num('P', ($) => $.P, 'W')],
-    hints: ['The magnetic force on the current opposes the motion (Lenz), so you must push with F = ILB.'],
-    steps: ($, f) => [`ε = BLv = ${f($.emf)} V`, `I = ε/R = ${f($.I)} A`, `F = ILB = ${f($.F)} N`, `P = Fv = I²R = ${f($.P)} W`],
+    hints: [String.raw`The magnetic force on the current opposes the motion (Lenz), so you have to push with $F = ILB$.`],
+    steps: ($, f) => [
+      String.raw`$\mathcal{E} = BLv = ${texNum($.emf)}\ \text{V}$`,
+      String.raw`$I = \dfrac{\mathcal{E}}{R} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$F = ILB = ${texNum($.F)}\ \text{N}$`,
+      String.raw`$P = Fv = I^2R = ${texNum($.P)}\ \text{W}$`,
+    ],
     sim: { scenario: 'bar', setup: (s, $) => void Object.assign(s, { B: $.B, width: Math.min(0.8, $.L) }) },
     cases: [kase('hand', { B: 0.5, L: 0.4, v: 2, R: 2 }, { emf: 0.4, I: 0.2, F: 0.04, P: 0.08 })],
   }),
@@ -60,8 +68,8 @@ export default [
     derive: ($) => ({ emf: $.B * 2 * Math.PI * $.R * $.Rdot }),
     text: (T) => `A circular loop in a ${T.B} T field (perpendicular to the loop) is expanding. When its radius is ${T.R} cm, the radius is growing at ${T.Rdot} m/s. Find the induced emf.`,
     parts: [num('emf', ($) => $.emf, 'V', { label: '|ε|' })],
-    hints: ['Φ = BπR², so dΦ/dt = B·2πR·dR/dt'],
-    steps: ($, f) => [`|ε| = B·2πR·dR/dt = ${f($.emf)} V`],
+    hints: [String.raw`$\Phi_B = B\pi R^2$, so $\dfrac{d\Phi_B}{dt} = B\,2\pi R\dfrac{dR}{dt}$`],
+    steps: ($, f) => [String.raw`$|\mathcal{E}| = B\,2\pi R\dfrac{dR}{dt} = ${texNum($.emf)}\ \text{V}$`],
     sim: { scenario: 'expand', setup: (s, $) => void Object.assign(s, { B: $.B, R0: Math.min(0.5, $.R) }) },
     cases: [kase('hand', { B: 0.4, R: 28, Rdot: 0.1 }, { emf: 0.07037 })],
   }),
@@ -71,8 +79,8 @@ export default [
     derive: ($) => ({ emf: ($.N * $.B * $.A * Math.abs(Math.cos($.th2 * DEG) - Math.cos($.th1 * DEG))) / $.dt }),
     valid: ($) => $.emf > 1e-6,
     text: (T) => `A ${T.N}-turn coil of area ${T.A} cm² in a ${T.B} T field is rotated so that the angle between its normal and B goes from ${T.th1}° to ${T.th2}° in ${T.dt} s. Find the average induced emf.`,
-    parts: [num('emf', ($) => $.emf, 'V', { label: '|ε_avg|' })],
-    steps: ($, f) => [`|ε| = N B A |cos θ₂ − cos θ₁| / Δt = ${f($.emf)} V`],
+    parts: [num('emf', ($) => $.emf, 'V', { label: String.raw`$|\mathcal{E}_{\text{avg}}|$` })],
+    steps: ($, f) => [String.raw`$|\mathcal{E}| = \dfrac{NBA\,|\cos\theta_2 - \cos\theta_1|}{\Delta t} = ${texNum($.emf)}\ \text{V}$`],
     cases: [kase('hand', { N: 10, B: 0.5, A: 400, th1: 0, th2: 90, dt: 0.1 }, { emf: 2 })],
   }),
 
@@ -83,7 +91,7 @@ export default [
     derive: ($) => ({ L: (MU0 * $.N ** 2 * Math.PI * $.r ** 2) / $.l }),
     text: (T) => `A solenoid has ${T.N} turns, radius ${T.r} cm and length ${T.l} cm. Find its inductance.`,
     parts: [num('L', ($) => $.L, 'mH', { scale: 1e-3 })],
-    steps: ($, f) => [`L = μ₀N²A/ℓ = ${f($.L)} H`],
+    steps: ($, f) => [String.raw`$L = \dfrac{\mu_0 N^2 A}{\ell} = ${texNum($.L)}\ \text{H}$`],
     cases: [kase('hand', { N: 500, r: 2, l: 30 }, { L: 1.3159 })],
   }),
   problem({
@@ -92,7 +100,7 @@ export default [
     derive: ($) => ({ emf: ($.L * $.dI) / $.dt }),
     text: (T) => `The current in a ${T.L} mH inductor changes steadily by ${T.dI} A in ${T.dt} ms. What is the magnitude of the self-induced emf?`,
     parts: [num('emf', ($) => $.emf, 'V'), mc('dir', [[1, 'It opposes the change in current'], [2, 'It helps the change along'], [3, 'It is zero once the current is steady'], [4, 'Both the first and third statements are true']], 4, { label: 'Which is correct?' })],
-    steps: ($, f) => [`|ε| = L ΔI/Δt = ${f($.emf)} V`],
+    steps: ($, f) => [String.raw`$|\mathcal{E}| = L\dfrac{\Delta I}{\Delta t} = ${texNum($.emf)}\ \text{V}$`],
     cases: [kase('hand', { L: 50, dI: 2, dt: 10 }, { emf: 10, dir: 4 })],
   }),
   problem({
@@ -105,8 +113,12 @@ export default [
     },
     text: (T, $, f) => `A ${T.L} mH inductor and a ${T.R} Ω resistor are switched onto a ${T.E} V battery at t = 0. Find the time constant, the current at t = ${f($.t)} s, and the energy stored once the current is steady.`,
     parts: [num('tau', ($) => $.tau, 's', { label: 'τ' }), num('I', ($) => $.I, 'A'), num('U', ($) => $.U, 'J')],
-    hints: ['I(t) = (ε/R)(1 − e^{−t/τ}),  τ = L/R,  U = ½LI²'],
-    steps: ($, f) => [`τ = L/R = ${f($.tau)} s`, `I = ${f($.I)} A`, `U = ½L(ε/R)² = ${f($.U)} J`],
+    hints: [String.raw`$I(t) = \dfrac{\varepsilon}{R}\left(1 - e^{-t/\tau}\right)$ with $\tau = L/R$, and $U = \tfrac{1}{2}LI^2$`],
+    steps: ($, f) => [
+      String.raw`$\tau = \dfrac{L}{R} = ${texNum($.tau)}\ \text{s}$`,
+      String.raw`$I = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$U = \tfrac{1}{2}L\left(\dfrac{\varepsilon}{R}\right)^2 = ${texNum($.U)}\ \text{J}$`,
+    ],
     cases: [kase('hand', { L: 200, R: 10, E: 12, n: 1 }, { tau: 0.02, I: 0.7585, U: 0.144 })],
   }),
 
@@ -118,7 +130,10 @@ export default [
     valid: ($) => $.Np !== $.Ns,
     text: (T) => `An ideal transformer has ${T.Np} primary turns and ${T.Ns} secondary turns. The primary has ${T.Vp} V (rms) and draws ${T.Ip} A. Find the secondary voltage and current. Is it step-up or step-down?`,
     parts: [num('Vs', ($) => $.Vs, 'V'), num('Is', ($) => $.Is, 'A'), mc('type', [[1, 'Step-up'], [-1, 'Step-down']], ($) => ($.Ns > $.Np ? 1 : -1), { label: 'Type' })],
-    steps: ($, f) => [`V_s = V_p N_s/N_p = ${f($.Vs)} V`, `Power in = power out → I_s = I_p N_p/N_s = ${f($.Is)} A`],
+    steps: ($, f) => [
+      String.raw`$V_s = V_p\dfrac{N_s}{N_p} = ${texNum($.Vs)}\ \text{V}$`,
+      String.raw`Power in = power out, so $I_s = I_p\dfrac{N_p}{N_s} = ${texNum($.Is)}\ \text{A}$`,
+    ],
     cases: [kase('hand', { Np: 200, Ns: 50, Vp: 120, Ip: 0.5 }, { Vs: 30, Is: 2, type: -1 })],
   }),
   problem({
@@ -132,8 +147,12 @@ export default [
     valid: ($) => $.pct < 50,
     text: (T) => `A plant sends ${T.P} kW over lines with a total resistance of ${T.R} Ω, at ${T.V} kV. Find the line current, the power lost in the lines, and that loss as a percentage of the power sent.`,
     parts: [num('I', ($) => $.I, 'A'), num('loss', ($) => $.loss, 'W'), num('pct', ($) => $.pct, '%')],
-    hints: ['Use I = P/V with the transmission voltage, not V²/R.'],
-    steps: ($, f) => [`I = P/V = ${f($.I)} A`, `P_loss = I²R = ${f($.loss)} W (${f($.pct)}%)`, 'Doubling V cuts the loss by a factor of 4.'],
+    hints: [String.raw`Use $I = P/V$ with the transmission voltage, not $V^2/R$.`],
+    steps: ($, f) => [
+      String.raw`$I = \dfrac{P}{V} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$P_{\text{loss}} = I^2R = ${texNum($.loss)}\ \text{W}$ (${f($.pct)}%)`,
+      String.raw`Doubling $V$ cuts the loss by a factor of 4.`,
+    ],
     cases: [kase('hand', { P: 500, V: 10, R: 5 }, { I: 50, loss: 12500, pct: 2.5 })],
   }),
   problem({
@@ -142,7 +161,10 @@ export default [
     derive: ($) => ({ eb: $.f * $.V, I: ($.V - $.f * $.V) / $.R, I0: $.V / $.R }),
     text: (T, $, f) => `A DC motor with ${T.R} Ω windings runs on ${T.V} V. At full speed its back emf is ${f($.eb)} V. Find the running current and the current at the moment it starts.`,
     parts: [num('I', ($) => $.I, 'A', { label: 'Running' }), num('I0', ($) => $.I0, 'A', { label: 'At start-up' })],
-    steps: ($, f) => [`I = (V − ε_b)/R = ${f($.I)} A`, `At start-up ε_b = 0, so I = V/R = ${f($.I0)} A`],
+    steps: ($, f) => [
+      String.raw`$I = \dfrac{V - \mathcal{E}_b}{R} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`At start-up $\mathcal{E}_b = 0$, so $I = \dfrac{V}{R} = ${texNum($.I0)}\ \text{A}$`,
+    ],
     cases: [kase('hand', { V: 120, R: 2, f: 100 / 120 }, { I: 10, I0: 60 })],
   }),
   problem({
@@ -154,8 +176,11 @@ export default [
       return { A, e0, erms: e0 / Math.SQRT2 };
     },
     text: (T) => `A generator coil has ${T.N} turns of radius ${T.r} cm and spins at ${T.f} Hz in a ${T.B} T field. Find the peak and rms emf.`,
-    parts: [num('e0', ($) => $.e0, 'V', { label: 'ε_max' }), num('erms', ($) => $.erms, 'V', { label: 'ε_rms' })],
-    steps: ($, f) => [`ε_max = NBAω = ${f($.e0)} V`, `ε_rms = ε_max/√2 = ${f($.erms)} V`],
+    parts: [num('e0', ($) => $.e0, 'V', { label: String.raw`$\mathcal{E}_{\max}$` }), num('erms', ($) => $.erms, 'V', { label: String.raw`$\mathcal{E}_{\text{rms}}$` })],
+    steps: ($, f) => [
+      String.raw`$\mathcal{E}_{\max} = NBA\omega = ${texNum($.e0)}\ \text{V}$`,
+      String.raw`$\mathcal{E}_{\text{rms}} = \dfrac{\mathcal{E}_{\max}}{\sqrt{2}} = ${texNum($.erms)}\ \text{V}$`,
+    ],
     sim: { scenario: 'generator', setup: (s, $) => void Object.assign(s, { N: Math.min($.N, 20), B: $.B, R: Math.min(0.5, $.r) }) },
     cases: [kase('hand', { N: 100, B: 0.5, r: 8, f: 60 }, { e0: 378.99, erms: 267.99 })],
   }),
@@ -179,8 +204,11 @@ export default [
       return { XC, I: $.V / XC };
     },
     text: (T) => `A ${T.C} μF capacitor is connected to a ${T.V} V (rms), ${T.f} Hz source. Find its reactance and the rms current.`,
-    parts: [num('XC', ($) => $.XC, 'Ω', { label: 'X_C' }), num('I', ($) => $.I, 'A', { label: 'I_rms' }), mc('f', [[1, 'X_C decreases'], [2, 'X_C increases']], 1, { label: 'If f goes up…' })],
-    steps: ($, f) => [`X_C = 1/(2πfC) = ${f($.XC)} Ω`, `I = V/X_C = ${f($.I)} A`],
+    parts: [num('XC', ($) => $.XC, 'Ω', { label: String.raw`$X_C$` }), num('I', ($) => $.I, 'A', { label: String.raw`$I_{\text{rms}}$` }), mc('f', [[1, 'X_C decreases'], [2, 'X_C increases']], 1, { label: 'If f goes up…' })],
+    steps: ($, f) => [
+      String.raw`$X_C = \dfrac{1}{2\pi fC} = ${texNum($.XC)}\ \Omega$`,
+      String.raw`$I = \dfrac{V}{X_C} = ${texNum($.I)}\ \text{A}$`,
+    ],
     sim: {
       scenario: 'rc',
       setup: (s, $) => acSet(s, { hasL: false, hasC: true, C: $.C, f: $.f, Vrms: $.V, R: 1 }),
@@ -196,8 +224,11 @@ export default [
       return { XL, I: $.V / XL };
     },
     text: (T) => `A ${T.L} mH inductor is connected to a ${T.V} V (rms), ${T.f} Hz source. Find its reactance and the rms current.`,
-    parts: [num('XL', ($) => $.XL, 'Ω', { label: 'X_L' }), num('I', ($) => $.I, 'A', { label: 'I_rms' }), mc('f', [[1, 'X_L decreases'], [2, 'X_L increases']], 2, { label: 'If f goes up…' })],
-    steps: ($, f) => [`X_L = 2πfL = ${f($.XL)} Ω`, `I = V/X_L = ${f($.I)} A`],
+    parts: [num('XL', ($) => $.XL, 'Ω', { label: String.raw`$X_L$` }), num('I', ($) => $.I, 'A', { label: String.raw`$I_{\text{rms}}$` }), mc('f', [[1, 'X_L decreases'], [2, 'X_L increases']], 2, { label: 'If f goes up…' })],
+    steps: ($, f) => [
+      String.raw`$X_L = 2\pi fL = ${texNum($.XL)}\ \Omega$`,
+      String.raw`$I = \dfrac{V}{X_L} = ${texNum($.I)}\ \text{A}$`,
+    ],
     sim: {
       scenario: 'rl',
       setup: (s, $) => acSet(s, { hasL: true, hasC: false, L: $.L, f: $.f, Vrms: $.V, R: 1 }),
@@ -217,18 +248,23 @@ export default [
       const phi = (Math.atan2(XL - XC, $.R) * 180) / Math.PI;
       return { XL, XC, Z, I, phi, pf: $.R / Z, P: I * I * $.R, VR: I * $.R, VL: I * XL, VC: I * XC };
     },
-    text: (T) => `A series circuit has R = ${T.R} Ω, L = ${T.L} mH and C = ${T.C} μF, driven at ${T.V} V (rms) and ${T.f} Hz. Find X_L, X_C, Z, I_rms, the phase angle φ (voltage relative to current), the power factor, and the average power.`,
+    text: (T) => `A series circuit has R = ${T.R} Ω, L = ${T.L} mH and C = ${T.C} μF, driven at ${T.V} V (rms) and ${T.f} Hz. Find $X_L$, $X_C$, $Z$, $I_{\\text{rms}}$, the phase angle φ (voltage relative to current), the power factor, and the average power.`,
     parts: [
-      num('XL', ($) => $.XL, 'Ω', { label: 'X_L' }),
-      num('XC', ($) => $.XC, 'Ω', { label: 'X_C' }),
+      num('XL', ($) => $.XL, 'Ω', { label: String.raw`$X_L$` }),
+      num('XC', ($) => $.XC, 'Ω', { label: String.raw`$X_C$` }),
       num('Z', ($) => $.Z, 'Ω'),
-      num('I', ($) => $.I, 'A', { label: 'I_rms' }),
+      num('I', ($) => $.I, 'A', { label: String.raw`$I_{\text{rms}}$` }),
       num('phi', ($) => $.phi, '°', { label: 'φ', abs: 0.5, tol: 0.01 }),
-      num('P', ($) => $.P, 'W', { label: 'P_avg' }),
+      num('P', ($) => $.P, 'W', { label: String.raw`$P_{\text{avg}}$` }),
       mc('lead', [[1, 'Current leads the voltage (capacitive)'], [-1, 'Current lags the voltage (inductive)'], [0, 'In phase']], ($) => (Math.abs($.XL - $.XC) < 1e-9 ? 0 : $.XL > $.XC ? -1 : 1), { label: 'Phase' }),
     ],
-    hints: ['Z = √(R² + (X_L − X_C)²),  tan φ = (X_L − X_C)/R,  P = I²R = IV cos φ'],
-    steps: ($, f) => [`X_L = ${f($.XL)} Ω, X_C = ${f($.XC)} Ω`, `Z = ${f($.Z)} Ω → I = ${f($.I)} A`, `φ = ${f($.phi)}°, cos φ = ${f($.pf)}`, `P = I²R = ${f($.P)} W`],
+    hints: [String.raw`$Z = \sqrt{R^2 + (X_L - X_C)^2}$, $\tan\varphi = \dfrac{X_L - X_C}{R}$, and $P = I^2R = IV\cos\varphi$`],
+    steps: ($, f) => [
+      String.raw`$X_L = ${texNum($.XL)}\ \Omega$, $X_C = ${texNum($.XC)}\ \Omega$`,
+      String.raw`$Z = ${texNum($.Z)}\ \Omega \;\Longrightarrow\; I = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$\varphi$ = ${f($.phi)}°, $\cos\varphi = ${texNum($.pf)}$`,
+      String.raw`$P = I^2R = ${texNum($.P)}\ \text{W}$`,
+    ],
     sim: {
       scenario: 'rlc',
       setup: (s, $) => acSet(s, { hasL: true, hasC: true, R: $.R, L: $.L, C: $.C, f: $.f, Vrms: $.V }),
@@ -245,9 +281,13 @@ export default [
       return { f0, I, VL: I * 2 * Math.PI * f0 * $.L };
     },
     text: (T) => `A series RLC circuit (R = ${T.R} Ω, L = ${T.L} mH, C = ${T.C} μF) is driven by a ${T.V} V (rms) source. Find the resonant frequency, the rms current at resonance, and the rms voltage across the inductor at resonance.`,
-    parts: [num('f0', ($) => $.f0, 'Hz'), num('I', ($) => $.I, 'A'), num('VL', ($) => $.VL, 'V', { label: 'V_L' })],
-    hints: ['At resonance X_L = X_C, so Z = R. V_L and V_C can be larger than the source voltage.'],
-    steps: ($, f) => [`f₀ = 1/(2π√(LC)) = ${f($.f0)} Hz`, `I = V/R = ${f($.I)} A`, `V_L = I X_L = ${f($.VL)} V`],
+    parts: [num('f0', ($) => $.f0, 'Hz'), num('I', ($) => $.I, 'A'), num('VL', ($) => $.VL, 'V', { label: String.raw`$V_L$` })],
+    hints: [String.raw`At resonance $X_L = X_C$, so $Z = R$. $V_L$ and $V_C$ can each be larger than the source voltage.`],
+    steps: ($, f) => [
+      String.raw`$f_0 = \dfrac{1}{2\pi\sqrt{LC}} = ${texNum($.f0)}\ \text{Hz}$`,
+      String.raw`$I = \dfrac{V}{R} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$V_L = IX_L = ${texNum($.VL)}\ \text{V}$`,
+    ],
     sim: {
       scenario: 'res',
       setup(s, $) {
@@ -263,7 +303,7 @@ export default [
     vars: { el: choice([1, 'only a capacitor'], [2, 'only an inductor'], [3, 'only a resistor'], [4, 'R and C in series'], [5, 'R and L in series']) },
     text: (T) => `An AC source drives a circuit containing ${T.el}. How does the current's phase compare with the source voltage's?`,
     parts: [mc('ans', [[1, 'Current leads by 90°'], [2, 'Current lags by 90°'], [3, 'In phase'], [4, 'Current leads by between 0° and 90°'], [5, 'Current lags by between 0° and 90°']], ($) => $.el)],
-    steps: () => ['Capacitor: I leads V by 90° ("ICE"). Inductor: V leads I by 90° ("ELI"). Adding R brings the phase angle to somewhere between 0° and 90°.'],
+    steps: () => [String.raw`Capacitor: $I$ leads $V$ by $90^\circ$ ("ICE"). Inductor: $V$ leads $I$ by $90^\circ$ ("ELI"). Adding $R$ brings the phase angle somewhere between $0^\circ$ and $90^\circ$.`],
     sim: { scenario: 'rc' },
     cases: [kase('RL', { el: 5 }, { ans: 5 })],
   }),

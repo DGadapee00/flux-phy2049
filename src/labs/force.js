@@ -12,7 +12,7 @@ export default defineLab({
   id: 'force',
   exam: 'e1',
   title: 'Force',
-  hint: 'Select a charge to read F_net',
+  hint: String.raw`Select a charge to read $\vec{F}_{\text{net}}$`,
   orbit: true,
   camera: { pos: new THREE.Vector3(5.6, 3.4, 8.8), target: new THREE.Vector3(0, 0, 0) },
   keys: { '+': 'add+', '=': 'add+', '-': 'add-', Delete: 'delete', Backspace: 'delete', r: 'reset', R: 'reset' },

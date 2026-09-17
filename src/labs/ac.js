@@ -99,7 +99,7 @@ export default defineLab({
   id: 'ac',
   exam: 'e5',
   title: 'AC',
-  hint: 'Tune f through resonance — I peaks when X_L = X_C',
+  hint: String.raw`Tune $f$ through resonance — $I$ peaks when $X_L = X_C$`,
   live: true,
   orbit: false,
   camera: { pos: new THREE.Vector3(-0.8, 0.9, 15.5), target: new THREE.Vector3(-0.8, 0.9, 0) },

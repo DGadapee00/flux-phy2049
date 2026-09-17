@@ -1,5 +1,5 @@
 /** Exam 7 · Ch 58 (refraction), 59 (mirrors), 60 (lenses), 62 (optical instruments). Distances in cm. */
-import { problem, kase, range, choice, num, mc, DEG } from '../kit.js';
+import { problem, kase, range, choice, num, mc, DEG , texNum } from '../kit.js';
 import { MEDIA } from '../../physics/optics.js';
 
 const E7 = { exam: 'e7' };
@@ -38,8 +38,11 @@ export default [
     },
     valid: ($) => $.m1 !== $.m2 && $.s < 0.999,
     text: (T) => `Light in ${T.m1} strikes a flat boundary with ${T.m2} at ${T.th}° from the normal. Find the angle of refraction and the angle of reflection.`,
-    parts: [num('th2', ($) => $.th2, '°', { label: 'θ₂', abs: 0.2, tol: 0.005 }), num('thr', ($) => $.th, '°', { label: 'θ_reflected', abs: 0.1, tol: 0 }), mc('bend', [[1, 'Toward the normal'], [-1, 'Away from the normal']], ($) => (nOf($.m2) > nOf($.m1) ? 1 : -1), { label: 'The ray bends…' })],
-    steps: ($, f) => [`n₁ sin θ₁ = n₂ sin θ₂ → θ₂ = ${f($.th2)}°`, 'θ_r = θ₁. Going into a higher n bends the ray toward the normal.'],
+    parts: [num('th2', ($) => $.th2, '°', { label: 'θ₂', abs: 0.2, tol: 0.005 }), num('thr', ($) => $.th, '°', { label: String.raw`$\theta$ reflected`, abs: 0.1, tol: 0 }), mc('bend', [[1, 'Toward the normal'], [-1, 'Away from the normal']], ($) => (nOf($.m2) > nOf($.m1) ? 1 : -1), { label: 'The ray bends…' })],
+    steps: ($, f) => [
+      String.raw`$n_1\sin\theta_1 = n_2\sin\theta_2 \;\Longrightarrow\; \theta_2$ = ${f($.th2)}°`,
+      String.raw`$\theta_r = \theta_1$. Going into a higher $n$ bends the ray toward the normal.`,
+    ],
     sim: {
       scenario: 'air-glass',
       setup: (s, $) => void Object.assign(s, { n1: $.m1, n2: $.m2, theta: $.th }),
@@ -53,9 +56,9 @@ export default [
     derive: ($) => ({ tc: (Math.asin(nOf($.m2) / nOf($.m1)) * 180) / Math.PI }),
     valid: ($) => nOf($.m1) > nOf($.m2),
     text: (T) => `Find the critical angle for light going from ${T.m1} into ${T.m2}.`,
-    parts: [num('tc', ($) => $.tc, '°', { label: 'θ_c', abs: 0.2, tol: 0.005 })],
-    hints: ['Total internal reflection can only happen when going from higher n to lower n.'],
-    steps: ($, f) => [`sin θ_c = n₂/n₁ → θ_c = ${f($.tc)}°`],
+    parts: [num('tc', ($) => $.tc, '°', { label: String.raw`$\theta_c$`, abs: 0.2, tol: 0.005 })],
+    hints: [String.raw`Total internal reflection can only happen going from higher $n$ to lower $n$.`],
+    steps: ($, f) => [String.raw`$\sin\theta_c = \dfrac{n_2}{n_1} \;\Longrightarrow\; \theta_c$ = ${f($.tc)}°`],
     sim: {
       scenario: 'tir',
       setup: (s, $) => void Object.assign(s, { n1: $.m1, n2: $.m2, theta: 30 }),
@@ -73,7 +76,7 @@ export default [
     valid: ($) => $.m1 !== $.m2 && Math.abs($.s - 1) > 0.01,
     text: (T) => `Light travels from ${T.m1} toward ${T.m2} at ${T.th}° from the normal. Is it totally internally reflected?`,
     parts: [mc('tir', [[1, 'Yes, total internal reflection'], [0, 'No, some light is transmitted']], ($) => $.tir)],
-    steps: ($, f) => [`n₁ sin θ₁ / n₂ = ${f($.s)}; TIR happens when this exceeds 1`],
+    steps: ($, f) => [String.raw`$\dfrac{n_1\sin\theta_1}{n_2} = ${texNum($.s)}$ — total internal reflection happens when this exceeds 1`],
     sim: {
       scenario: 'tir',
       setup: (s, $) => void Object.assign(s, { n1: $.m1, n2: $.m2, theta: $.th }),
@@ -87,7 +90,7 @@ export default [
     derive: ($) => ({ dp: $.d / nOf($.m) }),
     text: (T) => `Looking straight down from air, how deep does an object ${T.d} m below the surface of ${T.m} appear to be?`,
     parts: [num('dp', ($) => $.dp, 'm')],
-    steps: ($, f) => [`d' = d·(n_air/n) = ${f($.dp)} m (it looks shallower)`],
+    steps: ($, f) => [String.raw`$d' = d\dfrac{n_{\text{air}}}{n} = ${texNum($.dp)}\ \text{m}$ — it looks shallower`],
     cases: [kase('pool', { m: 'water', d: 2 }, { dp: 1.504 })],
   }),
   problem({
@@ -95,7 +98,7 @@ export default [
     vars: { q: choice([1, 'is bent the most'], [2, 'travels fastest in the glass'], [3, 'has the largest index of refraction']) },
     text: (T) => `White light passes through a glass prism. Which color ${T.q}?`,
     parts: [mc('ans', [[1, 'Violet'], [2, 'Red'], [3, 'All colors the same']], ($) => ($.q === 2 ? 2 : 1))],
-    steps: () => ['In glass, n is slightly larger for shorter wavelengths, so violet bends the most and travels slowest; red travels fastest.'],
+    steps: () => [String.raw`In glass $n$ is slightly larger for shorter wavelengths, so violet bends the most and travels slowest; red travels fastest.`],
     cases: [kase('fastest', { q: 2 }, { ans: 2 })],
   }),
 
@@ -106,9 +109,15 @@ export default [
     derive: ($) => ({ f: $.type === 'concave' ? $.fA : -$.fA, ...image($.type === 'concave' ? $.fA : -$.fA, $.d, $.ho) }),
     valid: ($) => Math.abs($.d - $.fA) > 1 && Math.abs($.di) < 400 && Math.abs(Math.abs($.m) - 1) > 0.03,
     text: (T) => `A ${T.ho} cm tall object stands ${T.d} cm in front of a ${T.type} mirror with |f| = ${T.fA} cm. Find the image distance, magnification and image height, and describe the image.`,
-    parts: [num('di', ($) => $.di, 'cm', { label: 'd_i (signed)' }), num('m', ($) => $.m, '', { label: 'm' }), num('hi', ($) => $.hi, 'cm', { label: 'h_i' }), mc('type', TYPES, ($) => $.code, { label: 'Image' })],
-    hints: ['1/f = 1/d_o + 1/d_i, with f > 0 for concave and f < 0 for convex.', 'm = −d_i/d_o. A positive d_i means a real image in front of the mirror.'],
-    steps: ($, f) => [`1/d_i = 1/${f($.f)} − 1/${f($.d)} → d_i = ${f($.di)} cm`, `m = ${f($.m)}, h_i = ${f($.hi)} cm`],
+    parts: [num('di', ($) => $.di, 'cm', { label: String.raw`$d_i$ (signed)` }), num('m', ($) => $.m, '', { label: 'm' }), num('hi', ($) => $.hi, 'cm', { label: String.raw`$h_i$` }), mc('type', TYPES, ($) => $.code, { label: 'Image' })],
+    hints: [
+      String.raw`$\dfrac{1}{f} = \dfrac{1}{d_o} + \dfrac{1}{d_i}$, with $f > 0$ for concave and $f < 0$ for convex.`,
+      String.raw`$m = -\dfrac{d_i}{d_o}$. A positive $d_i$ means a real image in front of the mirror.`,
+    ],
+    steps: ($, f) => [
+      String.raw`$\dfrac{1}{d_i} = \dfrac{1}{${texNum($.f)}} - \dfrac{1}{${texNum($.d)}} \;\Longrightarrow\; d_i = ${texNum($.di)}\ \text{cm}$`,
+      String.raw`$m = ${texNum($.m)}$, $h_i = ${texNum($.hi)}\ \text{cm}$`,
+    ],
     sim: {
       scenario: 'concave-out',
       setup: (s, $) => void Object.assign(s, { type: $.type, fAbs: $.fA, do: $.d, ho: $.ho }),
@@ -129,9 +138,13 @@ export default [
       return { f, d, di: -$.m * d };
     },
     text: (T) => `A concave mirror has a radius of curvature of ${T.R} cm. Where should an object go to get magnification m = ${T.m}? Where is the image?`,
-    parts: [num('f', ($) => $.f, 'cm', { label: 'f' }), num('d', ($) => $.d, 'cm', { label: 'd_o' }), num('di', ($) => $.di, 'cm', { label: 'd_i (signed)' })],
-    hints: ['f = R/2. Substitute d_i = −m·d_o into the mirror equation: d_o = f(1 − 1/m).'],
-    steps: ($, f) => [`f = ${f($.f)} cm`, `d_o = f(1 − 1/m) = ${f($.d)} cm`, `d_i = −m·d_o = ${f($.di)} cm`],
+    parts: [num('f', ($) => $.f, 'cm', { label: 'f' }), num('d', ($) => $.d, 'cm', { label: String.raw`$d_o$` }), num('di', ($) => $.di, 'cm', { label: String.raw`$d_i$ (signed)` })],
+    hints: [String.raw`$f = R/2$. Substituting $d_i = -m\,d_o$ into the mirror equation gives $d_o = f\left(1 - \dfrac{1}{m}\right)$.`],
+    steps: ($, f) => [
+      String.raw`$f = ${texNum($.f)}\ \text{cm}$`,
+      String.raw`$d_o = f\left(1 - \dfrac{1}{m}\right) = ${texNum($.d)}\ \text{cm}$`,
+      String.raw`$d_i = -m\,d_o = ${texNum($.di)}\ \text{cm}$`,
+    ],
     sim: {
       scenario: 'concave-f',
       setup: (s, $) => void Object.assign(s, { type: 'concave', fAbs: $.f, do: $.d }),
@@ -146,10 +159,10 @@ export default [
     vars: { type: choice(['conv', 'converging'], ['div', 'diverging']), fA: range(6, 30, 0.5, 'cm'), d: range(4, 60, 1, 'cm'), ho: range(1, 10, 0.5, 'cm') },
     derive: ($) => ({ f: $.type === 'conv' ? $.fA : -$.fA, ...image($.type === 'conv' ? $.fA : -$.fA, $.d, $.ho) }),
     valid: ($) => Math.abs($.d - $.fA) > 1 && Math.abs($.di) < 400 && Math.abs(Math.abs($.m) - 1) > 0.03,
-    text: (T) => `A ${T.ho} cm object is ${T.d} cm from a ${T.type} lens with |f| = ${T.fA} cm. Find d_i, m and h_i, and describe the image.`,
-    parts: [num('di', ($) => $.di, 'cm', { label: 'd_i (signed)' }), num('m', ($) => $.m, ''), num('hi', ($) => $.hi, 'cm', { label: 'h_i' }), mc('type', TYPES, ($) => $.code, { label: 'Image' })],
-    hints: ['f > 0 for converging, f < 0 for diverging. A real image forms on the far side (d_i > 0).'],
-    steps: ($, f) => [`d_i = ${f($.di)} cm, m = ${f($.m)}, h_i = ${f($.hi)} cm`],
+    text: (T) => `A ${T.ho} cm object is ${T.d} cm from a ${T.type} lens with |f| = ${T.fA} cm. Find $d_i$, $m$ and $h_i$, and describe the image.`,
+    parts: [num('di', ($) => $.di, 'cm', { label: String.raw`$d_i$ (signed)` }), num('m', ($) => $.m, ''), num('hi', ($) => $.hi, 'cm', { label: String.raw`$h_i$` }), mc('type', TYPES, ($) => $.code, { label: 'Image' })],
+    hints: [String.raw`$f > 0$ for converging, $f < 0$ for diverging. A real image forms on the far side, $d_i > 0$.`],
+    steps: ($, f) => [String.raw`$d_i = ${texNum($.di)}\ \text{cm}$, $m = ${texNum($.m)}$, $h_i = ${texNum($.hi)}\ \text{cm}$`],
     sim: {
       scenario: 'conv-far',
       setup: (s, $) => void Object.assign(s, { mode: 'single', type: $.type, fAbs: $.fA, do: $.d, ho: $.ho }),
@@ -170,9 +183,13 @@ export default [
     },
     valid: ($) => Math.abs($.P) > 0.2,
     text: (T) => `Two thin lenses with f₁ = ${T.f1} cm and f₂ = ${T.f2} cm are placed in contact. Find the power of lens 1, the combined power, and the combined focal length.`,
-    parts: [num('P1', ($) => $.P1, 'D', { label: 'P₁' }), num('P', ($) => $.P, 'D', { label: 'P_total' }), num('f', ($) => $.f, 'cm', { scale: 1e-2, label: 'f_total' })],
-    hints: ['P = 1/f with f in meters. Powers of lenses in contact add.'],
-    steps: ($, f) => [`P₁ = ${f($.P1)} D`, `P = P₁ + P₂ = ${f($.P)} D`, `f = 1/P = ${f($.f * 100)} cm`],
+    parts: [num('P1', ($) => $.P1, 'D', { label: 'P₁' }), num('P', ($) => $.P, 'D', { label: String.raw`$P_{\text{total}}$` }), num('f', ($) => $.f, 'cm', { scale: 1e-2, label: String.raw`$f_{\text{total}}$` })],
+    hints: [String.raw`$P = 1/f$ with $f$ in metres. Powers of lenses in contact add.`],
+    steps: ($, f) => [
+      String.raw`$P_1 = ${texNum($.P1)}\ \text{D}$`,
+      String.raw`$P = P_1 + P_2 = ${texNum($.P)}\ \text{D}$`,
+      String.raw`$f = \dfrac{1}{P} = ${texNum($.f * 100)}\ \text{cm}$`,
+    ],
     cases: [kase('hand', { f1: 20, f2: -50 }, { P1: 5, P: 3, f: 33.33 })],
   }),
   problem({
@@ -186,9 +203,16 @@ export default [
     },
     valid: ($) => Math.abs($.d - $.f1) > 0.5 && $.di1 > 0 && $.d2 > 0.5 && Math.abs($.d2 - $.f2) > 0.5 && Math.abs($.di2) < 300,
     text: (T) => `Two converging lenses, f₁ = ${T.f1} cm and f₂ = ${T.f2} cm, are ${T.sep} cm apart. An object is ${T.d} cm in front of lens 1. Find the final image position (measured from lens 2) and the overall magnification.`,
-    parts: [num('di1', ($) => $.di1, 'cm', { label: 'Image from lens 1' }), num('di2', ($) => $.di2, 'cm', { label: 'Final d_i (from lens 2, signed)' }), num('M', ($) => $.M, '', { label: 'M_total' })],
-    hints: ["Lens 1's image is the object for lens 2: d_o2 = separation − d_i1.", 'The magnifications multiply.'],
-    steps: ($, f) => [`d_i1 = ${f($.di1)} cm, m₁ = ${f($.m1)}`, `d_o2 = ${f($.d2)} cm → d_i2 = ${f($.di2)} cm, m₂ = ${f($.m2)}`, `M = m₁m₂ = ${f($.M)}`],
+    parts: [num('di1', ($) => $.di1, 'cm', { label: 'Image from lens 1' }), num('di2', ($) => $.di2, 'cm', { label: String.raw`Final $d_i$ (from lens 2, signed)` }), num('M', ($) => $.M, '', { label: String.raw`$M_{\text{total}}$` })],
+    hints: [
+      String.raw`Lens 1's image is the object for lens 2: $d_{o2} = s - d_{i1}$.`,
+      'The magnifications multiply.',
+    ],
+    steps: ($, f) => [
+      String.raw`$d_{i1} = ${texNum($.di1)}\ \text{cm}$, $m_1 = ${texNum($.m1)}$`,
+      String.raw`$d_{o2} = ${texNum($.d2)}\ \text{cm} \;\Longrightarrow\; d_{i2} = ${texNum($.di2)}\ \text{cm}$, $m_2 = ${texNum($.m2)}$`,
+      String.raw`$M = m_1 m_2 = ${texNum($.M)}$`,
+    ],
     sim: {
       scenario: 'micro',
       setup: (s, $) => void Object.assign(s, { mode: 'micro', type: 'conv', fAbs: $.f1, f2: $.f2, do: $.d, sep: $.sep, ho: 2 }),
@@ -204,7 +228,10 @@ export default [
     derive: ($) => ({ M: $.where === 1 ? 25 / $.f : 1 + 25 / $.f }),
     text: (T) => `A magnifying glass has f = ${T.f} cm. What is its angular magnification when the image is ${T.where}?`,
     parts: [num('M', ($) => $.M, '×')],
-    steps: ($, f) => [`Relaxed: M = 25/f. Near point: M = 1 + 25/f. → ${f($.M)}×`],
+    steps: ($, f) => [
+      String.raw`Relaxed eye: $M = \dfrac{25}{f}$. Image at the near point: $M = 1 + \dfrac{25}{f}$.`,
+      String.raw`$M = ${texNum($.M)}\times$`,
+    ],
     sim: { scenario: 'conv-in', setup: (s, $) => void Object.assign(s, { mode: 'single', type: 'conv', fAbs: Math.max(6, $.f), do: 0.8 * Math.max(6, $.f) }) },
     cases: [kase('relaxed', { f: 5, where: 1 }, { M: 5 }), kase('near point', { f: 5, where: 2 }, { M: 6 })],
   }),
@@ -214,7 +241,10 @@ export default [
     derive: ($) => ({ M: -$.fo / $.fe, L: $.fo + $.fe }),
     text: (T) => `A Keplerian telescope has an objective with f = ${T.fo} cm and an eyepiece with f = ${T.fe} cm. Find its angular magnification (relaxed eye) and its length.`,
     parts: [num('M', ($) => $.M, '×', { label: 'M (signed)' }), num('L', ($) => $.L, 'cm', { label: 'Tube length' })],
-    steps: ($, f) => [`M = −f_o/f_e = ${f($.M)}`, `L = f_o + f_e = ${f($.L)} cm`],
+    steps: ($, f) => [
+      String.raw`$M = -\dfrac{f_o}{f_e} = ${texNum($.M)}$`,
+      String.raw`$L = f_o + f_e = ${texNum($.L)}\ \text{cm}$`,
+    ],
     sim: {
       scenario: 'tele',
       setup: (s, $) => void Object.assign(s, { mode: 'tele', fAbs: $.fo, f2: $.fe, do: 1e5, sep: $.fo + $.fe }),
@@ -228,7 +258,7 @@ export default [
     derive: ($) => ({ M: -($.L / $.fo) * (25 / $.fe) }),
     text: (T) => `A microscope has tube length ${T.L} cm, an objective with f = ${T.fo} cm, and an eyepiece with f = ${T.fe} cm. Estimate its overall magnification.`,
     parts: [num('M', ($) => $.M, '×', { label: 'M (signed)' })],
-    steps: ($, f) => [`M ≈ −(L/f_o)(25 cm/f_e) = ${f($.M)}`],
+    steps: ($, f) => [String.raw`$M \approx -\dfrac{L}{f_o}\cdot\dfrac{25\ \text{cm}}{f_e} = ${texNum($.M)}$`],
     sim: { scenario: 'micro' },
     cases: [kase('hand', { L: 16, fo: 0.4, fe: 2.5 }, { M: -400 })],
   }),
@@ -242,8 +272,11 @@ export default [
     valid: ($) => ($.kind === 1 ? true : $.p > 30),
     text: (T) => `A person is ${T.kind} ${T.p} cm. What contact lens power (in diopters) corrects this? (Use a normal near point of 25 cm.)`,
     parts: [num('P', ($) => $.P, 'D'), num('f', ($) => $.f, 'cm')],
-    hints: ['Nearsighted: a distant object must form an image at the far point → f = −(far point).', 'Farsighted: an object at 25 cm must form an image at the near point → 1/f = 1/25 − 1/NP.'],
-    steps: ($, f) => [`P = ${f($.P)} D (f = ${f($.f)} cm)`],
+    hints: [
+      String.raw`Nearsighted: a distant object must form an image at the far point, so $f = -(\text{far point})$.`,
+      String.raw`Farsighted: an object at 25 cm must form an image at the near point, so $\dfrac{1}{f} = \dfrac{1}{25} - \dfrac{1}{\text{NP}}$.`,
+    ],
+    steps: ($, f) => [String.raw`$P = ${texNum($.P)}\ \text{D}$ ($f = ${texNum($.f)}\ \text{cm}$)`],
     cases: [kase('myopia', { kind: 1, p: 200 }, { P: -0.5, f: -200 }), kase('hyperopia', { kind: 2, p: 100 }, { P: 3, f: 33.33 })],
   }),
 ];

@@ -15,6 +15,7 @@ import { PROBLEMS, CHAPTER_ORDER, CHAPTER_TITLES, problemsForExam } from '../src
 import { createProgress, memoryStorage, pickSet, INTERVAL_DAYS } from '../src/problems/progress.js';
 import { build, instance, render, expected, withinTol, evalSymbolic, gradeSymbolic, grade, parseNumber } from '../src/problems/engine.js';
 import { applyProblem, headlessCtx } from '../src/problems/simbridge.js';
+import { mathProse } from '../src/ui/shared.js';
 import { loadLab } from '../src/labs/load.js';
 import { LAB_META, EXAMS } from '../src/data/catalog.js';
 
@@ -33,8 +34,14 @@ const err = (id, msg) => errors.push(`${id}: ${msg}`);
 
 function checkRender(tpl, inst) {
   const r = render(inst);
-  const blob = [r.text, ...r.parts.map((p) => `${p.label ?? ''} ${(p.options || []).map((o) => o.label).join(' ')} ${p.rubric ?? ''}`), ...r.steps, ...r.hints].join('\n');
+  const strings = [r.text, ...r.parts.map((p) => `${p.label ?? ''} ${(p.options || []).map((o) => o.label).join(' ')} ${p.rubric ?? ''}`), ...r.steps, ...r.hints];
+  const blob = strings.join('\n');
   if (/undefined|NaN|\[object/.test(blob)) err(tpl.id, `rendered text contains undefined/NaN:\n${blob.slice(0, 300)}`);
+  // The panel typesets `$…$` (src/ui/shared.js); KaTeX marks what it cannot parse instead of throwing.
+  for (const s of strings) {
+    const html = mathProse(s);
+    if (html.includes('katex-error')) err(tpl.id, `KaTeX cannot parse this: ${s}`);
+  }
 }
 
 function checkAnswers(tpl, inst, label) {
