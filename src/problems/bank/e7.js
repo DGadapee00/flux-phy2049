@@ -1,5 +1,5 @@
 /** Exam 7 · Ch 58 (refraction), 59 (mirrors), 60 (lenses), 62 (optical instruments). Distances in cm. */
-import { problem, kase, range, choice, num, mc, DEG , texNum } from '../kit.js';
+import { problem, kase, range, choice, num, mc, sym, DEG , texNum } from '../kit.js';
 import { MEDIA } from '../../physics/optics.js';
 
 const E7 = { exam: 'e7' };
@@ -87,9 +87,12 @@ export default [
   problem({
     ...E7, id: 'e7.58.apparent-depth', ch: '58', lab: 'refraction', title: 'Apparent depth', kind: 'numeric', topics: ['refraction'],
     vars: { m: MED('water', 'glass', 'diamond'), d: range(0.1, 5, 0.1, 'm') },
-    derive: ($) => ({ dp: $.d / nOf($.m) }),
+    derive: ($) => ({ n: nOf($.m), dp: $.d / nOf($.m) }),
     text: (T) => `Looking straight down from air, how deep does an object ${T.d} m below the surface of ${T.m} appear to be?`,
-    parts: [num('dp', ($) => $.dp, 'm')],
+    parts: [
+      sym('dp_sym', 'd/n', { d: 'm', n: '1' }, ($) => $.dp, { unit: 'm', label: String.raw`$d'$ as a formula (use n for the index)` }),
+      num('dp', ($) => $.dp, 'm'),
+    ],
     steps: ($, f) => [String.raw`$d' = d\dfrac{n_{\text{air}}}{n} = ${texNum($.dp)}\ \text{m}$ — it looks shallower`],
     cases: [kase('pool', { m: 'water', d: 2 }, { dp: 1.504 })],
   }),
@@ -240,7 +243,11 @@ export default [
     vars: { fo: range(20, 200, 5, 'cm'), fe: range(1, 10, 0.5, 'cm') },
     derive: ($) => ({ M: -$.fo / $.fe, L: $.fo + $.fe }),
     text: (T) => `A Keplerian telescope has an objective with f = ${T.fo} cm and an eyepiece with f = ${T.fe} cm. Find its angular magnification (relaxed eye) and its length.`,
-    parts: [num('M', ($) => $.M, '×', { label: 'M (signed)' }), num('L', ($) => $.L, 'cm', { label: 'Tube length' })],
+    parts: [
+      sym('M_sym', '-fo/fe', { fo: 'cm', fe: 'cm' }, ($) => $.M, { unit: '1', label: String.raw`$M$ as a formula (signed)` }),
+      num('M', ($) => $.M, '×', { label: String.raw`$M$ (signed)` }),
+      num('L', ($) => $.L, 'cm', { label: 'Tube length' }),
+    ],
     steps: ($, f) => [
       String.raw`$M = -\dfrac{f_o}{f_e} = ${texNum($.M)}$`,
       String.raw`$L = f_o + f_e = ${texNum($.L)}\ \text{cm}$`,

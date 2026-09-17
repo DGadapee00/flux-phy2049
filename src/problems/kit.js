@@ -54,11 +54,23 @@ export const tf = (id, correct, o = {}) => mc(id, [[1, 'True'], [0, 'False']], c
  * `alias` maps typed Greek letters to symbol names (λ → lam). The check script confirms that
  * expr, evaluated with $, equals `get($)`.
  */
+/**
+ * Symbolic answer: the expression, before any numbers go in.
+ *
+ * `vars` is either a list of symbol names, or — better — a map of name → SI unit, which lets the
+ * panel show the units of what the student typed and lets the bank check itself. Pass the unit of
+ * the answer as `o.unit` to turn that check on.
+ *
+ *   sym('Ey_sym', 'k*lam*L/(d*sqrt(d^2+L^2/4))', { lam: 'C/m', L: 'm', d: 'm' }, ($) => $.Ey,
+ *       { unit: 'N/C', label: '$E_y$ as a formula' })
+ */
 export const sym = (id, expr, vars, get, o = {}) => ({
   id,
   kind: 'symbolic',
   expr,
-  vars,
+  vars: Array.isArray(vars) ? vars : Object.keys(vars),
+  units: Array.isArray(vars) ? null : vars,
+  unit: o.unit ?? null,
   get,
   alias: o.alias ?? {},
   label: o.label ?? null,

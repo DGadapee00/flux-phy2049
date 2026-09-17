@@ -507,6 +507,29 @@ body.problem-blind .problems {
   color: var(--gold);
 }
 
+.pb-parse.ok {
+  color: var(--green);
+}
+
+.pb-parse.bad {
+  color: var(--gold);
+}
+
+/* A number held until the formula above it is right. */
+.pb-held {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.pb-part.held .pb-label {
+  color: var(--text-dim);
+}
+
+.pb-part.held .pb-input {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .pb-symhelp {
   font-size: 10.5px;
   color: var(--text-dim);

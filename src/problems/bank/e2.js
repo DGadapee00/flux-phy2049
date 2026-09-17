@@ -116,7 +116,10 @@ export default [
     vars: { q: range(1, 10, 0.5, 'μC', 1e-6), a: range(0.001, 0.02, 0.001, 'm/s²'), m: range(1, 10, 0.5, 'g', 1e-3) },
     derive: ($) => ({ E: ($.m * $.a) / $.q }),
     text: (T) => `A small object carrying ${T.q} μC accelerates at ${T.a} m/s² on a frictionless surface, due only to an electric field. Its mass is ${T.m} g. Find the field strength.`,
-    parts: [num('E', ($) => $.E, 'N/C')],
+    parts: [
+      sym('E_sym', 'm*a/q', { m: 'kg', a: 'm/s²', q: 'C' }, ($) => $.E, { unit: 'N/C', label: String.raw`$E$ as a formula` }),
+      num('E', ($) => $.E, 'N/C'),
+    ],
     steps: ($, f) => [String.raw`$E = \dfrac{ma}{q} = ${texNum($.E)}\ \text{N/C}$ (convert grams to kilograms and μC to C first)`],
     cases: [kase('#10', { q: 5, a: 0.005, m: 2 }, { E: 2 }, { key: '2 N/C' })],
   }),
@@ -143,7 +146,11 @@ export default [
     vars: { q: range(1, 10, 0.5, 'μC', 1e-6), s: SIGN, m: range(1, 10, 0.5, '×10⁻³ kg', 1e-3) },
     derive: ($) => ({ E: ($.m * G) / $.q }),
     text: (T) => `A particle with a ${T.s} ${T.q} μC charge has a mass of ${T.m} × 10⁻³ kg. What electric field (magnitude and direction) will exactly balance its weight?`,
-    parts: [num('E', ($) => $.E, 'N/C'), mc('dir', [[1, 'Upward'], [-1, 'Downward']], ($) => $.s, { label: 'Direction' })],
+    parts: [
+      sym('E_sym', 'm*g/q', { m: 'kg', q: 'C' }, ($) => $.E, { unit: 'N/C', label: String.raw`$E$ as a formula (g is gravity)` }),
+      num('E', ($) => $.E, 'N/C'),
+      mc('dir', [[1, 'Upward'], [-1, 'Downward']], ($) => $.s, { label: 'Direction' }),
+    ],
     steps: ($, f) => [String.raw`$|q|E = mg \;\Longrightarrow\; E = ${texNum($.E)}\ \text{N/C}$, pointing so that $q\vec{E}$ is upward`],
     cases: [kase('#12', { q: 4, s: 1, m: 5 }, { E: 12250, dir: 1 }, { key: '12,250 N/C' })],
   }),
@@ -164,7 +171,11 @@ export default [
     vars: { q: range(1, 100, 1, 'nC', 1e-9), s: SIGN, r: range(0.02, 3, 0.01, 'm') },
     derive: ($) => ({ E: (K * $.q) / $.r ** 2 }),
     text: (T) => `What are the magnitude and direction of the electric field ${T.r} m from a ${T.s} ${T.q} nC charged sphere?`,
-    parts: [num('E', ($) => $.E, 'N/C'), mc('dir', [[1, 'Away from the sphere'], [-1, 'Toward the sphere']], ($) => $.s, { label: 'Direction' })],
+    parts: [
+      sym('E_sym', 'k*q/r^2', { q: 'C', r: 'm' }, ($) => $.E, { unit: 'N/C', label: String.raw`$E$ as a formula` }),
+      num('E', ($) => $.E, 'N/C'),
+      mc('dir', [[1, 'Away from the sphere'], [-1, 'Toward the sphere']], ($) => $.s, { label: 'Direction' }),
+    ],
     steps: ($, f) => [
       String.raw`$E = \dfrac{kq}{r^2} = ${texNum($.E)}\ \text{N/C}$`,
       String.raw`It points away from a positive charge and toward a negative one.`,
@@ -184,7 +195,11 @@ export default [
     vars: { E: range(10000, 500000, 5000, 'N/C'), r: range(1, 10, 0.1, 'cm', 1e-2), dir: choice([-1, 'toward'], [1, 'away from']) },
     derive: ($) => ({ q: ($.E * $.r ** 2) / K }),
     text: (T) => `${T.r} cm from a small object, the electric field points ${T.dir} the object with a strength of ${T.E} N/C. What is the object's charge?`,
-    parts: [num('q', ($) => $.q, 'C', { label: '|q|' }), mc('sign', POSNEG, ($) => $.dir, { label: 'Sign' })],
+    parts: [
+      sym('q_sym', 'E*r^2/k', { E: 'N/C', r: 'm' }, ($) => $.q, { unit: 'C', label: String.raw`$|q|$ as a formula` }),
+      num('q', ($) => $.q, 'C', { label: String.raw`$|q|$` }),
+      mc('sign', POSNEG, ($) => $.dir, { label: 'Sign' }),
+    ],
     steps: ($, f) => [
       String.raw`$|q| = \dfrac{Er^2}{k} = ${texNum($.q)}\ \text{C}$`,
       String.raw`A field pointing toward the object means its charge is negative.`,
@@ -247,7 +262,11 @@ export default [
     vars: { q1: range(1, 10, 0.5, 'μC', 1e-6), d: range(10, 60, 5, 'cm', 1e-2), D: range(0.5, 5, 0.5, 'm') },
     derive: ($) => ({ q2: $.q1 * (($.D + $.d) / $.D) ** 2 }),
     text: (T) => `A +${T.q1} μC charge is at x = 0 and an unknown q₂ is at x = +${T.d} cm. The net field is zero at x = −${T.D} m. Find q₂.`,
-    parts: [num('q2', ($) => $.q2, 'μC', { scale: 1e-6, label: '|q₂|' }), mc('sign', POSNEG, -1, { label: 'Sign' })],
+    parts: [
+      sym('q2_sym', 'q1*((D + d)/D)^2', { q1: 'C', d: 'm', D: 'm' }, ($) => $.q2, { unit: 'C', label: String.raw`$|q_2|$ as a formula` }),
+      num('q2', ($) => $.q2, 'μC', { scale: 1e-6, label: String.raw`$|q_2|$` }),
+      mc('sign', POSNEG, -1, { label: 'Sign' }),
+    ],
     hints: [String.raw`$P$ is outside both charges, so the fields can cancel only if the charges have opposite signs.`],
     steps: ($, f) => [
       String.raw`$\dfrac{kq_1}{D^2} = \dfrac{k|q_2|}{(D+d)^2} \;\Longrightarrow\; |q_2| = ${texNum($.q2 * 1e6)}\ \mu\text{C}$, negative`,
@@ -290,7 +309,11 @@ export default [
     derive: ($) => ({ E: (2 * K * $.q * ($.r1 / 2)) / $.r2 ** 3, h: Math.sqrt(Math.max(0, $.r2 ** 2 - ($.r1 / 2) ** 2)) }),
     valid: ($) => $.r2 > $.r1 / 2 + 0.01,
     text: (T) => `A dipole: −${T.q} μC and +${T.q} μC charges are ${T.r1} cm apart, with the positive charge on the ${T.pos}. Point P is ${T.r2} cm from each charge, below their midpoint. Find the field at P.`,
-    parts: [num('E', ($) => $.E, 'N/C', { label: '|E|' }), mc('dir', [[1, '+x'], [-1, '−x'], [2, '+y'], [-2, '−y']], ($) => -$.pos, { label: 'Direction' })],
+    parts: [
+      sym('E_sym', 'k*q*r1/r2^3', { q: 'C', r1: 'm', r2: 'm' }, ($) => $.E, { unit: 'N/C', label: String.raw`$|\vec{E}|$ as a formula` }),
+      num('E', ($) => $.E, 'N/C', { label: String.raw`$|\vec{E}|$` }),
+      mc('dir', [[1, '+x'], [-1, '−x'], [2, '+y'], [-2, '−y']], ($) => -$.pos, { label: 'Direction' }),
+    ],
     hints: [String.raw`The vertical components cancel. Each horizontal component is $\dfrac{kq}{r_2^2}\cdot\dfrac{r_1/2}{r_2}$.`],
     steps: ($, f) => [
       String.raw`Each charge gives $\dfrac{kq}{r_2^2} = ${texNum((K * $.q) / $.r2 ** 2)}\ \text{N/C}$`,
@@ -328,7 +351,10 @@ export default [
     vars: { Q: range(0.5, 10, 0.5, 'μC', 1e-6), sig: range(1, 20, 0.5, 'μC/m²', 1e-6) },
     derive: ($) => ({ R: Math.sqrt($.Q / (Math.PI * $.sig)) }),
     text: (T) => `A circular disk carries ${T.Q} μC with σ = ${T.sig} μC/m². What is its radius?`,
-    parts: [num('R', ($) => $.R, 'm')],
+    parts: [
+      sym('R_sym', 'sqrt(Q/(pi*sig))', { Q: 'C', sig: 'C/m²' }, ($) => $.R, { unit: 'm', label: String.raw`$R$ as a formula` }),
+      num('R', ($) => $.R, 'm'),
+    ],
     steps: ($, f) => [String.raw`$R = \sqrt{\dfrac{Q}{\pi\sigma}} = ${texNum($.R)}\ \text{m}$`],
     cases: [kase('#3', { Q: 2, sig: 5 }, { R: 0.357 }, { key: '0.36 m' })],
   }),
@@ -356,7 +382,10 @@ export default [
     vars: { rho: range(1, 20, 0.5, '×10⁻⁵ C/m³', 1e-5), R: range(1, 20, 1, 'cm', 1e-2) },
     derive: ($) => ({ Q: ($.rho * 4 * Math.PI * $.R ** 3) / 3 }),
     text: (T) => `A sphere of radius ${T.R} cm has a uniform ρ = ${T.rho} × 10⁻⁵ C/m³. What is its total charge?`,
-    parts: [num('Q', ($) => $.Q, 'C')],
+    parts: [
+      sym('Q_sym', 'rho*4*pi*R^3/3', { rho: 'C/m³', R: 'm' }, ($) => $.Q, { unit: 'C', label: String.raw`$Q$ as a formula` }),
+      num('Q', ($) => $.Q, 'C'),
+    ],
     steps: ($, f) => [String.raw`$Q = \rho\cdot\tfrac{4}{3}\pi R^3 = ${texNum($.Q)}\ \text{C}$`],
     cases: [kase('#5', { rho: 7, R: 5 }, { Q: 3.665e-8 }, { key: '3.66 x 10^-8 C' })],
   }),
@@ -368,7 +397,7 @@ export default [
     parts: [
       self('setup', 'Sketch dq, r, θ and dE on the diagram.', 'dq = λ dx at x; r = √(x² + d²); dE points from dq toward P (if λ > 0); cos θ = d/r.'),
       mc('Ex', [[0, 'Eₓ = 0 by symmetry'], [1, 'Eₓ = kλL/d²'], [2, 'Eₓ depends on the sign of x']], 0, { label: 'x component' }),
-      sym('Ey_sym', 'k*lam*L/(d*sqrt(d^2 + L^2/4))', ['lam', 'L', 'd'], ($) => $.Ey, { label: String.raw`$E_y$ as a formula (use k, lam, L, d)` }),
+      sym('Ey_sym', 'k*lam*L/(d*sqrt(d^2 + L^2/4))', { lam: 'C/m', L: 'm', d: 'm' }, ($) => $.Ey, { unit: 'N/C', label: String.raw`$E_y$ as a formula (use k, lam, L, d)` }),
       num('Ey', ($) => $.Ey, 'N/C', { label: String.raw`$E_y$ (signed)` }),
     ],
     hints: [
@@ -396,7 +425,7 @@ export default [
     derive: ($) => ({ Ey: (K * $.Q * $.y) / ($.y ** 2 + $.a ** 2) ** 1.5 }),
     text: (T) => `A ring of radius a = ${T.a} m carries Q = ${T.Q} μC spread uniformly. Find the field on its axis, y = ${T.y} m from the center.`,
     parts: [
-      sym('Ey_sym', 'k*Q*y/(y^2 + a^2)^(3/2)', ['Q', 'y', 'a'], ($) => $.Ey, { label: String.raw`$E_y$ as a formula (use k, Q, y, a)` }),
+      sym('Ey_sym', 'k*Q*y/(y^2 + a^2)^(3/2)', { Q: 'C', y: 'm', a: 'm' }, ($) => $.Ey, { unit: 'N/C', label: String.raw`$E_y$ as a formula (use k, Q, y, a)` }),
       num('Ey', ($) => $.Ey, 'N/C', { label: String.raw`$E_y$ (signed)` }),
       mc('maxat', [[1, 'At the center (y = 0)'], [2, 'At y = a/√2'], [3, 'At y = a'], [4, 'Very far away']], 2, { label: 'Where on the axis is |E| largest?' }),
     ],
@@ -425,7 +454,7 @@ export default [
     text: (T) => `A thin wire runs from x = 0 to x = L = ${T.L} m with λ = ${T.lam} nC/m. Find the field at P on the x-axis, d = ${T.d} m beyond the right end.`,
     parts: [
       self('setup', 'Label dq, its distance to P, and dE.', 'dq = λ dx at x; distance = L + d − x; every dE points along +x.'),
-      sym('Ex_sym', 'k*lam*L/(d*(L + d))', ['lam', 'L', 'd'], ($) => $.Ex, { label: 'Eₓ as a formula' }),
+      sym('Ex_sym', 'k*lam*L/(d*(L + d))', { lam: 'C/m', L: 'm', d: 'm' }, ($) => $.Ex, { unit: 'N/C', label: String.raw`$E_x$ as a formula` }),
       num('Ex', ($) => $.Ex, 'N/C'),
     ],
     hints: [
@@ -446,7 +475,7 @@ export default [
     parts: [
       self('setup', 'Label dq, R, θ and dE.', 'dq = λR dθ at angle θ; dE points from dq toward P, i.e. along −(cos θ, sin θ).'),
       mc('Ex', [[0, 'Eₓ = 0: the cos θ terms cancel from 0 to π'], [1, 'Eₓ = 2kλ/R']], 0, { label: 'Show that Eₓ = 0' }),
-      sym('E_sym', '2*k*lam/R', ['lam', 'R'], ($) => $.E, { label: String.raw`$|E_y|$ as a formula` }),
+      sym('E_sym', '2*k*lam/R', { lam: 'C/m', R: 'm' }, ($) => $.E, { unit: 'N/C', label: String.raw`$|E_y|$ as a formula` }),
       num('E', ($) => $.E, 'N/C', { label: '|E|' }),
       mc('dir', [[-2, '−y (away from the arc)'], [2, '+y (toward the arc)']], -2, { label: 'Direction' }),
     ],
@@ -467,7 +496,7 @@ export default [
     text: (T) => `A disk of radius R = ${T.R} m has a uniform σ = ${T.sig} nC/m² (positive). Find the field on its axis, s = ${T.s} m from the center.`,
     parts: [
       self('setup', 'Break the disk into rings and label one.', 'Ring of radius r and width dr: dq = σ·2πr dr; dE = k dq·s/(s² + r²)^{3/2} along the axis.'),
-      sym('E_sym', '2*pi*k*sig*(1 - s/sqrt(s^2 + R^2))', ['sig', 's', 'R'], ($) => $.E, { label: 'E as a formula (use k, sig, s, R)' }),
+      sym('E_sym', '2*pi*k*sig*(1 - s/sqrt(s^2 + R^2))', { sig: 'C/m²', s: 'm', R: 'm' }, ($) => $.E, { unit: 'N/C', label: String.raw`$E$ as a formula (use k, sig, s, R)` }),
       num('E', ($) => $.E, 'N/C'),
       num('sheet', ($) => $.sig / (2 * EPS0), 'N/C', { label: 'Limit R → ∞ (infinite sheet)' }),
     ],
@@ -564,7 +593,10 @@ export default [
     vars: { m: range(10, 500, 10, 'N/(C·m²)'), a: range(0.1, 2, 0.1, 'm'), b: range(0.1, 2, 0.1, 'm') },
     derive: ($) => ({ Phi: ($.m * $.a * $.b ** 3) / 3 }),
     text: (T) => `A rectangle in the x–y plane spans 0 ≤ x ≤ b and 0 ≤ y ≤ a (b = ${T.b} m, a = ${T.a} m). The field is E = m x² ẑ with m = ${T.m} N/(C·m²). Find the flux.`,
-    parts: [sym('Phi_sym', 'm*a*b^3/3', ['m', 'a', 'b'], ($) => $.Phi, { label: 'Φ as a formula' }), num('Phi', ($) => $.Phi, 'N·m²/C')],
+    parts: [
+      sym('Phi_sym', 'm*a*b^3/3', { m: 'N/(C·m²)', a: 'm', b: 'm' }, ($) => $.Phi, { unit: 'N·m²/C', label: String.raw`$\Phi_E$ as a formula` }),
+      num('Phi', ($) => $.Phi, 'N·m²/C'),
+    ],
     hints: [String.raw`Use strips of constant $x$: $dA = a\,dx$.`],
     steps: ($, f) => [
       String.raw`$\Phi_E = \displaystyle\int_0^b m x^2 a\,dx = \frac{mab^3}{3} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
@@ -576,7 +608,10 @@ export default [
     vars: { a: range(10, 500, 10, 'N/C'), b: range(10, 500, 10, 'N/(C·m^½)'), R: range(0.1, 2, 0.1, 'm') },
     derive: ($) => ({ Phi: Math.PI * $.a * $.R ** 2 + ((4 * Math.PI) / 5) * $.b * $.R ** 2.5 }),
     text: (T) => `A hoop of radius R = ${T.R} m is perpendicular to E(r) = (a + b√r) x̂, where r is measured from its center; a = ${T.a} N/C, b = ${T.b} N/(C·m^½). Find the flux.`,
-    parts: [sym('Phi_sym', 'pi*a*R^2 + 4*pi/5*b*R^(5/2)', ['a', 'b', 'R'], ($) => $.Phi, { label: 'Φ as a formula' }), num('Phi', ($) => $.Phi, 'N·m²/C')],
+    parts: [
+      sym('Phi_sym', 'pi*a*R^2 + 4*pi/5*b*R^(5/2)', { a: 'N/C', b: 'N/(C·m^0.5)', R: 'm' }, ($) => $.Phi, { unit: 'N·m²/C', label: String.raw`$\Phi_E$ as a formula` }),
+      num('Phi', ($) => $.Phi, 'N·m²/C'),
+    ],
     hints: [String.raw`Use rings: $dA = 2\pi r\,dr$.`, String.raw`$\displaystyle\int r^{3/2}\,dr = \tfrac{2}{5}r^{5/2}$`],
     steps: ($, f) => [
       String.raw`$\Phi_E = \displaystyle\int_0^R (a + b\sqrt{r})\,2\pi r\,dr = \pi a R^2 + \frac{4\pi}{5}bR^{5/2} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
@@ -637,7 +672,10 @@ export default [
     vars: { Q: range(1, 20, 0.5, 'μC', 1e-6), Lw: range(10, 100, 5, 'm'), r: range(5, 50, 1, 'cm', 1e-2) },
     derive: ($) => ({ E: (2 * K * $.Q) / ($.Lw * $.r) }),
     text: (T) => `A ${T.Lw} m wire carries ${T.Q} μC spread uniformly. Use Gauss's law to find |E| ${T.r} cm from the wire, far from its ends.`,
-    parts: [num('E', ($) => $.E, 'N/C')],
+    parts: [
+      sym('E_sym', '2*k*Q/(Lw*r)', { Q: 'C', Lw: 'm', r: 'm' }, ($) => $.E, { unit: 'N/C', label: String.raw`$E$ as a formula` }),
+      num('E', ($) => $.E, 'N/C'),
+    ],
     steps: ($, f) => [
       String.raw`$\lambda = Q/L$, and a cylindrical Gaussian surface gives $E\,(2\pi r\ell) = \dfrac{\lambda\ell}{\varepsilon_0}$`,
       String.raw`$E = \dfrac{2k\lambda}{r} = ${texNum($.E)}\ \text{N/C}$`,

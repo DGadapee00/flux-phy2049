@@ -2,7 +2,8 @@
  * Problem engine: seeded sampling, text formatting, grading. No DOM, no Three.js, so the same
  * code runs in the browser and in scripts/problems-check.mjs.
  */
-import { K, EPS0, MU0 } from './kit.js';
+import { K, EPS0, MU0, C_LIGHT, G } from './kit.js';
+import { ZERO, CONST_DIMS, parseUnit, formatDim, dimEqual, isDimensionless, dimMul, dimDiv, dimScale } from '../physics/units.js';
 
 // ---------- seeded RNG ----------
 export function rng(seed) {
@@ -193,7 +194,7 @@ export function grade(part, $, input) {
 }
 
 // ---------- symbolic ----------
-const CONSTS = { pi: Math.PI, k: K, eps0: EPS0, mu0: MU0 };
+const CONSTS = { pi: Math.PI, k: K, eps0: EPS0, mu0: MU0, c: C_LIGHT, g: G };
 const FUNCS = {
   sqrt: Math.sqrt,
   sin: Math.sin,
@@ -210,11 +211,14 @@ const FUNCS = {
 const GREEK = { 'π': 'pi', 'λ': 'lam', 'σ': 'sig', 'ρ': 'rho', 'θ': 'th', 'ω': 'omega', 'ε0': 'eps0', 'ε₀': 'eps0', 'μ0': 'mu0', 'μ₀': 'mu0', 'φ': 'phi', 'α': 'alpha' };
 
 /**
- * Tiny expression parser → evaluator(scope). Supports + − * / ^, unary minus, parentheses,
- * functions above, and implicit multiplication ("2k lam/R", "2(a+b)", "k q/r^2").
- * Identifiers are matched longest-first against `symbols`, so "kQ" reads as k·Q.
+ * Tiny expression parser → AST. Supports + − * / ^, unary minus, parentheses, the functions above,
+ * and implicit multiplication ("2k lam/R", "2(a+b)", "k q/r^2"). Identifiers are matched
+ * longest-first against `symbols`, so "kQ" reads as k·Q.
+ *
+ * The AST is evaluated two ways: `compile` gives the numeric evaluator the grader uses, and
+ * `dimensionOf` (below) works out the units of the same expression.
  */
-export function compile(src, symbols = [], alias = {}) {
+export function parseExpr(src, symbols = [], alias = {}) {
   let s = String(src).replace(/[−–]/g, '-').replace(/[·×]/g, '*').replace(/²/g, '^2').replace(/³/g, '^3').replace(/√/g, 'sqrt');
   for (const [from, to] of Object.entries({ ...GREEK, ...alias }).sort((a, b) => b[0].length - a[0].length)) {
     s = s.split(from).join(` ${to} `);
@@ -262,9 +266,7 @@ export function compile(src, symbols = [], alias = {}) {
     let node = term();
     while (peek() && (peek().t === '+' || peek().t === '-')) {
       const op = out[p++].t;
-      const l = node;
-      const r = term();
-      node = op === '+' ? (sc) => l(sc) + r(sc) : (sc) => l(sc) - r(sc);
+      node = { t: 'op', op, l: node, r: term() };
     }
     return node;
   }
@@ -272,17 +274,14 @@ export function compile(src, symbols = [], alias = {}) {
     let node = unary();
     while (peek() && (peek().t === '*' || peek().t === '/')) {
       const op = out[p++].t;
-      const l = node;
-      const r = unary();
-      node = op === '*' ? (sc) => l(sc) * r(sc) : (sc) => l(sc) / r(sc);
+      node = { t: 'op', op, l: node, r: unary() };
     }
     return node;
   }
   function unary() {
     if (peek()?.t === '-') {
       p++;
-      const u = unary();
-      return (sc) => -u(sc);
+      return { t: 'neg', x: unary() };
     }
     if (peek()?.t === '+') {
       p++;
@@ -294,28 +293,23 @@ export function compile(src, symbols = [], alias = {}) {
     const base = atom();
     if (peek()?.t === '^') {
       p++;
-      const ex = unary();
-      return (sc) => Math.pow(base(sc), ex(sc));
+      return { t: 'op', op: '^', l: base, r: unary() };
     }
     return base;
   }
   function atom() {
     const tk = out[p++];
     if (!tk) throw new Error('Unexpected end');
-    if (tk.t === 'num') return () => tk.v;
+    if (tk.t === 'num') return { t: 'num', v: tk.v };
     if (tk.t === 'id') {
-      if (tk.v in CONSTS && !symbols.includes(tk.v)) return () => CONSTS[tk.v];
-      return (sc) => {
-        if (!(tk.v in sc)) throw new Error(`No value for ${tk.v}`);
-        return sc[tk.v];
-      };
+      if (tk.v in CONSTS && !symbols.includes(tk.v)) return { t: 'const', name: tk.v };
+      return { t: 'sym', name: tk.v };
     }
     if (tk.t === 'fn') {
       eat('(');
       const a = expr();
       eat(')');
-      const f = FUNCS[tk.v];
-      return (sc) => f(a(sc));
+      return { t: 'fn', name: tk.v, arg: a };
     }
     if (tk.t === '(') {
       const e = expr();
@@ -324,9 +318,111 @@ export function compile(src, symbols = [], alias = {}) {
     }
     throw new Error(`Unexpected ${tk.t}`);
   }
-  const fn = expr();
+  const ast = expr();
   if (p !== out.length) throw new Error('Unexpected trailing input');
-  return fn;
+  return ast;
+}
+
+const OPS = {
+  '+': (a, b) => a + b,
+  '-': (a, b) => a - b,
+  '*': (a, b) => a * b,
+  '/': (a, b) => a / b,
+  '^': (a, b) => Math.pow(a, b),
+};
+
+export function evalAst(ast, sc) {
+  switch (ast.t) {
+    case 'num':
+      return ast.v;
+    case 'const':
+      return CONSTS[ast.name];
+    case 'sym':
+      if (!(ast.name in sc)) throw new Error(`No value for ${ast.name}`);
+      return sc[ast.name];
+    case 'neg':
+      return -evalAst(ast.x, sc);
+    case 'fn':
+      return FUNCS[ast.name](evalAst(ast.arg, sc));
+    default:
+      return OPS[ast.op](evalAst(ast.l, sc), evalAst(ast.r, sc));
+  }
+}
+
+/** The evaluator the grader uses: compile once, call with a scope of symbol values. */
+export function compile(src, symbols = [], alias = {}) {
+  const ast = parseExpr(src, symbols, alias);
+  return (sc) => evalAst(ast, sc);
+}
+
+/**
+ * The units of an expression, from the units of its symbols — the check a student does by hand.
+ * Throws with a readable reason when the expression is not dimensionally consistent, which is
+ * itself the useful answer ("cannot add m to m/s").
+ */
+export function dimensionOf(ast, units) {
+  const walk = (n) => {
+    switch (n.t) {
+      case 'num':
+        return ZERO;
+      case 'const': {
+        const d = CONST_DIMS[n.name];
+        if (!d) throw new Error(`No units known for the constant ${n.name}`);
+        return d;
+      }
+      case 'sym': {
+        const u = units[n.name];
+        if (u === undefined) throw new Error(`No units declared for ${n.name}`);
+        return typeof u === 'string' ? parseUnit(u) : u;
+      }
+      case 'neg':
+        return walk(n.x);
+      case 'fn': {
+        const a = walk(n.arg);
+        if (n.name === 'sqrt') return dimScale(a, 0.5);
+        if (n.name === 'abs') return a;
+        if (!isDimensionless(a)) throw new Error(`${n.name}() needs a plain number, but its argument is in ${formatDim(a)}`);
+        return ZERO;
+      }
+      default: {
+        if (n.op === '^') {
+          let e;
+          try {
+            e = evalAst(n.r, {});
+          } catch {
+            throw new Error('An exponent has to be a number');
+          }
+          return dimScale(walk(n.l), e);
+        }
+        const a = walk(n.l);
+        const b = walk(n.r);
+        if (n.op === '*') return dimMul(a, b);
+        if (n.op === '/') return dimDiv(a, b);
+        if (!dimEqual(a, b)) throw new Error(`Cannot ${n.op === '+' ? 'add' : 'subtract'} ${formatDim(b)} and ${formatDim(a)}`);
+        return a;
+      }
+    }
+  };
+  return walk(ast);
+}
+
+/** Units of what the student typed, against what the answer should be. */
+export function checkUnits(input, part) {
+  if (!part.unit || !part.units) return null;
+  let want;
+  try {
+    want = parseUnit(part.unit);
+  } catch (e) {
+    return { ok: false, text: e.message };
+  }
+  let got;
+  try {
+    got = dimensionOf(parseExpr(input, part.vars, part.alias), part.units);
+  } catch (e) {
+    return { ok: false, text: e.message };
+  }
+  if (dimEqual(got, want)) return { ok: true, text: part.unit };
+  return { ok: false, text: formatDim(got), want: part.unit };
 }
 
 export function gradeSymbolic(part, input) {
@@ -343,23 +439,44 @@ export function gradeSymbolic(part, input) {
     return { correct: false, feedback: e.message };
   }
   const r = rng(12345);
-  for (let n = 0; n < 8; n++) {
-    const sc = Object.fromEntries(part.vars.map((v) => [v, 0.3 + 2.7 * r()]));
+  const scopes = [];
+  for (let n = 0; n < 8; n++) scopes.push(Object.fromEntries(part.vars.map((v) => [v, 0.3 + 2.7 * r()])));
+
+  /*
+   * Compare against the size of the key itself, not against 1. An expression like E r²/k is around
+   * 1e-10 at these sample values, and a fixed absolute tolerance would wave through any wrong
+   * answer of the same size. The typical magnitude across all the samples is the yardstick, so one
+   * sample where the expression happens to cancel does not make the test impossibly strict.
+   */
+  let sum = 0;
+  const wants = [];
+  for (const sc of scopes) {
     let a;
-    let b;
     try {
       a = want(sc);
-      b = got(sc);
+    } catch (e) {
+      return { correct: false, feedback: `Bad answer key: ${e.message}` };
+    }
+    wants.push(a);
+    if (Number.isFinite(a)) sum += a * a;
+  }
+  const typical = Math.sqrt(sum / scopes.length);
+
+  for (let n = 0; n < scopes.length; n++) {
+    const a = wants[n];
+    let b;
+    try {
+      b = got(scopes[n]);
     } catch (e) {
       return { correct: false, feedback: e.message };
     }
     if (!Number.isFinite(b)) return { correct: false, feedback: 'Expression is undefined for some values.' };
-    if (Math.abs(a - b) > 1e-6 * Math.max(1, Math.abs(a))) return { correct: false, feedback: '' };
+    const tol = 1e-6 * Math.max(Math.abs(a), typical);
+    if (Math.abs(a - b) > tol) return { correct: false, feedback: '' };
   }
   return { correct: true, feedback: '' };
 }
 
-/** Evaluate a symbolic part's key with the instance's SI values (used by the check script). */
 export function evalSymbolic(part, $) {
   return compile(part.expr, part.vars, part.alias)($);
 }

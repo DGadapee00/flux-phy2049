@@ -20,7 +20,8 @@ node scripts/problems-check.mjs --samples 200 --list   # deeper run, with notes 
 | Path | Role |
 |---|---|
 | `src/problems/kit.js` | Authoring helpers: `problem`, `range`, `choice`, `num`, `mc`, `tf`, `sym`, `self`, `kase`, `charge`, `layout`, constants |
-| `src/problems/engine.js` | Seeded sampling, `instance`, `render`, `grade`, number parser, symbolic grader. No DOM and no Three.js |
+| `src/problems/engine.js` | Seeded sampling, `instance`, `render`, `grade`, number parser, expression parser, symbolic grader, `checkUnits`. No DOM and no Three.js |
+| `src/physics/units.js` | Dimensional analysis: `parseUnit`, `formatDim`, `dimEqual`. A dimension is the exponent vector [M, L, T, I], so N/C and V/m compare equal |
 | `src/problems/simbridge.js` | `applyProblem(lab, slice, inst)` loads an instance into a lab's state slice; `headlessCtx()` is for Node |
 | `src/problems/index.js` | `PROBLEMS`, `problemById`, `problemsForExam`, `problemsForLab`, `CHAPTER_ORDER`, `CHAPTER_TITLES` |
 | `src/problems/progress.js` | Per-problem history, Leitner-box spaced review, `pickSet` for mixed sets and practice exams. No DOM; storage is injected |
@@ -47,7 +48,8 @@ problem({
   derive: ($) => ({ Ex, … }),         // everything in SI
   valid: ($) => bool,                 // resample until true
   text: (T, $, f) => `…${T.q1} μC…`,  // T = display strings, f = 3-sig-fig formatter
-  parts: [ num('E', $ => |Ex|, 'N/C'), mc('dir', DIR_X, $ => sign(Ex)), sym(...), self(...) ],
+  parts: [ sym('E_sym', 'k*q/r^2', { q: 'C', r: 'm' }, $ => |Ex|, { unit: 'N/C' }),   // symbols first
+           num('E', $ => |Ex|, 'N/C'), mc('dir', DIR_X, $ => sign(Ex)), self(...) ],
   hints: [...], steps: ($, f, T) => [...],
   sim: {
     scenario: 'dipole',               // base scenario, applied first
@@ -60,7 +62,11 @@ problem({
 
 - Numeric parts: `get($)` is in SI. The student answers in `unit`, which is SI ÷ `scale`. The default tolerance is 2% (`tol`), and `abs` sets an absolute floor.
 - Choice parts: `correct` is a value, an array (with `multi`), or a function of `$`.
-- `sym(id, 'k*lam*L/(d*sqrt(d^2+L^2/4))', ['lam','L','d'], get)`: students type things like `2k lam/R` or `kQ/r^2` (Greek letters are fine). The grader compares the two expressions at random points.
+- `sym(id, expr, vars, get, opts)`: students type things like `2k lam/R` or `kQ/r^2` (Greek letters are fine, and `k`, `eps0`, `mu0`, `pi`, `c`, `g` are constants). The grader compares the two expressions at random points.
+
+  `vars` is either the plain list `['lam','L','d']` or, better, a **map of symbol → unit**: `{ lam: 'C/m', L: 'm', d: 'm' }`. With the map and `opts.unit` (the unit the answer comes out in), the panel reads the units off whatever the student has typed so far and prints them under the box — `units: N/C ✓`, or `units: C/m — this one should come out in N/C`. That is the check a student does by hand on an exam: write it in symbols, read off the units, see whether it lands in the right place. Declare both or neither; the bank check rejects half a declaration.
+
+  **Symbols before numbers.** When a problem has a symbolic part and a numeric one, the numeric inputs stay disabled until the symbolic part is graded right — the panel shows *"Write the formula above first — then put the numbers in."* in their place. The lock is off in a practice exam (there is no feedback to unlock it), and off once the attempt is finished or the solution has been opened. 53 of the 179 templates now carry a symbolic part ahead of their numbers.
 - `read` may also return `'@label': [got, want]` for checks that aren't answers (e.g. "V at the point ≈ 0").
 - Text is typeset. The statement, part labels, hints, worked steps and rubrics are rendered with the panel markup (`$…$` for inline math, see 2b), so a step reads as one line of mathematics:
 
@@ -89,7 +95,7 @@ For every template, `scripts/problems-check.mjs` confirms that:
 1. Each worked case reproduces its expected answers, and the grader accepts those values when typed.
 2. N seeded samples are valid and finite, and every choice answer is one of the options.
 3. The text, labels, and steps never render `undefined` or `NaN`.
-4. Each symbolic key equals `get($)`, and the grader rejects a key scaled by ×1.1.
+4. Each symbolic key equals `get($)`, and the grader rejects a key scaled by ×1.1. Where a symbolic part declares units, the key's own dimensions are computed from the symbol units and must match the declared answer unit — a key in C/m under a part labelled N/C fails the build.
 5. **The problem and the lab agree.** The script loads the instance into the real lab with `applyProblem`, runs `lab.recompute` headless, and compares `sim.read` with the problem's answers. That's about 25,000 comparisons at 200 samples.
 
 A deliberate formula error and a flipped direction answer were each caught by (1) and (5). All templates with a `sim` are also loaded into the running app by `scripts/smoke.mjs`, which fails on any page error.
@@ -100,7 +106,7 @@ A deliberate formula error and a flipped direction answer were each caught by (1
 
 - **Panel.** `P` or the Practice button in the header. The list shows the current exam grouped by chapter. Each problem has a status dot (new, learning, due, missed, mastered), each chapter has a mastery bar, and there are kind filters and a "this lab only" filter. The panel takes the left column. While it is open, the 3D view shifts right (a projection offset) so the scene stays centered in the free space. Wave optics has no labs yet, so its exam opens straight into the list.
 - **Blind mode.** While an attempt is unsolved and not peeked, `body.problem-blind` hides `#eq-live`, `#insight`, `#mini-plot` and `#readout`. `veilNode` masks in-scene labels that carry numbers or verdicts ("real image", "attract"). It keeps givens drawn as `.qV`, `.qR` and `.qB` spans, charge labels, axis labels, and focal marks. Arrows that would give a direction away (probe E, forces, the net dE, B at the probe) are wrapped in `markAnswer()`, which puts them on `ANSWER_LAYER`; the camera turns that layer off. When you add a lab, wrap any such arrow in `markAnswer`.
-- **Answering.** Numeric inputs (`parseNumber` ignores a trailing unit), radio or checkbox choices, a symbolic input with a live parse message, and rubric self-checks. Check grades every answered part, and wrong parts can be retried. The attempt finishes when every part is right or the solution is opened.
+- **Answering.** Numeric inputs (`parseNumber` ignores a trailing unit), radio or checkbox choices, a symbolic input with a live parse message and a live units line, and rubric self-checks. Check grades every answered part, and wrong parts can be retried. The attempt finishes when every part is right or the solution is opened. `pendingSymbol()` holds the numeric parts of a problem behind its symbolic ones (see §2); `checkUnits()` drives the units line.
 - **Lab agreement.** After finishing (or peeking), `sim.read` runs against the live `computed` state, and each part shows the lab's value with "agrees" or "differs". This turns off if the student changes the setup; "Reset to the problem" restores it.
 - **URL.** `#/<exam>/<lab>?p=<id>&s=<seed>` opens that instance. `parseHash` stays backward compatible. Practice exams don't write the query.
 - **Progress.** `localStorage['flux.problems.v1']` stores `{ attempts, solved, clean, peeks, hints, box, due, lastSeed, lastOk }` per id. A clean solve moves the problem up a box, due again in 10 min, 1, 3, 7, 16 or 35 days. A solve that needed help drops a box (never below 1). A miss or an opened solution resets it to box 0. **Review due** walks every due problem across exams. First attempts use seed 0 (the worksheet numbers); later attempts use fresh seeds.

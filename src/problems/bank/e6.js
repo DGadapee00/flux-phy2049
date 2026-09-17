@@ -1,5 +1,5 @@
 /** Exam 6 · Ch 53 (EM waves), 54 (spectrum), 55 (intensity), 56 (polarization), 57 (intro to optics). */
-import { problem, kase, range, choice, num, mc, EPS0, C_LIGHT, DEG, AXES6, axisCode , texNum } from '../kit.js';
+import { problem, kase, range, choice, num, mc, sym, EPS0, C_LIGHT, DEG, AXES6, axisCode , texNum } from '../kit.js';
 import { BANDS, spectrumBand } from '../../physics/emwave.js';
 import { MEDIA } from '../../physics/optics.js';
 
@@ -65,7 +65,13 @@ export default [
       return { lam, w: $.k * C_LIGHT, f: C_LIGHT / lam, B0: $.E0 / C_LIGHT };
     },
     text: (T) => `E(x, t) = ${T.E0} sin[(${T.k} × 10⁶ rad/m)x − ωt] ŷ V/m in vacuum. Find λ, ω, f and B₀.`,
-    parts: [num('lam', ($) => $.lam, 'm', { label: 'λ' }), num('w', ($) => $.w, 'rad/s', { label: 'ω' }), num('f', ($) => $.f, 'Hz'), num('B0', ($) => $.B0, 'T', { label: 'B₀' })],
+    parts: [
+      sym('lam_sym', '2*pi/k', { k: '1/m' }, ($) => $.lam, { unit: 'm', label: String.raw`$\lambda$ as a formula` }),
+      num('lam', ($) => $.lam, 'm', { label: String.raw`$\lambda$` }),
+      num('w', ($) => $.w, 'rad/s', { label: String.raw`$\omega$` }),
+      num('f', ($) => $.f, 'Hz'),
+      num('B0', ($) => $.B0, 'T', { label: String.raw`$B_0$` }),
+    ],
     steps: ($, f) => [
       String.raw`$\lambda = \dfrac{2\pi}{k} = ${texNum($.lam)}\ \text{m}$`,
       String.raw`$\omega = ck = ${texNum($.w)}\ \text{rad/s}$`,
@@ -144,7 +150,11 @@ export default [
       return { I, E0: Math.sqrt((2 * I) / (C_LIGHT * EPS0)) };
     },
     text: (T) => `A ${T.P} W source radiates equally in all directions. Find the intensity and E₀ ${T.r} m away.`,
-    parts: [num('I', ($) => $.I, 'W/m²'), num('E0', ($) => $.E0, 'V/m')],
+    parts: [
+      sym('I_sym', 'P/(4*pi*r^2)', { P: 'W', r: 'm' }, ($) => $.I, { unit: 'W/m²', label: String.raw`$I$ as a formula` }),
+      num('I', ($) => $.I, 'W/m²'),
+      num('E0', ($) => $.E0, 'V/m'),
+    ],
     steps: ($, f) => [
       String.raw`$I = \dfrac{P}{4\pi r^2} = ${texNum($.I)}\ \text{W/m}^2$`,
       String.raw`$E_0 = \sqrt{\dfrac{2I}{c\varepsilon_0}} = ${texNum($.E0)}\ \text{V/m}$`,

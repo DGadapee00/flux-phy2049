@@ -1,5 +1,5 @@
 /** Exam 4 · Ch 43–44 (DC circuits, Kirchhoff, RC), 45 (magnetism), 46 (magnetic force), 47 (B from currents). */
-import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, MU0, QE, ME, MP, DEG, AXES6, axisCode , texNum } from '../kit.js';
+import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, sym, MU0, QE, ME, MP, DEG, AXES6, axisCode , texNum } from '../kit.js';
 
 const E4 = { exam: 'e4' };
 const PART = choice(['proton', 'a proton'], ['electron', 'an electron']);
@@ -20,7 +20,13 @@ export default [
       return { Req, I, V2: I * $.R2, P: $.E * I };
     },
     text: (T) => `A ${T.E} V battery drives R₁ = ${T.R1} Ω, R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω in series. Find $R_{\\text{eq}}$, the current, the voltage across R₂, and the power delivered by the battery.`,
-    parts: [num('Req', ($) => $.Req, 'Ω'), num('I', ($) => $.I, 'A'), num('V2', ($) => $.V2, 'V'), num('P', ($) => $.P, 'W')],
+    parts: [
+      sym('V2_sym', 'E*R2/(R1 + R2 + R3)', { E: 'V', R1: 'Ω', R2: 'Ω', R3: 'Ω' }, ($) => $.V2, { unit: 'V', label: String.raw`$V_2$ as a formula` }),
+      num('Req', ($) => $.Req, 'Ω'),
+      num('I', ($) => $.I, 'A'),
+      num('V2', ($) => $.V2, 'V'),
+      num('P', ($) => $.P, 'W'),
+    ],
     steps: ($, f) => [
       String.raw`$R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
       String.raw`$I = \dfrac{\varepsilon}{R_{\text{eq}}} = ${texNum($.I)}\ \text{A}$ — the same through every resistor`,
@@ -42,7 +48,12 @@ export default [
       return { Req, I: $.E / Req, I2: $.E / $.R2 };
     },
     text: (T) => `R₁ = ${T.R1} Ω, R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω are in parallel across a ${T.E} V battery. Find $R_{\\text{eq}}$, the total current, and the current through R₂.`,
-    parts: [num('Req', ($) => $.Req, 'Ω'), num('I', ($) => $.I, 'A'), num('I2', ($) => $.I2, 'A')],
+    parts: [
+      sym('Req_sym', '1/(1/R1 + 1/R2 + 1/R3)', { R1: 'Ω', R2: 'Ω', R3: 'Ω' }, ($) => $.Req, { unit: 'Ω', label: String.raw`$R_{\text{eq}}$ as a formula` }),
+      num('Req', ($) => $.Req, 'Ω'),
+      num('I', ($) => $.I, 'A'),
+      num('I2', ($) => $.I2, 'A'),
+    ],
     steps: ($, f) => [
       String.raw`$\dfrac{1}{R_{\text{eq}}} = \sum \dfrac{1}{R_i} \;\Longrightarrow\; R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
       String.raw`$I = ${texNum($.I)}\ \text{A}$`,
@@ -65,7 +76,12 @@ export default [
       return { Rp, Req, I1, Vp: I1 * Rp, I3: (I1 * Rp) / $.R3 };
     },
     text: (T) => `R₁ = ${T.R1} Ω is in series with the parallel pair R₂ = ${T.R2} Ω and R₃ = ${T.R3} Ω, across a ${T.E} V battery. Find $R_{\\text{eq}}$, the current through R₁, and the current through R₃.`,
-    parts: [num('Req', ($) => $.Req, 'Ω'), num('I1', ($) => $.I1, 'A'), num('I3', ($) => $.I3, 'A')],
+    parts: [
+      sym('Req_sym', 'R1 + R2*R3/(R2 + R3)', { R1: 'Ω', R2: 'Ω', R3: 'Ω' }, ($) => $.Req, { unit: 'Ω', label: String.raw`$R_{\text{eq}}$ as a formula` }),
+      num('Req', ($) => $.Req, 'Ω'),
+      num('I1', ($) => $.I1, 'A'),
+      num('I3', ($) => $.I3, 'A'),
+    ],
     steps: ($, f) => [
       String.raw`$R_2 \parallel R_3 = ${texNum($.Rp)}\ \Omega \;\Longrightarrow\; R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
       String.raw`$I_1 = ${texNum($.I1)}\ \text{A}$`,
@@ -124,7 +140,12 @@ export default [
       return { I, V: $.E - I * $.r, Pr: I * I * $.r };
     },
     text: (T) => `A battery with emf ${T.E} V and internal resistance ${T.r} Ω drives a ${T.R} Ω load. Find the current, the terminal voltage, and the power wasted inside the battery.`,
-    parts: [num('I', ($) => $.I, 'A'), num('V', ($) => $.V, 'V'), num('Pr', ($) => $.Pr, 'W')],
+    parts: [
+      sym('V_sym', 'E*R/(R + r)', { E: 'V', R: 'Ω', r: 'Ω' }, ($) => $.V, { unit: 'V', label: String.raw`the terminal voltage $V$ as a formula` }),
+      num('I', ($) => $.I, 'A'),
+      num('V', ($) => $.V, 'V'),
+      num('Pr', ($) => $.Pr, 'W'),
+    ],
     steps: ($, f) => [
       String.raw`$I = \dfrac{\varepsilon}{R + r} = ${texNum($.I)}\ \text{A}$`,
       String.raw`$V = \varepsilon - Ir = ${texNum($.V)}\ \text{V}$`,
@@ -344,7 +365,10 @@ export default [
     vars: { N: range(1, 50, 1, 'turns'), I: range(0.5, 8, 0.1, 'A'), R: range(5, 40, 1, 'cm', 1e-2), y: range(0, 40, 1, 'cm', 1e-2) },
     derive: ($) => ({ B: (MU0 * $.N * $.I * $.R ** 2) / (2 * ($.R ** 2 + $.y ** 2) ** 1.5) }),
     text: (T) => `A flat circular coil of ${T.N} turns and radius ${T.R} cm carries ${T.I} A. Find B on its axis ${T.y} cm from the center.`,
-    parts: [num('B', ($) => $.B, 'T')],
+    parts: [
+      sym('B_sym', 'mu0*N*I*R^2/(2*(R^2 + y^2)^(3/2))', { N: '1', I: 'A', R: 'm', y: 'm' }, ($) => $.B, { unit: 'T', label: String.raw`$B$ as a formula` }),
+      num('B', ($) => $.B, 'T'),
+    ],
     hints: [String.raw`At the center, $y = 0$, this reduces to $\dfrac{\mu_0 NI}{2R}$.`],
     steps: ($, f) => [
       String.raw`$B = \dfrac{\mu_0 N I R^2}{2(R^2+y^2)^{3/2}} = ${texNum($.B)}\ \text{T}$`,
@@ -386,7 +410,11 @@ export default [
     vars: { I1: range(1, 50, 1, 'A'), I2: range(1, 50, 1, 'A'), same: choice([1, 'the same direction'], [-1, 'opposite directions']), d: range(2, 50, 1, 'cm', 1e-2) },
     derive: ($) => ({ FL: (MU0 * $.I1 * $.I2) / (2 * Math.PI * $.d) }),
     text: (T) => `Two long parallel wires ${T.d} cm apart carry ${T.I1} A and ${T.I2} A in ${T.same}. Find the force per meter between them. Do they attract or repel?`,
-    parts: [num('FL', ($) => $.FL, 'N/m', { label: 'F/L' }), mc('type', [[1, 'Attract'], [-1, 'Repel']], ($) => $.same, { label: 'Attract or repel?' })],
+    parts: [
+      sym('FL_sym', 'mu0*I1*I2/(2*pi*d)', { I1: 'A', I2: 'A', d: 'm' }, ($) => $.FL, { unit: 'N/m', label: String.raw`$F/L$ as a formula` }),
+      num('FL', ($) => $.FL, 'N/m', { label: String.raw`$F/L$` }),
+      mc('type', [[1, 'Attract'], [-1, 'Repel']], ($) => $.same, { label: 'Attract or repel?' }),
+    ],
     steps: ($, f) => [
       String.raw`$\dfrac{F}{L} = \dfrac{\mu_0 I_1 I_2}{2\pi d} = ${texNum($.FL)}\ \text{N/m}$`,
       'Parallel currents attract; antiparallel currents repel.',

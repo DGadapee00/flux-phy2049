@@ -1,5 +1,5 @@
 /** Exam 5 · Ch 48 (Faraday/Lenz), 49 (inductance, RL), 50 (motors, transformers, transmission), 51 (applications), 52 (AC circuits). */
-import { problem, kase, range, choice, num, mc, MU0, DEG , texNum } from '../kit.js';
+import { problem, kase, range, choice, num, mc, sym, MU0, DEG , texNum } from '../kit.js';
 
 const E5 = { exam: 'e5' };
 const acSet = (s, o) => Object.assign(s, o);
@@ -41,7 +41,13 @@ export default [
       return { emf, I, F, P: F * $.v };
     },
     text: (T) => `A bar slides at a steady ${T.v} m/s along rails ${T.L} m apart in a ${T.B} T field perpendicular to the rails. The circuit resistance is ${T.R} Ω. Find the emf, the current, the force needed to keep the bar moving, and the power delivered.`,
-    parts: [num('emf', ($) => $.emf, 'V'), num('I', ($) => $.I, 'A'), num('F', ($) => $.F, 'N'), num('P', ($) => $.P, 'W')],
+    parts: [
+      sym('F_sym', 'B^2*L^2*v/R', { B: 'T', L: 'm', v: 'm/s', R: 'Ω' }, ($) => $.F, { unit: 'N', label: String.raw`the force $F$ as a formula` }),
+      num('emf', ($) => $.emf, 'V'),
+      num('I', ($) => $.I, 'A'),
+      num('F', ($) => $.F, 'N'),
+      num('P', ($) => $.P, 'W'),
+    ],
     hints: [String.raw`The magnetic force on the current opposes the motion (Lenz), so you have to push with $F = ILB$.`],
     steps: ($, f) => [
       String.raw`$\mathcal{E} = BLv = ${texNum($.emf)}\ \text{V}$`,
@@ -90,7 +96,10 @@ export default [
     vars: { N: range(50, 2000, 50, 'turns'), r: range(0.5, 5, 0.5, 'cm', 1e-2), l: range(5, 50, 1, 'cm', 1e-2) },
     derive: ($) => ({ L: (MU0 * $.N ** 2 * Math.PI * $.r ** 2) / $.l }),
     text: (T) => `A solenoid has ${T.N} turns, radius ${T.r} cm and length ${T.l} cm. Find its inductance.`,
-    parts: [num('L', ($) => $.L, 'mH', { scale: 1e-3 })],
+    parts: [
+      sym('L_sym', 'mu0*N^2*pi*r^2/l', { N: '1', r: 'm', l: 'm' }, ($) => $.L, { unit: 'H', label: String.raw`$L$ as a formula` }),
+      num('L', ($) => $.L, 'mH', { scale: 1e-3 }),
+    ],
     steps: ($, f) => [String.raw`$L = \dfrac{\mu_0 N^2 A}{\ell} = ${texNum($.L)}\ \text{H}$`],
     cases: [kase('hand', { N: 500, r: 2, l: 30 }, { L: 1.3159 })],
   }),
@@ -146,7 +155,12 @@ export default [
     },
     valid: ($) => $.pct < 50,
     text: (T) => `A plant sends ${T.P} kW over lines with a total resistance of ${T.R} Ω, at ${T.V} kV. Find the line current, the power lost in the lines, and that loss as a percentage of the power sent.`,
-    parts: [num('I', ($) => $.I, 'A'), num('loss', ($) => $.loss, 'W'), num('pct', ($) => $.pct, '%')],
+    parts: [
+      sym('loss_sym', 'P^2*R/V^2', { P: 'W', V: 'V', R: 'Ω' }, ($) => $.loss, { unit: 'W', label: String.raw`the line loss as a formula` }),
+      num('I', ($) => $.I, 'A'),
+      num('loss', ($) => $.loss, 'W'),
+      num('pct', ($) => $.pct, '%'),
+    ],
     hints: [String.raw`Use $I = P/V$ with the transmission voltage, not $V^2/R$.`],
     steps: ($, f) => [
       String.raw`$I = \dfrac{P}{V} = ${texNum($.I)}\ \text{A}$`,
@@ -176,7 +190,11 @@ export default [
       return { A, e0, erms: e0 / Math.SQRT2 };
     },
     text: (T) => `A generator coil has ${T.N} turns of radius ${T.r} cm and spins at ${T.f} Hz in a ${T.B} T field. Find the peak and rms emf.`,
-    parts: [num('e0', ($) => $.e0, 'V', { label: String.raw`$\mathcal{E}_{\max}$` }), num('erms', ($) => $.erms, 'V', { label: String.raw`$\mathcal{E}_{\text{rms}}$` })],
+    parts: [
+      sym('e0_sym', '2*pi*f*N*B*pi*r^2', { N: '1', B: 'T', r: 'm', f: 'Hz' }, ($) => $.e0, { unit: 'V', label: String.raw`$\mathcal{E}_{\max}$ as a formula` }),
+      num('e0', ($) => $.e0, 'V', { label: String.raw`$\mathcal{E}_{\max}$` }),
+      num('erms', ($) => $.erms, 'V', { label: String.raw`$\mathcal{E}_{\text{rms}}$` }),
+    ],
     steps: ($, f) => [
       String.raw`$\mathcal{E}_{\max} = NBA\omega = ${texNum($.e0)}\ \text{V}$`,
       String.raw`$\mathcal{E}_{\text{rms}} = \dfrac{\mathcal{E}_{\max}}{\sqrt{2}} = ${texNum($.erms)}\ \text{V}$`,
@@ -204,7 +222,12 @@ export default [
       return { XC, I: $.V / XC };
     },
     text: (T) => `A ${T.C} μF capacitor is connected to a ${T.V} V (rms), ${T.f} Hz source. Find its reactance and the rms current.`,
-    parts: [num('XC', ($) => $.XC, 'Ω', { label: String.raw`$X_C$` }), num('I', ($) => $.I, 'A', { label: String.raw`$I_{\text{rms}}$` }), mc('f', [[1, 'X_C decreases'], [2, 'X_C increases']], 1, { label: 'If f goes up…' })],
+    parts: [
+      sym('XC_sym', '1/(2*pi*f*C)', { f: 'Hz', C: 'F' }, ($) => $.XC, { unit: 'Ω', label: String.raw`$X_C$ as a formula` }),
+      num('XC', ($) => $.XC, 'Ω', { label: String.raw`$X_C$` }),
+      num('I', ($) => $.I, 'A', { label: String.raw`$I_{\text{rms}}$` }),
+      mc('f', [[1, String.raw`$X_C$ decreases`], [2, String.raw`$X_C$ increases`]], 1, { label: String.raw`If $f$ goes up…` }),
+    ],
     steps: ($, f) => [
       String.raw`$X_C = \dfrac{1}{2\pi fC} = ${texNum($.XC)}\ \Omega$`,
       String.raw`$I = \dfrac{V}{X_C} = ${texNum($.I)}\ \text{A}$`,
@@ -224,7 +247,9 @@ export default [
       return { XL, I: $.V / XL };
     },
     text: (T) => `A ${T.L} mH inductor is connected to a ${T.V} V (rms), ${T.f} Hz source. Find its reactance and the rms current.`,
-    parts: [num('XL', ($) => $.XL, 'Ω', { label: String.raw`$X_L$` }), num('I', ($) => $.I, 'A', { label: String.raw`$I_{\text{rms}}$` }), mc('f', [[1, 'X_L decreases'], [2, 'X_L increases']], 2, { label: 'If f goes up…' })],
+    parts: [
+      sym('XL_sym', '2*pi*f*L', { f: 'Hz', L: 'H' }, ($) => $.XL, { unit: 'Ω', label: String.raw`$X_L$ as a formula` }),
+      num('XL', ($) => $.XL, 'Ω', { label: String.raw`$X_L$` }), num('I', ($) => $.I, 'A', { label: String.raw`$I_{\text{rms}}$` }), mc('f', [[1, String.raw`$X_L$ decreases`], [2, String.raw`$X_L$ increases`]], 2, { label: 'If f goes up…' })],
     steps: ($, f) => [
       String.raw`$X_L = 2\pi fL = ${texNum($.XL)}\ \Omega$`,
       String.raw`$I = \dfrac{V}{X_L} = ${texNum($.I)}\ \text{A}$`,
@@ -250,6 +275,7 @@ export default [
     },
     text: (T) => `A series circuit has R = ${T.R} Ω, L = ${T.L} mH and C = ${T.C} μF, driven at ${T.V} V (rms) and ${T.f} Hz. Find $X_L$, $X_C$, $Z$, $I_{\\text{rms}}$, the phase angle φ (voltage relative to current), the power factor, and the average power.`,
     parts: [
+      sym('Z_sym', 'sqrt(R^2 + (2*pi*f*L - 1/(2*pi*f*C))^2)', { R: 'Ω', L: 'H', C: 'F', f: 'Hz' }, ($) => $.Z, { unit: 'Ω', label: String.raw`$Z$ as a formula` }),
       num('XL', ($) => $.XL, 'Ω', { label: String.raw`$X_L$` }),
       num('XC', ($) => $.XC, 'Ω', { label: String.raw`$X_C$` }),
       num('Z', ($) => $.Z, 'Ω'),
@@ -281,7 +307,12 @@ export default [
       return { f0, I, VL: I * 2 * Math.PI * f0 * $.L };
     },
     text: (T) => `A series RLC circuit (R = ${T.R} Ω, L = ${T.L} mH, C = ${T.C} μF) is driven by a ${T.V} V (rms) source. Find the resonant frequency, the rms current at resonance, and the rms voltage across the inductor at resonance.`,
-    parts: [num('f0', ($) => $.f0, 'Hz'), num('I', ($) => $.I, 'A'), num('VL', ($) => $.VL, 'V', { label: String.raw`$V_L$` })],
+    parts: [
+      sym('f0_sym', '1/(2*pi*sqrt(L*C))', { L: 'H', C: 'F' }, ($) => $.f0, { unit: 'Hz', label: String.raw`$f_0$ as a formula` }),
+      num('f0', ($) => $.f0, 'Hz'),
+      num('I', ($) => $.I, 'A'),
+      num('VL', ($) => $.VL, 'V', { label: String.raw`$V_L$` }),
+    ],
     hints: [String.raw`At resonance $X_L = X_C$, so $Z = R$. $V_L$ and $V_C$ can each be larger than the source voltage.`],
     steps: ($, f) => [
       String.raw`$f_0 = \dfrac{1}{2\pi\sqrt{LC}} = ${texNum($.f0)}\ \text{Hz}$`,

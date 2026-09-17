@@ -141,7 +141,10 @@ export default [
     vars: { a: range(-10, 10, 1, 'V/m²', 1, { exclude: [0] }), b: range(-20, 20, 1, 'V/m'), x0: range(-3, 3, 0.5, 'm') },
     derive: ($) => ({ Ex: -(2 * $.a * $.x0 + $.b) }),
     text: (T) => `The potential along the x-axis is V(x) = ${T.a}x² + ${T.b}x + 5 (V, with x in m). Find Eₓ at x = ${T.x0} m.`,
-    parts: [sym('Ex_sym', '-(2*a*x0 + b)', ['a', 'b', 'x0'], ($) => $.Ex, { label: 'Eₓ as a formula (use a, b, x0)' }), num('Ex', ($) => $.Ex, 'V/m', { abs: 0.01 })],
+    parts: [
+      sym('Ex_sym', '-(2*a*x0 + b)', { a: 'V/m²', b: 'V/m', x0: 'm' }, ($) => $.Ex, { unit: 'V/m', label: String.raw`$E_x$ as a formula (use a, b, x0)` }),
+      num('Ex', ($) => $.Ex, 'V/m', { abs: 0.01 }),
+    ],
     hints: [String.raw`$E_x = -\dfrac{dV}{dx}$`],
     steps: ($, f) => [
       String.raw`$E_x = -\dfrac{dV}{dx} = -(2ax + b)$`,
@@ -171,7 +174,11 @@ export default [
     vars: { q1: range(1, 10, 1, 'μC', 1e-6), q2: range(1, 10, 1, 'μC', 1e-6), d: range(0.2, 2, 0.1, 'm') },
     derive: ($) => ({ x: ($.d * $.q1) / ($.q1 + $.q2) }),
     text: (T) => `A +${T.q1} μC charge is at x = 0 and a −${T.q2} μC charge is at x = ${T.d} m. Where between them is V = 0?`,
-    parts: [num('x', ($) => $.x, 'm'), mc('E0', [[1, 'Yes, E = 0 there too'], [0, 'No, E is not zero there']], 0, { label: 'Is E zero at that point?' })],
+    parts: [
+      sym('x_sym', 'd*q1/(q1 + q2)', { q1: 'C', q2: 'C', d: 'm' }, ($) => $.x, { unit: 'm', label: String.raw`$x$ as a formula` }),
+      num('x', ($) => $.x, 'm'),
+      mc('E0', [[1, 'Yes, E = 0 there too'], [0, 'No, E is not zero there']], 0, { label: String.raw`Is $\vec{E}$ zero at that point?` }),
+    ],
     steps: ($, f) => [
       String.raw`$\dfrac{kq_1}{x} = \dfrac{k|q_2|}{d-x} \;\Longrightarrow\; x = \dfrac{dq_1}{q_1 + |q_2|} = ${texNum($.x)}\ \text{m}$`,
       String.raw`Between opposite charges both fields point toward the negative one, so $\vec{E} \neq 0$ there.`,
@@ -188,7 +195,10 @@ export default [
     vars: { Q: range(-5, 5, 0.1, 'μC', 1e-6, { exclude: [0] }), a: range(0.1, 0.6, 0.01, 'm'), y: range(0, 0.9, 0.01, 'm') },
     derive: ($) => ({ V: (K * $.Q) / Math.hypot($.a, $.y) }),
     text: (T) => `A ring of radius ${T.a} m carries ${T.Q} μC. Find V on its axis, ${T.y} m from the center.`,
-    parts: [sym('V_sym', 'k*Q/sqrt(a^2 + y^2)', ['Q', 'a', 'y'], ($) => $.V, { label: 'V as a formula' }), num('V', ($) => $.V, 'V')],
+    parts: [
+      sym('V_sym', 'k*Q/sqrt(a^2 + y^2)', { Q: 'C', a: 'm', y: 'm' }, ($) => $.V, { unit: 'V', label: String.raw`$V$ as a formula` }),
+      num('V', ($) => $.V, 'V'),
+    ],
     hints: [String.raw`Every $dq$ is the same distance from $P$, and $V$ is a scalar, so nothing cancels.`],
     steps: ($, f) => [
       String.raw`$V = \displaystyle\int \frac{k\,dq}{r} = \frac{kQ}{\sqrt{a^2+y^2}} = ${texNum($.V)}\ \text{V}$`,
@@ -210,7 +220,10 @@ export default [
       return { V: K * $.lam * Math.log((re + $.L / 2) / (re - $.L / 2)) };
     },
     text: (T) => `A line charge of length ${T.L} m and λ = ${T.lam} μC/m lies on the x-axis, centered on the origin. Find V at (0, ${T.d} m).`,
-    parts: [sym('V_sym', 'k*lam*ln((sqrt(L^2/4 + d^2) + L/2)/(sqrt(L^2/4 + d^2) - L/2))', ['lam', 'L', 'd'], ($) => $.V, { label: 'V as a formula' }), num('V', ($) => $.V, 'V')],
+    parts: [
+      sym('V_sym', 'k*lam*ln((sqrt(L^2/4 + d^2) + L/2)/(sqrt(L^2/4 + d^2) - L/2))', { lam: 'C/m', L: 'm', d: 'm' }, ($) => $.V, { unit: 'V', label: String.raw`$V$ as a formula` }),
+      num('V', ($) => $.V, 'V'),
+    ],
     hints: [String.raw`$\displaystyle\int \frac{dx}{\sqrt{x^2+d^2}} = \ln\!\left(x + \sqrt{x^2+d^2}\right)$`],
     steps: ($, f) => [
       String.raw`$V = k\lambda\displaystyle\int_{-L/2}^{L/2} \frac{dx}{\sqrt{x^2+d^2}} = k\lambda\ln\!\left[\frac{\sqrt{L^2/4 + d^2} + L/2}{\sqrt{L^2/4 + d^2} - L/2}\right]$`,
@@ -252,7 +265,13 @@ export default [
       return { C, Q: C * $.V, E: $.V / $.d, U: 0.5 * C * $.V ** 2 };
     },
     text: (T) => `An air-filled parallel-plate capacitor (treat as vacuum) has plates of area ${T.A} m² separated by ${T.d} mm and is connected to a ${T.V} V battery. Find C, Q, E between the plates, and the stored energy.`,
-    parts: [num('C', ($) => $.C, 'pF', { scale: 1e-12 }), num('Q', ($) => $.Q, 'C'), num('E', ($) => $.E, 'V/m'), num('U', ($) => $.U, 'J')],
+    parts: [
+      sym('U_sym', 'eps0*A*V^2/(2*d)', { A: 'm²', d: 'm', V: 'V' }, ($) => $.U, { unit: 'J', label: String.raw`$U$ as a formula in $A$, $d$, $V$` }),
+      num('C', ($) => $.C, 'pF', { scale: 1e-12 }),
+      num('Q', ($) => $.Q, 'C'),
+      num('E', ($) => $.E, 'V/m'),
+      num('U', ($) => $.U, 'J'),
+    ],
     steps: ($, f) => [
       String.raw`$C = \dfrac{\varepsilon_0 A}{d} = ${texNum($.C)}\ \text{F}$`,
       String.raw`$Q = CV = ${texNum($.Q)}\ \text{C}$`,
@@ -345,7 +364,11 @@ export default [
     vars: { C: range(1, 200, 1, 'μF', 1e-6), V: range(0.5, 10, 0.5, 'kV', 1e3) },
     derive: ($) => ({ U: 0.5 * $.C * $.V ** 2, Q: $.C * $.V }),
     text: (T) => `A defibrillator's ${T.C} μF capacitor is charged to ${T.V} kV. How much charge and energy does it store?`,
-    parts: [num('Q', ($) => $.Q, 'C'), num('U', ($) => $.U, 'J')],
+    parts: [
+      sym('U_sym', 'C*V^2/2', { C: 'F', V: 'V' }, ($) => $.U, { unit: 'J', label: String.raw`$U$ as a formula` }),
+      num('Q', ($) => $.Q, 'C'),
+      num('U', ($) => $.U, 'J'),
+    ],
     steps: ($, f) => [
       String.raw`$Q = CV = ${texNum($.Q)}\ \text{C}$`,
       String.raw`$U = \tfrac{1}{2}CV^2 = ${texNum($.U)}\ \text{J}$`,
@@ -393,7 +416,11 @@ export default [
       return { rho: mat($.m).rho, R, I: $.V / R };
     },
     text: (T, $, f) => `A ${T.m} wire (ρ = ${f($.rho)} Ω·m) is ${T.L} m long with a ${T.A} mm² cross section. Find its resistance and the current when ${T.V} V is applied.`,
-    parts: [num('R', ($) => $.R, 'Ω'), num('I', ($) => $.I, 'A')],
+    parts: [
+      sym('R_sym', 'rho*L/A', { rho: 'Ω·m', L: 'm', A: 'm²' }, ($) => $.R, { unit: 'Ω', label: String.raw`$R$ as a formula (use rho, L, A)` }),
+      num('R', ($) => $.R, 'Ω'),
+      num('I', ($) => $.I, 'A'),
+    ],
     steps: ($, f) => [
       String.raw`$R = \dfrac{\rho L}{A} = ${texNum($.R)}\ \Omega$`,
       String.raw`$I = \dfrac{V}{R} = ${texNum($.I)}\ \text{A}$`,
@@ -468,7 +495,10 @@ export default [
     vars: { n: range(1.5, 4, 0.5), R0: range(1, 50, 1, 'Ω') },
     derive: ($) => ({ R: $.R0 * $.n ** 2 }),
     text: (T) => `A ${T.R0} Ω wire is drawn out to ${T.n} times its original length, keeping its volume the same. What is its new resistance?`,
-    parts: [num('R', ($) => $.R, 'Ω')],
+    parts: [
+      sym('R_sym', 'n^2*R0', { n: '1', R0: 'Ω' }, ($) => $.R, { unit: 'Ω', label: String.raw`$R$ as a formula` }),
+      num('R', ($) => $.R, 'Ω'),
+    ],
     hints: [String.raw`The volume is constant, so $A$ shrinks by the same factor that $L$ grows.`],
     steps: ($, f) => [String.raw`$R = \dfrac{\rho(nL)}{A/n} = n^2 R_0 = ${texNum($.R)}\ \Omega$`],
     cases: [kase('double', { n: 2, R0: 10 }, { R: 40 })],
@@ -480,7 +510,11 @@ export default [
     vars: { P: range(5, 200, 5, 'W'), V: range(12, 240, 12, 'V') },
     derive: ($) => ({ R: $.V ** 2 / $.P, I: $.P / $.V }),
     text: (T) => `A bulb is rated ${T.P} W at ${T.V} V. Find its operating resistance and current.`,
-    parts: [num('R', ($) => $.R, 'Ω'), num('I', ($) => $.I, 'A')],
+    parts: [
+      sym('R_sym', 'V^2/P', { V: 'V', P: 'W' }, ($) => $.R, { unit: 'Ω', label: String.raw`$R$ as a formula` }),
+      num('R', ($) => $.R, 'Ω'),
+      num('I', ($) => $.I, 'A'),
+    ],
     steps: ($, f) => [
       String.raw`$R = \dfrac{V^2}{P} = ${texNum($.R)}\ \Omega$`,
       String.raw`$I = \dfrac{P}{V} = ${texNum($.I)}\ \text{A}$`,
@@ -499,7 +533,12 @@ export default [
     vars: { Vrms: range(12, 240, 12, 'V'), R: range(10, 400, 10, 'Ω') },
     derive: ($) => ({ Vp: $.Vrms * Math.SQRT2, Irms: $.Vrms / $.R, P: $.Vrms ** 2 / $.R }),
     text: (T) => `A ${T.R} Ω resistor is connected to a ${T.Vrms} V (rms) AC outlet. Find the peak voltage, the rms current, and the average power.`,
-    parts: [num('Vp', ($) => $.Vp, 'V'), num('Irms', ($) => $.Irms, 'A'), num('P', ($) => $.P, 'W')],
+    parts: [
+      sym('P_sym', 'Vrms^2/R', { Vrms: 'V', R: 'Ω' }, ($) => $.P, { unit: 'W', label: String.raw`$P_{\text{avg}}$ as a formula` }),
+      num('Vp', ($) => $.Vp, 'V'),
+      num('Irms', ($) => $.Irms, 'A'),
+      num('P', ($) => $.P, 'W'),
+    ],
     steps: ($, f) => [
       String.raw`$V_p = \sqrt{2}\,V_{\text{rms}} = ${texNum($.Vp)}\ \text{V}$`,
       String.raw`$I_{\text{rms}} = \dfrac{V_{\text{rms}}}{R} = ${texNum($.Irms)}\ \text{A}$`,
@@ -557,7 +596,12 @@ export default [
       return { P, Q: P * $.t, dT: (P * $.t) / ($.m * 4186) };
     },
     text: (T) => `A heater with R = ${T.R} Ω on ${T.V} V runs for ${T.t} min in ${T.m} kg of water (c = 4186 J/kg·°C). Find its power, the energy delivered, and the temperature rise (assume no losses).`,
-    parts: [num('P', ($) => $.P, 'W'), num('Q', ($) => $.Q, 'J'), num('dT', ($) => $.dT, '°C')],
+    parts: [
+      sym('Q_sym', 'V^2*t/R', { V: 'V', R: 'Ω', t: 's' }, ($) => $.Q, { unit: 'J', label: String.raw`the heat $Q$ as a formula` }),
+      num('P', ($) => $.P, 'W'),
+      num('Q', ($) => $.Q, 'J'),
+      num('dT', ($) => $.dT, '°C'),
+    ],
     steps: ($, f) => [
       String.raw`$P = \dfrac{V^2}{R} = ${texNum($.P)}\ \text{W}$`,
       String.raw`$Q = Pt = ${texNum($.Q)}\ \text{J}$`,

@@ -3,7 +3,7 @@
  * No lab yet (catalog 'wave' is "coming"), so lab is null; when the Interference / Diffraction /
  * Thin film labs land, set lab + sim here and the check script will start comparing.
  */
-import { problem, kase, range, choice, num, mc, DEG , texNum } from '../kit.js';
+import { problem, kase, range, choice, num, mc, sym, DEG , texNum } from '../kit.js';
 
 const W = { exam: 'wave', lab: null };
 
@@ -14,7 +14,11 @@ export default [
     vars: { lam: range(400, 700, 5, 'nm', 1e-9), d: range(0.05, 1, 0.05, 'mm', 1e-3), L: range(0.5, 5, 0.1, 'm'), m: range(1, 5, 1) },
     derive: ($) => ({ y: ($.m * $.lam * $.L) / $.d, dy: ($.lam * $.L) / $.d }),
     text: (T) => `Light of wavelength ${T.lam} nm passes through two slits ${T.d} mm apart onto a screen ${T.L} m away. Find the position of the m = ${T.m} bright fringe and the fringe spacing.`,
-    parts: [num('y', ($) => $.y, 'mm', { scale: 1e-3, label: `y_m` }), num('dy', ($) => $.dy, 'mm', { scale: 1e-3, label: 'Δy' })],
+    parts: [
+      sym('dy_sym', 'lam*L/d', { lam: 'm', L: 'm', d: 'm' }, ($) => $.dy, { unit: 'm', label: String.raw`the fringe spacing $\Delta y$ as a formula` }),
+      num('y', ($) => $.y, 'mm', { scale: 1e-3, label: String.raw`$y_m$` }),
+      num('dy', ($) => $.dy, 'mm', { scale: 1e-3, label: String.raw`$\Delta y$` }),
+    ],
     hints: [String.raw`Bright fringes: $d\sin\theta = m\lambda$. For small angles, $y = \dfrac{m\lambda L}{d}$.`],
     steps: ($, f) => [
       String.raw`$y = \dfrac{m\lambda L}{d} = ${texNum($.y * 1e3)}\ \text{mm}$`,
@@ -28,7 +32,10 @@ export default [
     derive: ($) => ({ lam: ($.dy * $.d) / $.L }),
     valid: ($) => $.lam > 3.5e-7 && $.lam < 8e-7,
     text: (T) => `Neighboring bright fringes are ${T.dy} mm apart on a screen ${T.L} m from a double slit with d = ${T.d} mm. What is the wavelength?`,
-    parts: [num('lam', ($) => $.lam, 'nm', { scale: 1e-9, label: 'λ' })],
+    parts: [
+      sym('lam_sym', 'dy*d/L', { dy: 'm', d: 'm', L: 'm' }, ($) => $.lam, { unit: 'm', label: String.raw`$\lambda$ as a formula` }),
+      num('lam', ($) => $.lam, 'nm', { scale: 1e-9, label: String.raw`$\lambda$` }),
+    ],
     steps: ($, f) => [String.raw`$\lambda = \dfrac{\Delta y\,d}{L} = ${texNum($.lam * 1e9)}\ \text{nm}$`],
     cases: [kase('hand', { dy: 4.5, d: 0.25, L: 1.5 }, { lam: 750 })],
   }),
@@ -73,7 +80,11 @@ export default [
     vars: { lam: range(400, 700, 1, 'nm', 1e-9), a: range(0.02, 1, 0.01, 'mm', 1e-3), L: range(0.5, 5, 0.1, 'm') },
     derive: ($) => ({ th: (Math.asin($.lam / $.a) * 180) / Math.PI, w: (2 * $.lam * $.L) / $.a }),
     text: (T) => `Light of wavelength ${T.lam} nm passes through a single slit ${T.a} mm wide onto a screen ${T.L} m away. Find the angle of the first dark fringe and the width of the central bright maximum.`,
-    parts: [num('th', ($) => $.th, '°', { label: 'θ₁', abs: 0.002 }), num('w', ($) => $.w, 'mm', { scale: 1e-3, label: 'Central width' })],
+    parts: [
+      sym('w_sym', '2*lam*L/a', { lam: 'm', L: 'm', a: 'm' }, ($) => $.w, { unit: 'm', label: String.raw`the central width as a formula` }),
+      num('th', ($) => $.th, '°', { label: String.raw`$\theta_1$`, abs: 0.002 }),
+      num('w', ($) => $.w, 'mm', { scale: 1e-3, label: 'Central width' }),
+    ],
     hints: [String.raw`Dark fringes: $a\sin\theta = m\lambda$ for $m = 1, 2, \dots$. The central maximum spans from $-\theta_1$ to $+\theta_1$.`],
     steps: ($, f) => [
       String.raw`$\sin\theta_1 = \dfrac{\lambda}{a} \;\Longrightarrow\; \theta_1$ = ${f($.th)}°`,
@@ -107,7 +118,11 @@ export default [
       return { th, s: th * $.L };
     },
     text: (T) => `An aperture ${T.D} mm across views objects ${T.L} km away in ${T.lam} nm light. Find the minimum resolvable angle and the smallest separation it can resolve at that distance.`,
-    parts: [num('th', ($) => $.th, 'rad', { label: String.raw`$\theta_{\min}$` }), num('s', ($) => $.s, 'm', { label: 'Separation' })],
+    parts: [
+      sym('s_sym', '1.22*lam*L/D', { lam: 'm', L: 'm', D: 'm' }, ($) => $.s, { unit: 'm', label: String.raw`the separation as a formula` }),
+      num('th', ($) => $.th, 'rad', { label: String.raw`$\theta_{\min}$` }),
+      num('s', ($) => $.s, 'm', { label: 'Separation' }),
+    ],
     steps: ($, f) => [
       String.raw`$\theta = \dfrac{1.22\lambda}{D} = ${texNum($.th)}\ \text{rad}$`,
       String.raw`$s = \theta L = ${texNum($.s)}\ \text{m}$`,

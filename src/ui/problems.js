@@ -12,7 +12,7 @@
  * this module only calls api.openInLab(inst) and reads api.computed / api.slice().
  */
 import { PROBLEMS, problemById, problemsForExam, CHAPTER_ORDER, CHAPTER_TITLES } from '../problems/index.js';
-import { instance, render, grade, expected, sig, withinTol, compile } from '../problems/engine.js';
+import { instance, render, grade, expected, sig, withinTol, compile, checkUnits } from '../problems/engine.js';
 import { createProgress, pickSet, MASTERED_BOX, INTERVAL_DAYS } from '../problems/progress.js';
 import { examById, LAB_META } from '../data/catalog.js';
 import { mathProse } from './shared.js';
@@ -569,6 +569,40 @@ export function createPractice(api) {
       <p class="pb-foot">Your first try uses the worksheet's numbers when there is one; after that the numbers change every time. Progress stays in this browser. <button type="button" class="linkish" data-act="reset-progress">Reset progress</button></p>`;
   }
 
+  /**
+   * What to show under a symbolic input: a parse error, or the units the expression comes out in.
+   * The units line is the check by hand — write the answer in symbols, see where it lands — run
+   * live on what is in the box.
+   */
+  function parseMessage(part, value) {
+    if (part.kind !== 'symbolic' || !String(value ?? '').trim()) return { cls: '', html: '' };
+    try {
+      compile(value, part.vars, part.alias);
+    } catch (err) {
+      return { cls: 'bad', html: esc(err.message) };
+    }
+    const u = checkUnits(value, part);
+    if (!u) return { cls: '', html: '' };
+    return u.ok
+      ? { cls: 'ok', html: `units: ${esc(u.text)} ✓` }
+      : { cls: 'bad', html: u.want ? `units: ${esc(u.text)} — this one should come out in ${esc(u.want)}` : esc(u.text) };
+  }
+
+  /**
+   * Whether an input is held until the formula above it is right. Writing the expression first is
+   * how the work earns partial credit on an exam, and it keeps a number from being guessed into
+   * place. An exam attempt never locks — there is no feedback to unlock it.
+   */
+  function pendingSymbol(cur, i) {
+    if (cur.mode === 'exam' || cur.finished || cur.revealed) return null;
+    for (let j = 0; j < i; j++) {
+      const p = cur.tpl.parts[j];
+      if (p.kind !== 'symbolic') continue;
+      if (!cur.results[p.id]?.correct) return p;
+    }
+    return null;
+  }
+
   function partHTML(cur, part, i) {
     const r = cur.view.parts[i];
     const exam = cur.mode === 'exam';
@@ -584,19 +618,22 @@ export function createPractice(api) {
     if (part.kind === 'numeric' || part.kind === 'symbolic') {
       const sym = part.kind === 'symbolic';
       const val = cur.inputs[part.id] ?? '';
+      const held = sym ? null : pendingSymbol(cur, i);
       const help = sym
-        ? `<div class="pb-symhelp">Symbols: ${part.vars.map(esc).join(', ')} · constants k, eps0, mu0, pi · e.g. <code>2*k*lam/R</code>, <code>sqrt(x^2 + d^2)</code></div>`
+        ? `<div class="pb-symhelp">Symbols: ${part.vars.map(esc).join(', ')} · constants k, eps0, mu0, pi, c, g · e.g. <code>2*k*lam/R</code>, <code>sqrt(x^2 + d^2)</code></div>`
         : '';
-      return `<div class="pb-part${state}" data-part="${esc(part.id)}">
+      const msg = parseMessage(part, val);
+      return `<div class="pb-part${state}${held ? ' held' : ''}" data-part="${esc(part.id)}">
         <label class="pb-label" for="pb-in-${i}">${label}</label>
         <div class="pb-field">
           <input id="pb-in-${i}" class="pb-input${sym ? ' sym' : ''}" data-input="${i}" type="text" spellcheck="false" autocomplete="off"
-            ${sym ? '' : 'inputmode="decimal"'} value="${esc(val)}" ${locked ? 'readonly' : ''} placeholder="${sym ? 'formula' : 'e.g. 2.5e-6'}" />
+            ${sym ? '' : 'inputmode="decimal"'} value="${esc(val)}" ${locked ? 'readonly' : ''} ${held ? 'disabled' : ''} placeholder="${sym ? 'formula' : 'e.g. 2.5e-6'}" />
           ${part.unit ? `<span class="pb-unit">${esc(part.unit)}</span>` : ''}
           <span class="pb-mark">${mark}</span>
         </div>
         ${help}
-        <div class="pb-parse" data-parse="${i}"></div>
+        ${held ? '<div class="pb-held">Write the formula above first — then put the numbers in.</div>' : ''}
+        <div class="pb-parse ${msg.cls}" data-parse="${i}">${msg.html}</div>
         <div class="pb-fb">${esc(fb)}</div>
         ${cur.revealed || (cur.finished && !res?.correct) ? `<div class="pb-want">Answer: ${esc(sym ? part.expr : showValue(part, r, part.get(cur.inst.$)))}</div>` : ''}
         ${labSlot}
@@ -1000,15 +1037,9 @@ export function createPractice(api) {
       if (part.kind === 'symbolic') {
         const out = panel.querySelector(`[data-parse="${el.dataset.input}"]`);
         if (out) {
-          let msg = '';
-          if (el.value.trim()) {
-            try {
-              compile(el.value, part.vars, part.alias);
-            } catch (err) {
-              msg = err.message;
-            }
-          }
-          out.textContent = msg;
+          const msg = parseMessage(part, el.value);
+          out.className = `pb-parse ${msg.cls}`;
+          out.innerHTML = msg.html;
         }
       }
     }

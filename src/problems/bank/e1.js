@@ -1,5 +1,5 @@
 /** Exam 1 · Ch V (vectors), 34 (charge), 35 (Coulomb force). */
-import { problem, kase, range, choice, SIGN, num, mc, K, QE, ME, MP, G, DEG, DIR_X, charge, layout, angleDeg, texNum } from '../kit.js';
+import { problem, kase, range, choice, SIGN, num, mc, sym, K, QE, ME, MP, G, DEG, DIR_X, charge, layout, angleDeg, texNum } from '../kit.js';
 
 const E1 = { exam: 'e1' };
 
@@ -150,7 +150,11 @@ export default [
       return { a12, final3 };
     },
     text: (T) => `Three identical conducting spheres carry ${T.q1} μC, ${T.q2} μC and ${T.q3} μC. Sphere 1 touches sphere 2 and they are separated. Then sphere 2 touches sphere 3. What is the final charge on sphere 1 and on sphere 3?`,
-    parts: [num('s1', ($) => $.a12, 'μC', { scale: 1e-6, abs: 0.01, label: 'Sphere 1' }), num('s3', ($) => $.final3, 'μC', { scale: 1e-6, abs: 0.01, label: 'Sphere 3' })],
+    parts: [
+      sym('s1_sym', '(q1 + q2)/2', { q1: 'C', q2: 'C' }, ($) => $.a12, { unit: 'C', label: String.raw`Sphere 1 as a formula` }),
+      num('s1', ($) => $.a12, 'μC', { scale: 1e-6, abs: 0.01, label: 'Sphere 1' }),
+      num('s3', ($) => $.final3, 'μC', { scale: 1e-6, abs: 0.01, label: 'Sphere 3' }),
+    ],
     hints: ['Identical conductors split their combined charge equally.'],
     steps: ($, f) => [
       String.raw`After 1–2: each has $\dfrac{q_1 + q_2}{2} = ${texNum($.a12 * 1e6)}\ \mu\text{C}$`,
@@ -181,7 +185,11 @@ export default [
     vars: { q1: range(1, 10, 0.5, 'μC', 1e-6), s1: SIGN, q2: range(1, 10, 0.5, 'μC', 1e-6), s2: SIGN, r: range(2, 80, 1, 'cm', 1e-2) },
     derive: ($) => ({ F: (K * $.q1 * $.q2) / $.r ** 2 }),
     text: (T) => `A ${T.s1} ${T.q1} μC charge and a ${T.s2} ${T.q2} μC charge are ${T.r} cm apart. Find the magnitude of the force between them. Is it attractive or repulsive?`,
-    parts: [num('F', ($) => $.F, 'N'), mc('type', [[1, 'Repulsive'], [-1, 'Attractive']], ($) => $.s1 * $.s2, { label: 'Type' })],
+    parts: [
+      sym('F_sym', 'k*q1*q2/r^2', { q1: 'C', q2: 'C', r: 'm' }, ($) => $.F, { unit: 'N', label: String.raw`$|\vec{F}|$ as a formula` }),
+      num('F', ($) => $.F, 'N'),
+      mc('type', [[1, 'Repulsive'], [-1, 'Attractive']], ($) => $.s1 * $.s2, { label: 'Type' }),
+    ],
     steps: ($, f) => [
       String.raw`$F = \dfrac{k|q_1q_2|}{r^2} = ${texNum($.F)}\ \text{N}$`,
       'Like signs repel; opposite signs attract.',
@@ -200,7 +208,10 @@ export default [
     vars: { q1: range(1, 10, 0.5, 'μC', 1e-6), q2: range(1, 10, 0.5, 'μC', 1e-6), F: range(0.1, 20, 0.1, 'N') },
     derive: ($) => ({ r: Math.sqrt((K * $.q1 * $.q2) / $.F) }),
     text: (T) => `How far apart must a ${T.q1} μC charge and a ${T.q2} μC charge be for the force between them to be ${T.F} N?`,
-    parts: [num('r', ($) => $.r, 'm')],
+    parts: [
+      sym('r_sym', 'sqrt(k*q1*q2/F)', { q1: 'C', q2: 'C', F: 'N' }, ($) => $.r, { unit: 'm', label: String.raw`$r$ as a formula` }),
+      num('r', ($) => $.r, 'm'),
+    ],
     steps: ($, f) => [String.raw`$r = \sqrt{\dfrac{k q_1 q_2}{F}} = ${texNum($.r)}\ \text{m}$`],
     cases: [kase('hand', { q1: 4, q2: 5, F: 2 }, { r: 0.3 })],
   }),
@@ -241,7 +252,10 @@ export default [
     vars: { q1: range(1, 20, 1, 'μC', 1e-6), q2: range(1, 20, 1, 'μC', 1e-6), d: range(0.1, 2, 0.05, 'm') },
     derive: ($) => ({ x: $.d / (1 + Math.sqrt($.q2 / $.q1)) }),
     text: (T) => `Two positive charges, ${T.q1} μC at x = 0 and ${T.q2} μC at x = ${T.d} m, are fixed. Where between them can a third charge sit with zero net force?`,
-    parts: [num('x', ($) => $.x, 'm', { label: 'x' })],
+    parts: [
+      sym('x_sym', 'd/(1 + sqrt(q2/q1))', { q1: 'C', q2: 'C', d: 'm' }, ($) => $.x, { unit: 'm', label: String.raw`$x$ as a formula` }),
+      num('x', ($) => $.x, 'm', { label: String.raw`$x$` }),
+    ],
     hints: [String.raw`$\dfrac{kq_1q}{x^2} = \dfrac{kq_2q}{(d-x)^2}$ — the third charge cancels out.`],
     steps: ($, f) => [
       String.raw`$\dfrac{x}{d-x} = \sqrt{\dfrac{q_1}{q_2}} \;\Longrightarrow\; x = \dfrac{d}{1+\sqrt{q_2/q_1}} = ${texNum($.x)}\ \text{m}$`,

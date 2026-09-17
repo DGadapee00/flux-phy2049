@@ -13,7 +13,8 @@
  */
 import { PROBLEMS, CHAPTER_ORDER, CHAPTER_TITLES, problemsForExam } from '../src/problems/index.js';
 import { createProgress, memoryStorage, pickSet, INTERVAL_DAYS } from '../src/problems/progress.js';
-import { build, instance, render, expected, withinTol, evalSymbolic, gradeSymbolic, grade, parseNumber } from '../src/problems/engine.js';
+import { build, instance, render, expected, withinTol, evalSymbolic, gradeSymbolic, grade, parseNumber, parseExpr, dimensionOf } from '../src/problems/engine.js';
+import { parseUnit, dimEqual, formatDim } from '../src/physics/units.js';
 import { applyProblem, headlessCtx } from '../src/problems/simbridge.js';
 import { mathProse } from '../src/ui/shared.js';
 import { loadLab } from '../src/labs/load.js';
@@ -56,6 +57,19 @@ function checkAnswers(tpl, inst, label) {
       const a = evalSymbolic(p, inst.$);
       const b = p.get(inst.$);
       if (!(Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b)))) err(tpl.id, `${label} symbolic ${p.id}: key gives ${a}, get() gives ${b}`);
+      // The key has to come out in the unit the part claims — the same check the student does by hand.
+      if (p.unit && p.units) {
+        try {
+          const got = dimensionOf(parseExpr(p.expr, p.vars, p.alias), p.units);
+          if (!dimEqual(got, parseUnit(p.unit))) {
+            err(tpl.id, `symbolic ${p.id}: the key is in ${formatDim(got)}, but the part says ${p.unit}`);
+          }
+        } catch (e) {
+          err(tpl.id, `symbolic ${p.id}: units — ${e.message}`);
+        }
+      } else if (p.unit || p.units) {
+        err(tpl.id, `symbolic ${p.id}: declare both the symbol units and the answer unit, or neither`);
+      }
     }
   }
 }
