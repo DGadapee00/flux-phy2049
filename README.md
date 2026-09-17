@@ -21,9 +21,9 @@ node scripts/gallery.mjs [lab ...]   # screenshot every lab × scenario to scrip
 node scripts/contact.mjs [regex]     # tile those screenshots into contact sheets for review
 ```
 
-Playwright is not a dependency here. `smoke.mjs` borrows one from wherever the machine keeps it —
-this project's own `node_modules`, a global install, or `PLAYWRIGHT_PATH=/path/to/a/project/that/has/it`.
-(`gallery.mjs` and `contact.mjs` still resolve it from a hardcoded path.)
+Playwright is not a dependency here. The three browser scripts borrow one from wherever the machine
+keeps it (`scripts/playwright.mjs`): this project's own `node_modules`, a global install, or
+`PLAYWRIGHT_PATH=/path/to/a/project/that/has/it`.
 
 The self-test checks the code against independent methods rather than against itself: Biot–Savart sums vs closed forms, Ampère loops, Boris-integrated orbits, image-charge surface potentials, Kirchhoff rules on every circuit layout, −ΔΦ/Δt for Faraday, an RK4 simulation of each AC circuit vs its phasor current, and paraxial ray tracing that must land every principal ray on the computed image.
 

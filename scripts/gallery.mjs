@@ -3,13 +3,9 @@
  * Writes scripts/output/gallery/<exam>-<lab>-<scenario>.png and reports page errors.
  *   node scripts/gallery.mjs [labId ...]
  */
-import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
-
-const require = createRequire('C:/Users/Dalto/planner-app/package.json');
-const { chromium } = require('playwright');
-
+import { chromium } from './playwright.mjs';
 const outDir = path.resolve('scripts/output/gallery');
 fs.mkdirSync(outDir, { recursive: true });
 const only = new Set(process.argv.slice(2));

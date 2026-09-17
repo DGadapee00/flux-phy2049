@@ -1,11 +1,9 @@
 /** Tile scripts/output/gallery/*.png into labeled contact sheets (12 per sheet). */
-import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { chromium } from './playwright.mjs';
 
-const require = createRequire('C:/Users/Dalto/planner-app/package.json');
-const { chromium } = require('playwright');
 const dir = path.resolve('scripts/output/gallery');
 const filter = process.argv[2] ? new RegExp(process.argv[2]) : null;
 const files = fs.readdirSync(dir).filter((f) => f.endsWith('.png') && !f.startsWith('sheet') && (!filter || filter.test(f))).sort();
