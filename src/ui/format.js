@@ -1,3 +1,5 @@
+import { coordUnit } from '../engine/frame.js';
+
 export function sciHTML(x, digits = 2) {
   if (!Number.isFinite(x)) return '—';
   if (Math.abs(x) < 1e-18) return '0';
@@ -57,6 +59,13 @@ export function fmtForce(mag) {
   if (a >= 1e-3) return `${(mag * 1e3).toFixed(2)} mN`;
   if (a >= 1e-6) return `${(mag * 1e6).toFixed(2)} μN`;
   return `${sciText(mag)} N`;
+}
+
+/** A point in the unit that suits the scene, e.g. "(10, 10, 0) cm". */
+export function fmtPoint(p) {
+  const { unit, per } = coordUnit();
+  const v = (x) => Number(((x || 0) * per).toFixed(3));
+  return `(${v(p.x)}, ${v(p.y)}, ${v(p.z)}) ${unit}`;
 }
 
 export function fmtLen(m) {

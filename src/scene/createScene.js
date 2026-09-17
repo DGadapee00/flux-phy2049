@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { M, fatSegments } from './manim.js';
+import { M } from './manim.js';
+import { NumberPlane } from './numberPlane.js';
 
 export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({
@@ -45,11 +46,8 @@ export function createScene(canvas) {
   key.position.set(6, 10, 4);
   scene.add(key);
 
-  const grid = numberPlane(7);
-  scene.add(grid);
-  grid.add(axisLabel('x', 7.35, 0, 0));
-  grid.add(axisLabel('y', 0, 5.2, 0));
-  grid.add(axisLabel('z', 0, 0, 7.35));
+  const grid = new NumberPlane();
+  scene.add(grid.group);
 
   function onResize() {
     const w = window.innerWidth;
@@ -65,46 +63,5 @@ export function createScene(canvas) {
   return { renderer, scene, camera, controls, labels, grid, onResize };
 }
 
-/** Manim NumberPlane on the xz floor: blue major lines, faint minor lines, light axes with ticks. */
-function numberPlane(half) {
-  const group = new THREE.Group();
-  const major = [];
-  const minor = [];
-  for (let i = -half; i <= half; i++) {
-    if (i !== 0) {
-      major.push(i, 0, -half, i, 0, half);
-      major.push(-half, 0, i, half, 0, i);
-    }
-    if (i < half) {
-      const m = i + 0.5;
-      minor.push(m, 0, -half, m, 0, half);
-      minor.push(-half, 0, m, half, 0, m);
-    }
-  }
-  group.add(fatSegments(minor, { color: M.blueE, width: 1, opacity: 0.28 }));
-  group.add(fatSegments(major, { color: M.blueD, width: 1.4, opacity: 0.42 }));
-
-  const axes = [-half, 0, 0, half, 0, 0, 0, 0, -half, 0, 0, half, 0, 0, 0, 0, 4.8, 0];
-  const ticks = [];
-  const t = 0.08;
-  for (let i = -half + 1; i < half; i++) {
-    if (i === 0) continue;
-    ticks.push(i, -t, 0, i, t, 0);
-    ticks.push(0, -t, i, 0, t, i);
-  }
-  for (let i = 1; i < 5; i++) ticks.push(-t, i, 0, t, i, 0);
-  group.add(fatSegments(axes, { color: M.white, width: 2, opacity: 0.8 }));
-  group.add(fatSegments(ticks, { color: M.white, width: 1.6, opacity: 0.7 }));
-  return group;
-}
-
-function axisLabel(text, x, y, z) {
-  const div = document.createElement('div');
-  div.className = 'axis-label';
-  div.textContent = text;
-  const obj = new CSS2DObject(div);
-  obj.position.set(x, y, z);
-  return obj;
-}
 
 export { CSS2DObject };

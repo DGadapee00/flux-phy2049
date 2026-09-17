@@ -1,5 +1,5 @@
 /** Exam 3 · Ch 38–39 (potential), 40 (capacitors), 41 (current, resistance), 42 (power). */
-import { problem, kase, range, choice, SIGN, num, mc, sym, K, EPS0, QE, ME, MP, POSNEG, charge, fitLayout } from '../kit.js';
+import { problem, kase, range, choice, SIGN, num, mc, sym, K, EPS0, QE, ME, MP, POSNEG, charge, layout } from '../kit.js';
 import { DIELECTRICS } from '../../physics/capacitor.js';
 import { MATERIALS } from '../../physics/circuit.js';
 
@@ -9,19 +9,9 @@ const mat = (id) => MATERIALS.find((m) => m.id === id);
 const MATS = choice(...['copper', 'aluminum', 'tungsten', 'iron', 'nichrome'].map((id) => [id, mat(id).name.toLowerCase()]));
 const DIEL = choice(...['teflon', 'paper', 'nylon', 'rubber'].map((id) => [id, `${DIELECTRICS.find((d) => d.id === id).name.toLowerCase()} (κ = ${kap(id)})`]));
 
-/** Potential lab: charges + probe (point B) + pathA, scaled so V (and W = qΔV) are unchanged. */
+/** Potential lab: the problem's charges, its point B (the probe) and its point A. */
 function potSetup(list, probe, pathA) {
-  return (s, $) => {
-    const pts = [...list($), { ...probe($), q: 0 }, ...(pathA ? [{ ...pathA($), q: 0 }] : [])];
-    const L = fitLayout(pts, null, { keep: 'V', maxR: 0.62 });
-    const n = list($).length;
-    s.charges = L.charges.slice(0, n).map((c) => ({ ...c, id: c.id }));
-    s.probe = { x: L.charges[n].x, y: L.charges[n].y, z: 0 };
-    if (pathA) s.pathA = { x: L.charges[n + 1].x, y: L.charges[n + 1].y, z: 0 };
-    s.extraE = { x: 0, y: 0, z: 0 };
-    s.selectedId = s.charges[0]?.id ?? null;
-    return Math.abs(L.s - 1) > 1e-6 ? `Scaled to fit: positions ×${L.s.toPrecision(2)}, charges ×${L.s.toPrecision(2)} — V is unchanged.` : '';
-  };
+  return (s, $) => layout(s, { charges: list($), probe: probe($), pathA: pathA ? pathA($) : null });
 }
 
 export default [

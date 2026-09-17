@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import { defineLab } from './define.js';
 import { CHARGE_HTML, bindCharges, renderChargeList } from './charges-ui.js';
 import { SCENARIOS } from '../data/scenarios.js';
 import { forceOn } from '../physics/field.js';
 import { coachForce } from '../physics/coach.js';
 import { fmtCharge, fmtForce } from '../ui/format.js';
 import { kv, cells } from '../ui/shared.js';
+import { defaultView, softenFor } from '../engine/frame.js';
+import { defineLab, planeCamera } from './define.js';
 
 export default defineLab({
   id: 'force',
@@ -17,9 +18,12 @@ export default defineLab({
   keys: { '+': 'add+', '=': 'add+', '-': 'add-', Delete: 'delete', Backspace: 'delete', r: 'reset', R: 'reset' },
   toggles: [{ key: 'forces', label: 'Forces' }],
   scenarios: SCENARIOS.force,
+  frame: true,
+  cameraFor: (state) => planeCamera(state) || undefined,
   defaultState() {
     return {
       scenarioId: 'pair-repel',
+      view: defaultView(),
       charges: [],
       extraE: { x: 0, y: 0, z: 0 },
       show: { flux: false, E: false, nHat: false, lines: false, forces: true, equipot: false },
@@ -32,7 +36,8 @@ export default defineLab({
   syncControls: (state) => renderChargeList(state),
   recompute(state, computed) {
     const idx = state.charges.findIndex((c) => c.id === state.selectedId);
-    computed.selectedForce = idx >= 0 && state.charges.length >= 2 ? forceOn(idx, state.charges) : null;
+    const soft = softenFor(state.view);
+    computed.selectedForce = idx >= 0 && state.charges.length >= 2 ? forceOn(idx, state.charges, soft) : null;
   },
   syncViews(state, computed, ctx) {
     const pool = ctx.pool;
@@ -41,7 +46,7 @@ export default defineLab({
     charges.setVisible(true);
     charges.sync(state.charges, state.selectedId);
     forces.setVisible(true);
-    forces.rebuild(state.charges, state.selectedId);
+    forces.rebuild(state.charges, state.selectedId, softenFor(state.view));
     ctx.grid.visible = true;
   },
   law: () => [String.raw`\vec{F}_E = \dfrac{k\,q_1 q_2}{r^2}\,\hat{r} \qquad \vec{F} = q\vec{E}`],

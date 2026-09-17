@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { defineLab } from './define.js';
+import { defineLab, planeCamera } from './define.js';
 import { CHARGE_HTML, bindCharges, renderChargeList } from './charges-ui.js';
 import { SCENARIOS } from '../data/scenarios.js';
 import { fieldAt, contributionsAt, forceOn } from '../physics/field.js';
@@ -7,7 +7,7 @@ import { potentialAt, potentialContributions, potentialEnergy, workByField, grad
 import { coachPotential } from '../physics/coach.js';
 import { fmtV, fmtE, fmtEnergy, fmtCharge } from '../ui/format.js';
 import { kv, cells } from '../ui/shared.js';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale, softenFor, contourSoftenFor, stepFor, defaultView, GRID_HALF } from '../engine/frame.js';
 
 export default defineLab({
   id: 'potential',
@@ -24,9 +24,12 @@ export default defineLab({
   ],
   legend: { id: 'V', title: 'Potential V', low: 'low', high: 'high', barClass: 'legend-v' },
   scenarios: SCENARIOS.potential,
+  frame: true,
+  cameraFor: (state) => planeCamera(state) || undefined,
   defaultState() {
     return {
       scenarioId: 'v-plus',
+      view: defaultView(),
       charges: [],
       extraE: { x: 0, y: 0, z: 0 },
       show: { flux: false, E: true, nHat: false, lines: true, forces: false, equipot: true },
@@ -67,20 +70,23 @@ export default defineLab({
     }
   },
   recompute(state, computed) {
-    computed.probeE = fieldAt(state.probe, state.charges, state.extraE);
-    computed.contrib = contributionsAt(state.probe, state.charges, state.extraE);
-    computed.V = potentialAt(state.probe, state.charges, state.extraE);
-    computed.VA = potentialAt(state.pathA, state.charges, state.extraE);
+    const soft = softenFor(state.view);
+    computed.probeE = fieldAt(state.probe, state.charges, state.extraE, soft);
+    computed.contrib = contributionsAt(state.probe, state.charges, state.extraE, soft);
+    computed.V = potentialAt(state.probe, state.charges, state.extraE, soft);
+    computed.VA = potentialAt(state.pathA, state.charges, state.extraE, soft);
     computed.PE = potentialEnergy(state.qTest, computed.V);
     computed.Wfield = workByField(state.qTest, computed.VA, computed.V);
-    computed.grad = gradientCheck(state.probe, state.charges, state.extraE);
-    computed.Vcontrib = potentialContributions(state.probe, state.charges, state.extraE);
+    computed.grad = gradientCheck(state.probe, state.charges, state.extraE, stepFor(state.view), soft);
+    computed.Vcontrib = potentialContributions(state.probe, state.charges, state.extraE, soft);
+    // V(x) across the visible width, so the plot follows the view instead of a fixed ±1 m.
+    const half = state.view ? 5 / state.view.upm : 1;
     const xs = [];
     const Vs = [];
     for (let i = 0; i <= 40; i++) {
-      const x = -1 + i * 0.05;
+      const x = -half + (i * half) / 20;
       xs.push(x);
-      Vs.push(potentialAt({ x, y: state.probe.y, z: state.probe.z }, state.charges, state.extraE));
+      Vs.push(potentialAt({ x, y: state.probe.y, z: state.probe.z }, state.charges, state.extraE, soft));
     }
     computed.Vx = { xs, Vs };
     const idx = state.charges.findIndex((c) => c.id === state.selectedId);
@@ -99,11 +105,18 @@ export default defineLab({
     charges.sync(state.charges, state.selectedId);
     probe.sync(state.probe, computed.probeE, `V = ${fmtV(computed.V)}`);
     lines.setVisible(!!state.show.lines);
-    if (state.show.lines) lines.rebuild(state.charges, state.extraE);
+    const soft = softenFor(state.view);
+    if (state.show.lines) lines.rebuild(state.charges, state.extraE, soft);
     const eqOn = !!state.show.equipot;
     equipot.setVisible(eqOn);
-    if (eqOn) equipot.rebuild(state.charges, state.extraE);
-    const u = UNITS_PER_METER;
+    if (eqOn) {
+      // Contour the plane the charges are laid out in, over the part of it that is on screen.
+      const plane = state.view?.plane || 'xz';
+      const half = (GRID_HALF - 1) / sceneScale();
+      const at = plane === 'xy' ? state.probe.z : state.probe.y;
+      equipot.rebuild(state.charges, state.extraE, { plane, half, at, soften: contourSoftenFor(state.view) });
+    }
+    const u = sceneScale();
     pathA.position.set(state.pathA.x * u, state.pathA.y * u, state.pathA.z * u);
     ctx.grid.visible = true;
   },

@@ -6,6 +6,7 @@
  * All values inside `$` are SI. Range variables are sampled in their display unit and
  * multiplied by `si`; choice variables carry their option value.
  */
+import { fitScale, lenLabel } from '../engine/frame.js';
 import { K, EPS0, QE, MU0 } from '../physics/constants.js';
 
 export { K, EPS0, QE, MU0 };
@@ -124,20 +125,26 @@ let uid = 5000;
 export const charge = (q, x, y, z = 0, extra = {}) => ({ id: ++uid, q, x, y, z, ...extra });
 
 /**
- * Scale a layout into the scene (~±maxR m) without changing the answer at the probe:
- * positions × s, charges × s^p, where p = 2 keeps E at the probe and p = 1 keeps V
- * (and the force between charges, keep: 'F'). Returns { s, charges, probe }.
+ * Load a problem's own numbers into a lab slice: true positions in meters, true charges, and a view
+ * scaled to frame them (see engine/frame.js).
+ *
+ * This used to scale the layout into a fixed-size scene and compensate on the charges, which kept
+ * the answer right but meant the separation on screen was never the separation in the question.
+ * Now the geometry is the question's, and the *view* adapts — so a value read off the lab is the
+ * value being solved for, and the setup can be rebuilt by hand from the problem text.
  */
-export function fitLayout(charges, probe, { maxR = 0.85, keep = 'E' } = {}) {
-  const pts = [...charges, probe].filter(Boolean);
-  const ext = Math.max(1e-9, ...pts.map((p) => Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z || 0))));
-  const s = Math.min(50, Math.max(1e-3, maxR / ext));
-  const p = keep === 'E' ? 2 : 1;
-  return {
-    s,
-    charges: charges.map((c) => ({ ...c, x: c.x * s, y: c.y * s, z: (c.z || 0) * s, q: c.q * s ** p })),
-    probe: probe ? { x: probe.x * s, y: probe.y * s, z: (probe.z || 0) * s } : null,
-  };
+export function layout(s, { charges = [], probe = null, pathA = null, plane = 'xy', select = 0 } = {}) {
+  const pt = (p) => ({ x: p.x || 0, y: p.y || 0, z: p.z || 0 });
+  const all = [...charges, probe, pathA].filter(Boolean).map(pt);
+  const extent = Math.max(1e-9, ...all.map((p) => Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z))));
+  s.charges = charges;
+  if (probe) s.probe = pt(probe);
+  if (pathA) s.pathA = pt(pathA);
+  s.extraE = { x: 0, y: 0, z: 0 };
+  s.selectedId = charges[select]?.id ?? charges[0]?.id ?? null;
+  const upm = fitScale(extent);
+  s.view = { upm, plane };
+  return `Set to the problem's own numbers · 1 grid square = ${lenLabel(1 / upm)}`;
 }
 
 export const mag = (v) => Math.hypot(v.x, v.y, v.z || 0);

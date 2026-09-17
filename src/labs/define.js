@@ -1,3 +1,15 @@
+import * as THREE from 'three';
+
+/**
+ * Head-on camera for a lab whose work plane is standing up (xy). Looking straight down −z turns the
+ * scene into the graph paper the problem is written on; orbiting still works from there.
+ */
+const XY_CAMERA = { pos: new THREE.Vector3(0, 0, 14), target: new THREE.Vector3(0, 0, 0) };
+
+export function planeCamera(state) {
+  return state?.view?.plane === 'xy' ? XY_CAMERA : null;
+}
+
 /**
  * Lab contract. Every lab is a plain object from defineLab().
  *
@@ -25,7 +37,11 @@
  * coach(state, computed)
  * plot(state, computed)     — null | { type:'Vx'|'ac', ... }
  * pointer                   — null = default charge drag; or { down, move, up }
- * probe                     — true: clicking empty space moves state.probe (xz plane at probe.y)
+ * probe                     — true: clicking empty space moves state.probe in the work plane
+ * frame                     — true: state.view ({ upm, plane }) drives the scene scale and the
+ *                             number plane, and the view refits when the content outgrows it
+ * extent(state)             — optional, with `frame`: how far the lab's own geometry reaches, in
+ *                             meters, when it is not made of charges (a rod's half-length, say)
  * cameraFor(state)          — optional per-scenario camera; falls back to `camera`
  * applyScenario(id, state)  — optional; otherwise data/scenarios.js applyScenario(lab.id, …)
  * afterFrame(dt, state, computed, ctx) — per-frame animation that does not need a recompute

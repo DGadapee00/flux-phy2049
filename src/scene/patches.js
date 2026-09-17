@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import { M } from './manim.js';
 
 const MAX = 2800;
@@ -54,7 +54,7 @@ export class PatchView {
   }
 
   syncWire(surface) {
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
     const o = surface.origin;
     this.wire.position.set(o.x * u, o.y * u, o.z * u);
     this.wire.rotation.set(0, 0, 0);
@@ -84,7 +84,7 @@ export class PatchView {
   sync(patches, samples, anim, showFlux) {
     const n = Math.min(patches.length, MAX);
     this.mesh.count = n;
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
     const iCut = anim.playing ? Math.min(n, Math.floor(anim.i)) : n;
     const gap = 0.9;
 

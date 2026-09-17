@@ -20,11 +20,11 @@ export function potentialAt(p, charges, extraE = null, soften = SOFTEN) {
   return V;
 }
 
-export function potentialContributions(p, charges, extraE = null) {
+export function potentialContributions(p, charges, extraE = null, soften = SOFTEN) {
   const rows = charges.map((c) => ({
     id: c.id,
     q: c.q,
-    V: potentialAt(p, [c]),
+    V: potentialAt(p, [c], null, soften),
   }));
   if (extraE && (extraE.x || extraE.y || extraE.z)) {
     rows.push({
@@ -46,40 +46,36 @@ export function workByField(q, VA, VB) {
 }
 
 /** Numerical −dV/dx at p, compared with E_x. */
-export function gradientCheck(p, charges, extraE = null, h = 0.012) {
-  const Vp = potentialAt({ x: p.x + h, y: p.y, z: p.z }, charges, extraE);
-  const Vm = potentialAt({ x: p.x - h, y: p.y, z: p.z }, charges, extraE);
+export function gradientCheck(p, charges, extraE = null, h = 0.012, soften = SOFTEN) {
+  const Vp = potentialAt({ x: p.x + h, y: p.y, z: p.z }, charges, extraE, soften);
+  const Vm = potentialAt({ x: p.x - h, y: p.y, z: p.z }, charges, extraE, soften);
   const dVdx = (Vp - Vm) / (2 * h);
-  const E = fieldAt(p, charges, extraE);
+  const E = fieldAt(p, charges, extraE, soften);
   return { dVdx, Ex: E.x, negdVdx: -dVdx, E };
 }
 
 /**
- * Marching-squares contours of V(x,z) on the y = y0 plane.
- * Returns polylines { level, pts: [{x,y,z}] }.
+ * Marching-squares contours of V on the work plane ('xz', the floor, or 'xy', standing up).
+ * `half` is the half-width in meters — the labs pass the part of the scene that is on screen, so
+ * the contours follow the view's scale instead of a fixed 1 m box. Returns segments in 3D.
  */
 export function contourLines(charges, extraE, opts = {}) {
-  const {
-    y0 = 0,
-    xmin = -1.05,
-    xmax = 1.05,
-    zmin = -1.05,
-    zmax = 1.05,
-    nx = 42,
-    nz = 42,
-    nLevels = 9,
-  } = opts;
-  const dx = (xmax - xmin) / (nx - 1);
-  const dz = (zmax - zmin) / (nz - 1);
-  const grid = new Float64Array(nx * nz);
+  const { plane = 'xz', half = 1.05, at = 0, n = 42, nLevels = 9, soften = SOFTEN } = opts;
+  const [a1, a2] = plane === 'xy' ? ['x', 'y'] : ['x', 'z'];
+  const off = plane === 'xy' ? 'z' : 'y';
+  const min = -half;
+  const d = (2 * half) / (n - 1);
+  const grid = new Float64Array(n * n);
+  const p = { x: 0, y: 0, z: 0 };
+  p[off] = at;
   let vmin = Infinity;
   let vmax = -Infinity;
-  for (let i = 0; i < nx; i++) {
-    const x = xmin + i * dx;
-    for (let j = 0; j < nz; j++) {
-      const z = zmin + j * dz;
-      const V = potentialAt({ x, y: y0, z }, charges, extraE);
-      grid[i * nz + j] = V;
+  for (let i = 0; i < n; i++) {
+    p[a1] = min + i * d;
+    for (let j = 0; j < n; j++) {
+      p[a2] = min + j * d;
+      const V = potentialAt(p, charges, extraE, soften);
+      grid[i * n + j] = V;
       if (Number.isFinite(V)) {
         if (V < vmin) vmin = V;
         if (V > vmax) vmax = V;
@@ -89,31 +85,31 @@ export function contourLines(charges, extraE, opts = {}) {
   if (!Number.isFinite(vmin) || vmax - vmin < 1e-9) return { lines: [], vmin: 0, vmax: 0 };
   const span = vmax - vmin;
   const levels = [];
-  for (let k = 1; k <= nLevels; k++) {
-    levels.push(vmin + (span * k) / (nLevels + 1));
-  }
+  for (let k = 1; k <= nLevels; k++) levels.push(vmin + (span * k) / (nLevels + 1));
+  const point = (u, v) => {
+    const q = { x: 0, y: 0, z: 0 };
+    q[a1] = u;
+    q[a2] = v;
+    q[off] = at;
+    return q;
+  };
   const lines = [];
   for (const level of levels) {
     const segs = [];
-    for (let i = 0; i < nx - 1; i++) {
-      for (let j = 0; j < nz - 1; j++) {
-        const x0 = xmin + i * dx;
-        const z0 = zmin + j * dz;
-        const v00 = grid[i * nz + j];
-        const v10 = grid[(i + 1) * nz + j];
-        const v11 = grid[(i + 1) * nz + (j + 1)];
-        const v01 = grid[i * nz + (j + 1)];
+    for (let i = 0; i < n - 1; i++) {
+      for (let j = 0; j < n - 1; j++) {
+        const u0 = min + i * d;
+        const v0 = min + j * d;
+        const v00 = grid[i * n + j];
+        const v10 = grid[(i + 1) * n + j];
+        const v11 = grid[(i + 1) * n + (j + 1)];
+        const v01 = grid[i * n + (j + 1)];
         const pts = [];
-        lerpEdge(pts, x0, z0, x0 + dx, z0, v00, v10, level);
-        lerpEdge(pts, x0 + dx, z0, x0 + dx, z0 + dz, v10, v11, level);
-        lerpEdge(pts, x0, z0 + dz, x0 + dx, z0 + dz, v01, v11, level);
-        lerpEdge(pts, x0, z0, x0, z0 + dz, v00, v01, level);
-        if (pts.length >= 4) {
-          segs.push([
-            { x: pts[0], y: y0, z: pts[1] },
-            { x: pts[2], y: y0, z: pts[3] },
-          ]);
-        }
+        lerpEdge(pts, u0, v0, u0 + d, v0, v00, v10, level);
+        lerpEdge(pts, u0 + d, v0, u0 + d, v0 + d, v10, v11, level);
+        lerpEdge(pts, u0, v0 + d, u0 + d, v0 + d, v01, v11, level);
+        lerpEdge(pts, u0, v0, u0, v0 + d, v00, v01, level);
+        if (pts.length >= 4) segs.push([point(pts[0], pts[1]), point(pts[2], pts[3])]);
       }
     }
     if (segs.length) lines.push({ level, segs });
@@ -121,10 +117,10 @@ export function contourLines(charges, extraE, opts = {}) {
   return { lines, vmin, vmax };
 }
 
-function lerpEdge(out, x1, z1, x2, z2, v1, v2, level) {
+function lerpEdge(out, u1, v1p, u2, v2p, v1, v2, level) {
   if (!Number.isFinite(v1) || !Number.isFinite(v2)) return;
   if ((v1 - level) * (v2 - level) > 0) return;
   if (v1 === v2) return;
   const t = (level - v1) / (v2 - v1);
-  out.push(x1 + t * (x2 - x1), z1 + t * (z2 - z1));
+  out.push(u1 + t * (u2 - u1), v1p + t * (v2p - v1p));
 }

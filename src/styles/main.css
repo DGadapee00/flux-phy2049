@@ -508,8 +508,19 @@ sup {
 .val {
   font-size: 14px;
   color: var(--text);
-  min-width: 76px;
+  min-width: 70px;
   text-align: right;
+}
+
+.slider-num {
+  flex: 0 0 62px;
+  width: 62px;
+}
+
+.hud input[type='number']::-webkit-outer-spin-button,
+.hud input[type='number']::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
 }
 
 select {
@@ -616,6 +627,98 @@ select {
 
 .charge-item input[type='range'] {
   width: 100%;
+}
+
+/* ---------- Typed values: charges and coordinates ---------- */
+
+.charge-item {
+  grid-template-columns: 26px 1fr auto;
+  gap: 8px;
+}
+
+.q-name {
+  font-family: var(--math);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.num-field {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.num-field .unit {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.hud input[type='number'] {
+  pointer-events: auto;
+  /* No spinners: they eat half the width of a box that has to hold "0.025". */
+  appearance: textfield;
+  -moz-appearance: textfield;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud input[type='number']:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(88, 196, 221, 0.08);
+}
+
+.coord-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.coord-head,
+.coord-row {
+  display: grid;
+  grid-template-columns: 20px repeat(3, 1fr) 24px;
+  gap: 5px;
+  align-items: center;
+}
+
+.coord-head {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.coord-name {
+  font-family: var(--math);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.coord-row.selected .coord-name {
+  color: var(--yellow);
+}
+
+.coord-unit {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.scale-row {
+  justify-content: space-between;
+}
+
+.scale-row .tiny {
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* ---------- Legends ---------- */
@@ -770,6 +873,21 @@ input[type='checkbox'] {
 }
 
 /* ---------- In-scene labels (Manim background stroke instead of boxes) ---------- */
+
+.grid-tick {
+  font-family: var(--font);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  text-shadow:
+    0 0 4px #000,
+    0 0 3px #000,
+    1px 1px 0 #000,
+    -1px -1px 0 #000;
+}
 
 .charge-label,
 .probe-label,

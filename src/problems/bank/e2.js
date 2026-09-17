@@ -3,7 +3,7 @@
  * and Ch 37 (conductors). Cases tagged "#n" come from Montgomery's practice sheets and reproduce
  * the printed key; the notes flag the two key errors found.
  */
-import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, tf, sym, self, K, EPS0, QE, ME, MP, G, DEG, DIR_X, RADIAL, POSNEG, charge, fitLayout, angleDeg } from '../kit.js';
+import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, tf, sym, self, K, EPS0, QE, ME, MP, G, DEG, DIR_X, RADIAL, POSNEG, charge, layout, angleDeg } from '../kit.js';
 
 const E2 = { exam: 'e2' };
 const A = { ...E2, ch: '36A' };
@@ -11,16 +11,9 @@ const B = { ...E2, ch: '36B' };
 const Cc = { ...E2, ch: '36C' };
 const C37 = { ...E2, ch: '37' };
 
-/** Field lab: place point charges + probe, scaled so |E| at the probe is unchanged. */
+/** Field lab: the problem's charges and probe, at the problem's own coordinates. */
 function fieldSetup(list, probe) {
-  return (s, $) => {
-    const L = fitLayout(list($), probe($), { keep: 'E', maxR: 0.62 });
-    s.charges = L.charges;
-    s.probe = L.probe;
-    s.extraE = { x: 0, y: 0, z: 0 };
-    s.selectedId = L.charges[0]?.id ?? null;
-    return Math.abs(L.s - 1) > 1e-6 ? `Scaled to fit: positions ×${L.s.toPrecision(2)}, charges ×${(L.s ** 2).toPrecision(2)} — E at P is unchanged.` : '';
-  };
+  return (s, $) => layout(s, { charges: list($), probe: probe($) });
 }
 const probeE = (c) => c.probeE;
 const Emag = (c) => Math.hypot(c.probeE.x, c.probeE.y, c.probeE.z);

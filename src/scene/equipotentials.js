@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import { contourLines } from '../physics/potential.js';
 import { fatSegments, rampColor, disposeTree } from './manim.js';
 
@@ -22,10 +22,10 @@ export class EquipotentialView {
     this.lines.length = 0;
   }
 
-  rebuild(charges, extraE) {
+  rebuild(charges, extraE, opts) {
     this.clear();
-    const { lines, vmin, vmax } = contourLines(charges, extraE);
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
+    const { lines, vmin, vmax } = contourLines(charges, extraE, opts);
     const span = Math.max(1e-9, vmax - vmin);
     for (const band of lines) {
       const t = (band.level - vmin) / span;

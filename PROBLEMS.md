@@ -19,7 +19,7 @@ node scripts/problems-check.mjs --samples 200 --list   # deeper run, with notes 
 
 | Path | Role |
 |---|---|
-| `src/problems/kit.js` | Authoring helpers: `problem`, `range`, `choice`, `num`, `mc`, `tf`, `sym`, `self`, `kase`, `charge`, `fitLayout`, constants |
+| `src/problems/kit.js` | Authoring helpers: `problem`, `range`, `choice`, `num`, `mc`, `tf`, `sym`, `self`, `kase`, `charge`, `layout`, constants |
 | `src/problems/engine.js` | Seeded sampling, `instance`, `render`, `grade`, number parser, symbolic grader. No DOM and no Three.js |
 | `src/problems/simbridge.js` | `applyProblem(lab, slice, inst)` loads an instance into a lab's state slice; `headlessCtx()` is for Node |
 | `src/problems/index.js` | `PROBLEMS`, `problemById`, `problemsForExam`, `problemsForLab`, `CHAPTER_ORDER`, `CHAPTER_TITLES` |
@@ -62,7 +62,9 @@ problem({
 - Choice parts: `correct` is a value, an array (with `multi`), or a function of `$`.
 - `sym(id, 'k*lam*L/(d*sqrt(d^2+L^2/4))', ['lam','L','d'], get)`: students type things like `2k lam/R` or `kQ/r^2` (Greek letters are fine). The grader compares the two expressions at random points.
 - `read` may also return `'@label': [got, want]` for checks that aren't answers (e.g. "V at the point ≈ 0").
-- `fitLayout(charges, probe, { keep: 'E' | 'V' | 'F' })` scales a real-size layout into the ±0.85 m scene without changing the answer. Positions are multiplied by s and charges by s² (for E) or s (for V or F). `setup` returns a note that says so.
+- `layout(slice, { charges, probe, pathA, plane, select })` loads the problem's own numbers: the positions in metres and the charges exactly as stated, plus a `view` (`{ upm, plane }`) that scales the scene to them. A distance in the question is the distance on screen, so the lab can be rebuilt by hand from the text. It returns the note shown under the problem ("Set to the problem's own numbers · 1 grid square = 10 cm").
+
+  This replaced `fitLayout`, which scaled positions into a fixed-size scene and compensated on the charges (×s² for E, ×s for V and F). The answer was right, but the separation on screen was never the separation in the question, so the sim could not be used alongside the worked problem.
 
 ## 3. What the check proves
 
@@ -93,6 +95,6 @@ A deliberate formula error and a flipped direction answer were each caught by (1
 
 1. Pick the bank file for the exam. Write each worksheet problem as a template whose `cases[0]` is the worksheet's numbers, with the printed key in `key`.
 2. If the key looks wrong, work it by hand. If the key really is wrong, keep the correct `want` and explain in `note` (see 36B #2).
-3. Choose ranges that match the worksheet's style and use `valid()` to avoid degenerate cases. Stay inside the lab's slider ranges when a sim is attached.
+3. Choose ranges that match the worksheet's style and use `valid()` to avoid degenerate cases. Sliders no longer bound a setup — every slider has a box that takes an exact value and widens its range — but keep the numbers in a range the lab can draw.
 4. Attach `sim` when a lab can show the setup, and add `read` whenever the lab computes the same quantity. That comparison is the strongest test here.
 5. Run `node scripts/problems-check.mjs --only <id-prefix> --samples 300`.

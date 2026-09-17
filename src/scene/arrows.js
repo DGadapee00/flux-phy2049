@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import { M } from './manim.js';
 
 const MAX = 900;
@@ -79,7 +79,7 @@ export class ArrowView {
   }
 
   sync(patches, samples, showE, showN, extraEScale = 5e4) {
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
     const n = patches.length;
     // About 150 arrows at most: enough to read the pattern without a thicket.
     const stride = Math.max(2, Math.ceil(n / 150));

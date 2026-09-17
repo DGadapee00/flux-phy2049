@@ -1,5 +1,5 @@
 /** Exam 1 · Ch V (vectors), 34 (charge), 35 (Coulomb force). */
-import { problem, kase, range, choice, SIGN, num, mc, K, QE, ME, MP, G, DEG, DIR_X, charge, fitLayout, angleDeg } from '../kit.js';
+import { problem, kase, range, choice, SIGN, num, mc, K, QE, ME, MP, G, DEG, DIR_X, charge, layout, angleDeg } from '../kit.js';
 
 const E1 = { exam: 'e1' };
 
@@ -166,10 +166,7 @@ export default [
     sim: {
       scenario: 'pair-repel',
       setup(s, $) {
-        const L = fitLayout([charge($.s1 * $.q1, -$.r / 2, 0), charge($.s2 * $.q2, $.r / 2, 0)], null, { keep: 'F', maxR: 0.4 });
-        s.charges = L.charges;
-        s.selectedId = L.charges[1].id;
-        return L.s !== 1 ? `Positions ×${L.s.toPrecision(2)}, charges ×${L.s.toPrecision(2)} (same force).` : '';
+        return layout(s, { charges: [charge($.s1 * $.q1, -$.r / 2, 0), charge($.s2 * $.q2, $.r / 2, 0)], select: 1 });
       },
       read: (c) => ({ F: Math.hypot(c.selectedForce.x, c.selectedForce.y), type: Math.sign(c.selectedForce.x) }),
     },
@@ -206,11 +203,7 @@ export default [
     sim: {
       scenario: 'three',
       setup(s, $) {
-        const L = fitLayout([charge($.Q1, 0, 0), charge($.Q2, $.d1, 0), charge($.Q3, $.d1 + $.d2, 0)], null, { keep: 'F', maxR: 0.8 });
-        const shift = (L.charges[2].x) / 2;
-        s.charges = L.charges.map((c) => ({ ...c, x: c.x - shift }));
-        s.selectedId = s.charges[1].id;
-        return L.s !== 1 ? `Positions ×${L.s.toPrecision(2)}, charges ×${L.s.toPrecision(2)} (same forces).` : '';
+        return layout(s, { charges: [charge($.Q1, 0, 0), charge($.Q2, $.d1, 0), charge($.Q3, $.d1 + $.d2, 0)], select: 1 });
       },
       read: (c) => ({ F: Math.abs(c.selectedForce.x), dir: Math.sign(c.selectedForce.x) }),
     },
@@ -227,10 +220,7 @@ export default [
     sim: {
       scenario: 'three',
       setup(s, $) {
-        const L = fitLayout([charge($.q1, 0, 0), charge(1e-6, $.x, 0), charge($.q2, $.d, 0)], null, { keep: 'F', maxR: 0.8 });
-        const shift = L.charges[2].x / 2;
-        s.charges = L.charges.map((c) => ({ ...c, x: c.x - shift }));
-        s.selectedId = s.charges[1].id;
+        return layout(s, { charges: [charge($.q1, 0, 0), charge(1e-6, $.x, 0), charge($.q2, $.d, 0)], select: 1 });
       },
       read: (c, s, $) => ({ '@net force on the test charge ≈ 0': [Math.hypot(c.selectedForce.x, c.selectedForce.y) / (K * $.q1 * 1e-6 / $.x ** 2), 0] }),
     },
@@ -250,9 +240,7 @@ export default [
     sim: {
       scenario: 'three',
       setup(s, $) {
-        const L = fitLayout([charge($.sa * $.qa, -$.a, 0), charge($.q, 0, 0), charge($.sb * $.qb, 0, -$.b)], null, { keep: 'F', maxR: 0.7 });
-        s.charges = L.charges;
-        s.selectedId = L.charges[1].id;
+        return layout(s, { charges: [charge($.sa * $.qa, -$.a, 0), charge($.q, 0, 0), charge($.sb * $.qb, 0, -$.b)], select: 1 });
       },
       read: (c) => ({ F: Math.hypot(c.selectedForce.x, c.selectedForce.y), th: angleDeg(c.selectedForce.x, c.selectedForce.y) }),
     },

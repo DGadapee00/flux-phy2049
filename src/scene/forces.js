@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import { allForces, pairForce } from '../physics/field.js';
 import { Arrow, M, disposeTree, markAnswer } from './manim.js';
 
@@ -27,11 +27,11 @@ export class ForceView {
     this.pairs = [];
   }
 
-  rebuild(charges, selectedId) {
+  rebuild(charges, selectedId, soften) {
     this.clear();
     if (charges.length < 2) return;
-    const u = UNITS_PER_METER;
-    const forces = allForces(charges);
+    const u = sceneScale();
+    const forces = allForces(charges, soften);
 
     for (let i = 0; i < charges.length; i++) {
       for (let j = i + 1; j < charges.length; j++) {

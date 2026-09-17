@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import {
   linePerpNumerical,
   ringAxisNumerical,
@@ -50,7 +50,7 @@ export class DistributionView {
 
   rebuild(integral, animIndex = Infinity) {
     this.clear();
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
     const n = Math.max(6, Math.round(integral.n));
     const wantV = integral.quantity === 'V';
     const positive = (integral.kind === 'ring' ? integral.Q : integral.lambda) >= 0;

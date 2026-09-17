@@ -28,9 +28,9 @@ export function fieldMag(E) {
 }
 
 /** Per-charge field contributions at p (superposition table). */
-export function contributionsAt(p, charges, extraE = null) {
+export function contributionsAt(p, charges, extraE = null, soften = SOFTEN) {
   const rows = charges.map((c) => {
-    const E = fieldAt(p, [c]);
+    const E = fieldAt(p, [c], null, soften);
     return { id: c.id, q: c.q, E, mag: fieldMag(E) };
   });
   if (extraE && (extraE.x || extraE.y || extraE.z)) {
@@ -40,15 +40,15 @@ export function contributionsAt(p, charges, extraE = null) {
 }
 
 /** Force on charge i from all others: F = q E_others. */
-export function forceOn(index, charges) {
+export function forceOn(index, charges, soften = SOFTEN) {
   const c = charges[index];
   const others = charges.filter((_, j) => j !== index);
-  const E = fieldAt(c, others);
+  const E = fieldAt(c, others, null, soften);
   return { x: c.q * E.x, y: c.q * E.y, z: c.q * E.z, E };
 }
 
-export function allForces(charges) {
-  return charges.map((_, i) => forceOn(i, charges));
+export function allForces(charges, soften = SOFTEN) {
+  return charges.map((_, i) => forceOn(i, charges, soften));
 }
 
 /** Coulomb pair force on a from b (force on a). */

@@ -8,7 +8,8 @@ import { parseHash, writeHash, neighborExam, problemQuery } from './engine/route
 import { createViewPool } from './engine/views.js';
 import { createChargePointer } from './engine/pointer.js';
 import { loadLab, loadExamLabs } from './labs/load.js';
-import { addChargeTo, deleteSelectedFrom, setChargeQOn } from './labs/charges-ui.js';
+import { addChargeTo, deleteSelectedFrom, setChargeQOn, setCoordOn } from './labs/charges-ui.js';
+import { setFrame, refit, defaultView, sceneScale, workPlane } from './engine/frame.js';
 import { applyProblem } from './problems/simbridge.js';
 import { createPractice } from './ui/problems.js';
 import { ANSWER_LAYER } from './scene/manim.js';
@@ -85,6 +86,15 @@ const hud = createHUD({
   setChargeQ: (id, q) => {
     setChargeQOn(slice(), id, q);
     bump();
+  },
+  setCoord: (point, axis, v) => {
+    setCoordOn(slice(), point, axis, v);
+    bump();
+  },
+  fitView: () => {
+    applyFrame({ force: true });
+    goCamera(app.lab);
+    bump(false);
   },
   selectCharge: (id) => {
     slice().selectedId = id;
@@ -188,6 +198,26 @@ function apiAdd(sign) {
 function applyLabScenario(lab, id, s) {
   if (lab.applyScenario) lab.applyScenario(id, s);
   else applyScenario(lab.id, id, s);
+  // Scenarios are authored in the floor plane; a problem sets its own view in its setup().
+  if (lab.frame) s.view = defaultView();
+}
+
+/**
+ * Push the active lab's view (scene units per meter, and which plane the 2D work happens in) into
+ * the scene, refitting when the content has outgrown the frame. Labs without `frame` keep the
+ * fixed default scale, so their scenes are untouched.
+ */
+function applyFrame({ force = false } = {}) {
+  const lab = app.lab;
+  const s = slice();
+  if (lab?.frame) {
+    s.view = refit(s, { force, extent: lab.extent?.(s) });
+    setFrame(s.view);
+  } else {
+    setFrame(null);
+  }
+  grid.setScale(sceneScale());
+  grid.setPlane(workPlane());
 }
 
 function setScenario(id) {
@@ -195,6 +225,7 @@ function setScenario(id) {
   if (!lab) return;
   practice?.noteEdit();
   applyLabScenario(lab, id, slice());
+  applyFrame({ force: true });
   goCamera(lab);
   bump();
 }
@@ -252,6 +283,7 @@ async function setLab(labId) {
   }
   const s = app.slices[labId];
   s.lab = labId;
+  applyFrame();
   lab.enter(ctx, app.handles[labId], s);
   setOrbit(lab.orbit);
   goCamera(lab);
@@ -280,6 +312,7 @@ async function openProblemInApp(inst, { push = true, query = true } = {}) {
     let note = '';
     if (tpl.lab && app.lab?.id === tpl.lab) {
       note = applyProblem(app.lab, slice(), inst);
+      applyFrame();
       goCamera(app.lab);
       bump();
     }
@@ -325,6 +358,7 @@ function recompute() {
   const lab = app.lab;
   const s = slice();
   if (!lab) return;
+  applyFrame();
   ctx.handle = app.handles[app.labId];
   lab.recompute(s, computed, ctx);
   computed.coach = lab.coach(s, computed);

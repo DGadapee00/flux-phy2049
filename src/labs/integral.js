@@ -10,7 +10,7 @@ import {
 import { coachIntegral } from '../physics/coach.js';
 import { fmtE, fmtV, fmtCharge, fmtLen } from '../ui/format.js';
 import { kv, cells, matchClass } from '../ui/shared.js';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale, defaultView } from '../engine/frame.js';
 
 function fmtFrom(mag) {
   const a = Math.abs(mag);
@@ -27,9 +27,13 @@ export default defineLab({
   camera: { pos: new THREE.Vector3(2.4, 5.2, 11.2), target: new THREE.Vector3(0, 1.4, 0) },
   keys: { ' ': 'sweep', r: 'reset', R: 'reset' },
   scenarios: SCENARIOS.integral,
+  // A problem can hand this lab a 3 m rod; the view scales to it instead of drawing off screen.
+  frame: true,
+  extent: (s) => (s.integral.kind === 'rod' ? Math.max(s.integral.L / 2, s.integral.d) : Math.max(s.integral.a, s.integral.y)),
   defaultState() {
     return {
       scenarioId: 'rod',
+      view: defaultView(),
       integral: { kind: 'rod', L: 0.8, lambda: 2e-6, d: 0.35, n: 20, Q: 2.5e-6, a: 0.32, y: 0.38, quantity: 'E' },
       charges: [],
       extraE: { x: 0, y: 0, z: 0 },
@@ -200,7 +204,8 @@ export default defineLab({
     distView.labelEl.textContent = wantV
       ? `V = ${fmtV(distView.partial.V)}  vs  ${fmtV(analytic.V)}`
       : `|E| = ${fmtFrom(computed.integral.partial.mag)}  vs  ${fmtFrom(analytic.mag)}`;
-    distView.label.position.set(P.x * UNITS_PER_METER, P.y * UNITS_PER_METER + 0.4, P.z * UNITS_PER_METER);
+    const u = sceneScale();
+    distView.label.position.set(P.x * u, P.y * u + 0.4, P.z * u);
   },
   syncViews(state, computed, ctx) {
     ctx.pool.dist().setVisible(true);

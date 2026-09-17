@@ -3,7 +3,7 @@ import { defineLab } from './define.js';
 import { conductorField, imageGrounded, imageIsolatedNeutral, sigmaUniform, sigmaSphere, EoutsideSphere } from '../physics/conductors.js';
 import { fmtE, fmtCharge } from '../ui/format.js';
 import { kv, cells } from '../ui/shared.js';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import { POS_COLOR, NEG_COLOR } from '../scene/manim.js';
 
 const _neutral = new THREE.Color(0x3a3d44);
@@ -189,7 +189,7 @@ export default defineLab({
   syncViews(state, computed, ctx) {
     const h = ctx.handle;
     if (!h) return;
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
     const outer = state.kind === 'cage' ? state.b : state.R;
     h.sphere.scale.setScalar(outer * u);
     h.inner.visible = state.kind === 'cage';

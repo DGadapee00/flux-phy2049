@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import { fmtE } from '../ui/format.js';
 import { Arrow, M, markAnswer } from './manim.js';
 
@@ -32,7 +32,7 @@ export class ProbeView {
   }
 
   sync(probe, E, extra = '') {
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
     this.group.position.set(probe.x * u, probe.y * u, probe.z * u);
     const mag = Math.hypot(E.x, E.y, E.z);
     if (mag < 1e-8) {

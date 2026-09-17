@@ -1,6 +1,13 @@
 import * as THREE from 'three';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale, workPlane, PLANE_AXES, GRID_HALF, snapStep, snapTo } from './frame.js';
 
+/**
+ * Dragging charges and placing the probe.
+ *
+ * Drags stay in the lab's work plane — the same plane the problem is written in — so moving a
+ * charge changes the two coordinates you are reading, and Shift moves it out of the plane.
+ * Positions snap to half a grid square (round numbers at any scale); hold Alt to place freely.
+ */
 export function createChargePointer({ camera, controls, canvas, getState, getPool, getHandle, getLab, bump }) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
@@ -16,13 +23,43 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
   }
 
   function fromWorld(v) {
-    return { x: v.x / UNITS_PER_METER, y: v.y / UNITS_PER_METER, z: v.z / UNITS_PER_METER };
+    const u = sceneScale();
+    return { x: v.x / u, y: v.y / u, z: v.z / u };
   }
 
+  /** Keep everything inside the number plane, whatever the current scale is. */
   function clampPos(p) {
-    p.x = Math.max(-1.35, Math.min(1.35, p.x));
-    p.y = Math.max(-1.1, Math.min(1.1, p.y));
-    p.z = Math.max(-1.35, Math.min(1.35, p.z));
+    const lim = (GRID_HALF - 0.5) / sceneScale();
+    p.x = Math.max(-lim, Math.min(lim, p.x));
+    p.y = Math.max(-lim, Math.min(lim, p.y));
+    p.z = Math.max(-lim, Math.min(lim, p.z));
+  }
+
+  /**
+   * The plane a drag runs in: the work plane through the point, or — with Shift — the perpendicular
+   * plane, which moves the point along the out-of-plane axis.
+   */
+  function dragPlane(point, out) {
+    const u = sceneScale();
+    const P = PLANE_AXES[workPlane()];
+    const axes = out ? [P.axes[0], P.off] : P.axes;
+    const fixed = out ? P.axes[1] : P.off;
+    nrm.set(fixed === 'x' ? 1 : 0, fixed === 'y' ? 1 : 0, fixed === 'z' ? 1 : 0);
+    const at = new THREE.Vector3(
+      fixed === 'x' ? point.x * u : 0,
+      fixed === 'y' ? point.y * u : 0,
+      fixed === 'z' ? point.z * u : 0,
+    );
+    plane.setFromNormalAndCoplanarPoint(nrm, at);
+    return axes;
+  }
+
+  /** Write the two in-plane coordinates of `hit` onto `target`, snapped unless Alt is held. */
+  function place(target, axes, free) {
+    const p = fromWorld(hit);
+    const step = free ? 0 : snapStep();
+    for (const a of axes) target[a] = snapTo(p[a], step);
+    clampPos(target);
   }
 
   canvas.addEventListener('pointerdown', (e) => {
@@ -40,8 +77,7 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
     const id = pool.charges().pick(raycaster);
     down = { x: e.clientX, y: e.clientY, id, moved: false };
     if (id != null) {
-      const c = state.charges.find((x) => x.id === id);
-      drag = { id, shift: e.shiftKey, y0: c.y, z0: c.z };
+      drag = { id, shift: e.shiftKey };
       state.selectedId = id;
       controls.enabled = false;
     }
@@ -61,19 +97,9 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
     raycaster.setFromCamera(pointer, camera);
     const c = state.charges.find((x) => x.id === drag.id);
     if (!c) return;
-    if (drag.shift || e.shiftKey) {
-      nrm.set(0, 0, 1);
-      plane.setFromNormalAndCoplanarPoint(nrm, new THREE.Vector3(0, 0, c.z * UNITS_PER_METER));
-    } else {
-      nrm.set(0, 1, 0);
-      plane.setFromNormalAndCoplanarPoint(nrm, new THREE.Vector3(0, c.y * UNITS_PER_METER, 0));
-    }
+    const axes = dragPlane(c, drag.shift || e.shiftKey);
     if (raycaster.ray.intersectPlane(plane, hit)) {
-      const p = fromWorld(hit);
-      c.x = p.x;
-      if (drag.shift || e.shiftKey) c.y = p.y;
-      else c.z = p.z;
-      clampPos(c);
+      place(c, axes, e.altKey);
       state.dirty = true;
     }
   });
@@ -90,24 +116,16 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
       }
       return;
     }
-    // Labs opt in with `probe: true`; a click on empty space moves state.probe in its xz plane.
+    // Labs opt in with `probe: true`; a click on empty space moves state.probe in the work plane.
     const allowProbe = !!getLab?.()?.probe && !!state.probe;
     if (down && !down.moved && down.id == null && allowProbe) {
       setPointer(e);
       raycaster.setFromCamera(pointer, camera);
-      nrm.set(0, 1, 0);
-      plane.setFromNormalAndCoplanarPoint(nrm, new THREE.Vector3(0, state.probe.y * UNITS_PER_METER, 0));
+      const shiftA = state.lab === 'potential' && e.shiftKey && state.pathA;
+      const target = shiftA ? state.pathA : state.probe;
+      const axes = dragPlane(target, false);
       if (raycaster.ray.intersectPlane(plane, hit)) {
-        const p = fromWorld(hit);
-        if (state.lab === 'potential' && e.shiftKey) {
-          state.pathA.x = p.x;
-          state.pathA.z = p.z;
-          clampPos(state.pathA);
-        } else {
-          state.probe.x = p.x;
-          state.probe.z = p.z;
-          clampPos(state.probe);
-        }
+        place(target, axes, e.altKey);
         state.dirty = true;
       }
     }

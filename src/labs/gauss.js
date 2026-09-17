@@ -126,7 +126,7 @@ export default defineLab({
       $('surf-tilt-val').textContent = `${((state.surface.tilt * 180) / Math.PI).toFixed(0)}°`;
     }
     if ($('btn-sweep')) $('btn-sweep').textContent = state.anim.playing ? 'Stop integral' : 'Play ∮ E · dA';
-    renderChargeList(state, { gauss: true });
+    renderChargeList(state, { gauss: true, fit: false });
   },
   recompute(state, computed) {
     const g = computeGauss(state.surface, state.charges, state.extraE);

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import { fmtCharge } from '../ui/format.js';
 import { POS_COLOR, NEG_COLOR, M, makeChargeTexture, fatLine } from './manim.js';
 
@@ -83,7 +83,7 @@ export class ChargeView {
       rec.discMat.map = pos ? this.texPos : this.texNeg;
       rec.discMat.needsUpdate = true;
     }
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
     rec.root.position.set(c.x * u, c.y * u, c.z * u);
     const r = (c.small ? 0.12 : 0.22) * (0.85 + 0.15 * Math.min(3, Math.abs(c.q) * 1e6));
     rec.mesh.scale.setScalar(r * 1.15);

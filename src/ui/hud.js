@@ -2,11 +2,14 @@ import { EXAMS, examById, LAB_META } from '../data/catalog.js';
 import { setLawEl } from './shared.js';
 import { drawVx, drawAC, drawVI } from './plot.js';
 import { resetChargeListSig } from '../labs/charges-ui.js';
+import { sceneScale, workPlane, lenLabel, PLANE_AXES } from '../engine/frame.js';
 
 export function createHUD(api) {
   const $ = (id) => document.getElementById(id);
   let lawKey = '';
   let mountedId = '';
+  /** Refreshers for the typed boxes beside each slider, rebuilt whenever a lab mounts. */
+  const sliderBoxes = [];
 
   function setLaw(lines) {
     const key = (lines || []).join('\n');
@@ -72,6 +75,42 @@ export function createHUD(api) {
       </div>`;
   }
 
+  /**
+   * Give every slider a box you can type an exact value into. A slider is good for sweeping and bad
+   * for matching a number in a problem, so the box writes straight into the same input — widening
+   * the slider's range when the problem asks for a value it could not otherwise reach.
+   */
+  function enhanceSliders(host) {
+    for (const row of host.querySelectorAll('.slider-row')) {
+      const range = row.querySelector("input[type='range']");
+      if (!range || row.querySelector('.slider-num')) continue;
+      const step = Number(range.step);
+      // Fractional steps become continuous, so a typed value is never snapped back to the grid.
+      // Whole-number steps (piece counts, turns) stay discrete.
+      if (Number.isFinite(step) && step > 0 && step < 1) range.step = 'any';
+      const box = document.createElement('input');
+      box.type = 'number';
+      box.className = 'slider-num';
+      box.step = Number.isFinite(step) && step > 0 ? String(step) : 'any';
+      box.setAttribute('aria-label', 'Exact value');
+      const show = () => {
+        if (box !== document.activeElement) box.value = String(Number(Number(range.value).toPrecision(6)));
+      };
+      show();
+      box.addEventListener('input', () => {
+        const v = Number(box.value);
+        if (box.value === '' || !Number.isFinite(v)) return;
+        if (v < Number(range.min)) range.min = String(v);
+        if (v > Number(range.max)) range.max = String(v);
+        range.value = String(v);
+        range.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      range.addEventListener('input', show);
+      row.appendChild(box);
+      sliderBoxes.push(show);
+    }
+  }
+
   function mount(lab, exam, state) {
     const examId = exam?.id || 'e2';
     const labId = lab?.id || '';
@@ -97,7 +136,9 @@ export function createHUD(api) {
       return;
     }
     host.innerHTML = lab.controls();
+    sliderBoxes.length = 0;
     lab.bind(api);
+    enhanceSliders(host);
     mountedId = lab.id;
     renderToggles(lab, state);
     renderLegend(lab);
@@ -145,6 +186,17 @@ export function createHUD(api) {
     api.handleKey(e);
   });
 
+  /** What plane a drag runs in, and what one grid square is worth — the scene's legend, in words. */
+  function updatePlaneHint(lab) {
+    const el = $('hint-plane');
+    if (!el) return;
+    const plane = workPlane();
+    const off = PLANE_AXES[plane].off;
+    el.textContent = lab?.frame
+      ? `${plane} plane · 1 square = ${lenLabel(1 / sceneScale())} · Shift-drag for ${off}`
+      : 'Shift-drag for height';
+  }
+
   function update(state, computed, lab) {
     if (!lab) {
       $('eq-live').innerHTML = '';
@@ -158,6 +210,8 @@ export function createHUD(api) {
       $('scenario').value = state.scenarioId;
     }
     lab.syncControls(state);
+    for (const show of sliderBoxes) show();
+    updatePlaneHint(lab);
     document.querySelectorAll('#toggle-host [data-key]').forEach((b) => {
       const on = !!state.show?.[b.dataset.key];
       b.classList.toggle('active', on);

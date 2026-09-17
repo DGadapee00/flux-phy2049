@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { UNITS_PER_METER } from '../physics/constants.js';
+import { sceneScale } from '../engine/frame.js';
 import { Arrow, M, POS_COLOR, NEG_COLOR, disposeTree } from './manim.js';
 
 export class CapacitorView {
@@ -32,7 +32,7 @@ export class CapacitorView {
 
   rebuild(cap, result) {
     this.clear();
-    const u = UNITS_PER_METER;
+    const u = sceneScale();
     const side = Math.min(Math.max(result.side, 0.18), 0.55);
     const d = Math.max(cap.d, 0.08);
     const thick = Math.max(0.008, side * 0.04);
