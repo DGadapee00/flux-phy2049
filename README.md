@@ -4,7 +4,18 @@ Interactive 3D labs for Montgomery’s Calculus Physics II. One app at http://lo
 
 Private repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — no lecture notes, worksheets, or Canvas files.
 
-## Run
+## Open it in a browser
+
+`npm run build` turns the app into a plain folder of files that any static host can serve, which
+makes FLUX a link instead of an install — no Git, no Node, no terminal, no PowerShell execution
+policy on the other end. Deep links survive the move: `#/e8/interference`, or a single problem at
+`#/e4/circuits?p=e4.44.two-loop&s=0`.
+
+Nothing is published yet. **[DEPLOY.md](DEPLOY.md)** has the three routes and what each one exposes —
+the build carries the worksheets' numbers and printed answers, so read that section before hosting it
+somewhere open.
+
+## Run it locally
 
 ```bash
 git clone https://github.com/DGadapee00/flux-phy2049.git
