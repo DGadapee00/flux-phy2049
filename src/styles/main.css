@@ -238,6 +238,12 @@ body {
 
 /* ---------- Toggles ---------- */
 
+/* Phone-only control; the phone layer switches it on. See mobile.css. */
+.sheet-switch {
+  display: none;
+}
+
+
 .toggles {
   top: 16px;
   right: 16px;

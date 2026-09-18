@@ -157,6 +157,23 @@ export function createHUD(api) {
   });
   $('scenario').addEventListener('change', () => api.setScenario($('scenario').value));
   $('btn-reset-cam').addEventListener('click', () => api.resetCamera());
+
+  /*
+   * On a phone the equation panel and Setup cannot both be on screen — there is roughly 400px
+   * between the header strips and the readout. They share the bottom sheet and this picks which.
+   * The switch itself is display:none above 720px, so desktop never sees it and keeps both panels.
+   */
+  $('sheet-switch').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-sheet]');
+    if (!btn) return;
+    const eq = btn.dataset.sheet === 'eq';
+    document.body.classList.toggle('show-eq', eq);
+    for (const b of $('sheet-switch').querySelectorAll('button')) {
+      const on = b === btn;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  });
   $('toggle-host').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-key]');
     if (btn) api.toggleShow(btn.dataset.key);

@@ -209,7 +209,67 @@
     padding: 12px;
   }
 
+  /*
+   * The equation panel is the law, the live substitution and the insight box — the part that
+   * explains where a number came from, which is most of why this app exists. It was being dropped
+   * entirely below 720px. It shares the bottom sheet with Setup instead, one visible at a time.
+   */
+  .sheet-switch {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .sheet-switch button {
+    min-height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .sheet-switch button.active,
+  .sheet-switch button[aria-selected='true'] {
+    color: var(--text);
+    background: rgba(236, 230, 226, 0.09);
+  }
+
   .eq-panel {
+    display: none;
+    top: auto;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: 42dvh;
+    border-radius: 0;
+    border-width: 1px 0;
+    padding: 12px;
+  }
+
+  body.has-legend .eq-panel {
+    max-height: 42dvh;
+  }
+
+  body.show-eq .eq-panel {
+    display: flex;
+  }
+
+  body.show-eq .controls {
+    display: none;
+  }
+
+  /* The legend duplicates the colour key that the equation panel explains properly. */
+  body.show-eq .legend {
     display: none;
   }
 
