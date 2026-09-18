@@ -1091,29 +1091,86 @@ export function createPractice(api) {
     if (cur.mode === 'exam') saveExamInputs();
   });
 
-  /** Insert a palette chip at the caret and leave the caret after it, ready to keep typing. */
+  /**
+   * Put `ins` in at the caret and leave the caret `back` characters from its end.
+   *
+   * insertText rather than assigning to `value`: it goes through the browser's own editing
+   * machinery, so Ctrl-Z still undoes it. Assigning to value wipes the undo stack, which is a
+   * miserable thing to discover halfway through writing a formula. The direct write is kept as a
+   * fallback for the day execCommand finally goes away.
+   */
+  function insertAt(box, ins, back = 0) {
+    if (!box || box.disabled || box.readOnly) return;
+    const a = box.selectionStart ?? box.value.length;
+    const b = box.selectionEnd ?? a;
+    box.focus();
+    if (ins === ')' && a === b && box.value[a] === ')') {
+      // Step over the bracket that `/` or `(` already closed, the way an editor does, rather than
+      // stacking up a second one.
+      box.setSelectionRange(a + 1, a + 1);
+      return;
+    }
+    let ok = false;
+    try {
+      box.setSelectionRange(a, b);
+      ok = document.execCommand('insertText', false, ins);
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
+      box.value = box.value.slice(0, a) + ins + box.value.slice(b);
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    const caret = a + ins.length - back;
+    box.setSelectionRange(caret, caret);
+  }
+
+  /**
+   * The keys that open a group, typed rather than tapped.
+   *
+   * `/` has to mean the same thing from the keyboard as it does from the palette, or the palette is
+   * teaching a grouping the keyboard then quietly undoes. beforeinput rather than keydown: it is
+   * what virtual keyboards and IMEs actually fire, so this works on a phone too.
+   */
+  const PAIRS = { '/': ['/()', 1], '(': ['()', 1], ')': [')', 0] };
+  panel.addEventListener('beforeinput', (e) => {
+    if (e.inputType !== 'insertText' || !PAIRS[e.data]) return;
+    const box = e.target;
+    if (!box.matches?.('.pb-input.sym') || box.disabled || box.readOnly) return;
+    e.preventDefault();
+    const [ins, back] = PAIRS[e.data];
+    insertAt(box, ins, back);
+  });
+
+  /** Backspace inside an empty pair takes both brackets, so a mistyped `/` costs one key, not three. */
+  panel.addEventListener('keydown', (e) => {
+    if (e.key !== 'Backspace') return;
+    const box = e.target;
+    if (!box.matches?.('.pb-input.sym') || box.disabled || box.readOnly) return;
+    const a = box.selectionStart;
+    if (a == null || a !== box.selectionEnd) return;
+    if (box.value[a - 1] !== '(' || box.value[a] !== ')') return;
+    e.preventDefault();
+    box.setSelectionRange(a - 1, a + 1);
+    let ok = false;
+    try {
+      ok = document.execCommand('delete');
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
+      box.value = box.value.slice(0, a - 1) + box.value.slice(a + 1);
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+      box.setSelectionRange(a - 1, a - 1);
+    }
+  });
+
+  /** Insert a palette chip at the caret and leave the caret ready to keep typing. */
   panel.addEventListener('click', (e) => {
     const key = e.target.closest('.pb-key');
     if (!key) return;
     e.preventDefault();
-    const box = panel.querySelector(`[data-input="${key.dataset.keyFor}"]`);
-    if (!box || box.disabled || box.readOnly) return;
-    const ins = key.dataset.ins;
-    const back = Number(key.dataset.back) || 0;
-    const a = box.selectionStart ?? box.value.length;
-    const b = box.selectionEnd ?? a;
-    let caret;
-    if (ins === ')' && a === b && box.value[a] === ')') {
-      // Step over the bracket the `/` or `(` key already closed, the way an editor does, rather
-      // than stacking up a second one.
-      caret = a + 1;
-    } else {
-      box.value = box.value.slice(0, a) + ins + box.value.slice(b);
-      caret = a + ins.length - back;
-    }
-    box.focus();
-    box.setSelectionRange(caret, caret);
-    box.dispatchEvent(new Event('input', { bubbles: true }));
+    insertAt(panel.querySelector(`[data-input="${key.dataset.keyFor}"]`), key.dataset.ins, Number(key.dataset.back) || 0);
   });
 
   panel.addEventListener('change', () => {
