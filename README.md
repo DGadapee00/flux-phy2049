@@ -1,10 +1,16 @@
 # FLUX — PHY 2049
 
-Interactive 3D labs for Montgomery’s Calculus Physics II. One app at http://localhost:5174/ — exam units in the top row, labs as tabs, hash URLs so each lab is bookmarkable (`#/e3/potential`).
+Interactive 3D labs for Montgomery’s Calculus Physics II. Exam units in the top row, labs as tabs, hash URLs so each lab is bookmarkable (`#/e3/potential`).
 
-Private repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — no lecture notes, worksheets, or Canvas files.
+## Open the live app
 
-## Run
+**[https://flux-phy2049.pages.dev](https://flux-phy2049.pages.dev)** — no install. Works on a laptop, Chromebook, phone, or library machine.
+
+Deep links work the same as locally, e.g. `#/e3/potential` or a single problem at `#/e4/circuits?p=e4.44.two-loop&s=0`.
+
+Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — no lecture notes, worksheets, or Canvas files.
+
+## Run locally
 
 ```bash
 git clone https://github.com/DGadapee00/flux-phy2049.git
