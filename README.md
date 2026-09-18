@@ -129,8 +129,5 @@ Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops 
 - Click empty space (Gauss / Field / Potential / Conductors / Biot–Savart) to place the probe
 - `Space` plays the integral or sum · `Delete` removes a charge · `+` / `−` add charges · `R` resets the camera
 
-Phone layout (< ~720 px) is out of scope for now.
 
-## What Gauss can and cannot do
 
-Φ = Q_in/ε₀ is always true on a closed surface; Φ = EA is not. The coach panel says when symmetry lets you pull |E| out.
