@@ -17,7 +17,7 @@ const NEUTRAL = new THREE.Color(M.fluxZero);
 /** The surface is graphite first; the flux colour tints it rather than replacing it, so a sphere
  *  at uniform outward flux still reads as smoked mesh instead of a solid slab of colour. */
 const GRAPHITE = new THREE.Color(M.graphite);
-const TINT = 0.38;
+const TINT = 0.22;
 const OUT = new THREE.Color(M.fluxOut);
 const IN = new THREE.Color(M.fluxIn);
 
