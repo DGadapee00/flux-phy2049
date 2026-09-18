@@ -33,7 +33,7 @@ The self-test checks the code against independent methods rather than against it
 
 ## Practice
 
-Press **P** (or the yellow **Practice** button) for the problem bank: 179 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
+Press **P** (or the yellow **Practice** button) for the problem bank: 184 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
 
 1. **Open a problem.** It loads its own setup into the matching lab — the charges, distances and coordinates exactly as the question states them, with the scene scaled to fit (the note under the problem says what one grid square is worth). Nothing is rescaled, so the lab is reading the problem you are working. While it's unsolved, the lab's numbers are hidden: the readout, the equation panel, value labels in the scene, and the arrows that would show a direction answer. The geometry stays visible.
 2. **Symbols before numbers.** Most multi-step problems open with the formula, not the arithmetic: type the answer in symbols (`k*q/r^2`, `2k lam/R` — Greek names and the constants `k`, `eps0`, `mu0`, `pi`, `c`, `g` all work) and the panel reads the units off what you've typed and prints them under the box, `units: N/C ✓` or `units: C/m — this one should come out in N/C`. That's the exam habit of writing the problem in units first and checking it lands in the right place, confirmed while you write it. The numeric boxes stay locked until the formula is right, so the numbers go into an expression you've already justified. A practice exam turns the lock off.

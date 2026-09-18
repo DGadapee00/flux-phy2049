@@ -116,6 +116,60 @@ export default [
     cases: [kase('hand', { q1: 2, s1: 1, q2: 3, s2: 1, r: 0.3 }, { U: 0.1798 })],
   }),
   problem({
+    ...E3, id: 'e3.38.system-energy', ch: '38', lab: 'potential', title: 'Energy of a three-charge system', kind: 'numeric', level: 2, topics: ['potential-energy', 'superposition'],
+    vars: {
+      q1: range(1, 5, 0.1, 'μC', 1e-6),
+      q2: range(1, 5, 0.1, 'μC', 1e-6),
+      q3: range(1, 5, 0.1, 'μC', 1e-6),
+      r12: range(10, 30, 1, 'cm', 0.01),
+      r23: range(10, 30, 1, 'cm', 0.01),
+      r13: range(10, 40, 1, 'cm', 0.01),
+    },
+    derive: ($) => {
+      const U12 = (K * $.q1 * $.q2) / $.r12;
+      const U13 = (K * $.q1 * $.q3) / $.r13;
+      const U23 = (K * $.q2 * $.q3) / $.r23;
+      // Place the triangle so the lab can draw it: q1 at the origin, q2 on the x axis.
+      const x3 = ($.r12 ** 2 + $.r13 ** 2 - $.r23 ** 2) / (2 * $.r12);
+      const y3sq = $.r13 ** 2 - x3 ** 2;
+      return { U12, U13, U23, U3: U13 + U23, U: U12 + U13 + U23, x3, y3: Math.sqrt(Math.max(0, y3sq)), y3sq };
+    },
+    // The three separations have to describe a real triangle, with some margin so it is not a sliver.
+    valid: ($) => $.y3sq > 0.0015 && $.r12 + $.r23 > $.r13 * 1.05 && $.r12 + $.r13 > $.r23 * 1.05 && $.r13 + $.r23 > $.r12 * 1.05,
+    text: (T) => `Three positive point charges are held at the corners of a triangle: q₁ = ${T.q1} μC, q₂ = ${T.q2} μC and q₃ = ${T.q3} μC, with r₁₂ = ${T.r12} cm, r₂₃ = ${T.r23} cm and r₁₃ = ${T.r13} cm. Assembling them one at a time from far away, find the work stored at each step and the total potential energy of the system.`,
+    parts: [
+      sym('U_sym', 'k*(q1*q2/r12 + q1*q3/r13 + q2*q3/r23)', { q1: 'C', q2: 'C', q3: 'C', r12: 'm', r13: 'm', r23: 'm' }, ($) => $.U, { unit: 'J', label: String.raw`$U_{\text{system}}$ as a formula` }),
+      num('U12', ($) => $.U12, 'J', { label: String.raw`bringing in $q_2$` }),
+      num('U3', ($) => $.U3, 'J', { label: String.raw`bringing in $q_3$` }),
+      num('U', ($) => $.U, 'J', { label: String.raw`$U_{\text{system}}$` }),
+    ],
+    hints: [
+      String.raw`The first charge costs nothing — there is nothing to push against yet.`,
+      String.raw`Each later charge pays for every charge already placed, so count each *pair* once: $U = k\left(\dfrac{q_1q_2}{r_{12}} + \dfrac{q_1q_3}{r_{13}} + \dfrac{q_2q_3}{r_{23}}\right)$.`,
+    ],
+    steps: ($, f) => [
+      String.raw`$U_{1} = 0$ — no work to place the first charge.`,
+      String.raw`$U_{2} = \dfrac{kq_1q_2}{r_{12}} = ${texNum($.U12)}\ \text{J}$`,
+      String.raw`$U_{3} = \dfrac{kq_1q_3}{r_{13}} + \dfrac{kq_2q_3}{r_{23}} = ${texNum($.U13)} + ${texNum($.U23)} = ${texNum($.U3)}\ \text{J}$`,
+      String.raw`$U_{\text{system}} = ${texNum($.U)}\ \text{J}$ — three pairs, each counted once.`,
+    ],
+    sim: {
+      scenario: 'v-plus',
+      setup(s, $) {
+        // q1 and q2 in the scene; q3 rides the probe, so the lab's PE is exactly the third step.
+        const note = potSetup(
+          () => [charge($.q1, 0, 0), charge($.q2, $.r12, 0)],
+          () => ({ x: $.x3, y: $.y3 }),
+          () => ({ x: $.r12 / 2, y: -$.r13 }),
+        )(s, $);
+        s.qTest = $.q3;
+        return note;
+      },
+      read: (c) => ({ U3: c.PE }),
+    },
+    cases: [kase('notes', { q1: 3.1, q2: 2.5, q3: 2.0, r12: 17, r23: 20, r13: 25 }, { U12: 0.4098, U3: 0.4476, U: 0.8574 }, { key: '0.41 J + 0.448 J = 0.86 J' })],
+  }),
+  problem({
     ...E3, id: 'e3.38.equipotentials', ch: '38', lab: 'potential', title: 'Equipotentials and the field', kind: 'conceptual', topics: ['potential', 'equipotential'],
     text: () => 'Which statements about equipotential surfaces and the electric field are true? (Select all that apply.)',
     parts: [
@@ -256,6 +310,51 @@ export default [
     cases: [kase('hand', { Q: 2, R: 0.35, f: 0.6 }, { V: 51360, inside: 1 })],
   }),
 
+  problem({
+    ...E3, id: 'e3.39.compare-configs', ch: '39', lab: 'potential', title: 'Comparing four charge arrangements', kind: 'numeric', level: 2, topics: ['potential', 'superposition', 'ranking'],
+    vars: {
+      cfg: choice(['a', '(a)'], ['b', '(b)'], ['c', '(c)'], ['d', '(d)']),
+      q: range(0.5, 4, 0.5, 'μC', 1e-6),
+      r0: range(0.5, 2, 0.25, 'm'),
+    },
+    derive: ($) => {
+      // Each arrangement puts +2q and −q at either r₀ or 2r₀ from P. (a) and (d) differ on the
+      // page but put both charges at the same distances, which is the whole point of the question.
+      const D = { a: [2, 1], b: [1, 2], c: [2, 2], d: [2, 1] }[$.cfg];
+      const [na, nb] = D;
+      const V = (K * 2 * $.q) / (na * $.r0) - (K * $.q) / (nb * $.r0);
+      return { na, nb, V, sign: Math.sign(Number(V.toFixed(6))) };
+    },
+    text: (T, $) => `A point P has a +2q charge and a −q charge near it, each sitting either r₀ or 2r₀ away. The four arrangements are (a) 2q at 2r₀ and −q at r₀; (b) 2q at r₀ and −q at 2r₀; (c) both at 2r₀; (d) 2q at 2r₀ and −q at r₀, on opposite sides of P. With q = ${T.q} μC and r₀ = ${T.r0} m, find the total potential at P for arrangement ${T.cfg}.`,
+    parts: [
+      num('V', ($) => $.V, 'V', { label: String.raw`$V_P$`, abs: 1 }),
+      mc('sign', [[1, 'positive'], [0, 'zero'], [-1, 'negative']], ($) => $.sign, { label: String.raw`Sign of $V_P$` }),
+      mc('same', [['ad', '(a) and (d)'], ['ab', '(a) and (b)'], ['bc', '(b) and (c)'], ['cd', '(c) and (d)']], 'ad', { label: 'Which two arrangements give the same potential?' }),
+    ],
+    hints: [
+      String.raw`Potential is a scalar: add the numbers with their signs, no components and no angles.`,
+      String.raw`Only the distance to P matters, not which side a charge sits on — so two arrangements that look different on the page can give the same $V$.`,
+    ],
+    steps: ($, f, T) => [
+      String.raw`$V_P = \dfrac{k(2q)}{${$.na}r_0} + \dfrac{k(-q)}{${$.nb}r_0} = ${texNum((K * 2 * $.q) / ($.na * $.r0))} + (${texNum(-(K * $.q) / ($.nb * $.r0))}) = ${texNum($.V)}\ \text{V}$`,
+      String.raw`(a) and (d) place both charges at the same two distances, so they give the same potential even though the pictures differ — distance is all $V$ cares about.`,
+    ],
+    sim: {
+      scenario: 'v-plus',
+      // P at the origin, the two charges on either side at their stated distances.
+      setup: potSetup(
+        ($) => [charge(2 * $.q, $.na * $.r0, 0), charge(-$.q, -$.nb * $.r0, 0)],
+        () => ({ x: 0, y: 0 }),
+        ($) => ({ x: 0, y: 3 * $.r0 }),
+      ),
+      read: (c) => ({ V: c.V }),
+    },
+    cases: [
+      kase('notes (b)', { cfg: 'b', q: 1, r0: 1 }, { V: 13485, sign: 1, same: 'ad' }, { key: '+13,500 V', note: 'Key writes the first term as +1800 V; k(2q)/r₀ with q = 1 μC, r₀ = 1 m is +18,000 V. The stated total, 13,500 V, is right.' }),
+      kase('notes (a)', { cfg: 'a', q: 1, r0: 1 }, { V: 0, sign: 0, same: 'ad' }, { key: '0 V' }),
+      kase('notes (c)', { cfg: 'c', q: 1, r0: 1 }, { V: 4495, sign: 1, same: 'ad' }, { key: '+4,500 V' }),
+    ],
+  }),
   // ================================================================= 40
   problem({
     ...E3, id: 'e3.40.parallel-plate', ch: '40', lab: 'capacitor', title: 'Parallel-plate capacitor', kind: 'numeric', topics: ['capacitance'],
@@ -504,6 +603,31 @@ export default [
     cases: [kase('double', { n: 2, R0: 10 }, { R: 40 })],
   }),
 
+  problem({
+    ...E3, id: 'e3.41.non-ohmic', ch: '41', title: 'Ohmic or not?', kind: 'conceptual', topics: ['resistance', 'ohms-law', 'non-ohmic'],
+    vars: {
+      device: choice(
+        ['nichrome', 'a nichrome heating wire held at a steady temperature'],
+        ['diode', 'a diode'],
+        ['semi', 'a semiconductor'],
+        ['bulb', 'a filament bulb in the instant after it is switched on'],
+        ['copper', 'a copper wire at constant temperature'],
+      ),
+    },
+    derive: ($) => ({ ohmic: $.device === 'nichrome' || $.device === 'copper' ? 1 : 0 }),
+    text: (T) => `Does ${T.device} obey Ohm's law — that is, is the slope of its I vs. V graph constant?`,
+    parts: [
+      mc('ans', [[1, 'Yes — I vs. V is a straight line through the origin'], [0, 'No — the slope of I vs. V changes']], ($) => $.ohmic, { label: 'Ohmic?' }),
+    ],
+    hints: [String.raw`"Ohmic" is a statement about the *graph*, not about whether $R = V/I$ can be computed. $R = V/I$ always can be; for a non-ohmic device the answer just keeps changing.`],
+    steps: ($) => [
+      $.ohmic
+        ? String.raw`A metal at a fixed temperature has a constant resistance, so $I$ is proportional to $V$ and the graph is a straight line.`
+        : String.raw`Semiconductors, diodes and a filament that is still heating up all change resistance as conditions change, so the slope of $I$ vs. $V$ is not constant.`,
+      String.raw`A bulb is the sharpest case: cold, its filament resistance is low and the current surges; a moment later it is hot, $R$ has risen and the current settles.`,
+    ],
+    cases: [kase('diode', { device: 'diode' }, { ans: 0 }), kase('copper', { device: 'copper' }, { ans: 1 })],
+  }),
   // ================================================================= 42
   problem({
     ...E3, id: 'e3.42.bulb', ch: '42', lab: 'power', title: 'Bulb resistance from its rating', kind: 'numeric', topics: ['power'],
@@ -625,5 +749,82 @@ export default [
     hints: ['Household outlets are in parallel, so the currents add.'],
     steps: ($, f) => [String.raw`$I = \dfrac{\sum P}{V} = ${texNum($.I)}\ \text{A}$`],
     cases: [kase('kitchen', { P1: 1200, P2: 800, P3: 500, Imax: 15 }, { I: 20.83, trip: 1 })],
+  }),
+  problem({
+    ...E3, id: 'e3.42.grounding', ch: '42', title: 'What the ground wire is for', kind: 'conceptual', topics: ['power', 'safety', 'grounding'],
+    vars: {
+      ask: choice(
+        ['why', 'Why is one wire of a household circuit connected to earth?'],
+        ['drill', 'A drill with a metal case develops a short between the hot wire and the case. What does the grounding wire do?'],
+        ['breaker', 'What is a breaker or fuse there to do?'],
+        ['what-hurts', 'In an electric shock, what actually causes the damage?'],
+      ),
+    },
+    text: (T) => T.ask,
+    parts: [
+      mc(
+        'ans',
+        [
+          ['reference', 'It fixes a common zero of potential, so every device is measured against the same reference'],
+          ['path', 'It gives the current a low-resistance path to earth so it does not travel through the person touching the case'],
+          ['limit', 'It opens the circuit when the current exceeds what the wiring can safely carry, before the wire overheats'],
+          ['current', 'The current — the voltage is what drives it, but the current through the body is what does the harm'],
+        ],
+        ($) => ({ why: 'reference', drill: 'path', breaker: 'limit', 'what-hurts': 'current' })[$.ask],
+      ),
+    ],
+    hints: ['The ground does two separate jobs: it sets a common reference, and it gives fault current somewhere to go that is not you.'],
+    steps: ($) => [
+      $.ask === 'why'
+        ? 'Earth is the same conductor for everyone, so calling it 0 V means every device sees the same voltage.'
+        : $.ask === 'drill'
+          ? 'Without the ground wire the only path from the shorted case to earth runs down the arm and through the body. The ground wire is a far better conductor, so the current goes there instead.'
+          : $.ask === 'breaker'
+            ? 'It trips on excess current and opens the circuit, so the wiring cannot overheat and start a fire.'
+            : 'A few mA is a tingle; above about 100 mA can be fatal. Voltage drives the current, but it is the current through the body that matters.',
+    ],
+    cases: [kase('drill', { ask: 'drill' }, { ans: 'path' }), kase('breaker', { ask: 'breaker' }, { ans: 'limit' })],
+  }),
+  problem({
+    ...E3, id: 'e3.42.body-current', ch: '42', title: 'Current through the body', kind: 'numeric', level: 2, topics: ['power', 'ohms-law', 'safety'],
+    vars: {
+      V: choice([12, 12], [24, 24], [120, 120], [240, 240]),
+      skin: choice(['dry', 'dry skin (about 100 kΩ hand to hand)'], ['wet', 'wet skin (about 1.5 kΩ hand to hand)']),
+    },
+    derive: ($) => {
+      const R = $.skin === 'dry' ? 100e3 : 1500;
+      const I = $.V / R;
+      const mA = I * 1e3;
+      // The thresholds the notes give: a few mA is felt, above ~100 mA can be fatal.
+      const band = mA < 1 ? 'none' : mA < 100 ? 'felt' : 'fatal';
+      return { R, I, mA, band, P: $.V * I };
+    },
+    text: (T) => `A person contacts a ${T.V} V source hand to hand with ${T.skin}. How much current flows through them, and how serious is it?`,
+    parts: [
+      num('I', ($) => $.I, 'mA', { scale: 1e-3, label: 'I' }),
+      mc(
+        'band',
+        [['none', 'Below the threshold of sensation'], ['felt', 'Felt — from a tingle up to a painful, muscle-locking shock'], ['fatal', 'Above about 100 mA — potentially fatal']],
+        ($) => $.band,
+        { label: 'How serious?' },
+      ),
+    ],
+    hints: [
+      String.raw`It is still just Ohm's law: $I = V/R$, with the body as the resistor.`,
+      String.raw`The same voltage is harmless through dry skin and dangerous through wet skin, because $R$ drops by a factor of about 60.`,
+    ],
+    steps: ($, f) => [
+      String.raw`$I = \dfrac{V}{R} = \dfrac{${$.V}}{${texNum($.R)}} = ${texNum($.mA)}\ \text{mA}$`,
+      $.band === 'fatal'
+        ? 'Above roughly 100 mA, so this one is potentially fatal — which is why wet hands and mains voltage are a genuinely dangerous combination.'
+        : $.band === 'felt'
+          ? 'Enough to feel, and possibly enough to lock the muscles so the person cannot let go.'
+          : 'Below the threshold of sensation.',
+    ],
+    cases: [
+      kase('120 V, wet', { V: 120, skin: 'wet' }, { I: 80, band: 'felt' }),
+      kase('120 V, dry', { V: 120, skin: 'dry' }, { I: 1.2, band: 'felt' }),
+      kase('240 V, wet', { V: 240, skin: 'wet' }, { I: 160, band: 'fatal' }),
+    ],
   }),
 ];
