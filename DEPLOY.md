@@ -87,5 +87,7 @@ where the whole internet can read them.
   type. Vendoring the two fonts into `public/` would remove the dependency.
 - **Updating means rebuilding.** The hosted copy is a snapshot. New problems or labs reach
   the group only after another build and upload (or, on option 2, another push).
-- **Phones work** but the labs assume a pointer and a fair amount of screen. Tablet and up
-  is the honest floor.
+- **Phones**: the practice bank is built for them — full-screen problem sheet, 44px targets,
+  16px inputs so Safari doesn't zoom on focus. The 3D labs render and respond to touch
+  (one finger orbits, two zoom), but 390px of portrait is not much room for a Gaussian
+  surface. Problems on a phone, labs on a laptop.

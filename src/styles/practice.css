@@ -778,14 +778,3 @@ body.problem-blind .veiled .katex {
   }
 }
 
-@media (max-width: 720px) {
-  body.practice-open .controls {
-    display: none;
-  }
-  .problems {
-    left: 10px;
-    right: 10px;
-    width: auto;
-    max-height: calc(100vh - var(--below-brand, 230px) - 40px);
-  }
-}

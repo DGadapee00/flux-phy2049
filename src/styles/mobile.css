@@ -1,0 +1,345 @@
+/*
+ * Phone layer. Loaded last, scoped entirely to <= 720px, so nothing here can reach the desktop.
+ *
+ * The premise: the practice bank is the thing worth doing on a phone — problems on the bus, not
+ * orbiting a Gaussian surface one-handed. So practice gets the whole screen, and the labs get a
+ * layout that is honest about the space it has rather than four floating panels landing on top of
+ * each other.
+ *
+ * The desktop HUD anchors panels to the four corners of the viewport. At 390px wide those corners
+ * are the same place, which is why the toggle row was being drawn over the brand and the readout
+ * over Setup. Below 720px the panels stop floating and become a stack: header strips at the top,
+ * a sheet at the bottom, canvas in between.
+ */
+
+/*
+ * Header compaction. Applies to portrait phones and to landscape phones, which have the width for
+ * the desktop arrangement but not the height — a 196px header out of 390px was half the screen.
+ * Position is left alone here so landscape keeps the floating panel; only the contents shrink.
+ */
+@media (max-width: 720px), (max-height: 560px) and (orientation: landscape) {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .brand {
+    gap: 0 10px;
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .brand-mark {
+    grid-column: 1;
+    grid-row: 1;
+    width: 26px;
+    height: 26px;
+  }
+
+  .brand-text {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .brand-text h1 {
+    font-size: 17px;
+    letter-spacing: 0.12em;
+  }
+
+  .brand-text .subtitle {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Practice moves up beside the title — it is the primary action on a phone. */
+  .practice-row {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: center;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .practice-stat,
+  .practice-btn kbd {
+    display: none;
+  }
+
+  .practice-btn {
+    min-height: 34px;
+    padding: 4px 14px;
+  }
+
+  /*
+   * Tabs scroll sideways instead of wrapping. Wrapping is what grew the header to 196px — a third
+   * of the screen — and it got worse the further into the term you went.
+   */
+  .exam-tabs,
+  .lab-tabs {
+    grid-row: auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .exam-tabs::-webkit-scrollbar,
+  .lab-tabs::-webkit-scrollbar,
+  .toggles::-webkit-scrollbar,
+  .readout::-webkit-scrollbar {
+    display: none;
+  }
+
+  .exam-tabs {
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+
+  .exam-tab,
+  .tab {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding-left: 14px;
+    padding-right: 14px;
+    white-space: nowrap;
+  }
+
+  .tab {
+    font-size: 13px;
+  }
+
+  .tab::after {
+    left: 14px;
+    right: 14px;
+  }
+
+  /* Keyboard shortcuts and shift-drag mean nothing on a touch screen, and the bar overflowed. */
+  .hint-bar {
+    display: none;
+  }
+}
+
+/*
+ * Portrait phone. The panels stop floating and become a stack: header strips at the top, a sheet
+ * at the bottom, canvas in between.
+ */
+@media (max-width: 720px) {
+  /*
+   * iOS: 100% resolves against the tall viewport, so the bottom of the layout sits under the
+   * collapsed URL bar. dvh tracks the bar as it hides and shows.
+   */
+  html,
+  body,
+  #app {
+    height: 100dvh;
+  }
+
+  .brand {
+    top: 0;
+    left: 0;
+    right: 0;
+    min-width: 0;
+    max-width: none;
+    border-radius: 0;
+    border-width: 0 0 1px;
+    padding: calc(7px + env(safe-area-inset-top)) 10px 5px;
+  }
+
+  /* ---------- Lab chrome: strips at the top, a sheet at the bottom ---------- */
+
+  #app {
+    --hdr: calc(var(--below-brand, 150px) - 12px);
+  }
+
+  /* Toggles were pinned top-right, which is now the header. Put them under it, scrolling. */
+  .toggles {
+    top: var(--hdr);
+    left: 0;
+    right: 0;
+    max-width: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    border-radius: 0;
+    border-width: 0 0 1px;
+    padding: 6px 10px;
+  }
+
+  .toggles .toggle,
+  .toggles .btn {
+    flex: 0 0 auto;
+    min-height: 34px;
+  }
+
+  /*
+   * The readout becomes a single scrolling row pinned to the bottom edge. A fixed row count makes
+   * its height predictable, which is what lets Setup sit above it without measuring anything.
+   */
+  .readout {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    transform: none;
+    border-radius: 0;
+    border-width: 1px 0 0;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(45%, max-content);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .controls {
+    top: auto;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: 26dvh;
+    border-radius: 0;
+    border-width: 1px 0;
+    padding: 12px;
+  }
+
+  .eq-panel {
+    display: none;
+  }
+
+  /* Clear of the toggle strip, which is a fixed 47px now that it scrolls instead of wrapping. */
+  .legend {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    bottom: auto;
+    top: calc(var(--hdr) + 56px);
+  }
+
+  /* ---------- Practice takes the screen ---------- */
+
+  body.practice-open .toggles,
+  body.practice-open .controls,
+  body.practice-open .readout,
+  body.practice-open .legend {
+    display: none;
+  }
+
+  /* Undo the desktop rule that slides the legend clear of the side panel. */
+  body.practice-open .legend {
+    left: 10px;
+  }
+
+  .problems {
+    top: var(--hdr);
+    left: 0;
+    right: 0;
+    width: auto;
+    height: calc(100dvh - var(--hdr));
+    max-height: none;
+    border-radius: 0;
+    border-width: 1px 0 0;
+    padding: 0 14px calc(20px + env(safe-area-inset-bottom));
+    background: var(--panel-solid);
+  }
+
+  body.problem-blind .problems {
+    max-height: none;
+  }
+
+  /* Close and back stay reachable while the problem scrolls under them. */
+  .pb-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -14px;
+    padding: 12px 14px 10px;
+    background: var(--panel-solid);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pb-h {
+    font-size: 19px;
+  }
+
+  .pb-text {
+    font-size: 16px;
+  }
+
+  /*
+   * Safari zooms the page when a focused input is under 16px, which on a problem with three parts
+   * means the layout jumps every time you tab between answers.
+   */
+  .pb-input,
+  .pb-input.sym,
+  .hud input,
+  .hud select {
+    font-size: 16px;
+  }
+
+  .pb-input {
+    min-height: 44px;
+    padding: 10px 11px;
+  }
+
+  /* Touch targets: 44px is the smallest thing a thumb hits reliably. */
+  .pb-x,
+  .pb-back,
+  .pb-chip,
+  .pb-item,
+  .pb-row .btn,
+  .pb-actions .btn,
+  .problems .btn {
+    min-height: 44px;
+  }
+
+  .pb-x,
+  .pb-back {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+  }
+
+  .linkish {
+    padding: 6px 2px;
+  }
+
+  .pb-chip {
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+  }
+
+  .pb-item {
+    padding: 10px 12px;
+  }
+
+  .pb-parts {
+    gap: 16px;
+  }
+
+  .pb-label {
+    font-size: 13px;
+  }
+}
+
+/*
+ * Landscape phone: there is width for the desktop arrangement but no height, so only the
+ * readout needs moving — it was running underneath the Setup panel on the right.
+ */
+@media (max-width: 960px) and (max-height: 520px) and (orientation: landscape) {
+  .readout {
+    left: 16px;
+    right: auto;
+    transform: none;
+    width: min(520px, calc(100vw - 320px));
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

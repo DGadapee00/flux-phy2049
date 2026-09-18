@@ -1163,19 +1163,3 @@ select:focus-visible {
   }
 }
 
-@media (max-width: 720px) {
-  .eq-panel {
-    display: none;
-  }
-  .controls {
-    top: auto;
-    bottom: 88px;
-    right: 10px;
-    left: 10px;
-    width: auto;
-    max-height: 32vh;
-  }
-  .toggles {
-    max-width: calc(100vw - 24px);
-  }
-}
