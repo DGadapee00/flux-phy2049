@@ -358,6 +358,80 @@ await page.waitForFunction(() => window.__gauss?.state?.lab === 'faraday', null,
 const back = await page.evaluate(() => window.__gauss.state.lab);
 if (back !== 'faraday') mismatches.push({ name: 'history.back', got: back, exp: 'faraday' });
 
+// ---------------------------------------------------------------- scene scale is stable
+/*
+ * Dragging a charge must never move the zoom, at any camera angle.
+ *
+ * Two ways it used to: the drag clamp allowed a position further out (GRID_HALF − 0.5 units) than
+ * refit() tolerates (FIT_MAX), so edge-on to the work plane — where a few pixels sweep the hit
+ * right across the plane — every pointermove hit the clamp and zoomed out, which widened the clamp,
+ * which zoomed out further; and a drag that Chromium turned into a native text drag-and-drop landed
+ * the dropped string in a coordinate box. Either way the scale ran away to ~1e21 m per grid square
+ * and V, PE and W all read 0.
+ */
+await page.evaluate(() => {
+  try {
+    localStorage.removeItem('flux.problems.v1');
+  } catch {}
+  location.hash = '#/e3/potential';
+});
+await page.waitForFunction(() => window.__gauss?.state?.lab === 'potential', null, { timeout: 10000 });
+await page.waitForTimeout(400);
+await page.evaluate(() => document.querySelector('#add-minus')?.click());
+await page.waitForTimeout(300);
+
+const scale0 = await page.evaluate(() => window.__gauss.state.view.upm);
+let worstScale = scale0;
+let worstCoord = 0;
+for (const polar of [60, 85, 89.9, 90, 91, 100, 120]) {
+  await page.evaluate((deg) => {
+    const g = window.__gauss;
+    const r = g.camera.position.distanceTo(g.controls.target);
+    const ph = (deg * Math.PI) / 180;
+    const th = (25 * Math.PI) / 180;
+    g.camera.position.set(
+      g.controls.target.x + r * Math.sin(ph) * Math.sin(th),
+      g.controls.target.y + r * Math.cos(ph),
+      g.controls.target.z + r * Math.sin(ph) * Math.cos(th),
+    );
+    g.camera.lookAt(g.controls.target);
+    g.controls.update();
+  }, polar);
+  await page.waitForTimeout(120);
+  const at = await page.evaluate(() => {
+    const g = window.__gauss;
+    const s = g.state;
+    const c = s.charges[s.charges.length - 1];
+    const u = s.view.upm;
+    const v = new g.camera.position.constructor(c.x * u, c.y * u, c.z * u);
+    v.project(g.camera);
+    return { x: ((v.x * 0.5 + 0.5) * 1440), y: ((-v.y * 0.5 + 0.5) * 900) };
+  });
+  if (!Number.isFinite(at.x) || !Number.isFinite(at.y)) continue;
+  await page.mouse.move(at.x, at.y);
+  await page.mouse.down();
+  for (const f of [0.3, 0.6, 1]) await page.mouse.move(at.x + 180 * f, at.y + 60 * f, { steps: 2 });
+  await page.mouse.up();
+  await page.waitForTimeout(150);
+  const now = await page.evaluate(() => {
+    const s = window.__gauss.state;
+    const all = [...s.charges, s.probe, s.pathA].filter(Boolean);
+    return {
+      upm: s.view.upm,
+      max: Math.max(0, ...all.map((p) => Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)))),
+    };
+  });
+  worstScale = Math.min(worstScale, now.upm);
+  worstCoord = Math.max(worstCoord, now.max);
+}
+// The scale may legitimately step once; a runaway is orders of magnitude.
+if (!(worstScale >= scale0 / 4)) {
+  mismatches.push({ name: 'grazing drags do not run the scene scale away', got: worstScale, exp: `>= ${scale0 / 4}` });
+}
+if (!(worstCoord <= 20)) {
+  mismatches.push({ name: 'grazing drags keep coordinates on the grid', got: worstCoord, exp: '<= 20 m' });
+}
+
 // ---------------------------------------------------------------- practice
 // Every problem with a lab setup loads into the running app without errors (worksheet + one sampled seed).
 const loadErrors = errors.length;

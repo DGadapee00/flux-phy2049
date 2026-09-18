@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { sceneScale, workPlane, PLANE_AXES, GRID_HALF, snapStep, snapTo } from './frame.js';
+import { sceneScale, workPlane, PLANE_AXES, GRID_HALF, FIT_MAX, snapStep, snapTo } from './frame.js';
 
 /**
  * Dragging charges and placing the probe.
@@ -27,12 +27,53 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
     return { x: v.x / u, y: v.y / u, z: v.z / u };
   }
 
-  /** Keep everything inside the number plane, whatever the current scale is. */
+  /**
+   * Keep a dragged point inside the band the fit leaves alone.
+   *
+   * This used to clamp to the drawn grid, GRID_HALF − 0.5 = 6.5 units — but refit() rescales as
+   * soon as the content is drawn past FIT_MAX = 4.4 units. So the clamp permitted a position the
+   * fit then treated as too big: the scene zoomed out, which made the clamp limit (a distance in
+   * metres, 6.5 / scale) proportionally larger, which let the next pointermove go further still.
+   *
+   * Edge-on to the work plane a few pixels of mouse sweep the hit right across the plane, so every
+   * move landed on the limit and the loop ran on every event, not once per drag: the scale fell
+   * 2 → 1 → 0.5 → 0.2 inside a single drag, and a handful of drags took it to 1e21 m per square.
+   * Every distance was then astronomical and V, PE and W all read 0.
+   *
+   * Clamping inside FIT_MAX instead makes the invariant frame.js already intended true — "a drag
+   * never makes the scene breathe" — because a drag can no longer produce an extent that refit()
+   * wants to rescale. The margin is for float error at the boundary.
+   */
   function clampPos(p) {
-    const lim = (GRID_HALF - 0.5) / sceneScale();
-    p.x = Math.max(-lim, Math.min(lim, p.x));
-    p.y = Math.max(-lim, Math.min(lim, p.y));
-    p.z = Math.max(-lim, Math.min(lim, p.z));
+    const lim = (FIT_MAX - 0.05) / sceneScale();
+    // Number.isFinite first: NaN survives Math.max/Math.min untouched, so an unguarded clamp
+    // passes it straight through into the state and every later number becomes NaN.
+    const fix = (v) => (Number.isFinite(v) ? Math.max(-lim, Math.min(lim, v)) : 0);
+    p.x = fix(p.x);
+    p.y = fix(p.y);
+    p.z = fix(p.z);
+  }
+
+  /**
+   * Is this intersection worth using?
+   *
+   * intersectPlane only reports failure when the ray is *exactly* parallel to the plane; just short
+   * of that it returns a point an arbitrary distance away, and `0 * Infinity` in the ray arithmetic
+   * can hand back NaN. Neither is a place the student pointed at. The bound is in scene units so it
+   * means the same thing at every zoom level, and it is generous — three times the drawn grid — so
+   * it only ever rejects the degenerate case. Ignoring the sample leaves the point where it was
+   * until the pointer is back over the grid.
+   */
+  const HIT_LIMIT = 3 * GRID_HALF;
+  function usableHit() {
+    return (
+      Number.isFinite(hit.x) &&
+      Number.isFinite(hit.y) &&
+      Number.isFinite(hit.z) &&
+      Math.abs(hit.x) <= HIT_LIMIT &&
+      Math.abs(hit.y) <= HIT_LIMIT &&
+      Math.abs(hit.z) <= HIT_LIMIT
+    );
   }
 
   /**
@@ -98,7 +139,7 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
     const c = state.charges.find((x) => x.id === drag.id);
     if (!c) return;
     const axes = dragPlane(c, drag.shift || e.shiftKey);
-    if (raycaster.ray.intersectPlane(plane, hit)) {
+    if (raycaster.ray.intersectPlane(plane, hit) && usableHit()) {
       place(c, axes, e.altKey);
       state.dirty = true;
     }
@@ -124,7 +165,7 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
       const shiftA = state.lab === 'potential' && e.shiftKey && state.pathA;
       const target = shiftA ? state.pathA : state.probe;
       const axes = dragPlane(target, false);
-      if (raycaster.ray.intersectPlane(plane, hit)) {
+      if (raycaster.ray.intersectPlane(plane, hit) && usableHit()) {
         place(target, axes, e.altKey);
         state.dirty = true;
       }

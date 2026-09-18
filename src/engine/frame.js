@@ -94,7 +94,10 @@ export function snapTo(v, step) {
   return step > 0 ? Math.round(v / step) * step : v;
 }
 
-const COORD = (p) => Math.max(Math.abs(p.x || 0), Math.abs(p.y || 0), Math.abs(p.z || 0));
+// A non-finite coordinate must never reach the fit: metersPerUnit(NaN) is NaN, and a NaN scale
+// takes the whole scene with it.
+const FIN = (v) => (Number.isFinite(v) ? Math.abs(v) : 0);
+const COORD = (p) => Math.max(FIN(p.x), FIN(p.y), FIN(p.z));
 
 /** Largest coordinate, in meters, of everything the student can see and move. */
 export function contentExtent(state) {

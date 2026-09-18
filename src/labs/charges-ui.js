@@ -48,13 +48,53 @@ export function bindCharges(api) {
   }
 
   const coords = $('coord-block');
+
+  /*
+   * Refuse text dropped onto a coordinate box.
+   *
+   * A number typed into these boxes is a coordinate; a string dragged from somewhere else on the
+   * page is not. Chromium turns a drag that begins on selectable text into a native drag-and-drop,
+   * and dropping on a number input replaces its value outright — the event arrives as a perfectly
+   * ordinary `input` with inputType "insertFromDrop". A grid tick label dropped into the probe's z
+   * box set it to 1.0e5 m, the frame refitted to fit that, and the scene ended up labelled in units
+   * of 1e21 m with every field value reading zero. Capture phase, so it lands before the input's
+   * own handling.
+   */
+  for (const type of ['dragover', 'drop']) {
+    coords?.addEventListener(
+      type,
+      (e) => {
+        if (e.target.closest?.('input[data-axis]')) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+      true,
+    );
+  }
+
   coords?.addEventListener('input', (e) => {
     const input = e.target.closest('input[data-axis]');
     const row = e.target.closest('[data-point]');
     if (!input || !row) return;
+    /*
+     * A box that still reads exactly what was painted into it has nothing new to say.
+     *
+     * These boxes are a lossy render of the state: the number shown is the coordinate rounded to
+     * three decimals *in whatever unit the current scene scale implies* (m, cm, mm, µm). Committing
+     * one back unconditionally round-trips the state through that rendering, so a stray input event
+     * — a spinner drag, a rebuild while the pointer is down — either rounded the coordinate away
+     * (2e-5 m shown as "0", committed as 0) or, when the box had been painted in one unit and the
+     * scale had since moved the divisor to another, multiplied it by up to a million. That was the
+     * runaway: probe.z went to 1.0e5 m, the frame refitted to fit it, the grid ended up labelled in
+     * units of 1e21 m, and V, PE and W all read zero.
+     */
+    if (input.value === input.dataset.painted) return;
     const v = Number(input.value);
     if (!Number.isFinite(v)) return;
-    api.setCoord(row.dataset.point, input.dataset.axis, v / coordUnit().per);
+    // Read it in the unit it was painted in, never whichever unit the scale implies right now.
+    const per = Number(input.dataset.per) || coordUnit().per;
+    api.setCoord(row.dataset.point, input.dataset.axis, v / per);
   });
 }
 
@@ -103,10 +143,16 @@ export function resetChargeListSig() {
 }
 
 /** Never fight the box the student is typing in. */
-function setInput(el, value) {
+/**
+ * Paint a value into a box, remembering what was painted and the unit it is in, so the input
+ * handler can tell a real edit from an echo and can read the number in the right unit.
+ */
+function setInput(el, value, per) {
   if (!el || el === document.activeElement) return;
   const next = String(value);
   if (el.value !== next) el.value = next;
+  el.dataset.painted = next;
+  if (per != null) el.dataset.per = String(per);
 }
 
 export function renderChargeList(state, { gauss = false, fit = true } = {}) {
@@ -187,7 +233,7 @@ function renderCoords(state, fit) {
     const el = host.querySelector(`[data-point="${r.key}"]`);
     if (!el) continue;
     el.classList.toggle('selected', r.id != null && r.id === state.selectedId);
-    for (const a of ['x', 'y', 'z']) setInput(el.querySelector(`[data-axis="${a}"]`), num((r.p[a] || 0) * per));
+    for (const a of ['x', 'y', 'z']) setInput(el.querySelector(`[data-axis="${a}"]`), num((r.p[a] || 0) * per), per);
   }
   const note = document.getElementById('scale-note');
   if (note) note.textContent = `1 square = ${lenLabel(1 / sceneScale())}`;
