@@ -7,15 +7,23 @@ site out of search results, which is the protection that remains.
 
 ## Updating the live site
 
-A hosted build is a snapshot. Code on `main` is not on the site until somebody publishes it.
+The Pages project is a **Direct Upload** project, not Git-connected. Pushing to `main` does not
+publish anything — a hosted build is a snapshot, and it only changes when someone uploads a new one.
+This is the single most important thing to know about this setup: green tests and a merged commit
+do not mean the group is looking at that code.
 
-- **If the Pages project is connected to this repo**, a push to `main` triggers a build. Build
-  command `npm run build`, output directory `dist`.
-- **If it was a drag-and-drop upload**, merging changes nothing. Run `npm run build` and upload
-  `dist` again under the project's *Create deployment* tab.
+To ship a release:
 
-Check which one it is at dash.cloudflare.com → Workers & Pages → flux-phy2049 → Settings. A
-Git-connected project names the repo and branch there; a direct-upload project doesn't.
+1. Land the changes on `main`.
+2. `npm test && npm run build`
+3. dash.cloudflare.com → Workers & Pages → `flux-phy2049` → Deployments → Create new deployment,
+   and upload the new `dist`.
+
+The production URL does not change.
+
+Cloudflare does not convert a Direct Upload project to Git-connected. Auto-deploy on push would mean
+creating a *second* Pages project pointed at `DGadapee00/flux-phy2049` (build `npm run build`, output
+`dist`) and moving people to its URL — worth it only if republishing by hand starts to hurt.
 
 ## How the build works
 
@@ -67,7 +75,7 @@ site is marked noindex.
 ## Option 2 — GitHub Pages (automatic on every push)
 
 `.github/workflows/pages.yml` is still in the repo but does nothing while Pages is off, which is
-how it should stay unless the site moves off Cloudflare. Turn it on at
+how it should stay while the site lives on Cloudflare. Turn it on at
 **Settings → Pages → Build and deployment → Source: GitHub Actions**, then push to `main`.
 Every push rebuilds and republishes; the URL is
 `https://dgadapee00.github.io/flux-phy2049/`.
