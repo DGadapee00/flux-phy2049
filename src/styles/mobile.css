@@ -197,16 +197,84 @@
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   }
 
+  /*
+   * Everything below was sized for a 300px column beside the scene, not a strip under it. At
+   * desktop metrics the Setup sheet and the readout together took a third of the phone, which is
+   * the wrong way round: the scene is the thing you came to look at. Tighter type and padding
+   * throughout, and Hide in the switch above drops the sheet entirely when it is in the way.
+   */
   .controls {
     top: auto;
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    bottom: calc(50px + env(safe-area-inset-bottom));
     left: 0;
     right: 0;
     width: auto;
-    max-height: 26dvh;
+    max-height: 24dvh;
     border-radius: 0;
     border-width: 1px 0;
-    padding: 12px;
+    padding: 9px 12px;
+    gap: 8px;
+  }
+
+  .panel-header h2 {
+    font-size: 13px;
+  }
+
+  .panel-header .hint {
+    font-size: 10px;
+  }
+
+  .lab-block {
+    gap: 7px;
+  }
+
+  .field {
+    gap: 3px;
+  }
+
+  .field > span,
+  .mini-label {
+    font-size: 10px;
+  }
+
+  /*
+   * The box shrinks but the type stays at 16px: under that, Safari zooms the page when the
+   * control takes focus, which is the thing the practice sheet fixes and must not reintroduce.
+   */
+  .hud select {
+    padding: 5px 9px;
+  }
+
+  .slider-row {
+    gap: 8px;
+  }
+
+  .val {
+    font-size: 13px;
+    min-width: 54px;
+  }
+
+  .seg button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  /* The readout is the answer, not a headline. */
+  .readout {
+    padding: 5px 12px calc(5px + env(safe-area-inset-bottom));
+  }
+
+  .readout .label {
+    font-size: 10px;
+  }
+
+  .readout .value {
+    font-size: 15px;
+  }
+
+  body.sheet-hidden .controls,
+  body.sheet-hidden .eq-panel {
+    display: none;
   }
 
   /*
@@ -246,7 +314,7 @@
   .eq-panel {
     display: none;
     top: auto;
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    bottom: calc(50px + env(safe-area-inset-bottom));
     left: 0;
     right: 0;
     width: auto;
