@@ -592,11 +592,26 @@ export function createPractice(api) {
    * keyboard.
    */
   function paletteHTML(part, i) {
-    const chip = (ins, show = ins, cls = '') =>
-      `<button type="button" class="pb-key${cls}" data-key-for="${i}" data-ins="${esc(ins)}">${esc(show)}</button>`;
+    const chip = (ins, show = ins, cls = '', back = 0) =>
+      `<button type="button" class="pb-key${cls}" data-key-for="${i}" data-ins="${esc(ins)}" data-back="${back}">${esc(show)}</button>`;
     const vars = part.vars.map((v) => chip(GLYPH[v] || v));
     const consts = ['k', 'eps0', 'mu0', 'pi'].filter((c) => !part.vars.includes(c)).map((c) => chip(GLYPH[c] || c));
-    const ops = [chip('/', '/', ' op'), chip('^', '^', ' op'), chip('²', '²', ' op'), chip('√(', '√', ' op'), chip('(', '(', ' op'), chip(')', ')', ' op')];
+    /*
+     * `/` opens a bracketed denominator with the caret inside it, and `√` and `(` close themselves
+     * the same way. Division and implicit multiplication have equal precedence and associate left,
+     * so a bare slash makes `q/Aε₀` mean (q/A)·ε₀ — while every physics text on the shelf writes
+     * exactly that string to mean q/(Aε₀). Anyone building a denominator a symbol at a time got the
+     * first reading, which is wrong and does not look wrong. Giving the denominator real brackets
+     * from the moment it is opened makes the grouping explicit instead of assumed.
+     */
+    const ops = [
+      chip('/()', '/', ' op', 1),
+      chip('^', '^', ' op'),
+      chip('²', '²', ' op'),
+      chip('√()', '√', ' op', 1),
+      chip('()', '(', ' op', 1),
+      chip(')', ')', ' op'),
+    ];
     return `<div class="pb-pal">${vars.join('')}${consts.join('')}<span class="pb-pal-gap"></span>${ops.join('')}</div>`;
   }
 
@@ -1084,10 +1099,18 @@ export function createPractice(api) {
     const box = panel.querySelector(`[data-input="${key.dataset.keyFor}"]`);
     if (!box || box.disabled || box.readOnly) return;
     const ins = key.dataset.ins;
+    const back = Number(key.dataset.back) || 0;
     const a = box.selectionStart ?? box.value.length;
     const b = box.selectionEnd ?? a;
-    box.value = box.value.slice(0, a) + ins + box.value.slice(b);
-    const caret = a + ins.length;
+    let caret;
+    if (ins === ')' && a === b && box.value[a] === ')') {
+      // Step over the bracket the `/` or `(` key already closed, the way an editor does, rather
+      // than stacking up a second one.
+      caret = a + 1;
+    } else {
+      box.value = box.value.slice(0, a) + ins + box.value.slice(b);
+      caret = a + ins.length - back;
+    }
     box.focus();
     box.setSelectionRange(caret, caret);
     box.dispatchEvent(new Event('input', { bubbles: true }));

@@ -358,7 +358,9 @@ body {
   top: var(--below-brand, 196px);
   left: 16px;
   width: min(360px, calc(100vw - 360px));
-  max-height: calc(100vh - var(--below-brand, 196px) - 64px);
+  /* The readout sits at bottom:42 and stands ~70 tall, so stopping 64px short ran straight
+     through it on any window short enough for this panel to reach its limit. */
+  max-height: calc(100vh - var(--below-brand, 196px) - 124px);
   overflow: auto;
   overscroll-behavior: contain;
   /*
@@ -385,7 +387,7 @@ body {
 }
 
 body.has-legend .eq-panel {
-  max-height: calc(100vh - var(--below-brand, 196px) - 168px);
+  max-height: calc(100vh - var(--below-brand, 196px) - 180px);
 }
 
 .law {
@@ -875,11 +877,19 @@ input[type='checkbox'] {
 
 /* ---------- Readout ---------- */
 
+/*
+ * Centred on the viewport, the readout ran under the equation panel on the left and under Setup on
+ * the right — 56px at 1440 wide, 136px at 1280 — which only looked fine because the overlap
+ * happened to fall where the panels were short. It sits in the band between them instead, still
+ * centred within that band, so it can never reach either one.
+ */
 .readout {
-  left: 50%;
+  left: 416px;
+  right: 332px;
   bottom: 42px;
-  transform: translateX(-50%);
-  width: min(920px, calc(100vw - 40px));
+  width: auto;
+  max-width: 920px;
+  margin-inline: auto;
   padding: 10px 18px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1164,7 +1174,10 @@ select:focus-visible {
     width: 260px;
     max-height: 40vh;
   }
+  /* Narrower panels here, so the band the readout sits in can be correspondingly wider. */
   .readout {
+    left: 312px;
+    right: 292px;
     grid-template-columns: repeat(2, 1fr);
   }
 }

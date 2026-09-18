@@ -275,6 +275,11 @@
    * with different font metrics would make that seam wider, not narrower.
    */
   .readout {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: none;
+    margin-inline: 0;
     height: calc(50px + env(safe-area-inset-bottom));
     padding: 0 12px env(safe-area-inset-bottom);
     align-content: center;
