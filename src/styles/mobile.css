@@ -259,6 +259,15 @@
     font-size: 11px;
   }
 
+  /*
+   * The primary action in a lab — Play the sweep, Pause, Tune f to f0. Keeps its type: it is the
+   * one control you reach for, and at 15px serif it reads as the thing to press. Given a proper
+   * touch target instead, which costs no screen space because the sheet scrolls under a fixed cap.
+   */
+  .controls .btn.accent {
+    min-height: 44px;
+  }
+
   /* The readout is the answer, not a headline. */
   .readout {
     padding: 5px 12px calc(5px + env(safe-area-inset-bottom));
