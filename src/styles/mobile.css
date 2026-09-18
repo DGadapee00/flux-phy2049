@@ -491,6 +491,30 @@
     padding: 10px 12px;
   }
 
+  /*
+   * The palette earns its place here more than anywhere: an iOS keyboard cannot type λ or ε₀ at
+   * all without switching layouts, so on a phone these chips are the only way in. Sized like
+   * keyboard keys rather than the 44px used elsewhere — a dense row of 13 has to stay one thumb
+   * wide — with the spacing opened up to keep them distinct.
+   */
+  .pb-key {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 17px;
+  }
+
+  .pb-key.op {
+    font-size: 15px;
+  }
+
+  .pb-pal {
+    gap: 6px;
+  }
+
+  .pb-preview .katex {
+    font-size: 1.25em;
+  }
+
   .pb-parts {
     gap: 16px;
   }

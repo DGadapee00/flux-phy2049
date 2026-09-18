@@ -13,7 +13,7 @@
  */
 import { PROBLEMS, CHAPTER_ORDER, CHAPTER_TITLES, problemsForExam } from '../src/problems/index.js';
 import { createProgress, memoryStorage, pickSet, INTERVAL_DAYS } from '../src/problems/progress.js';
-import { build, instance, render, expected, withinTol, evalSymbolic, gradeSymbolic, grade, parseNumber, parseExpr, dimensionOf } from '../src/problems/engine.js';
+import { build, instance, render, expected, withinTol, evalSymbolic, gradeSymbolic, grade, parseNumber, parseExpr, dimensionOf , exprToTex } from '../src/problems/engine.js';
 import { parseUnit, dimEqual, formatDim } from '../src/physics/units.js';
 import { applyProblem, headlessCtx } from '../src/problems/simbridge.js';
 import { mathProse } from '../src/ui/shared.js';
@@ -236,6 +236,19 @@ if (!Number.isNaN(parseNumber('abc'))) err('engine', 'parseNumber accepts text')
     if (a.map((t) => t.id).join() !== b.map((t) => t.id).join()) err('pickSet', `${exam}: same seed gave different sets`);
     if (new Set(a.map((t) => t.ch)).size < Math.min(n, chapters.size)) err('pickSet', `${exam}: set skips chapters it had room for`);
     if (a.filter((t) => t.kind === 'conceptual').length > Math.max(1, Math.floor(n * 0.25))) err('pickSet', `${exam}: too many conceptual problems`);
+  }
+}
+
+/*
+ * Every reference formula must render. The practice panel typesets what the parser understood, so
+ * an expression the emitter cannot handle would leave a student staring at a blank preview with no
+ * way to tell whether their formula was read correctly.
+ */
+for (const tpl of PROBLEMS) {
+  for (const part of tpl.parts.filter((p) => p.kind === 'symbolic')) {
+    const t = exprToTex(part.expr, part.vars, part.alias);
+    if (!t) err(tpl.id, `symbolic ${part.id}: "${part.expr}" does not render to TeX`);
+    else if (/undefined|NaN/.test(t)) err(tpl.id, `symbolic ${part.id}: TeX came out as "${t}"`);
   }
 }
 

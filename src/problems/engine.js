@@ -323,6 +323,85 @@ export function parseExpr(src, symbols = [], alias = {}) {
   return ast;
 }
 
+/**
+ * How each symbol is written and typed. The parser already accepts the real glyphs — `2kλ/R` and
+ * `q/(4πε₀r²)` parse fine — but nothing ever said so, so students typed `lam` and `eps0` from the
+ * hint line and had no idea there was another way. GLYPH drives the palette and the hints; TEX_SYM
+ * drives the rendered preview.
+ */
+export const GLYPH = {
+  pi: 'π', lam: 'λ', sig: 'σ', rho: 'ρ', th: 'θ', omega: 'ω', phi: 'φ', alpha: 'α',
+  eps0: 'ε₀', mu0: 'μ₀',
+};
+
+const TEX_SYM = {
+  pi: '\\pi', lam: '\\lambda', sig: '\\sigma', rho: '\\rho', th: '\\theta',
+  omega: '\\omega', phi: '\\varphi', alpha: '\\alpha',
+  eps0: '\\varepsilon_0', mu0: '\\mu_0',
+};
+
+/** `r1` → `r_{1}`, `lam` → `\lambda`, anything else as written. */
+function texName(name) {
+  if (TEX_SYM[name]) return TEX_SYM[name];
+  const m = /^([A-Za-z]+)(\d+)$/.exec(name);
+  return m ? `${m[1]}_{${m[2]}}` : name;
+}
+
+/**
+ * The AST as TeX, for the live preview under a formula box.
+ *
+ * Rendering the *parsed* expression rather than the raw text is the point: what you see is what
+ * the grader understood. `a/b+c` previews as a fraction over b alone, so a missing bracket is
+ * visible while you type instead of at submit time.
+ */
+export function astToTex(ast) {
+  const P = { '+': 1, '-': 1, '*': 2, '/': 2, '^': 4 };
+  const wrap = (s, yes) => (yes ? `\\left(${s}\\right)` : s);
+  const go = (n, need = 0) => {
+    switch (n.t) {
+      case 'num':
+        return String(n.v);
+      case 'const':
+      case 'sym':
+        return texName(n.name);
+      case 'neg':
+        // A leading minus needs no brackets as a factor or a numerator — only where it would
+        // collide with another operator, as in a − (−b).
+        return wrap(`-${go(n.x, 3)}`, need > 2);
+      case 'fn':
+        return n.name === 'sqrt'
+          ? `\\sqrt{${go(n.arg)}}`
+          : `\\operatorname{${n.name}}\\left(${go(n.arg)}\\right)`;
+      case 'op': {
+        if (n.op === '/') return `\\dfrac{${go(n.l)}}{${go(n.r)}}`;
+        if (n.op === '^') return `${go(n.l, 5)}^{${go(n.r)}}`;
+        const p = P[n.op];
+        const l = go(n.l, p);
+        const r = go(n.r, p + 1);
+        // A thin space reads as multiplication between symbols; against a leading digit it would
+        // look like one number, so those get an explicit dot.
+        const body =
+          n.op === '*'
+            ? `${l}${/^[\d.]/.test(r) ? '\\cdot ' : '\\,'}${r}`
+            : `${l} ${n.op} ${go(n.r, n.op === '-' ? 3 : p + 1)}`;
+        return wrap(body, need > p);
+      }
+      default:
+        return '';
+    }
+  };
+  return go(ast);
+}
+
+/** Typed text → TeX, or null when it does not parse yet. */
+export function exprToTex(src, symbols = [], alias = {}) {
+  try {
+    return astToTex(parseExpr(src, symbols, alias));
+  } catch {
+    return null;
+  }
+}
+
 const OPS = {
   '+': (a, b) => a + b,
   '-': (a, b) => a - b,

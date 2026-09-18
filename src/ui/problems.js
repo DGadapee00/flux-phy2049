@@ -12,10 +12,10 @@
  * this module only calls api.openInLab(inst) and reads api.computed / api.slice().
  */
 import { PROBLEMS, problemById, problemsForExam, CHAPTER_ORDER, CHAPTER_TITLES } from '../problems/index.js';
-import { instance, render, grade, expected, sig, withinTol, compile, checkUnits } from '../problems/engine.js';
+import { instance, render, grade, expected, sig, withinTol, compile, checkUnits, exprToTex, GLYPH } from '../problems/engine.js';
 import { createProgress, pickSet, MASTERED_BOX, INTERVAL_DAYS } from '../problems/progress.js';
 import { examById, LAB_META } from '../data/catalog.js';
-import { mathProse } from './shared.js';
+import { mathProse, tex } from './shared.js';
 
 const EXAM_MINUTES = 50;
 const EXAM_SIZE = 8;
@@ -574,6 +574,32 @@ export function createPractice(api) {
    * The units line is the check by hand — write the answer in symbols, see where it lands — run
    * live on what is in the box.
    */
+  /**
+   * The formula as the parser read it, typeset. Not decoration: it renders the AST, so a missing
+   * bracket shows up as the wrong thing under the numerator while you type, rather than as a wrong
+   * answer at submit. Blank until the expression parses — the line below already names the error.
+   */
+  function previewHTML(part, value) {
+    if (!String(value ?? '').trim()) return '';
+    const t = exprToTex(value, part.vars, part.alias);
+    return t ? tex(t, true) : '';
+  }
+
+  /**
+   * Chips that insert a symbol at the caret. The parser has always accepted λ, ε₀ and ² directly;
+   * nothing ever told anyone, and on a phone there is no way to type them at all. The problem's own
+   * symbols come first, then the constants, then the operators that are awkward on a touch
+   * keyboard.
+   */
+  function paletteHTML(part, i) {
+    const chip = (ins, show = ins, cls = '') =>
+      `<button type="button" class="pb-key${cls}" data-key-for="${i}" data-ins="${esc(ins)}">${esc(show)}</button>`;
+    const vars = part.vars.map((v) => chip(GLYPH[v] || v));
+    const consts = ['k', 'eps0', 'mu0', 'pi'].filter((c) => !part.vars.includes(c)).map((c) => chip(GLYPH[c] || c));
+    const ops = [chip('/', '/', ' op'), chip('^', '^', ' op'), chip('²', '²', ' op'), chip('√(', '√', ' op'), chip('(', '(', ' op'), chip(')', ')', ' op')];
+    return `<div class="pb-pal">${vars.join('')}${consts.join('')}<span class="pb-pal-gap"></span>${ops.join('')}</div>`;
+  }
+
   function parseMessage(part, value) {
     if (part.kind !== 'symbolic' || !String(value ?? '').trim()) return { cls: '', html: '' };
     try {
@@ -620,8 +646,10 @@ export function createPractice(api) {
       const val = cur.inputs[part.id] ?? '';
       const held = sym ? null : pendingSymbol(cur, i);
       const help = sym
-        ? `<div class="pb-symhelp">Symbols: ${part.vars.map(esc).join(', ')} · constants k, eps0, mu0, pi, c, g · e.g. <code>2*k*lam/R</code>, <code>sqrt(x^2 + d^2)</code></div>`
+        ? `<div class="pb-symhelp">Tap to insert, or type — <code>λ</code> and <code>lam</code> both work. <code>/</code> makes a fraction.</div>`
         : '';
+      const palette = sym ? paletteHTML(part, i) : '';
+      const preview = sym ? `<div class="pb-preview" data-preview="${i}">${previewHTML(part, val)}</div>` : '';
       const msg = parseMessage(part, val);
       return `<div class="pb-part${state}${held ? ' held' : ''}" data-part="${esc(part.id)}">
         <label class="pb-label" for="pb-in-${i}">${label}</label>
@@ -631,6 +659,8 @@ export function createPractice(api) {
           ${part.unit ? `<span class="pb-unit">${esc(part.unit)}</span>` : ''}
           <span class="pb-mark">${mark}</span>
         </div>
+        ${preview}
+        ${palette}
         ${help}
         ${held ? '<div class="pb-held">Write the formula above first — then put the numbers in.</div>' : ''}
         <div class="pb-parse ${msg.cls}" data-parse="${i}">${msg.html}</div>
@@ -1039,9 +1069,28 @@ export function createPractice(api) {
           out.className = `pb-parse ${msg.cls}`;
           out.innerHTML = msg.html;
         }
+        const pv = panel.querySelector(`[data-preview="${el.dataset.input}"]`);
+        if (pv) pv.innerHTML = previewHTML(part, el.value);
       }
     }
     if (cur.mode === 'exam') saveExamInputs();
+  });
+
+  /** Insert a palette chip at the caret and leave the caret after it, ready to keep typing. */
+  panel.addEventListener('click', (e) => {
+    const key = e.target.closest('.pb-key');
+    if (!key) return;
+    e.preventDefault();
+    const box = panel.querySelector(`[data-input="${key.dataset.keyFor}"]`);
+    if (!box || box.disabled || box.readOnly) return;
+    const ins = key.dataset.ins;
+    const a = box.selectionStart ?? box.value.length;
+    const b = box.selectionEnd ?? a;
+    box.value = box.value.slice(0, a) + ins + box.value.slice(b);
+    const caret = a + ins.length;
+    box.focus();
+    box.setSelectionRange(caret, caret);
+    box.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
   panel.addEventListener('change', () => {

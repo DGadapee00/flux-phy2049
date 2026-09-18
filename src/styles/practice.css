@@ -778,3 +778,75 @@ body.problem-blind .veiled .katex {
   }
 }
 
+
+/* ---------- Formula input: rendered preview and the symbol palette ---------- */
+
+/*
+ * The preview shows the expression as the parser read it. It is deliberately quiet — a panel, not
+ * a headline — because it is there to be glanced at while typing, not read.
+ */
+.pb-preview:empty {
+  display: none;
+}
+
+.pb-preview {
+  margin-top: 6px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.28);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.pb-preview .katex-display {
+  margin: 0;
+}
+
+.pb-preview .katex {
+  font-size: 1.15em;
+  color: var(--text);
+}
+
+.pb-pal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.pb-pal-gap {
+  flex: 0 0 8px;
+}
+
+.pb-key {
+  min-width: 30px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(236, 230, 226, 0.04);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.pb-key:hover {
+  border-color: var(--border-hover);
+  background: rgba(236, 230, 226, 0.09);
+}
+
+.pb-key.op {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pb-symhelp code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.92em;
+  color: var(--text-muted);
+}
