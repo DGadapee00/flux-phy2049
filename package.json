@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node scripts/tex-check.mjs && node src/physics/selftest.js && node scripts/problems-check.mjs"
+    "test": "node scripts/tex-check.mjs && node src/physics/selftest.js && node scripts/problems-check.mjs",
+    "deploy": "npm test && npm run build && npx --yes wrangler@latest pages deploy dist --project-name flux-phy2049 --branch main",
+    "live": "node scripts/live.mjs"
   },
   "dependencies": {
     "katex": "^0.16.47",

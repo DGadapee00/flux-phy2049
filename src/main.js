@@ -14,6 +14,13 @@ import { applyProblem } from './problems/simbridge.js';
 import { createPractice } from './ui/problems.js';
 import { ANSWER_LAYER } from './scene/manim.js';
 
+// Which build this is, so "is the live site current?" has an answer that isn't a guess.
+// Also served as /version.json — see DEPLOY.md.
+console.info(
+  `FLUX build ${__BUILD__.commit}${__BUILD__.subject ? ` — ${__BUILD__.subject}` : ''} (built ${__BUILD__.built})`,
+);
+window.__build = __BUILD__;
+
 const canvas = document.getElementById('c');
 const { renderer, scene, camera, controls, labels, grid } = createScene(canvas);
 const pool = createViewPool(scene);

@@ -12,14 +12,51 @@ publish anything — a hosted build is a snapshot, and it only changes when some
 This is the single most important thing to know about this setup: green tests and a merged commit
 do not mean the group is looking at that code.
 
-To ship a release:
+### Shipping a release
 
-1. Land the changes on `main`.
-2. `npm test && npm run build`
-3. dash.cloudflare.com → Workers & Pages → `flux-phy2049` → Deployments → Create new deployment,
-   and upload the new `dist`.
+```bash
+npm run deploy
+```
 
-The production URL does not change.
+That runs the tests, builds, and uploads `dist` to the Pages project in one go. It does not need
+Wrangler installed — `npx` fetches it for that run — but it does need to be authorised once:
+
+```bash
+npx wrangler login      # opens a browser, once per machine
+```
+
+(A `CLOUDFLARE_API_TOKEN` in the environment works instead, if you'd rather not log in.)
+
+The production URL never changes. Check the first run landed under **Production** rather than
+Preview in the dashboard; if it shows as a preview, the project's production branch is named
+something other than `main` and the `--branch` flag in the `deploy` script should match it.
+
+The dashboard route still works if you'd rather click: Workers & Pages → `flux-phy2049` →
+Deployments → Create new deployment, and upload `dist`.
+
+### Knowing what is actually live
+
+Every build stamps itself with the commit it came from, served at
+<https://flux-phy2049.pages.dev/version.json> and logged to the browser console.
+
+```bash
+npm run live
+```
+
+prints the live commit and the local one, and lists exactly which commits the site is missing:
+
+```
+live   dd1a835  Build Ch 38-42 from the practice sheets
+       built 2026-09-17T00:00:00Z
+local  0dddd21  Record that Pages is Direct Upload, not Git-connected
+
+The live site is 5 commit(s) behind this checkout:
+...
+```
+
+It exits non-zero when the site is behind, so it can gate something later if that ever matters.
+A build made from a checkout with uncommitted changes is stamped `abc1234+local`, which is a
+warning in itself: that build does not correspond to anything in the history.
 
 Cloudflare does not convert a Direct Upload project to Git-connected. Auto-deploy on push would mean
 creating a *second* Pages project pointed at `DGadapee00/flux-phy2049` (build `npm run build`, output

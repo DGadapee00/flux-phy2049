@@ -30,6 +30,11 @@ Already have a clone? `git pull` inside `flux-phy2049` before starting, so the s
 the current code.
 
 ```bash
+npm run deploy           # test, build, and publish to flux-phy2049.pages.dev (see DEPLOY.md)
+npm run live             # what commit the live site is built from, and what it's missing
+```
+
+```bash
 npm test                 # physics self-test (no browser) — analytic vs numerical, relative tolerances
 node scripts/smoke.mjs   # all labs in a headless browser; original 8 vs scripts/baseline/values.json
 node scripts/gallery.mjs [lab ...]   # screenshot every lab × scenario to scripts/output/gallery
