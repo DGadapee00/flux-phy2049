@@ -205,7 +205,7 @@
    */
   .controls {
     top: auto;
-    bottom: calc(50px + env(safe-area-inset-bottom));
+    bottom: calc(54px + env(safe-area-inset-bottom));
     left: 0;
     right: 0;
     width: auto;
@@ -268,9 +268,22 @@
     min-height: 44px;
   }
 
-  /* The readout is the answer, not a headline. */
+  /*
+   * The readout is the answer, not a headline — and it is a fixed height, because the sheets above
+   * are positioned off it by a constant. Left to size itself it came out 50–52px depending on the
+   * lab's glyph metrics, so a 50px offset had nine labs overlapping it by a pixel or two. A device
+   * with different font metrics would make that seam wider, not narrower.
+   */
   .readout {
-    padding: 5px 12px calc(5px + env(safe-area-inset-bottom));
+    height: calc(50px + env(safe-area-inset-bottom));
+    padding: 0 12px env(safe-area-inset-bottom);
+    align-content: center;
+  }
+
+  .readout .label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .readout .label {
@@ -323,7 +336,7 @@
   .eq-panel {
     display: none;
     top: auto;
-    bottom: calc(50px + env(safe-area-inset-bottom));
+    bottom: calc(54px + env(safe-area-inset-bottom));
     left: 0;
     right: 0;
     width: auto;
