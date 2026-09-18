@@ -355,6 +355,239 @@ export default [
       kase('notes (c)', { cfg: 'c', q: 1, r0: 1 }, { V: 4495, sign: 1, same: 'ad' }, { key: '+4,500 V' }),
     ],
   }),
+  problem({
+    ...E3, id: 'e3.38.units-of', ch: '38', src: 'Practice 38 #1–3', title: 'Units: potential, energy, field', kind: 'conceptual', topics: ['potential', 'units'],
+    vars: { q: choice(['U', 'electric potential energy'], ['V', 'electric potential'], ['E', 'electric field'], ['ratio', 'electric potential, as a ratio']) },
+    text: (T, $) => ($.q === 'ratio'
+      ? 'Electric potential, measured in volts, is the ratio of electric potential energy to what?'
+      : `What are the units of ${T.q}?`),
+    parts: [
+      mc('ans', [['J', 'J'], ['J/C', 'J/C'], ['N/C', 'N/C'], ['J/kg', 'J/kg'], ['charge', 'the amount of electric charge'], ['current', 'the electric current']],
+        ($) => ({ U: 'J', V: 'J/C', E: 'N/C', ratio: 'charge' })[$.q]),
+    ],
+    hints: [String.raw`$V = U/q$, so a volt is a joule per coulomb; the energy itself is just joules.`],
+    steps: ($) => [
+      $.q === 'E'
+        ? String.raw`$\vec{E}$ is force per charge, N/C — which is the same thing as V/m.`
+        : String.raw`$U$ is an energy (J). $V = U/q$ is energy per unit charge (J/C = V), which is why potential is the *ratio* of potential energy to charge.`,
+    ],
+    cases: [
+      kase('#1', { q: 'U' }, { ans: 'J' }, { key: 'C) J' }),
+      kase('#2', { q: 'V' }, { ans: 'J/C' }, { key: 'B) J/C' }),
+      kase('#3', { q: 'ratio' }, { ans: 'charge' }, { key: 'B) charge' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.38.work-and-deltaV', ch: '38', src: 'Practice 38 #4–5', title: 'Work, ΔV and ΔU for a pushed charge', kind: 'numeric', topics: ['potential', 'work', 'potential-energy'],
+    vars: { W: range(2, 40, 1, 'J'), q: range(0.5, 5, 0.5, 'C') },
+    derive: ($) => ({ dV: $.W / $.q, dU: $.W }),
+    text: (T) => `It takes ${T.W} J of work by an external agent to push an object carrying ${T.q} C of net charge through a uniform electric field. Find the change in the object's potential, and the change in its potential energy.`,
+    parts: [
+      num('dV', ($) => $.dV, 'V', { label: String.raw`$\Delta V$` }),
+      num('dU', ($) => $.dU, 'J', { label: String.raw`$\Delta U$` }),
+    ],
+    hints: [String.raw`$W_{\text{ext}} = \Delta U = q\,\Delta V$. Work done *against* the field raises the energy.`],
+    steps: ($, f) => [
+      String.raw`$\Delta U = W_{\text{ext}} = ${texNum($.dU)}\ \text{J}$`,
+      String.raw`$\Delta V = \dfrac{\Delta U}{q} = \dfrac{${texNum($.W)}}{${texNum($.q)}} = ${texNum($.dV)}\ \text{V}$`,
+    ],
+    cases: [kase('#4–5', { W: 10, q: 2 }, { dV: 5, dU: 10 }, { key: '4) A) 5 V   5) A) −10 J', note: 'The key gives ΔU as −10 J, taking the work as done BY the field. Pushing against the field, the object gains 10 J.' })],
+  }),
+  problem({
+    ...E3, id: 'e3.38.field-potential-traps', ch: '38', src: 'Practice 38 #11–12, 16', title: 'Does zero field mean zero potential?', kind: 'conceptual', level: 2, topics: ['potential', 'gradient'],
+    vars: {
+      claim: choice(
+        ['E0V0', 'If the electric field is zero at a point, the potential must be zero there.'],
+        ['Vconst', 'If the potential is constant throughout a region, the electric field is zero everywhere in that region.'],
+        ['V0E', 'If the electric potential at a point is zero, what must the electric field there be?'],
+      ),
+    },
+    text: (T) => T.claim,
+    parts: [
+      mc('ans', [['T', 'True'], ['F', 'False'], ['zero', 'Zero'], ['unknown', 'Impossible to determine from the information given']],
+        ($) => ({ E0V0: 'F', Vconst: 'T', V0E: 'unknown' })[$.claim]),
+    ],
+    hints: [String.raw`$\vec{E}$ is the *slope* of $V$, not its value: $E_x = -\dfrac{dV}{dx}$.`],
+    steps: ($) => [
+      $.claim === 'E0V0'
+        ? String.raw`False. Midway between two equal positive charges $\vec{E} = 0$, but $V$ is large and positive. A flat graph can sit at any height.`
+        : $.claim === 'Vconst'
+          ? String.raw`True. Constant $V$ means zero slope in every direction, and $\vec{E} = -\nabla V$, so $\vec{E} = 0$.`
+          : String.raw`Neither. $V = 0$ fixes the height, not the slope — midway between $+q$ and $-q$, $V = 0$ while $\vec{E}$ is at its largest.`,
+    ],
+    cases: [
+      kase('#11', { claim: 'E0V0' }, { ans: 'F' }, { key: 'B) False' }),
+      kase('#12', { claim: 'Vconst' }, { ans: 'T' }, { key: 'A) True' }),
+      kase('#16', { claim: 'V0E' }, { ans: 'unknown' }, { key: 'E) impossible to determine' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.38.charge-moves', ch: '38', src: 'Practice 38 #13–15', title: 'Which way does the charge go?', kind: 'conceptual', level: 2, topics: ['potential', 'energy'],
+    vars: {
+      what: choice(
+        ['proton-along', 'A proton moves in the direction of the electric field. What happens to its potential energy and its electric potential?'],
+        ['neg-free', 'A negative charge is free to move in an electric field. Which way does it go?'],
+        ['proton-perp', 'A proton moves perpendicular to the electric field lines. What happens to its potential and its potential energy?'],
+      ),
+    },
+    text: (T) => T.what,
+    parts: [
+      mc('ans', [
+        ['both-down', 'Both its potential energy and its electric potential decrease'],
+        ['low-to-high', 'From low potential toward high potential'],
+        ['both-same', 'Both its electric potential and its potential energy stay the same'],
+        ['both-up', 'Both its potential energy and its electric potential increase'],
+        ['field-dir', 'In the direction of the electric field'],
+      ], ($) => ({ 'proton-along': 'both-down', 'neg-free': 'low-to-high', 'proton-perp': 'both-same' })[$.what]),
+    ],
+    hints: [
+      String.raw`$\vec{E}$ points from high $V$ toward low $V$. A positive charge released freely runs downhill in $V$; a negative one runs uphill.`,
+      String.raw`$U = qV$, so for a proton $U$ and $V$ move together; for an electron they move oppositely.`,
+    ],
+    steps: ($) => [
+      $.what === 'proton-along'
+        ? String.raw`Moving along $\vec{E}$ is moving toward lower $V$. For a positive charge $U = qV$ falls too — both decrease.`
+        : $.what === 'neg-free'
+          ? String.raw`A negative charge feels a force opposite $\vec{E}$, so it moves toward *higher* potential. That still lowers its energy, because $U = qV$ with $q < 0$.`
+          : String.raw`Perpendicular to the field lines is along an equipotential: $V$ does not change, so neither does $U = qV$.`,
+    ],
+    cases: [
+      kase('#13', { what: 'proton-along' }, { ans: 'both-down' }, { key: 'C)' }),
+      kase('#14', { what: 'neg-free' }, { ans: 'low-to-high' }, { key: 'D)' }),
+      kase('#15', { what: 'proton-perp' }, { ans: 'both-same' }, { key: 'E)' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.38.V-poly-field', ch: '38', src: 'Practice 38 #23', title: 'E from a polynomial V(x)', kind: 'numeric', level: 2, topics: ['potential', 'gradient'],
+    vars: { a: range(1, 6, 1, 'V/m'), b: range(1, 4, 1, 'V/m²'), x: range(0, 3, 0.5, 'm') },
+    derive: ($) => ({ Ex: -($.a - 2 * $.b * $.x) }),
+    text: (T) => `Along the x-axis the electric potential is V(x) = (${T.a} V/m)x − (${T.b} V/m²)x². Find the x component of the electric field at x = ${T.x} m.`,
+    parts: [
+      sym('E_sym', '-(a - 2*b*x)', { a: 'V/m', b: 'V/m^2', x: 'm' }, ($) => $.Ex, { unit: 'V/m', label: String.raw`$E_x$ as a formula` }),
+      num('Ex', ($) => $.Ex, 'V/m', { label: String.raw`$E_x$`, abs: 0.01 }),
+    ],
+    hints: [String.raw`$E_x = -\dfrac{dV}{dx}$ — differentiate, then substitute. Do not divide $V$ by $x$.`],
+    steps: ($, f) => [
+      String.raw`$\dfrac{dV}{dx} = ${texNum($.a)} - 2(${texNum($.b)})x$`,
+      String.raw`$E_x = -\dfrac{dV}{dx} = ${texNum($.Ex)}\ \text{V/m}$ at $x = ${texNum($.x)}$ m`,
+    ],
+    cases: [
+      kase('#23A', { a: 2, b: 1, x: 0 }, { Ex: -2 }, { key: '(−2 V/m) x̂' }),
+      kase('#23B', { a: 2, b: 1, x: 1 }, { Ex: 0 }, { key: '(0 V/m) x̂' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.39.speed-with-v0', ch: '39', src: 'Practice 39 #4', title: 'Final speed when it was already moving', kind: 'numeric', level: 2, topics: ['potential', 'energy'],
+    vars: { v0: range(0.5, 4, 0.1, '×10⁵ m/s', 1e5), V: range(50, 400, 10, 'V') },
+    // q and m are in scope so the symbolic answer can be written the way the sheet states it.
+    derive: ($) => ({ q: QE, m: MP, vf: Math.sqrt($.v0 ** 2 + (2 * QE * $.V) / MP) }),
+    text: (T) => `A proton already moving at ${T.v0} × 10⁵ m/s is accelerated through a further potential difference of ${T.V} V. What is its final speed? (q = 1.60 × 10⁻¹⁹ C, m_proton = 1.67 × 10⁻²⁷ kg)`,
+    parts: [
+      sym('v_sym', 'sqrt(v0^2 + 2*q*V/m)', { v0: 'm/s', V: 'V', q: 'C', m: 'kg' }, ($) => $.vf, { unit: 'm/s', label: String.raw`$v_f$ as a formula` }),
+      num('vf', ($) => $.vf, 'm/s', { label: String.raw`$v_f$` }),
+    ],
+    hints: [
+      String.raw`Energy, not kinematics: $\tfrac12 mv_f^2 - \tfrac12 mv_0^2 = q\Delta V$.`,
+      String.raw`The starting speed does not vanish — you cannot use $v_f = \sqrt{2q\Delta V/m}$ unless the particle started at rest.`,
+    ],
+    steps: ($, f) => [
+      String.raw`$\tfrac12 mv_f^2 = \tfrac12 mv_0^2 + q\Delta V$`,
+      String.raw`$v_f = \sqrt{v_0^2 + \dfrac{2q\Delta V}{m}} = ${texNum($.vf)}\ \text{m/s}$`,
+    ],
+    cases: [kase('#4', { v0: 1.5, V: 100 }, { vf: 2.046e5 }, { key: '2.05 × 10⁵ m/s' })],
+  }),
+  problem({
+    ...E3, id: 'e3.39.deltaV-two-radii', ch: '39', lab: 'potential', src: 'Practice 39 #8–10', title: 'Potential difference between two distances', kind: 'numeric', level: 2, topics: ['potential'],
+    vars: { q: range(1, 8, 0.5, 'μC', 1e-6), s: SIGN, r1: range(1, 6, 0.5, 'm'), r2: range(0.5, 4, 0.5, 'm') },
+    derive: ($) => {
+      const V1 = (K * $.s * $.q) / $.r1;
+      const V2 = (K * $.s * $.q) / $.r2;
+      return { V1, V2, dV: V2 - V1 };
+    },
+    valid: ($) => $.r2 < $.r1 - 0.4,
+    text: (T) => `A sphere carrying a ${T.s} ${T.q} μC net charge sits at the origin. Find the potential difference between a point ${T.r1} m away and a point ${T.r2} m away — that is, V at the nearer point minus V at the farther one.`,
+    parts: [
+      num('dV', ($) => $.dV, 'V', { label: String.raw`$\Delta V$` }),
+    ],
+    hints: [String.raw`$V$ depends only on the distance, so work out $kq/r$ at each radius and subtract. The direction you subtract sets the sign.`],
+    steps: ($, f) => [
+      String.raw`$V(${texNum($.r2)}\,\text{m}) = ${texNum($.V2)}\ \text{V}$, $V(${texNum($.r1)}\,\text{m}) = ${texNum($.V1)}\ \text{V}$`,
+      String.raw`$\Delta V = ${texNum($.V2)} - (${texNum($.V1)}) = ${texNum($.dV)}\ \text{V}$`,
+    ],
+    sim: {
+      scenario: 'v-plus',
+      setup: potSetup(($) => [charge($.s * $.q, 0, 0)], ($) => ({ x: $.r2, y: 0 }), ($) => ({ x: $.r1, y: 0 })),
+      read: (c) => ({ dV: c.V - c.VA }),
+    },
+    cases: [
+      kase('#8', { q: 4, s: 1, r1: 4, r2: 2 }, { dV: 8987 }, { key: '+9000 V', note: 'The sheet phrases it "between x = 4.0 m and y = 2.0 m"; the key\'s sign means V(2 m) − V(4 m).' }),
+      kase('#9', { q: 4, s: -1, r1: 4, r2: 2 }, { dV: -8987 }, { key: '−9000 V' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.39.equipotential-map', ch: '39', src: 'Practice 39 #21–25', title: 'Reading an equipotential map', kind: 'numeric', level: 3, topics: ['potential', 'equipotential', 'work'],
+    vars: {
+      VA: range(-200, -40, 20, 'V'),
+      step: range(20, 80, 20, 'V'),
+      q: range(1, 8, 1, 'μC', 1e-6),
+    },
+    derive: ($) => {
+      // Six equally spaced equipotentials, A (lowest) through G (highest); H sits on G's surface.
+      const VG = $.VA + 6 * $.step;
+      const dV = $.VA - VG; // A relative to G
+      return { VG, dV, Wga: $.q * (VG - $.VA) * -1, WgaAbs: Math.abs($.q * dV), Wgh: 0, ve: Math.sqrt((2 * QE * Math.abs(3 * $.step)) / ME) };
+    },
+    text: (T) => `An equipotential map between two charged conductors is labelled A, B, … G, with A at ${T.VA} V and each successive surface ${T.step} V higher, so G is the highest. Point H lies on the same surface as G. (a) Find V_A − V_G. (b) Find the work needed to move a +${T.q} μC charge from G to A. (c) Find the work needed to move it from G to H.`,
+    parts: [
+      num('dV', ($) => $.dV, 'V', { label: String.raw`$V_A - V_G$` }),
+      num('Wga', ($) => $.Wga, 'J', { label: String.raw`$W_{G \to A}$` }),
+      num('Wgh', ($) => $.Wgh, 'J', { label: String.raw`$W_{G \to H}$`, abs: 1e-12 }),
+    ],
+    hints: [
+      String.raw`$W = q\,\Delta V$ with $\Delta V = V_{\text{final}} - V_{\text{initial}}$.`,
+      String.raw`H is on the same equipotential as G, so $\Delta V = 0$ — and the path between them does not matter.`,
+    ],
+    steps: ($, f) => [
+      String.raw`$V_A - V_G = ${texNum($.VA)} - ${texNum($.VG)} = ${texNum($.dV)}\ \text{V}$`,
+      String.raw`$W_{G\to A} = q(V_A - V_G) = ${texNum($.Wga)}\ \text{J}$`,
+      String.raw`$W_{G\to H} = q(V_H - V_G) = 0$ — H and G are on the same equipotential.`,
+    ],
+    cases: [kase('#21–23', { VA: -160, step: 20, q: 4 }, { dV: -120, Wga: -4.8e-4, Wgh: 0 }, { key: '21) −320 V  22) 1.28×10⁻³ J  23) 0 J', note: 'Values depend on the printed map; the structure (ΔV, W = qΔV, and W = 0 along an equipotential) is what this template drills.' })],
+  }),
+  problem({
+    ...E3, id: 'e3.39.equipotential-props', ch: '39', src: 'Practice 39 #18–20', title: 'What an equipotential surface is', kind: 'conceptual', topics: ['potential', 'equipotential'],
+    vars: {
+      ask: choice(
+        ['name', 'A surface on which every point is at the same potential is called'],
+        ['orient', 'An equipotential surface must be'],
+        ['spacing', 'The closer together the equipotential surfaces are drawn, the'],
+      ),
+    },
+    text: (T) => T.ask,
+    parts: [
+      mc('ans', [
+        ['equip', 'an equipotential surface'],
+        ['perp', 'perpendicular to the electric field at every point'],
+        ['bigger', 'larger the change in potential over a given distance, and the stronger the electric field'],
+        ['dielectric', 'a dielectric surface'],
+        ['parallel', 'parallel to the electric field at every point'],
+        ['smaller', 'smaller the change in potential over a given distance, and the weaker the electric field'],
+      ], ($) => ({ name: 'equip', orient: 'perp', spacing: 'bigger' })[$.ask]),
+    ],
+    hints: [String.raw`$\vec{E}$ points straight downhill in $V$, and the steepest descent is always perpendicular to a level surface.`],
+    steps: ($) => [
+      $.ask === 'orient'
+        ? String.raw`If $\vec{E}$ had a component along the surface, moving along it would change $V$ — and then it would not be an equipotential.`
+        : $.ask === 'spacing'
+          ? String.raw`$|\vec{E}| = \left|\dfrac{dV}{dx}\right|$: crowded surfaces mean a steep slope, which means a strong field. On a topographic map, closely spaced contours mean a steep hill.`
+          : String.raw`"Equipotential" literally means equal potential — every point on the surface is at the same $V$.`,
+    ],
+    cases: [
+      kase('#18', { ask: 'name' }, { ans: 'equip' }, { key: 'E)' }),
+      kase('#19', { ask: 'orient' }, { ans: 'perp' }, { key: 'B)' }),
+      kase('#20', { ask: 'spacing' }, { ans: 'bigger' }, { key: 'A)' }),
+    ],
+  }),
   // ================================================================= 40
   problem({
     ...E3, id: 'e3.40.parallel-plate', ch: '40', lab: 'capacitor', title: 'Parallel-plate capacitor', kind: 'numeric', topics: ['capacitance'],
@@ -506,6 +739,95 @@ export default [
     cases: [kase('battery, d×2, U', { act: 1, mode: 1, qty: 'U' }, { f: 0.5 }), kase('isolated, κ, V', { act: 4, mode: 2, qty: 'V' }, { f: 0.5 }), kase('isolated, d×2, E', { act: 1, mode: 2, qty: 'E' }, { f: 1 })],
   }),
 
+  problem({
+    ...E3, id: 'e3.40.basics', ch: '40', lab: 'capacitor', src: 'Practice 40 #4–8', title: 'C, Q, V and the field between the plates', kind: 'numeric', topics: ['capacitance'],
+    vars: {
+      ask: choice(['C', 'C from Q and V'], ['Q', 'Q from C and V'], ['V', 'V from the energy to move a charge'], ['Efield', 'E from V and d'], ['Esigma', 'E from the charge and the plate area']),
+      Q: range(1, 10, 0.5, 'μC', 1e-6),
+      V: range(20, 200, 10, 'V'),
+      C: range(0.5, 10, 0.5, 'μF', 1e-6),
+      d: range(1, 10, 1, 'cm', 0.01),
+      A: range(0.01, 0.2, 0.01, 'm²'),
+      qm: range(1, 10, 0.5, 'μC', 1e-6),
+      W: range(0.1, 1, 0.05, 'mJ', 1e-3),
+    },
+    derive: ($) => ({
+      Cval: $.Q / $.V,
+      Qval: $.C * $.V,
+      Vval: $.W / $.qm,
+      Ed: $.V / $.d,
+      Esig: $.Q / (EPS0 * $.A),
+    }),
+    text: (T, $) => ({
+      C: `When each plate of an air-filled capacitor carries ${T.Q} μC, the potential difference between the plates is ${T.V} V. What is its capacitance?`,
+      Q: `What charge appears on the plates of a ${T.C} μF capacitor charged to ${T.V} V?`,
+      V: `Moving a ${T.qm} μC positive charge from the negative plate to the positive plate of a capacitor takes ${T.W} mJ. What is the potential difference between the plates?`,
+      Efield: `The plates of a parallel-plate capacitor are ${T.d} cm apart with ${T.V} V between them. What is the electric field between the plates?`,
+      Esigma: `A parallel-plate capacitor with air between the plates has a plate area of ${T.A} m² and ${T.Q} μC on each plate. What is the electric field between the plates? (ε₀ = 8.85 × 10⁻¹² C²/N·m²)`,
+    })[$.ask],
+    parts: [
+      num('ans', ($) => ({ C: $.Cval, Q: $.Qval, V: $.Vval, Efield: $.Ed, Esigma: $.Esig })[$.ask],
+        '', { label: 'Answer (SI units)' }),
+    ],
+    hints: [
+      String.raw`$C = \dfrac{Q}{V}$ — capacitance is set by geometry, not by how much charge you put on.`,
+      String.raw`Between parallel plates the field is uniform: $E = \dfrac{V}{d} = \dfrac{\sigma}{\varepsilon_0} = \dfrac{Q}{\varepsilon_0 A}$.`,
+    ],
+    steps: ($, f) => [
+      ({
+        C: String.raw`$C = \dfrac{Q}{V} = ${texNum($.Cval)}\ \text{F}$`,
+        Q: String.raw`$Q = CV = ${texNum($.Qval)}\ \text{C}$`,
+        V: String.raw`$\Delta V = \dfrac{W}{q} = ${texNum($.Vval)}\ \text{V}$`,
+        Efield: String.raw`$E = \dfrac{V}{d} = ${texNum($.Ed)}\ \text{V/m}$`,
+        Esigma: String.raw`$E = \dfrac{Q}{\varepsilon_0 A} = ${texNum($.Esig)}\ \text{V/m}$`,
+      })[$.ask],
+    ],
+    cases: [
+      kase('#4', { ask: 'C', Q: 4, V: 80, C: 2, d: 6, A: 0.04, qm: 5, W: 0.3 }, { ans: 5e-8 }, { key: '5 × 10⁻⁸ F' }),
+      kase('#5', { ask: 'Q', Q: 4, V: 100, C: 2, d: 6, A: 0.04, qm: 5, W: 0.3 }, { ans: 2e-4 }, { key: '2 × 10⁻⁴ C' }),
+      kase('#6', { ask: 'V', Q: 4, V: 80, C: 2, d: 6, A: 0.04, qm: 5, W: 0.3 }, { ans: 60 }, { key: '60 V' }),
+      kase('#7', { ask: 'Efield', Q: 4, V: 60, C: 2, d: 6, A: 0.04, qm: 5, W: 0.3 }, { ans: 1000 }, { key: '1,000 V/m' }),
+      kase('#8', { ask: 'Esigma', Q: 2e-3, V: 80, C: 2, d: 6, A: 0.04, qm: 5, W: 0.3 }, { ans: 5650 }, { key: '5650 V/m', note: 'Sheet states the charge as 2 nC; 5650 V/m follows from 2 nC only if ε₀A is read as 8.85e-12 × 0.04 — the printed value matches σ/ε₀ with Q = 2 nC to within rounding.' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.40.increase-C', ch: '40', src: 'Practice 40 #1–3', title: 'What changes the capacitance?', kind: 'conceptual', topics: ['capacitance', 'dielectrics'],
+    vars: {
+      ask: choice(
+        ['increase', 'Which of these increases the capacitance of a parallel-plate capacitor?'],
+        ['kappa', 'Inserting a dielectric raises a capacitor’s capacitance by a factor of 4. What is the dielectric constant of the material?'],
+        ['direction', 'Between two oppositely charged parallel plates, which way does the electric field point?'],
+      ),
+      factor: range(2, 8, 1, ''),
+    },
+    derive: ($) => ({ k: $.factor }),
+    text: (T, $) => ($.ask === 'kappa'
+      ? `Inserting a dielectric raises a capacitor's capacitance by a factor of ${T.factor}. What is the dielectric constant of the material?`
+      : T.ask),
+    parts: [
+      mc('ans', [
+        ['dielectric', 'Introducing a dielectric between the plates'],
+        ['charge', 'Putting more charge on the plates'],
+        ['voltage', 'Raising the potential between the plates'],
+        ['equal', 'It equals the factor the capacitance went up by'],
+        ['inverse', 'It is the reciprocal of that factor'],
+        ['toneg', 'From the positive plate toward the negative plate'],
+        ['topos', 'From the negative plate toward the positive plate'],
+      ], ($) => ({ increase: 'dielectric', kappa: 'equal', direction: 'toneg' })[$.ask]),
+    ],
+    hints: [String.raw`$C = \dfrac{\kappa\varepsilon_0 A}{d}$ — only the geometry and the filling appear. $Q$ and $V$ do not.`],
+    steps: ($, f) => [
+      $.ask === 'increase'
+        ? String.raw`Adding charge raises $Q$ and $V$ together, leaving $C = Q/V$ alone. A dielectric changes the capacitor itself, by $\kappa$.`
+        : $.ask === 'kappa'
+          ? String.raw`$C_{\text{new}} = \kappa C$, so a factor of ${f($.k)} means $\kappa = ${f($.k)}$.`
+          : String.raw`$\vec{E}$ points away from positive charge and toward negative, so between the plates it runs from the positive plate to the negative one.`,
+    ],
+    cases: [
+      kase('#2', { ask: 'increase', factor: 4 }, { ans: 'dielectric' }, { key: 'C)' }),
+      kase('#3', { ask: 'kappa', factor: 4 }, { ans: 'equal' }, { key: 'C) 4' }),
+    ],
+  }),
   // ================================================================= 41
   problem({
     ...E3, id: 'e3.41.wire-R', ch: '41', lab: 'ohm', title: 'Resistance of a wire', kind: 'numeric', topics: ['resistance', 'ohms-law'],
@@ -627,6 +949,80 @@ export default [
       String.raw`A bulb is the sharpest case: cold, its filament resistance is low and the current surges; a moment later it is hot, $R$ has risen and the current settles.`,
     ],
     cases: [kase('diode', { device: 'diode' }, { ans: 0 }), kase('copper', { device: 'copper' }, { ans: 1 })],
+  }),
+  problem({
+    ...E3, id: 'e3.41.ohm-basics', ch: '41', lab: 'ohm', src: 'Practice 41 #3, 5–8', title: 'Ohm’s law, four ways', kind: 'numeric', topics: ['current', 'resistance', 'ohms-law'],
+    vars: {
+      ask: choice(['I-from-Q', 'current from charge and time'], ['V', 'voltage across a resistor'], ['I', 'current through a resistor'], ['R', 'resistance from V and I']),
+      Q: range(0.1, 2, 0.01, 'C'),
+      t: range(0.1, 2, 0.05, 's'),
+      Ir: range(0.5, 8, 0.5, 'A'),
+      Rr: range(5, 4000, 5, 'Ω'),
+      Vs: range(10, 240, 10, 'V'),
+    },
+    derive: ($) => ({ Iq: $.Q / $.t, Vr: $.Ir * $.Rr, Ir2: $.Vs / $.Rr, Rv: $.Vs / $.Ir }),
+    text: (T, $) => ({
+      'I-from-Q': `What current flows in a wire if ${T.Q} C of charge passes a point in ${T.t} s?`,
+      V: `${T.Ir} A flows through a ${T.Rr} Ω resistor. What is the potential difference across it?`,
+      I: `A ${T.Rr} Ω resistor is connected across a ${T.Vs} V source. What current flows through it?`,
+      R: `A ${T.Vs} V battery drives ${T.Ir} A through a light bulb. What is the bulb's resistance?`,
+    })[$.ask],
+    parts: [num('ans', ($) => ({ 'I-from-Q': $.Iq, V: $.Vr, I: $.Ir2, R: $.Rv })[$.ask], '', { label: 'Answer (SI units)' })],
+    hints: [String.raw`$I = \dfrac{\Delta Q}{\Delta t}$ defines current; $V = IR$ relates the three circuit quantities.`],
+    steps: ($, f) => [
+      ({
+        'I-from-Q': String.raw`$I = \dfrac{Q}{t} = ${texNum($.Iq)}\ \text{A}$`,
+        V: String.raw`$V = IR = ${texNum($.Vr)}\ \text{V}$`,
+        I: String.raw`$I = \dfrac{V}{R} = ${texNum($.Ir2)}\ \text{A}$`,
+        R: String.raw`$R = \dfrac{V}{I} = ${texNum($.Rv)}\ \Omega$`,
+      })[$.ask],
+    ],
+    cases: [
+      kase('#3', { ask: 'I-from-Q', Q: 0.67, t: 0.3, Ir: 5, Rr: 10, Vs: 12 }, { ans: 2.2333 }, { key: '2.23 A' }),
+      kase('#5', { ask: 'V', Q: 1, t: 1, Ir: 5, Rr: 10, Vs: 12 }, { ans: 50 }, { key: '50 V' }),
+      kase('#6', { ask: 'I', Q: 1, t: 1, Ir: 5, Rr: 4000, Vs: 220 }, { ans: 0.055 }, { key: '0.055 A' }),
+      kase('#7', { ask: 'R', Q: 1, t: 1, Ir: 2, Rr: 10, Vs: 12 }, { ans: 6 }, { key: '6 Ω' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.41.geometry-concepts', ch: '41', src: 'Practice 41 #9–10, 13, 17', title: 'How geometry and temperature change R', kind: 'conceptual', topics: ['resistance', 'proportional-reasoning'],
+    vars: {
+      ask: choice(
+        ['half-radius', 'The radius of a round wire is halved, with its length unchanged. What happens to its resistance?'],
+        ['thicker', 'Two copper wires have the same length but different thickness. The thicker one has'],
+        ['heat', 'A copper wire is heated. Its electrical resistance'],
+        ['nonohmic', 'If a material is non-ohmic, what do we know about its resistance?'],
+      ),
+    },
+    text: (T) => T.ask,
+    parts: [
+      mc('ans', [
+        ['x4', 'It increases by a factor of 4'],
+        ['x2', 'It increases by a factor of 2'],
+        ['less', 'less resistance'],
+        ['more', 'more resistance'],
+        ['up', 'increases'],
+        ['down', 'decreases'],
+        ['notconst', 'It does not stay constant as the voltage changes'],
+        ['const', 'It stays constant as the voltage changes'],
+      ], ($) => ({ 'half-radius': 'x4', thicker: 'less', heat: 'up', nonohmic: 'notconst' })[$.ask]),
+    ],
+    hints: [String.raw`$R = \dfrac{\rho L}{A}$ with $A = \pi r^2$ — so $R$ goes as $1/r^2$, not $1/r$.`],
+    steps: ($) => [
+      $.ask === 'half-radius'
+        ? String.raw`Halving $r$ quarters the area, and $R \propto 1/A$, so $R$ goes up by 4. This is the one people miss by forgetting the square.`
+        : $.ask === 'thicker'
+          ? String.raw`More cross-section is more room for the current: bigger $A$, smaller $R$.`
+          : $.ask === 'heat'
+            ? String.raw`In a metal, heating makes the lattice vibrate harder and scatter electrons more, so $\rho$ and $R$ rise.`
+            : String.raw`Non-ohmic means the $I$ vs $V$ graph is not a straight line, so the ratio $V/I$ — the resistance — changes as you move along it.`,
+    ],
+    cases: [
+      kase('#9', { ask: 'half-radius' }, { ans: 'x4' }, { key: 'D) increased by a factor of 4' }),
+      kase('#10', { ask: 'thicker' }, { ans: 'less' }, { key: 'B) less resistance' }),
+      kase('#13', { ask: 'heat' }, { ans: 'up' }, { key: 'C) increases' }),
+      kase('#17', { ask: 'nonohmic' }, { ans: 'notconst' }, { key: 'B)' }),
+    ],
   }),
   // ================================================================= 42
   problem({
@@ -825,6 +1221,109 @@ export default [
       kase('120 V, wet', { V: 120, skin: 'wet' }, { I: 80, band: 'felt' }),
       kase('120 V, dry', { V: 120, skin: 'dry' }, { I: 1.2, band: 'felt' }),
       kase('240 V, wet', { V: 240, skin: 'wet' }, { I: 160, band: 'fatal' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.42.power-basics', ch: '42', lab: 'power', src: 'Practice 42 #1–4', title: 'Power, four ways', kind: 'numeric', topics: ['power'],
+    vars: {
+      ask: choice(['P', 'P from V and R'], ['R', 'R from P and V'], ['I', 'I from P and V'], ['both', 'R and I from P and V']),
+      V: range(12, 240, 6, 'V'),
+      R: range(10, 400, 10, 'Ω'),
+      P: range(25, 200, 5, 'W'),
+    },
+    // The current the scenario actually carries — from V and R when those are the givens,
+    // otherwise from P and V — so the second part means something in every branch.
+    derive: ($) => ({ Pv: $.V ** 2 / $.R, Rp: $.V ** 2 / $.P, Ip: $.ask === 'P' ? $.V / $.R : $.P / $.V }),
+    text: (T, $) => ({
+      P: `A light bulb running at ${T.V} V dc has a resistance of ${T.R} Ω. How much power does it dissipate?`,
+      R: `A ${T.P} W light runs on a ${T.V} V supply. What is its resistance?`,
+      I: `A ${T.P} W heater is connected to a ${T.V} V source. What current flows through it?`,
+      both: `A ${T.P} W motor runs from a ${T.V} V supply. Find its resistance and the current it draws.`,
+    })[$.ask],
+    parts: [
+      num('ans', ($) => ({ P: $.Pv, R: $.Rp, I: $.Ip, both: $.Rp })[$.ask], '', { label: 'Answer (SI units)' }),
+      num('I2', ($) => $.Ip, 'A', { label: 'Current drawn' }),
+    ],
+    hints: [String.raw`$P = IV = I^2R = \dfrac{V^2}{R}$ — pick the form that uses what you were given.`],
+    steps: ($, f) => [
+      ({
+        P: String.raw`$P = \dfrac{V^2}{R} = ${texNum($.Pv)}\ \text{W}$`,
+        R: String.raw`$R = \dfrac{V^2}{P} = ${texNum($.Rp)}\ \Omega$`,
+        I: String.raw`$I = \dfrac{P}{V} = ${texNum($.Ip)}\ \text{A}$`,
+        both: String.raw`$R = \dfrac{V^2}{P} = ${texNum($.Rp)}\ \Omega$ and $I = \dfrac{P}{V} = ${texNum($.Ip)}\ \text{A}$`,
+      })[$.ask],
+    ],
+    cases: [
+      kase('#1', { ask: 'P', V: 120, R: 200, P: 100 }, { ans: 72, I2: 0.6 }, { key: '72 W' }),
+      kase('#2', { ask: 'R', V: 12, R: 100, P: 150 }, { ans: 0.96, I2: 12.5 }, { key: '0.96 Ω' }),
+      kase('#3', { ask: 'I', V: 110, R: 100, P: 100 }, { ans: 0.909, I2: 0.909 }, { key: '0.91 A' }),
+      kase('#4', { ask: 'both', V: 12, R: 100, P: 100 }, { ans: 1.44, I2: 8.333 }, { key: 'A) 1.44 Ω  B) 8.33 A' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.42.ac-from-equation', ch: '42', src: 'Practice 42 #11–13', title: 'Reading an ac current equation', kind: 'numeric', level: 2, topics: ['power', 'rms', 'ac'],
+    vars: { Ip: range(0.2, 3, 0.1, 'A'), w: range(120, 400, 1, 'rad/s'), R: range(10, 200, 10, 'Ω') },
+    derive: ($) => ({ Irms: $.Ip / Math.SQRT2, f: $.w / (2 * Math.PI), P: ($.Ip / Math.SQRT2) ** 2 * $.R }),
+    text: (T) => `The current through a ${T.R} Ω resistor is I = (${T.Ip} A) sin[(${T.w}/s)t], with t in seconds. Find the rms current, the frequency, and the average power dissipated.`,
+    parts: [
+      num('Irms', ($) => $.Irms, 'A', { label: String.raw`$I_{\text{rms}}$` }),
+      num('f', ($) => $.f, 'Hz', { label: 'f' }),
+      num('P', ($) => $.P, 'W', { label: String.raw`$P_{\text{avg}}$` }),
+    ],
+    hints: [
+      String.raw`The number in front of the sine is the *peak*, so $I_{\text{rms}} = I_p/\sqrt{2}$.`,
+      String.raw`The number multiplying $t$ is $\omega$, not $f$: $f = \omega/2\pi$.`,
+      String.raw`Average power uses rms values: $P = I_{\text{rms}}^2 R$.`,
+    ],
+    steps: ($, f) => [
+      String.raw`$I_{\text{rms}} = \dfrac{I_p}{\sqrt{2}} = ${texNum($.Irms)}\ \text{A}$`,
+      String.raw`$f = \dfrac{\omega}{2\pi} = ${texNum($.f)}\ \text{Hz}$`,
+      String.raw`$P_{\text{avg}} = I_{\text{rms}}^2R = ${texNum($.P)}\ \text{W}$`,
+    ],
+    cases: [kase('#11, #13', { Ip: 0.8, w: 240, R: 50 }, { Irms: 0.5657, f: 38.2, P: 16 }, { key: '0.57 A; 38.2 Hz' })],
+  }),
+  problem({
+    ...E3, id: 'e3.42.concepts', ch: '42', src: 'Practice 42 #5–6, 14–15', title: 'Power in series, and power transmission', kind: 'conceptual', level: 2, topics: ['power', 'circuits'],
+    vars: {
+      ask: choice(
+        ['series', 'A battery drives two resistors in series, one 5 Ω and one 10 Ω. In which is energy dissipated at the higher rate?'],
+        ['brighter', 'A 100 W lamp glows brighter than a 25 W lamp on the same supply. The 100 W lamp’s resistance is'],
+        ['transmission', 'What is the most efficient way to transmit electrical energy over power lines?'],
+        ['harm', 'Which electrical property of a source is most dangerous to the human body?'],
+      ),
+    },
+    text: (T) => T.ask,
+    parts: [
+      mc('ans', [
+        ['bigR', 'In the larger resistance'],
+        ['smallR', 'In the smaller resistance'],
+        ['same', 'At the same rate in both'],
+        ['less', 'less'],
+        ['greater', 'greater'],
+        ['highV', 'High voltage'],
+        ['highI', 'High current'],
+        ['current', 'The current'],
+        ['voltage', 'The voltage'],
+      ], ($) => ({ series: 'bigR', brighter: 'less', transmission: 'highV', harm: 'current' })[$.ask]),
+    ],
+    hints: [
+      String.raw`In series the current is shared, so use the form of the power law that holds $I$ fixed: $P = I^2R$.`,
+      String.raw`On a fixed supply voltage the bulbs share $V$, so use $P = V^2/R$ instead — the bigger power belongs to the smaller resistance.`,
+    ],
+    steps: ($) => [
+      $.ask === 'series'
+        ? String.raw`Same $I$ through both, and $P = I^2R$, so the larger resistance dissipates more. (Reaching for $P = V^2/R$ here gives the wrong answer, because the two resistors do not share the same $V$.)`
+        : $.ask === 'brighter'
+          ? String.raw`Both sit across the same $V$, so $P = V^2/R$: more power means *less* resistance. This is the mirror image of the series case — which formula is right depends on what is shared.`
+          : $.ask === 'transmission'
+            ? String.raw`Line loss is $I^2R$. For a given delivered power $P = IV$, raising $V$ lowers $I$, and the loss falls as the square.`
+            : String.raw`Voltage drives it, but current through the body does the damage — a few mA is felt, and over about 100 mA can be fatal.`,
+    ],
+    cases: [
+      kase('#5', { ask: 'series' }, { ans: 'bigR' }, { key: 'A) the 10 Ω resistor' }),
+      kase('#6', { ask: 'brighter' }, { ans: 'less' }, { key: 'A) less' }),
+      kase('#14', { ask: 'transmission' }, { ans: 'highV' }, { key: 'B) High voltage' }),
+      kase('#15', { ask: 'harm' }, { ans: 'current' }, { key: 'B) Current' }),
     ],
   }),
 ];
