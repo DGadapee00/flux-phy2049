@@ -164,12 +164,24 @@ export const SCENARIOS = {
     {
       id: 'rod',
       name: 'Finite line, P on bisector',
-      integral: { kind: 'rod', L: 0.8, lambda: 2e-6, d: 0.35, n: 20, Q: 2e-6, a: 0.3, y: 0.4 },
+      integral: { kind: 'rod', L: 0.8, lambda: 2e-6, d: 0.35, n: 20, x0: 0, Q: 2e-6, a: 0.3, y: 0.4 },
+    },
+    {
+      // The symmetry case is the one every textbook does; this is the one that shows what the
+      // symmetry was buying. Nothing cancels, so E_x survives and E points away from the rod.
+      id: 'rod-end',
+      name: 'Finite line, P above one end',
+      integral: { kind: 'rod', L: 0.8, lambda: 2e-6, d: 0.35, n: 20, x0: 0.4, Q: 2e-6, a: 0.3, y: 0.4 },
+    },
+    {
+      id: 'rod-off',
+      name: 'Finite line, P off the end',
+      integral: { kind: 'rod', L: 0.8, lambda: 2e-6, d: 0.35, n: 20, x0: 0.75, Q: 2e-6, a: 0.3, y: 0.4 },
     },
     {
       id: 'ring',
       name: 'Ring, P on axis',
-      integral: { kind: 'ring', L: 0.8, lambda: 2e-6, d: 0.35, n: 24, Q: 2.5e-6, a: 0.32, y: 0.38 },
+      integral: { kind: 'ring', L: 0.8, lambda: 2e-6, d: 0.35, n: 24, x0: 0, Q: 2.5e-6, a: 0.32, y: 0.38 },
     },
   ],
   force: [

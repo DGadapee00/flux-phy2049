@@ -76,15 +76,19 @@ export class DistributionView {
       this.body = torus;
     } else {
       data = wantV
-        ? linePerpPotentialNumerical(integral.lambda, integral.L, integral.d, n)
-        : linePerpNumerical(integral.lambda, integral.L, integral.d, n);
+        ? linePerpPotentialNumerical(integral.lambda, integral.L, integral.d, n, integral.x0 || 0)
+        : linePerpNumerical(integral.lambda, integral.L, integral.d, n, integral.x0 || 0);
       const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03 * u, 0.03 * u, integral.L * u, 20), bodyMat());
       rod.rotation.z = Math.PI / 2;
       this.group.add(rod);
       this.body = rod;
     }
 
-    const P = { x: 0, y: integral.kind === 'ring' ? integral.y : integral.d, z: 0 };
+    const P = {
+      x: integral.kind === 'ring' ? 0 : integral.x0 || 0,
+      y: integral.kind === 'ring' ? integral.y : integral.d,
+      z: 0,
+    };
     const probe = new THREE.Mesh(
       new THREE.SphereGeometry(0.09, 20, 14),
       new THREE.MeshBasicMaterial({ color: M.white, toneMapped: false }),

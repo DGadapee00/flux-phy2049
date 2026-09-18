@@ -182,6 +182,39 @@ console.log('Gauss lab self-test');
   approx(num.E.x, 0, 0.05 * Math.abs(closed.E.y), 'rod perpendicular: E_x ≈ 0');
 }
 
+// P slid along the rod: the closed form has to track the Riemann sum everywhere, not just where
+// the symmetry hides E_x. Ends, past the ends, and both signs.
+{
+  const lambda = 2e-6;
+  const L = 0.8;
+  const d = 0.35;
+  for (const x0 of [0, 0.2, 0.4, 0.75, -0.4, -0.9]) {
+    const closed = linePerpField(lambda, L, d, x0);
+    const num = linePerpNumerical(lambda, L, d, 4000, x0);
+    const scale = Math.max(Math.abs(closed.E.y), Math.abs(closed.E.x));
+    approx(num.E.y, closed.E.y, 0.004, `rod x0=${x0}: E_y closed vs sum`);
+    approx(num.E.x, closed.E.x, 0.004 * scale, `rod x0=${x0}: E_x closed vs sum`);
+
+    const V = linePerpPotential(lambda, L, d, x0);
+    const Vn = linePerpPotentialNumerical(lambda, L, d, 4000, x0);
+    approx(Vn.V, V.V, 0.004, `rod x0=${x0}: V closed vs sum`);
+  }
+
+  // The bisector is the only place E_x vanishes, and x0 -> -x0 mirrors it.
+  ok(Math.abs(linePerpField(lambda, L, d, 0).E.x) < 1e-9, 'rod: E_x = 0 only on the bisector');
+  ok(Math.abs(linePerpField(lambda, L, d, 0.4).E.x) > 0.2 * Math.abs(linePerpField(lambda, L, d, 0.4).E.y),
+    'rod above the end: E_x is a real fraction of E_y');
+  approx(linePerpField(lambda, L, d, -0.4).E.x, -linePerpField(lambda, L, d, 0.4).E.x, 1e-9, 'rod: E_x is odd in x0');
+  approx(linePerpField(lambda, L, d, -0.4).E.y, linePerpField(lambda, L, d, 0.4).E.y, 1e-9, 'rod: E_y is even in x0');
+
+  // Far off the end the rod looks like a point charge at its centre.
+  const far = 40;
+  const pt = linePerpField(lambda, L, 1e-6, far);
+  const Qtot = lambda * L;
+  approx(Math.hypot(pt.E.x, pt.E.y), (K * Qtot) / (far * far), 0.001 * (K * Qtot) / (far * far),
+    'rod from far off the end -> kQ/r^2');
+}
+
 {
   const Qr = 3e-6;
   const a = 0.3;

@@ -283,12 +283,28 @@ export function coachField(charges, computed) {
 export function coachIntegral(state) {
   const kind = state.integral.kind;
   if (kind === 'rod') {
+    const x0 = state.integral.x0 || 0;
+    const half = state.integral.L / 2;
+    if (Math.abs(x0) < 1e-9) {
+      return {
+        title: 'Line charge — perpendicular bisector',
+        body: [
+          String.raw`Each slice carries $dq = \lambda\,dx$ and sends $d\vec{E} = k\,dq/r^2\,\hat{r}$ toward $P$. The $x$-components cancel in pairs and the $y$-components add, which leaves`,
+          eq(String.raw`E_y = k\lambda d\int \frac{dx}{(x^2+d^2)^{3/2}}`),
+          String.raw`That integral is this picture. Play the sum and watch $E_x$ die while $E_y$ builds. Slide $x_0$ off the bisector to see what the symmetry was buying you.`,
+        ],
+        canFindE: true,
+      };
+    }
+    const beyond = Math.abs(x0) > half + 5e-3;
     return {
-      title: 'Line charge — perpendicular bisector',
+      title: beyond ? 'Line charge — P off the end' : 'Line charge — P above the end',
       body: [
-        String.raw`Each slice carries $dq = \lambda\,dx$ and sends $d\vec{E} = k\,dq/r^2\,\hat{r}$ toward $P$. The $x$-components cancel in pairs and the $y$-components add, which leaves`,
-        eq(String.raw`E_y = k\lambda d\int \frac{dx}{(x^2+d^2)^{3/2}}`),
-        String.raw`That integral is this picture. Play the sum and watch $E_x$ die while $E_y$ builds.`,
+        String.raw`$P$ is no longer on the bisector, so the pairing argument is gone: for every slice on one side there is no matching slice on the other. $E_x$ does not cancel, and $\vec{E}$ tilts away from the near end.`,
+        eq(String.raw`E_y = \frac{k\lambda}{d}\left(\sin\theta_1 + \sin\theta_2\right), \qquad E_x = k\lambda\left(\frac{1}{r_2} - \frac{1}{r_1}\right)`),
+        beyond
+          ? String.raw`Both ends now lie to one side of $P$, so $\theta_1$ and $\theta_2$ have the same sign and the two terms in $E_y$ partly cancel instead of adding.`
+          : String.raw`Directly above an end, one angle has run out to zero: half the rod is doing all the work. Play the sum and watch $E_x$ build instead of dying.`,
       ],
       canFindE: true,
     };

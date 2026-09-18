@@ -12,6 +12,11 @@ import { fmtE, fmtV, fmtCharge, fmtLen } from '../ui/format.js';
 import { kv, cells, matchClass } from '../ui/shared.js';
 import { sceneScale, defaultView } from '../engine/frame.js';
 
+/** P sits on the perpendicular bisector — the only place the x-components cancel in pairs. */
+const onBisector = (state) => state.integral.kind === 'rod' && Math.abs(state.integral.x0 || 0) < 1e-9;
+
+const deg = (rad) => ((rad * 180) / Math.PI).toFixed(1);
+
 function fmtFrom(mag) {
   const a = Math.abs(mag);
   if (a >= 1e3) return `${(mag / 1e3).toFixed(2)} kN/C`;
@@ -29,12 +34,15 @@ export default defineLab({
   scenarios: SCENARIOS.integral,
   // A problem can hand this lab a 3 m rod; the view scales to it instead of drawing off screen.
   frame: true,
-  extent: (s) => (s.integral.kind === 'rod' ? Math.max(s.integral.L / 2, s.integral.d) : Math.max(s.integral.a, s.integral.y)),
+  extent: (s) =>
+    s.integral.kind === 'rod'
+      ? Math.max(s.integral.L / 2, s.integral.d, Math.abs(s.integral.x0 || 0))
+      : Math.max(s.integral.a, s.integral.y),
   defaultState() {
     return {
       scenarioId: 'rod',
       view: defaultView(),
-      integral: { kind: 'rod', L: 0.8, lambda: 2e-6, d: 0.35, n: 20, Q: 2.5e-6, a: 0.32, y: 0.38, quantity: 'E' },
+      integral: { kind: 'rod', L: 0.8, lambda: 2e-6, d: 0.35, n: 20, x0: 0, Q: 2.5e-6, a: 0.32, y: 0.38, quantity: 'E' },
       charges: [],
       extraE: { x: 0, y: 0, z: 0 },
       show: { flux: false, E: false, nHat: false, lines: false, forces: false },
@@ -69,6 +77,13 @@ export default defineLab({
               <div class="slider-row">
                 <input type="range" id="int-d" min="0.12" max="0.9" step="0.01" value="0.35" />
                 <span class="mono val" id="int-d-val">0.35 m</span>
+              </div>
+            </label>
+            <label class="field">
+              <span>P along the rod x₀</span>
+              <div class="slider-row">
+                <input type="range" id="int-x0" min="-1" max="1" step="0.01" value="0" />
+                <span class="mono val" id="int-x0-val">0.00 m</span>
               </div>
             </label>
           </div>
@@ -135,6 +150,10 @@ export default defineLab({
       api.slice().integral.d = Number(e.target.value);
       api.bump();
     });
+    $('int-x0').addEventListener('input', (e) => {
+      api.slice().integral.x0 = Number(e.target.value);
+      api.bump();
+    });
     $('int-a').addEventListener('input', (e) => {
       api.slice().integral.a = Number(e.target.value);
       api.bump();
@@ -173,6 +192,19 @@ export default defineLab({
     $('int-lambda-val').textContent = `${state.integral.lambda >= 0 ? '+' : ''}${(state.integral.lambda * 1e6).toFixed(2)} μC/m`;
     $('int-d').value = state.integral.d;
     $('int-d-val').textContent = `${state.integral.d.toFixed(2)} m`;
+    const x0 = state.integral.x0 || 0;
+    const half = state.integral.L / 2;
+    $('int-x0').value = x0;
+    // Naming where P is matters more than the number: the whole point is which case you are in.
+    const where =
+      Math.abs(x0) < 1e-9
+        ? 'bisector'
+        : Math.abs(Math.abs(x0) - half) < 5e-3
+          ? 'above the end'
+          : Math.abs(x0) > half
+            ? 'off the end'
+            : 'over the rod';
+    $('int-x0-val').textContent = `${x0 >= 0 ? '+' : ''}${x0.toFixed(2)} m · ${where}`;
     $('int-a').value = state.integral.a;
     $('int-a-val').textContent = `${state.integral.a.toFixed(2)} m`;
     $('int-Q').value = state.integral.Q * 1e6;
@@ -192,15 +224,20 @@ export default defineLab({
     const nShow = state.anim.playing ? state.anim.i : state.integral.n + 1;
     const data = distView.rebuild(state.integral, nShow);
     const wantV = (state.integral.quantity || 'E') === 'V';
+    const x0 = state.integral.x0 || 0;
     const analytic = wantV
       ? state.integral.kind === 'rod'
-        ? linePerpPotential(state.integral.lambda, state.integral.L, state.integral.d)
+        ? linePerpPotential(state.integral.lambda, state.integral.L, state.integral.d, x0)
         : ringAxisPotential(state.integral.Q, state.integral.a, state.integral.y)
       : state.integral.kind === 'rod'
-        ? linePerpField(state.integral.lambda, state.integral.L, state.integral.d)
+        ? linePerpField(state.integral.lambda, state.integral.L, state.integral.d, x0)
         : ringAxisField(state.integral.Q, state.integral.a, state.integral.y);
     computed.integral = { pieces: data.pieces, partial: distView.partial, analytic };
-    const P = { x: 0, y: state.integral.kind === 'ring' ? state.integral.y : state.integral.d, z: 0 };
+    const P = {
+      x: state.integral.kind === 'ring' ? 0 : x0,
+      y: state.integral.kind === 'ring' ? state.integral.y : state.integral.d,
+      z: 0,
+    };
     distView.labelEl.textContent = wantV
       ? `V = ${fmtV(distView.partial.V)}  vs  ${fmtV(analytic.V)}`
       : `|E| = ${fmtFrom(computed.integral.partial.mag)}  vs  ${fmtFrom(analytic.mag)}`;
@@ -232,12 +269,20 @@ export default defineLab({
           ]
         : [String.raw`V = \dfrac{kQ}{\sqrt{a^2+y^2}} = \dfrac{k\lambda\,2\pi a}{\sqrt{a^2+y^2}}`];
     }
-    return kind === 'rod'
+    if (kind !== 'rod') {
+      return [String.raw`d\vec{E} = \dfrac{k\,dq}{r^2}\,\hat{r}`, String.raw`E_y = \dfrac{kQy}{(y^2+a^2)^{3/2}}`];
+    }
+    // Off the bisector nothing cancels, so E_x has to be carried through with E_y.
+    return onBisector(state)
       ? [
           String.raw`d\vec{E} = \dfrac{k\,dq}{r^2}\,\hat{r}, \quad dq = \lambda\,dx`,
-          String.raw`E_y = \dfrac{k\lambda}{d}\left(\sin\theta_1 + \sin\theta_2\right)`,
+          String.raw`E_y = \dfrac{k\lambda}{d}\left(\sin\theta_1 + \sin\theta_2\right), \quad E_x = 0`,
         ]
-      : [String.raw`d\vec{E} = \dfrac{k\,dq}{r^2}\,\hat{r}`, String.raw`E_y = \dfrac{kQy}{(y^2+a^2)^{3/2}}`];
+      : [
+          String.raw`d\vec{E} = \dfrac{k\,dq}{r^2}\,\hat{r}, \quad dq = \lambda\,dx`,
+          String.raw`E_y = \dfrac{k\lambda}{d}\left(\sin\theta_1 + \sin\theta_2\right)`,
+          String.raw`E_x = k\lambda\left(\dfrac{1}{r_2} - \dfrac{1}{r_1}\right) \ne 0`,
+        ];
   },
   liveRows(state, computed) {
     const I = computed.integral;
@@ -263,14 +308,20 @@ export default defineLab({
       kv(String.raw`Running $|\vec{E}|$`, fmtE(p.mag)),
       kv(String.raw`Analytic $|\vec{E}|$`, fmtE(a.mag)),
       kv('Match', `<span class="${matchClass(pct)}">${pct.toFixed(1)}%</span>`),
-      kind === 'rod'
-        ? kv(String.raw`$\theta$`, String.raw`${((I.analytic.theta * 180) / Math.PI).toFixed(1)}°  ·  $r_{\text{end}}$ = ${fmtLen(I.analytic.rEnd)}`)
-        : kv(String.raw`$r$ to the ring`, fmtLen(I.analytic.r)),
+      kind !== 'rod'
+        ? kv(String.raw`$r$ to the ring`, fmtLen(I.analytic.r))
+        : onBisector(state)
+          ? kv(String.raw`$\theta$`, String.raw`${deg(a.theta)}°  ·  $r_{\text{end}}$ = ${fmtLen(a.rEnd)}`)
+          : kv(
+              String.raw`$\theta_1,\ \theta_2$`,
+              String.raw`${deg(a.theta1)}°, ${deg(a.theta2)}°  ·  $r_1$ = ${fmtLen(a.r1)}, $r_2$ = ${fmtLen(a.r2)}`,
+            ),
     ].join('');
   },
   readout(state, computed) {
     const I = computed.integral;
     if (!I) return '';
+    const kind = state.integral.kind;
     const p = I.partial;
     const a = I.analytic;
     const wantV = (state.integral.quantity || 'E') === 'V';
@@ -286,10 +337,14 @@ export default defineLab({
     }
     const rel = Math.abs(p.mag - a.mag) / Math.max(a.mag, 1);
     const pct = Math.max(0, (1 - rel) * 100);
+    // "should → 0" is a claim about the bisector, not about the rod. Off it, E_x is the answer.
+    const sym = kind === 'rod' ? onBisector(state) : true;
     return cells([
       [String.raw`$\sum d\vec{E}$ (running)`, fmtE(p.mag), ''],
       [String.raw`Analytic $|\vec{E}|$`, fmtE(a.mag), ''],
-      [String.raw`$E_x$ (should $\to 0$)`, fmtE(p.x), Math.abs(p.x) < 0.08 * Math.max(p.mag, 1) ? 'ok' : ''],
+      sym
+        ? [String.raw`$E_x$ (should $\to 0$)`, fmtE(p.x), Math.abs(p.x) < 0.08 * Math.max(p.mag, 1) ? 'ok' : '']
+        : [String.raw`$E_x$ (no cancellation)`, fmtE(p.x), ''],
       [String.raw`$E_y$`, fmtE(p.y), ''],
     ]);
   },

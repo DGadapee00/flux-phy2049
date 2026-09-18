@@ -1,25 +1,41 @@
 import { K } from './constants.js';
 
 /**
- * Finite line along x, −L/2..L/2, uniform λ.
- * P on the perpendicular bisector at (0, d, 0).
- * E = (kλ/d)(sinθ1 + sinθ2) ŷ, with θ1 = θ2 = atan((L/2)/d).
+ * Finite line along x, −L/2..L/2, uniform λ. P at perpendicular distance d, offset x0 along the
+ * line: P = (x0, d, 0). x0 = 0 is the perpendicular bisector, x0 = ±L/2 sits above an end, and
+ * |x0| > L/2 puts P off the end entirely.
+ *
+ * Measuring from P, the rod runs from u1 = −L/2 − x0 to u2 = L/2 − x0, and
+ *
+ *   E_y = (kλ/d)[ u2/r2 − u1/r1 ]   = (kλ/d)(sinθ1 + sinθ2)
+ *   E_x = kλ[ 1/r2 − 1/r1 ]
+ *
+ * with r = √(u² + d²) at each end. On the bisector u1 = −u2, so E_x vanishes and E_y collapses to
+ * the symmetric (kλ/d)(2 sinθ) — which is why the cancellation argument only works there.
  */
-export function linePerpField(lambda, L, d) {
-  const half = L / 2;
-  const rEnd = Math.hypot(half, d);
-  const sinT = half / rEnd;
-  const Ey = ((K * lambda) / d) * (2 * sinT);
+export function linePerpField(lambda, L, d, x0 = 0) {
+  const u1 = -L / 2 - x0;
+  const u2 = L / 2 - x0;
+  const r1 = Math.hypot(u1, d);
+  const r2 = Math.hypot(u2, d);
+  const Ey = ((K * lambda) / d) * (u2 / r2 - u1 / r1);
+  const Ex = K * lambda * (1 / r2 - 1 / r1);
   return {
-    E: { x: 0, y: Ey, z: 0 },
-    mag: Math.abs(Ey),
-    theta: Math.asin(Math.min(1, sinT)),
-    rEnd,
+    E: { x: Ex, y: Ey, z: 0 },
+    mag: Math.hypot(Ex, Ey),
+    // Angles from the perpendicular at P out to each end, signed so that E_y = (kλ/d)(sinθ1+sinθ2).
+    theta1: Math.atan2(-u1, d),
+    theta2: Math.atan2(u2, d),
+    r1,
+    r2,
+    // Kept for the symmetric case, where both ends are the same distance away.
+    theta: Math.atan2(u2, d),
+    rEnd: r2,
   };
 }
 
 /** Numerical Riemann sum for the same line, n slices. */
-export function linePerpNumerical(lambda, L, d, n) {
+export function linePerpNumerical(lambda, L, d, n, x0 = 0) {
   const dx = L / n;
   const dq = lambda * dx;
   let Ex = 0;
@@ -27,7 +43,7 @@ export function linePerpNumerical(lambda, L, d, n) {
   const pieces = [];
   for (let i = 0; i < n; i++) {
     const x = -L / 2 + (i + 0.5) * dx;
-    const rx = 0 - x;
+    const rx = x0 - x;
     const ry = d;
     const rz = 0;
     const r2 = rx * rx + ry * ry + rz * rz;
@@ -48,7 +64,7 @@ export function linePerpNumerical(lambda, L, d, n) {
       ry,
       rz,
       dE: { x: dEx, y: dEy, z: dEz },
-      Px: 0,
+      Px: x0,
       Py: d,
       Pz: 0,
     });
@@ -117,21 +133,23 @@ export function sphereUniformE(Q, R, r) {
  * Potential on the perpendicular bisector of a finite line, −L/2..L/2.
  * V = kλ ln[(√((L/2)²+d²) + L/2) / (√((L/2)²+d²) − L/2)]
  */
-export function linePerpPotential(lambda, L, d) {
-  const half = L / 2;
-  const rEnd = Math.hypot(half, d);
-  const V = K * lambda * Math.log((rEnd + half) / (rEnd - half));
-  return { V, rEnd };
+export function linePerpPotential(lambda, L, d, x0 = 0) {
+  const u1 = -L / 2 - x0;
+  const u2 = L / 2 - x0;
+  // asinh(u/d) rather than ln(u + √(u²+d²)): the log form cancels to nothing once P is well off
+  // the end, where u is large and negative and u + r is the difference of two near-equal numbers.
+  const V = K * lambda * (Math.asinh(u2 / d) - Math.asinh(u1 / d));
+  return { V, r1: Math.hypot(u1, d), r2: Math.hypot(u2, d), rEnd: Math.hypot(u2, d) };
 }
 
-export function linePerpPotentialNumerical(lambda, L, d, n) {
+export function linePerpPotentialNumerical(lambda, L, d, n, x0 = 0) {
   const dx = L / n;
   const dq = lambda * dx;
   let V = 0;
   const pieces = [];
   for (let i = 0; i < n; i++) {
     const x = -L / 2 + (i + 0.5) * dx;
-    const r = Math.hypot(x, d);
+    const r = Math.hypot(x - x0, d);
     const dV = (K * dq) / r;
     V += dV;
     pieces.push({
@@ -140,12 +158,12 @@ export function linePerpPotentialNumerical(lambda, L, d, n) {
       z: 0,
       dq,
       r,
-      rx: -x,
+      rx: x0 - x,
       ry: d,
       rz: 0,
       dE: { x: 0, y: 0, z: 0 },
       dV,
-      Px: 0,
+      Px: x0,
       Py: d,
       Pz: 0,
     });
