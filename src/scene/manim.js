@@ -5,52 +5,30 @@ import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 
-/**
- * Instrument Dark palette. Low-saturation instrument colours on a near-black ground: nothing here
- * is gold, nothing glows. Role names (eVec, fluxIn, …) are what labs should reach for; the plain
- * colour names are kept so existing call sites keep working.
- */
+/** Manim / 3Blue1Brown palette. */
 export const M = {
-  bg: 0x0b0e12,
-  white: 0xe6edf4,
-  grey: 0x8b96a8,
-  greyDark: 0x2a3340,
-  blue: 0x5ba8c9,
-  blueD: 0x4e93b2,
-  blueE: 0x35607a,
-  teal: 0x6aa8b0,
-  green: 0x6fcfb0,
-  yellow: 0xd4b07a,
-  gold: 0xd4b07a,
-  red: 0xc45b5b,
-  maroon: 0xa85f6b,
-  purple: 0x8878a8,
-  pink: 0xb06a9e,
-
-  // Roles
-  accent: 0x5ba8c9,
-  match: 0x6fcfb0,
-  sink: 0xd9897a,
-  qPos: 0xc45b5b,
-  qNeg: 0x5b8fc4,
-  eVec: 0xd4b07a,
-  bVec: 0x6aa8b0,
-  fluxIn: 0x4a6d8c,
-  fluxZero: 0xc9d0d6,
-  fluxOut: 0xc4a882,
-  gridLine: 0x5a8caa, // paired with a low opacity — the --grid token is rgba(90,140,170,0.14)
-  textMuted: 0x8b96a8,
-  /** Current marks: thin and grey, never a bright dot. */
-  current: 0x9aa5b5,
-  /** Smoked graphite for Gaussian surfaces, conductors and slabs. */
-  graphite: 0x39424f,
+  bg: 0x0b0c0e,
+  white: 0xece6e2,
+  grey: 0x888888,
+  greyDark: 0x444444,
+  blue: 0x58c4dd,
+  blueD: 0x29abca,
+  blueE: 0x1c758a,
+  teal: 0x5cd0b3,
+  green: 0x83c167,
+  yellow: 0xf4d345,
+  gold: 0xf0ac5f,
+  red: 0xfc6255,
+  maroon: 0xc55f73,
+  purple: 0x9a72ac,
+  pink: 0xd147bd,
 };
 
-export const POS_COLOR = M.qPos;
-export const NEG_COLOR = M.qNeg;
+export const POS_COLOR = M.red;
+export const NEG_COLOR = M.blue;
 
-/** Flux / E·n̂ colormap: inward (cool) → zero (bone) → outward (warm). t in [0, 1]. */
-const RAMP = [M.fluxIn, M.fluxZero, M.fluxOut].map((h) => new THREE.Color(h));
+/** 3b1b vector-field colormap: slow = blue, fast = red. t in [0, 1]. */
+const RAMP = [M.blueE, M.blue, M.teal, M.green, M.yellow, M.red].map((h) => new THREE.Color(h));
 export function rampColor(t, out = new THREE.Color()) {
   const x = Math.max(0, Math.min(1, t)) * (RAMP.length - 1);
   const i = Math.min(RAMP.length - 2, Math.floor(x));
@@ -153,19 +131,25 @@ export function makeChargeTexture(hex, sign) {
   c.height = S;
   const g = c.getContext('2d');
   const col = new THREE.Color(hex);
-  const rgb = (k, a = 1) =>
-    `rgba(${Math.round(col.r * 255 * k)},${Math.round(col.g * 255 * k)},${Math.round(col.b * 255 * k)},${a})`;
-  // Matte: one flat fill, a slightly darker rim for the edge, and the sign. No halo, no gloss.
+  const rgb = (k) => `rgb(${Math.round(col.r * 255 * k)},${Math.round(col.g * 255 * k)},${Math.round(col.b * 255 * k)})`;
+  const halo = g.createRadialGradient(S / 2, S / 2, S * 0.3, S / 2, S / 2, S * 0.5);
+  halo.addColorStop(0, `rgba(${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)},0.35)`);
+  halo.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = halo;
+  g.fillRect(0, 0, S, S);
+  const grd = g.createRadialGradient(S * 0.42, S * 0.4, S * 0.02, S / 2, S / 2, S * 0.3);
+  grd.addColorStop(0, rgb(1.12));
+  grd.addColorStop(1, rgb(0.78));
   g.beginPath();
   g.arc(S / 2, S / 2, S * 0.3, 0, Math.PI * 2);
-  g.fillStyle = rgb(1);
+  g.fillStyle = grd;
   g.fill();
-  g.lineWidth = S * 0.018;
-  g.strokeStyle = rgb(0.62);
+  g.lineWidth = S * 0.022;
+  g.strokeStyle = 'rgba(255,255,255,0.85)';
   g.stroke();
-  g.fillStyle = 'rgba(230, 237, 244, 0.92)';
-  const bar = S * 0.03;
-  const len = S * 0.13;
+  g.fillStyle = '#ffffff';
+  const bar = S * 0.035;
+  const len = S * 0.15;
   if (sign !== 0) g.fillRect(S / 2 - len, S / 2 - bar, 2 * len, 2 * bar);
   if (sign > 0) g.fillRect(S / 2 - bar, S / 2 - len, 2 * bar, 2 * len);
   const tex = new THREE.CanvasTexture(c);

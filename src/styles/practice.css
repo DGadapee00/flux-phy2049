@@ -17,9 +17,9 @@
   gap: 8px;
   padding: 4px 8px 4px 12px;
   border-radius: 999px;
-  border: 1px solid var(--accent);
-  background: transparent;
-  color: var(--text-math);
+  border: 1px solid rgba(244, 211, 69, 0.45);
+  background: rgba(244, 211, 69, 0.08);
+  color: var(--yellow);
   font-family: var(--serif);
   font-size: 15px;
   cursor: pointer;
@@ -28,7 +28,7 @@
 
 .practice-btn:hover,
 .practice-btn.active {
-  background: rgba(91, 168, 201, 0.18);
+  background: rgba(244, 211, 69, 0.18);
 }
 
 .practice-btn kbd {
@@ -207,7 +207,7 @@ body.problem-blind .problems {
 
 .btn.due {
   color: var(--yellow);
-  border-color: rgba(91, 168, 201, 0.4);
+  border-color: rgba(244, 211, 69, 0.4);
 }
 
 .pb-filters {
@@ -332,7 +332,7 @@ body.problem-blind .problems {
 
 .pb-dot.s-due {
   border-color: var(--yellow);
-  background: rgba(91, 168, 201, 0.35);
+  background: rgba(244, 211, 69, 0.35);
 }
 
 .pb-dot.s-missed {
@@ -387,8 +387,8 @@ body.problem-blind .problems {
 }
 
 .pb-banner.warn {
-  background: rgba(91, 168, 201, 0.08);
-  border-color: rgba(91, 168, 201, 0.3);
+  background: rgba(244, 211, 69, 0.08);
+  border-color: rgba(244, 211, 69, 0.3);
 }
 
 .pb-banner.good {
@@ -504,7 +504,7 @@ body.problem-blind .problems {
 
 .pb-parse {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--gold);
 }
 
 .pb-parse.ok {
@@ -614,7 +614,7 @@ body.problem-blind .problems {
   gap: 4px;
   padding-left: 18px;
   font-size: 12.5px;
-  color: var(--text-muted);
+  color: var(--yellow);
 }
 
 .pb-solution {
@@ -629,7 +629,7 @@ body.problem-blind .problems {
   font-family: var(--serif);
   font-size: 15px;
   font-weight: 400;
-  color: var(--text);
+  color: var(--yellow);
 }
 
 .pb-verdict {
@@ -723,7 +723,7 @@ body.problem-blind .problems {
 
 .pb-examnav button.on {
   color: var(--yellow);
-  border-color: rgba(91, 168, 201, 0.6);
+  border-color: rgba(244, 211, 69, 0.6);
 }
 
 .pb-table {

@@ -40,8 +40,10 @@ export class CapacitorView {
     const plateMat = (color) =>
       new THREE.MeshStandardMaterial({
         color,
+        emissive: color,
+        emissiveIntensity: 0.25,
         metalness: 0.1,
-        roughness: 0.85,
+        roughness: 0.6,
       });
     this.plus = new THREE.Mesh(plateGeo, plateMat(POS_COLOR));
     this.minus = new THREE.Mesh(plateGeo.clone(), plateMat(NEG_COLOR));

@@ -28,7 +28,7 @@ const AMP = 0.3;
 const N_ARR = 24;
 const N_CURVE = 97;
 const T_CYCLE = 2;
-const TEAL = M.bVec;
+const TEAL = M.teal;
 
 function label(html, x, y, z) {
   const el = document.createElement('div');
@@ -102,20 +102,19 @@ export default defineLab({
     const u = UNITS_PER_METER;
     const group = new THREE.Group();
     ctx.scene.add(group);
-    group.add(fatLine([X0 * u - 0.6, 0, 0, X1 * u + 0.6, 0, 0], { color: M.textMuted, width: 1.2, opacity: 0.7 }));
-    const Ebatch = new VectorBatch(group, M.eVec);
+    group.add(fatLine([X0 * u - 0.6, 0, 0, X1 * u + 0.6, 0, 0], { color: M.white, width: 1.8 }));
+    const Ebatch = new VectorBatch(group, M.red);
     const Bbatch = new VectorBatch(group, TEAL);
     const zeros = new Array(N_CURVE * 3).fill(0);
     for (let i = 0; i < N_CURVE; i++) zeros[i * 3] = (X0 + (i / (N_CURVE - 1)) * (X1 - X0)) * u;
-    const eCurve = fatLine(zeros, { color: M.eVec, width: 2 });
-    const bCurve = fatLine(zeros, { color: TEAL, width: 2 });
+    const eCurve = fatLine(zeros, { color: M.red, width: 3 });
+    const bCurve = fatLine(zeros, { color: TEAL, width: 3 });
     group.add(eCurve, bCurve);
-    const Sarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3((X1 + 0.12) * u, 0, 0), 1.6, M.accent, 0.28, 0.22, 0.038);
-    Sarr.traverse((o) => { if (o.material) { o.material.transparent = true; o.material.opacity = 0.7; } });
+    const Sarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3((X1 + 0.12) * u, 0, 0), 1.6, M.gold, 0.34, 0.26, 0.05);
     group.add(Sarr);
     const eLab = label('<i>E</i>', X0 * u - 0.2, (AMP + 0.06) * u, 0);
     const bLab = label('<span class="qB"><i>B</i></span>', X0 * u - 0.2, 0.2, (AMP + 0.06) * u);
-    const sLab = label('<span style="color:#5BA8C9"><i>S</i>, direction of travel</span>', (X1 + 0.2) * u, 0.5, 0);
+    const sLab = label('<span style="color:#F0AC5F"><i>S</i>, direction of travel</span>', (X1 + 0.2) * u, 0.5, 0);
     group.add(eLab, bLab, sLab);
     group.visible = false;
     return { group, Ebatch, Bbatch, eCurve, bCurve, Sarr, eLab };
@@ -139,11 +138,7 @@ export default defineLab({
     const om = (2 * Math.PI) / T_CYCLE;
     const t = em.tDisp;
     const vis = em.band.id === 'vis';
-    // Still tinted by λ, as the Setup note says — but pulled back toward the instrument warm so a
-    // visible wavelength reads as a muted cast rather than a neon stripe.
-    const eColor = vis
-      ? new THREE.Color(em.rgb.r, em.rgb.g, em.rgb.b).lerp(new THREE.Color(M.eVec), 0.62)
-      : new THREE.Color(M.eVec);
+    const eColor = vis ? new THREE.Color(em.rgb.r, em.rgb.g, em.rgb.b) : new THREE.Color(M.red);
     const bColor = new THREE.Color(TEAL);
 
     h.Ebatch.begin();

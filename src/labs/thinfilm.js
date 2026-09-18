@@ -184,24 +184,24 @@ export default defineLab({
 
     const slab = new THREE.Mesh(
       new THREE.PlaneGeometry((X_R - X_L) * u, FILM_DRAW * u),
-      new THREE.MeshBasicMaterial({ color: M.graphite, transparent: true, opacity: 0.55, toneMapped: false, side: THREE.DoubleSide }),
+      new THREE.MeshBasicMaterial({ color: M.blueE, transparent: true, opacity: 0.3, toneMapped: false, side: THREE.DoubleSide }),
     );
     slab.position.set(0, (Y_TOP - FILM_DRAW / 2) * u, 0);
     group.add(slab);
 
     const substrate = new THREE.Mesh(
       new THREE.PlaneGeometry((X_R - X_L) * u, SUB_H * u),
-      new THREE.MeshBasicMaterial({ color: 0x1b2028, transparent: true, opacity: 0.9, toneMapped: false, side: THREE.DoubleSide }),
+      new THREE.MeshBasicMaterial({ color: 0x2a2f3a, transparent: true, opacity: 0.85, toneMapped: false, side: THREE.DoubleSide }),
     );
     substrate.position.set(0, (Y_TOP - FILM_DRAW - SUB_H / 2) * u, 0);
     group.add(substrate);
 
-    group.add(fatLine([X_L * u, Y_TOP * u, 0, X_R * u, Y_TOP * u, 0], { color: M.textMuted, width: 1.2, opacity: 0.8 }));
-    group.add(fatLine([X_L * u, (Y_TOP - FILM_DRAW) * u, 0, X_R * u, (Y_TOP - FILM_DRAW) * u, 0], { color: M.textMuted, width: 1.2, opacity: 0.8 }));
+    group.add(fatLine([X_L * u, Y_TOP * u, 0, X_R * u, Y_TOP * u, 0], { color: M.white, width: 2.2 }));
+    group.add(fatLine([X_L * u, (Y_TOP - FILM_DRAW) * u, 0, X_R * u, (Y_TOP - FILM_DRAW) * u, 0], { color: M.white, width: 2.2 }));
 
-    const rayIn = fatSegments(segmentCapacity(4), { color: M.eVec, width: 1.5, opacity: 0.85 });
-    const rayTop = fatSegments(segmentCapacity(4), { color: M.eVec, width: 1.5, opacity: 0.85 });
-    const rayBot = fatSegments(segmentCapacity(6), { color: M.eVec, width: 1.5, opacity: 0.85 });
+    const rayIn = fatSegments(segmentCapacity(4), { color: M.gold, width: 2.4 });
+    const rayTop = fatSegments(segmentCapacity(4), { color: M.gold, width: 2.6 });
+    const rayBot = fatSegments(segmentCapacity(6), { color: M.gold, width: 2.6 });
     group.add(rayIn, rayTop, rayBot);
     // How the two reflected rays combine is the answer to every problem here.
     markAnswer(rayTop);
@@ -280,7 +280,7 @@ export default defineLab({
     h.rayTop.material.color.copy(beam);
     h.rayBot.material.color.copy(beam);
 
-    h.slab.material.color.set(c.bright ? 0x33505c : 0x2b3440);
+    h.slab.material.color.set(c.bright ? 0x2f6f5f : 0x33405a);
 
     // The swatch: what this film sends back in white light.
     const col = reflectedColor(state.nf, state.ns, state.t);

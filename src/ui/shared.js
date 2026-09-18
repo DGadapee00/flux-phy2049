@@ -2,7 +2,7 @@ import katex from 'katex';
 
 const TEX_MACROS = {
   '\\qV': '\\textcolor{#58C4DD}{V}',
-  '\\qI': '\\textcolor{#D5DDE8}{I}',
+  '\\qI': '\\textcolor{#F4D345}{I}',
   '\\qR': '\\textcolor{#83C167}{R}',
   '\\qP': '\\textcolor{#FC6255}{P}',
   // House style, so every panel spells the same quantity the same way.

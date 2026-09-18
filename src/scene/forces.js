@@ -46,7 +46,7 @@ export class ForceView {
       const F = forces[i];
       const mag = Math.hypot(F.x, F.y, F.z);
       if (mag < 1e-12) continue;
-      const color = c.id === selectedId ? M.accent : M.eVec;
+      const color = c.id === selectedId ? M.yellow : M.gold;
       this.addArrow(c, F, u, color, c.id === selectedId ? 1.15 : 0.85);
     }
   }

@@ -342,9 +342,9 @@ export default defineLab({
         const Fd = new THREE.Vector3(0, 0, Math.sign(c.F.z));
         const Lf = 0.8 + 2.2 * Math.tanh(c.Fmag / 1.5);
         g.add(new Arrow(Fd, new THREE.Vector3(0, 0.8, 0), Lf, M.gold, 0.4, 0.3, 0.06));
-        g.add(label(`<span style="color:var(--e-vec,#D4B07A)"><i>F</i> = ${strip(fmtForce(c.Fmag))}</span>`, 0.4, 0.2, Fd.z * (Lf + 0.5)));
+        g.add(label(`<span style="color:var(--gold,#F0AC5F)"><i>F</i> = ${strip(fmtForce(c.Fmag))}</span>`, 0.4, 0.2, Fd.z * (Lf + 0.5)));
       } else {
-        g.add(label('<span style="color:var(--e-vec,#D4B07A)"><i>F</i> = 0 (L ∥ B)</span>', 0.6, -0.3, 0));
+        g.add(label('<span style="color:var(--gold,#F0AC5F)"><i>F</i> = 0 (L ∥ B)</span>', 0.6, -0.3, 0));
       }
       g.add(label(qv('qI', `<i>I</i> = ${state.I.toFixed(1)} A`), b.x + 0.6, b.y + 1.3, 0));
     } else {
@@ -379,7 +379,7 @@ export default defineLab({
         const d2 = new THREE.Vector3(Math.sign(Fx), 0, 0);
         g.add(new Arrow(d2, new THREE.Vector3(x2, 0.9, 0), Lf, M.gold, 0.36, 0.28, 0.055));
         g.add(new Arrow(d2.clone().multiplyScalar(-1), new THREE.Vector3(x1, 0.9, 0), Lf, M.gold, 0.36, 0.28, 0.055));
-        g.add(label(`<span style="color:var(--e-vec,#D4B07A)">${c.attract ? 'attract' : 'repel'} · <i>F</i>/<i>L</i> = ${strip(fmtForce(Math.abs(Fx)))}/m</span>`, 0, -2.2, 0));
+        g.add(label(`<span style="color:var(--gold,#F0AC5F)">${c.attract ? 'attract' : 'repel'} · <i>F</i>/<i>L</i> = ${strip(fmtForce(Math.abs(Fx)))}/m</span>`, 0, -2.2, 0));
       }
     }
     h.Bfield.end(c.kind !== 'parallel');

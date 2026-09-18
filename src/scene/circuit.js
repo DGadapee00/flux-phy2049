@@ -80,7 +80,7 @@ export class CircuitView {
     this.key = '';
     this.s = 0;
     this.time = 0;
-    this.dotTex = makeChargeTexture(M.current, 0);
+    this.dotTex = makeChargeTexture(M.yellow, 0);
     this.glowWarm = makeGlowTexture(0xffe9a8);
     this.glowHot = makeGlowTexture(M.red);
     this._v = new THREE.Vector3();
@@ -154,7 +154,7 @@ export class CircuitView {
       this.fill = add(
         new THREE.Mesh(
           new THREE.CircleGeometry(0.48, 48),
-          new THREE.MeshBasicMaterial({ color: M.current, transparent: true, depthWrite: false, toneMapped: false }),
+          new THREE.MeshBasicMaterial({ color: M.yellow, transparent: true, depthWrite: false, toneMapped: false }),
         ),
       );
       this.fill.position.set(0, yt, -0.02);
@@ -174,7 +174,7 @@ export class CircuitView {
         const pivot = new THREE.Object3D();
         pivot.position.set(0, yt, 0);
         pivot.rotation.z = (k / 12) * Math.PI * 2 + Math.PI / 12;
-        const ray = fatLine([0, 0, 0, 1, 0, 0], { color: M.current, width: 1.4, opacity: 0.7 });
+        const ray = fatLine([0, 0, 0, 1, 0, 0], { color: M.yellow, width: 2.5, opacity: 0.99 });
         ray.position.x = 0.66;
         pivot.add(ray);
         add(pivot);
@@ -200,7 +200,7 @@ export class CircuitView {
     this.loadLabel = add(label('circuit-label', 0, yt + 1.5));
 
     // Current: arrow on the right wire, label just inside the loop.
-    this.arrow = add(new Arrow(new THREE.Vector3(0, -1, 0), new THREE.Vector3(), 1, M.current, 0.22, 0.16, 0.024));
+    this.arrow = add(new Arrow(new THREE.Vector3(0, -1, 0), new THREE.Vector3(), 1, M.yellow, 0.28, 0.2, 0.035));
     this.iLabel = add(label('circuit-label', W - 0.55, Y0 - 1.0));
     this.eqLabel = add(label('circuit-label circuit-eq', -0.35, Y0 + 0.25));
 
@@ -260,7 +260,7 @@ export class CircuitView {
       this.fill.material.opacity = 0.04 + 0.5 * b;
       this.glow.material.opacity = b;
       this.glow.scale.setScalar(1.4 + 2.6 * b);
-      this.filament.material.color.copy(this._c.setHex(M.white).lerp(this._c2.setHex(M.eVec), b));
+      this.filament.material.color.copy(this._c.setHex(M.white).lerp(this._c2.setHex(M.yellow), b));
       for (const r of this.rays) {
         r.scale.x = 0.08 + 0.5 * b;
         r.material.opacity = b;

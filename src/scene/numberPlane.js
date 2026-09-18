@@ -31,8 +31,8 @@ export class NumberPlane {
         minor.push(-half, m, 0, half, m, 0);
       }
     }
-    this.plane.add(fatSegments(minor, { color: M.gridLine, width: 0.8, opacity: 0.14 }));
-    this.plane.add(fatSegments(major, { color: M.gridLine, width: 1, opacity: 0.26 }));
+    this.plane.add(fatSegments(minor, { color: M.blueE, width: 1, opacity: 0.28 }));
+    this.plane.add(fatSegments(major, { color: M.blueD, width: 1.4, opacity: 0.42 }));
 
     const t = 0.08;
     const axes = [-half, 0, 0, half, 0, 0, 0, -half, 0, 0, half, 0];
@@ -42,15 +42,15 @@ export class NumberPlane {
       ticks.push(i, -t, 0, i, t, 0);
       ticks.push(-t, i, 0, t, i, 0);
     }
-    this.plane.add(fatSegments(axes, { color: M.textMuted, width: 1.2, opacity: 0.7 }));
-    this.plane.add(fatSegments(ticks, { color: M.textMuted, width: 1, opacity: 0.55 }));
+    this.plane.add(fatSegments(axes, { color: M.white, width: 2, opacity: 0.8 }));
+    this.plane.add(fatSegments(ticks, { color: M.white, width: 1.6, opacity: 0.7 }));
 
     // Out-of-plane axis: vertical for the floor plane, into the screen for the standing one.
     this.off = new THREE.Group();
-    this.off.add(fatSegments([0, 0, 0, 0, 4.8, 0], { color: M.textMuted, width: 1.2, opacity: 0.5 }));
+    this.off.add(fatSegments([0, 0, 0, 0, 4.8, 0], { color: M.white, width: 2, opacity: 0.55 }));
     const offTicks = [];
     for (let i = 1; i < 5; i++) offTicks.push(-t, i, 0, t, i, 0);
-    this.off.add(fatSegments(offTicks, { color: M.textMuted, width: 1, opacity: 0.45 }));
+    this.off.add(fatSegments(offTicks, { color: M.white, width: 1.6, opacity: 0.5 }));
     this.group.add(this.off);
 
     // Tick labels every other square, on both in-plane axes.
