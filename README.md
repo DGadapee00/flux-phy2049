@@ -1,21 +1,21 @@
 # FLUX — PHY 2049
 
-Interactive 3D labs for Montgomery’s Calculus Physics II. One app at http://localhost:5174/ — exam units in the top row, labs as tabs, hash URLs so each lab is bookmarkable (`#/e3/potential`).
+Interactive 3D labs for Montgomery’s Calculus Physics II. Exam units in the top row, labs as tabs, hash URLs so each lab is bookmarkable (`#/e3/potential`).
 
-Private repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — no lecture notes, worksheets, or Canvas files.
+## Open the live app
 
-## Open it in a browser
+**[https://flux-phy2049.pages.dev](https://flux-phy2049.pages.dev)** — no install. Works on a laptop, Chromebook, phone, or library machine.
 
-`npm run build` turns the app into a plain folder of files that any static host can serve, which
-makes FLUX a link instead of an install — no Git, no Node, no terminal, no PowerShell execution
-policy on the other end. Deep links survive the move: `#/e8/interference`, or a single problem at
-`#/e4/circuits?p=e4.44.two-loop&s=0`.
+Deep links work the same as locally, e.g. `#/e3/potential` or a single problem at `#/e4/circuits?p=e4.44.two-loop&s=0`.
 
-Nothing is published yet. **[DEPLOY.md](DEPLOY.md)** has the three routes and what each one exposes —
-the build carries the worksheets' numbers and printed answers, so read that section before hosting it
-somewhere open.
+The practice bank is built for phones: full-screen problem sheet, thumb-sized targets, inputs that
+don't make Safari zoom. The 3D labs render and respond to touch, but they want a laptop.
 
-## Run it locally
+Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — no lecture notes,
+worksheets, or Canvas files. **[DEPLOY.md](DEPLOY.md)** covers rebuilding and republishing, and what
+a public build exposes.
+
+## Run locally
 
 ```bash
 git clone https://github.com/DGadapee00/flux-phy2049.git

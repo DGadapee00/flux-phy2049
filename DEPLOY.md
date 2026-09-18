@@ -1,4 +1,23 @@
-# Putting FLUX behind a link
+# Deploying FLUX
+
+**Live at <https://flux-phy2049.pages.dev> on Cloudflare Pages, public, no login.** That was a
+deliberate call: the group is small, a link that just works beats a link that emails people a code,
+and Cloudflare Access was skipped on purpose. `public/robots.txt` and `public/_headers` keep the
+site out of search results, which is the protection that remains.
+
+## Updating the live site
+
+A hosted build is a snapshot. Code on `main` is not on the site until somebody publishes it.
+
+- **If the Pages project is connected to this repo**, a push to `main` triggers a build. Build
+  command `npm run build`, output directory `dist`.
+- **If it was a drag-and-drop upload**, merging changes nothing. Run `npm run build` and upload
+  `dist` again under the project's *Create deployment* tab.
+
+Check which one it is at dash.cloudflare.com → Workers & Pages → flux-phy2049 → Settings. A
+Git-connected project names the repo and branch there; a direct-upload project doesn't.
+
+## How the build works
 
 The app is a static site. `npm run build` writes a `dist/` folder of plain HTML, JS and CSS —
 no server, no database, no Node on the other end. Anything that can serve a folder can host it,
@@ -15,7 +34,7 @@ subfolder (`.../flux-phy2049/`) without changing anything. Routing is hash-based
 (`#/e3/potential`), so there is no server rewrite rule to configure — deep links to a lab
 or to a single problem (`#/e4/circuits?p=e4.44.two-loop&s=0`) work as-is.
 
-## Before you publish: what goes public
+## What the public build exposes
 
 The bank's problems are generated from our own templates, but their ground-truth `cases`
 carry numbers and printed answers taken from Montgomery's worksheets. That material has
@@ -25,7 +44,10 @@ the problems and check the answers.
 
 `public/robots.txt` and `public/_headers` ship with the build and ask search engines to
 skip the site, so it will not turn up in a Google search for a problem's wording. That is
-a courtesy, not a lock. If you want an actual lock, use option 3.
+a courtesy, not a lock — anyone handed the URL can read everything. Option 3 below is the
+route that would change that, and it is the one we chose not to take.
+
+## Other routes, if the current one ever stops suiting
 
 ## Option 1 — Netlify Drop (fastest, ~2 minutes, unlisted URL)
 
@@ -44,7 +66,8 @@ site is marked noindex.
 
 ## Option 2 — GitHub Pages (automatic on every push)
 
-`.github/workflows/pages.yml` is already in the repo. Turn it on at
+`.github/workflows/pages.yml` is still in the repo but does nothing while Pages is off, which is
+how it should stay unless the site moves off Cloudflare. Turn it on at
 **Settings → Pages → Build and deployment → Source: GitHub Actions**, then push to `main`.
 Every push rebuilds and republishes; the URL is
 `https://dgadapee00.github.io/flux-phy2049/`.
