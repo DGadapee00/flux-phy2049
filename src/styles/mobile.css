@@ -273,13 +273,33 @@
     display: none;
   }
 
-  /* Clear of the toggle strip, which is a fixed 47px now that it scrolls instead of wrapping. */
+  /*
+   * The legend is a colour key, not content — it should not cost a tenth of the screen. Stretching
+   * it full width was wrong twice over: it covered the scene horizontally as well as vertically.
+   * Back to roughly its desktop width, and tighter, since it sits over the canvas here.
+   * Clear of the toggle strip, which is a fixed 47px now that it scrolls instead of wrapping.
+   */
   .legend {
     left: 10px;
-    right: 10px;
-    width: auto;
+    right: auto;
+    width: 172px;
     bottom: auto;
     top: calc(var(--hdr) + 56px);
+    padding: 5px 8px;
+  }
+
+  .legend-title {
+    font-size: 11.5px;
+    margin-bottom: 3px;
+  }
+
+  .legend-bar {
+    height: 5px;
+  }
+
+  .legend-row {
+    font-size: 10px;
+    margin-top: 2px;
   }
 
   /* ---------- Practice takes the screen ---------- */
