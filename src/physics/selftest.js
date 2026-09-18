@@ -9,6 +9,10 @@ import {
   ringAxisNumerical,
   linePerpPotential,
   linePerpPotentialNumerical,
+  diskAxisField,
+  diskAxisNumerical,
+  diskAxisPotential,
+  diskAxisPotentialNumerical,
   ringAxisPotential,
   ringAxisPotentialNumerical,
 } from './analytic.js';
@@ -223,6 +227,68 @@ console.log('Gauss lab self-test');
   const num = ringAxisNumerical(Qr, a, y, 48);
   approx(num.E.y, closed.E.y, 0.02, 'ring on axis: numerical vs analytic E_y');
   approx(Math.hypot(num.E.x, num.E.z), 0, 0.04 * Math.abs(closed.E.y), 'ring: radial E cancels');
+}
+
+// Arc: the closed ring is the special case, so check the partial ones against the sum too.
+{
+  const Qr = 2.5e-6;
+  const a = 0.32;
+  for (const span of [2 * Math.PI, Math.PI, Math.PI / 2, 0.4]) {
+    for (const y of [0, 0.38, -0.25]) {
+      const closed = ringAxisField(Qr, a, y, span);
+      const num = ringAxisNumerical(Qr, a, y, 8000, span);
+      const scale = Math.max(Math.abs(closed.E.x), Math.abs(closed.E.y), 1);
+      const deg = ((span * 180) / Math.PI).toFixed(0);
+      // Absolute against the field's own scale, not relative: on a closed ring at y = 0 both E_x
+      // and E_y are zero, and a relative test there compares two piles of rounding error.
+      const near = (got, exp, name) => ok(Math.abs(got - exp) <= 0.002 * scale, name);
+      near(num.E.x, closed.E.x, `arc ${deg}° y=${y}: E_x closed vs sum`);
+      near(num.E.y, closed.E.y, `arc ${deg}° y=${y}: E_y closed vs sum`);
+      near(num.E.z, 0, `arc ${deg}° y=${y}: E_z cancels`);
+    }
+  }
+
+  // E_y does not know about the span; only E_x does.
+  approx(ringAxisField(Qr, a, 0.38, Math.PI).E.y, ringAxisField(Qr, a, 0.38, 2 * Math.PI).E.y, 1e-9,
+    'arc: E_y is independent of the span');
+  ok(Math.abs(ringAxisField(Qr, a, 0.38, 2 * Math.PI).E.x) < 1e-9, 'closed ring: E_x = 0');
+
+  // Half ring at the centre is the textbook 2kλ/R.
+  const half = ringAxisField(Qr, a, 0, Math.PI);
+  const lambda = Qr / (a * Math.PI);
+  approx(Math.abs(half.E.x), (2 * K * lambda) / a, 1e-6 * ((2 * K * lambda) / a), 'half ring at centre: |E| = 2kλ/R');
+  approx(half.E.y, 0, 1e-9, 'half ring at centre: no axial field');
+
+  // A thin arc is a point charge at distance r.
+  const thin = ringAxisField(Qr, a, 0, 1e-4);
+  approx(Math.hypot(thin.E.x, thin.E.y), (K * Qr) / (a * a), 1e-6 * ((K * Qr) / (a * a)), 'vanishing arc -> kQ/r^2');
+}
+
+// Circular plate: radial Riemann sum, and both limits.
+{
+  const Qd = 2.5e-6;
+  const R = 0.35;
+  for (const y of [0.4, 0.05, 1.5, -0.4]) {
+    const closed = diskAxisField(Qd, R, y);
+    const num = diskAxisNumerical(Qd, R, y, 20000);
+    approx(num.E.y, closed.E.y, 0.002 * Math.abs(closed.E.y), `plate y=${y}: E_y closed vs radial sum`);
+    const V = diskAxisPotential(Qd, R, y);
+    const Vn = diskAxisPotentialNumerical(Qd, R, y, 20000);
+    approx(Vn.V, V.V, 0.002 * Math.abs(V.V), `plate y=${y}: V closed vs radial sum`);
+  }
+
+  const sigma = Qd / (Math.PI * R * R);
+  approx(diskAxisField(Qd, R, 1e-7).E.y, 2 * Math.PI * K * sigma, 1e-3 * 2 * Math.PI * K * sigma,
+    'plate at y -> 0 is the infinite sheet, 2πkσ');
+  approx(diskAxisField(Qd, R, 60).E.y, (K * Qd) / 3600, 0.002 * ((K * Qd) / 3600),
+    'plate from far away -> kQ/y^2');
+  approx(diskAxisField(Qd, R, -0.4).E.y, -diskAxisField(Qd, R, 0.4).E.y, 1e-9, 'plate: E flips sign through the plate');
+
+  // E = -dV/dy, checked numerically against the closed-form field.
+  const h = 1e-5;
+  const y0 = 0.4;
+  const dV = (diskAxisPotential(Qd, R, y0 + h).V - diskAxisPotential(Qd, R, y0 - h).V) / (2 * h);
+  approx(-dV, diskAxisField(Qd, R, y0).E.y, 1e-4 * Math.abs(diskAxisField(Qd, R, y0).E.y), 'plate: E_y = -dV/dy');
 }
 
 {

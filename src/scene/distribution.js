@@ -4,8 +4,10 @@ import { sceneScale } from '../engine/frame.js';
 import {
   linePerpNumerical,
   ringAxisNumerical,
+  diskAxisNumerical,
   linePerpPotentialNumerical,
   ringAxisPotentialNumerical,
+  diskAxisPotentialNumerical,
 } from '../physics/analytic.js';
 import { Arrow, M, POS_COLOR, NEG_COLOR, fatLine, disposeTree, makeChargeTexture, markAnswer } from './manim.js';
 
@@ -66,11 +68,27 @@ export class DistributionView {
         depthWrite: false,
       });
     let data;
-    if (integral.kind === 'ring') {
+    let annuli = null;
+    if (integral.kind === 'disk') {
       data = wantV
-        ? ringAxisPotentialNumerical(integral.Q, integral.a, integral.y, n)
-        : ringAxisNumerical(integral.Q, integral.a, integral.y, n);
-      const torus = new THREE.Mesh(new THREE.TorusGeometry(integral.a * u, 0.035 * u, 12, 96), bodyMat());
+        ? diskAxisPotentialNumerical(integral.Q, integral.R, integral.y, n)
+        : diskAxisNumerical(integral.Q, integral.R, integral.y, n);
+      // The plate itself, then one outline per radial slice: the picture of ∫ 2πσ s ds.
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(integral.R * u, integral.R * u, 0.012 * u, 72), bodyMat());
+      this.group.add(plate);
+      this.body = plate;
+      annuli = data.pieces.map((pc) => pc.s);
+    } else if (integral.kind === 'ring') {
+      const span = integral.span ?? 2 * Math.PI;
+      data = wantV
+        ? ringAxisPotentialNumerical(integral.Q, integral.a, integral.y, n, span)
+        : ringAxisNumerical(integral.Q, integral.a, integral.y, n, span);
+      const seg = Math.max(8, Math.round((96 * span) / (2 * Math.PI)));
+      const geo = new THREE.TorusGeometry(integral.a * u, 0.035 * u, 12, seg, span);
+      // The torus sweeps from its local +x; rotate it back by half so a partial arc stays centred
+      // on +x, which is where the physics puts the symmetry axis.
+      geo.rotateZ(-span / 2);
+      const torus = new THREE.Mesh(geo, bodyMat());
       torus.rotation.x = Math.PI / 2;
       this.group.add(torus);
       this.body = torus;
@@ -84,9 +102,10 @@ export class DistributionView {
       this.body = rod;
     }
 
+    const onAxis = integral.kind === 'ring' || integral.kind === 'disk';
     const P = {
-      x: integral.kind === 'ring' ? 0 : integral.x0 || 0,
-      y: integral.kind === 'ring' ? integral.y : integral.d,
+      x: onAxis ? 0 : integral.x0 || 0,
+      y: onAxis ? integral.y : integral.d,
       z: 0,
     };
     const probe = new THREE.Mesh(
@@ -100,6 +119,25 @@ export class DistributionView {
     this.label.position.y += 0.35;
 
     const cut = Number.isFinite(animIndex) ? Math.min(data.pieces.length, Math.max(0, Math.floor(animIndex))) : data.pieces.length;
+
+    if (annuli) {
+      for (let i = 0; i < annuli.length; i++) {
+        const active = i < cut;
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(Math.max(1e-4, annuli[i]) * u, 0.006 * u, 6, 64),
+          new THREE.MeshBasicMaterial({
+            color: i === cut - 1 ? M.white : positive ? POS_COLOR : NEG_COLOR,
+            transparent: true,
+            opacity: active ? (i === cut - 1 ? 1 : 0.55) : 0.12,
+            toneMapped: false,
+            depthWrite: false,
+          }),
+        );
+        ring.rotation.x = Math.PI / 2;
+        this.group.add(ring);
+        this.dqMeshes.push(ring);
+      }
+    }
 
     for (let i = 0; i < data.pieces.length; i++) {
       const pc = data.pieces[i];

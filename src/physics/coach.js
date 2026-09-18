@@ -309,12 +309,46 @@ export function coachIntegral(state) {
       canFindE: true,
     };
   }
+  if (kind === 'disk') {
+    const R = state.integral.R;
+    const y = Math.abs(state.integral.y);
+    const bracket = 1 - y / Math.hypot(y, R);
+    return {
+      title: bracket > 0.8 ? 'Plate up close — nearly a sheet' : 'Circular plate on axis',
+      body: [
+        String.raw`Cut the plate in polar coordinates: $dq = \sigma\,dA = \sigma\,s\,ds\,d\theta$. Every point of the ring at radius $s$ is the same distance from $P$, so the $\theta$ integral is just $2\pi$ and the plate becomes a stack of rings, $dq = 2\pi\sigma s\,ds$:`,
+        eq(String.raw`E_y = 2\pi k\sigma\int_0^{R}\frac{y\,s\,ds}{(s^2+y^2)^{3/2}}`),
+        eq(String.raw`= 2\pi k\sigma\left[1 - \frac{y}{\sqrt{y^2+R^2}}\right]`),
+        bracket > 0.8
+          ? String.raw`The bracket is ${bracket.toFixed(2)} — almost 1. Close to a wide plate the field stops depending on distance at all: that is the infinite sheet, $2\pi k\sigma = \sigma/2\varepsilon_0$.`
+          : String.raw`The bracket is ${bracket.toFixed(2)}. Push $y$ down or $R$ up and watch it climb to 1 (the sheet); pull $y$ out past $R$ and the plate collapses to a point charge, $kQ/y^2$.`,
+      ],
+      canFindE: true,
+    };
+  }
+  const span = state.integral.span ?? 2 * Math.PI;
+  if (span < 2 * Math.PI - 1e-6) {
+    const deg = ((span * 180) / Math.PI).toFixed(0);
+    const centre = Math.abs(state.integral.y) < 1e-9;
+    return {
+      title: `Arc of ${deg}° — only part of the cancellation survives`,
+      body: [
+        String.raw`Every $dq$ is still the same distance $r = \sqrt{a^2+y^2}$ from $P$, so $|d\vec{E}|$ is constant. What has changed is the bookkeeping: with only ${deg}° of arc there is no opposite piece to cancel the in-plane component, so $E_x$ survives.`,
+        eq(String.raw`E_y = \frac{kQy}{(y^2+a^2)^{3/2}}`),
+        eq(String.raw`E_x = -\frac{2kQa\sin(\phi/2)}{\phi\,r^3}`),
+        centre
+          ? String.raw`At the centre $E_y = 0$ and only $E_x$ is left. For a half ring that is $E = 2k\lambda/a$ — the standard result, pointing away from the arc.`
+          : String.raw`Notice $E_y$ has no $\phi$ in it: closing the arc up into a full ring changes nothing about the axial field, it only cancels $E_x$.`,
+      ],
+      canFindE: true,
+    };
+  }
   return {
     title: 'Ring on axis',
     body: [
       String.raw`Every $dq$ is the same distance from $P$, so $|d\vec{E}|$ is constant around the ring. The radial pieces cancel and the axial pieces add:`,
       eq(String.raw`E_y = \frac{kQy}{(y^2+a^2)^{3/2}}`),
-      String.raw`— the same $(\,\cdot\,)^{3/2}$ denominator as on the sheet.`,
+      String.raw`— the same $(\,\cdot\,)^{3/2}$ denominator as on the sheet. Cut the span down and watch what the closure was buying you.`,
     ],
     canFindE: true,
   };

@@ -181,7 +181,29 @@ export const SCENARIOS = {
     {
       id: 'ring',
       name: 'Ring, P on axis',
-      integral: { kind: 'ring', L: 0.8, lambda: 2e-6, d: 0.35, n: 24, x0: 0, Q: 2.5e-6, a: 0.32, y: 0.38 },
+      integral: { kind: 'ring', L: 0.8, lambda: 2e-6, d: 0.35, n: 24, x0: 0, Q: 2.5e-6, a: 0.32, y: 0.38, span: 2 * Math.PI, R: 0.35 },
+    },
+    {
+      // The classic: at the centre of a semicircle E = 2kλ/R, pointing away from the arc.
+      id: 'half-ring',
+      name: 'Half ring, P at the centre',
+      integral: { kind: 'ring', L: 0.8, lambda: 2e-6, d: 0.35, n: 24, x0: 0, Q: 2.5e-6, a: 0.32, y: 0, span: Math.PI, R: 0.35 },
+    },
+    {
+      id: 'half-ring-axis',
+      name: 'Half ring, P up the axis',
+      integral: { kind: 'ring', L: 0.8, lambda: 2e-6, d: 0.35, n: 24, x0: 0, Q: 2.5e-6, a: 0.32, y: 0.38, span: Math.PI, R: 0.35 },
+    },
+    {
+      id: 'disk',
+      name: 'Circular plate, P on axis',
+      integral: { kind: 'disk', L: 0.8, lambda: 2e-6, d: 0.35, n: 24, x0: 0, Q: 2.5e-6, a: 0.32, y: 0.4, span: 2 * Math.PI, R: 0.35 },
+    },
+    {
+      // Close to a wide plate the bracket goes to 1 and the answer stops depending on distance.
+      id: 'disk-sheet',
+      name: 'Plate up close — the sheet limit',
+      integral: { kind: 'disk', L: 0.8, lambda: 2e-6, d: 0.35, n: 24, x0: 0, Q: 2.5e-6, a: 0.32, y: 0.06, span: 2 * Math.PI, R: 1.0 },
     },
   ],
   force: [
