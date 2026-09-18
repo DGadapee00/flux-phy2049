@@ -31,8 +31,8 @@ export const M = {
   accent: 0x5ba8c9,
   match: 0x6fcfb0,
   sink: 0xd9897a,
-  qPos: 0x8f5e5c,
-  qNeg: 0x5c738f,
+  qPos: 0xc45b5b,
+  qNeg: 0x5b8fc4,
   eVec: 0xd4b07a,
   bVec: 0x6aa8b0,
   fluxIn: 0x4a6d8c,
@@ -157,15 +157,15 @@ export function makeChargeTexture(hex, sign) {
     `rgba(${Math.round(col.r * 255 * k)},${Math.round(col.g * 255 * k)},${Math.round(col.b * 255 * k)},${a})`;
   // Matte: one flat fill, a slightly darker rim for the edge, and the sign. No halo, no gloss.
   g.beginPath();
-  g.arc(S / 2, S / 2, S * 0.26, 0, Math.PI * 2);
+  g.arc(S / 2, S / 2, S * 0.3, 0, Math.PI * 2);
   g.fillStyle = rgb(1);
   g.fill();
   g.lineWidth = S * 0.018;
   g.strokeStyle = rgb(0.62);
   g.stroke();
-  g.fillStyle = '#d5dde8';
-  const bar = S * 0.02;
-  const len = S * 0.1;
+  g.fillStyle = 'rgba(230, 237, 244, 0.92)';
+  const bar = S * 0.03;
+  const len = S * 0.13;
   if (sign !== 0) g.fillRect(S / 2 - len, S / 2 - bar, 2 * len, 2 * bar);
   if (sign > 0) g.fillRect(S / 2 - bar, S / 2 - len, 2 * bar, 2 * len);
   const tex = new THREE.CanvasTexture(c);

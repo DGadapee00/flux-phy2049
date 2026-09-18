@@ -7,8 +7,8 @@
   --text-math: #d5dde8;
   --match: #6fcfb0;
   --sink: #d9897a;
-  --q-pos: #8f5e5c;
-  --q-neg: #5c738f;
+  --q-pos: #c45b5b;
+  --q-neg: #5b8fc4;
   --grid-line: rgba(90, 140, 170, 0.14);
   --e-vec: #d4b07a;
   --b-vec: #6aa8b0;
@@ -38,9 +38,9 @@
   --accent: #5ba8c9;
   --accent-soft: rgba(91, 168, 201, 0.12);
   --pos: var(--q-pos);
-  --pos-soft: rgba(143, 94, 92, 0.12);
+  --pos-soft: rgba(196, 91, 91, 0.12);
   --neg: var(--q-neg);
-  --neg-soft: rgba(92, 115, 143, 0.12);
+  --neg-soft: rgba(91, 143, 196, 0.12);
   --ok: var(--match);
   --warn: var(--sink);
   --danger: var(--sink);
@@ -335,13 +335,6 @@ body {
   color: var(--text-muted);
 }
 
-/* Destructive only — .btn.ghost is shared with Reset view, Fit view and the practice controls. */
-#del-charge {
-  color: var(--sink);
-  border-color: var(--sink);
-  background: transparent;
-}
-
 .btn.accent {
   width: 100%;
   margin-top: 4px;
@@ -358,16 +351,16 @@ body {
 }
 
 .btn.pos {
-  color: var(--q-pos);
-  background: var(--surface-2);
-  border-color: var(--border);
+  color: var(--pos);
+  background: var(--pos-soft);
+  border-color: rgba(252, 98, 85, 0.4);
   flex: 1;
 }
 
 .btn.neg {
-  color: var(--q-neg);
-  background: var(--surface-2);
-  border-color: var(--border);
+  color: var(--neg);
+  background: var(--neg-soft);
+  border-color: rgba(88, 196, 221, 0.4);
   flex: 1;
 }
 

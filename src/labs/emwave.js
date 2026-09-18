@@ -29,10 +29,6 @@ const N_ARR = 24;
 const N_CURVE = 97;
 const T_CYCLE = 2;
 const TEAL = M.bVec;
-/** How much of a visible wavelength's saturation and lightness survive the instrument palette. */
-const SPECTRAL_S = 0.62;
-const SPECTRAL_L = 0.72;
-const _hsl = { h: 0, s: 0, l: 0 };
 
 function label(html, x, y, z) {
   const el = document.createElement('div');
@@ -143,14 +139,11 @@ export default defineLab({
     const om = (2 * Math.PI) / T_CYCLE;
     const t = em.tDisp;
     const vis = em.band.id === 'vis';
-    // Still tinted by λ, as the Setup note says. Muting by mixing toward the instrument warm shifts
-    // the hue — green goes chartreuse, then khaki — so the spectral hue is kept and the saturation
-    // and lightness come down instead. 532 nm stays green, just off the neon.
-    const eColor = new THREE.Color(M.eVec);
-    if (vis) {
-      eColor.setRGB(em.rgb.r, em.rgb.g, em.rgb.b).getHSL(_hsl);
-      eColor.setHSL(_hsl.h, _hsl.s * SPECTRAL_S, _hsl.l * SPECTRAL_L);
-    }
+    // Still tinted by λ, as the Setup note says — but pulled back toward the instrument warm so a
+    // visible wavelength reads as a muted cast rather than a neon stripe.
+    const eColor = vis
+      ? new THREE.Color(em.rgb.r, em.rgb.g, em.rgb.b).lerp(new THREE.Color(M.eVec), 0.62)
+      : new THREE.Color(M.eVec);
     const bColor = new THREE.Color(TEAL);
 
     h.Ebatch.begin();
