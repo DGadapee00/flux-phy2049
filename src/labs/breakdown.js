@@ -165,7 +165,9 @@ export default defineLab({
       kv(String.raw`$V_b$ (3 MV/m rule)`, fmtV(r.Vstrength)),
       kv('The two agree to', `<span class="${matchClass(pct)}">${pct.toFixed(0)}%</span>`),
       kv(String.raw`$Q,\ C$ of the body`, `${fmtCharge(r.Q)} · ${(r.C * 1e12).toFixed(1)} pF`),
-      kv(String.raw`$U=\tfrac12 CV^2$`, fmtU(r.U)),
+      // The energy is already in the readout; this row is the plot's yellow dot as a number, and
+      // nothing else on screen reports it.
+      kv('Easiest gap for this gas', `${fmtV(r.min.V)} at ${r.min.pd.toPrecision(3)} Pa·m`),
     ].join('');
   },
   readout(state, computed) {

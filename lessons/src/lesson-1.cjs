@@ -101,6 +101,7 @@ const doc = new Document({
       bullet('Describe the polarization effect and explain why a charged object attracts a neutral one.'),
       bullet('Use Coulomb’s law quantitatively: predict a force, then check it against the simulator.'),
       bullet('Explain why the electric field is zero inside a conductor, and what grounding changes.'),
+      bullet('Explain what makes a gas break down, and what a spark’s energy actually is.'),
 
       new Paragraph({ children: [], pageBreakBefore: true }),
 
@@ -150,12 +151,26 @@ const doc = new Document({
       ...q(15, 'A charge sits inside a hollow conductor. Describe the charge that appears on the inner wall and on the outer surface, and explain why each one is there.', 5),
       ...q(16, 'Move the probe into the metal shell and record |E|. Explain what this means for someone sitting inside a car during a lightning strike.', 5),
 
+      new Paragraph({ children: [], pageBreakBefore: true }),
+
+      h1('Activity # 5 – Breakdown: why you get a shock off a doorknob'),
+      rich([{ text: 'Open ' }, { text: 'Exam 3 → Breakdown', bold: true }, { text: ' and choose the scenario ' },
+            { text: '“Doorknob spark”', bold: true }, { text: '.' }]),
+      p('You are the sphere on the left, charged to the potential shown; the plate on the right is the grounded doorknob. Two rules for when the air lets go are reported side by side: Paschen’s law, and the 3 MV/m dielectric-strength rule. They do not agree, and the lesson is in the disagreement. The gap in the picture is drawn on a log scale so it stays visible — every number on the panels is the real one.', { after: 160 }),
+      ...img('shot-breakdown.png', 'Exam 3 → Breakdown, “Doorknob spark”. 18 kV across a 4 mm gap. The plot is the Paschen curve; the yellow dot is its minimum and the red dot is where you are on it.'),
+
+      ...q(17, 'Record E in the gap, the breakdown voltage the gap needs, and the energy released. The panel also reports how far apart the two rules are here — record that too.', 4),
+      ...q(18, 'Switch to “Same charge, hand further away”. The charge on you has not changed. Explain why there is now no spark, and which quantity changed to stop it.', 4),
+      ...q(19, 'Find the energy released in Question 17 in joules. A dropped paperclip lands with roughly 1 mJ. Given that, explain why the shock hurts.', 4),
+      ...q(20, 'Read the lowest point of the Paschen curve (the yellow dot) from the panel: what is the smallest voltage that can break down a gap of air at all, and at what value of p·d? Is any voltage below that ever enough?', 4),
+      ...q(21, 'Switch to “Thin air”. Here p·d sits to the LEFT of that minimum. Widen the gap with the slider and watch the breakdown voltage. What happens, and why does the 3 MV/m rule get this case exactly backwards?', 5),
+
       p('When complete, upload this Lesson to this assignment in Canvas.', { bold: true, after: 200 }),
 
       new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Note for the instructor — what carries over and what does not'),
-      p('This is a direct conversion of Interactive Lesson # 1. It is honest about coverage: two of the three original learning objectives transfer to FLUX and are strengthened by it, and one does not transfer at all.', { after: 160 }),
+      p('This is a direct conversion of Interactive Lesson # 1. All three original learning objectives transfer, two of them with more behind them than the PhET activities had. The one genuine gap is narrow and named below.', { after: 160 }),
 
       new Table({
         columnWidths: COLS,
@@ -168,14 +183,17 @@ const doc = new Document({
               'Shown by electrons transferring from the sweater to the balloon.',
               'Covered for induction only. The sphere stays neutral while separating charge. FLUX has no triboelectric charging — nothing is rubbed against anything.'),
           row('Breakdown in air, and the factors affecting it',
-              'The spark in John Travoltage.',
-              'Not covered. FLUX does not model dielectric breakdown. Keep the PhET activity for this, or drop the objective.', { shade: 'FBE4E4' }),
+              'The spark in John Travoltage. Qualitative: charge builds, then it jumps.',
+              'Covered by the Breakdown lab (Activity # 5), and further than the original went. Paschen’s law against the 3 MV/m rule, with the threshold, the gap, the pressure and the gas all adjustable, and the energy of the spark in joules.', { shade: 'E2EFDA' }),
           row('Quantitative Coulomb’s law',
               'Not available.',
               'Added. Exact charges and coordinates can be typed in, and forces are read in newtons, so a prediction can be checked against a number.', { shade: 'E2EFDA' }),
           row('Field inside a conductor',
               'Not available.',
               'Added. A movable probe reports E = 0 inside the metal and the region it is in.', { shade: 'E2EFDA' }),
+          row('Why a gas has a breakdown minimum',
+              'Not available.',
+              'Added. The Paschen curve is plotted with the operating point on it, so the regime where a WIDER gap breaks down more easily — the reason vacuum insulates — is visible rather than asserted.', { shade: 'E2EFDA' }),
         ],
       }),
 
@@ -184,7 +202,8 @@ const doc = new Document({
       bullet('Every value the simulator reports is computed a second time by an independent method and checked against the first — 307 such checks run before each release. The two figures shown side by side in several labs (“numerical” and “analytic”) are that comparison, visible to the student.'),
       bullet('Each lab carries a practice bank. Pressing P opens generated problems for that chapter which load their own setup into the lab, so a student can be asked to predict a number and have it checked. That is not something the PhET activities can do, and it could replace or supplement the written questions above.'),
       p('', { after: 120 }),
-      p('Suggested reading of the above: use FLUX for Activities 1–4 as written, and keep John Travoltage as a short fifth activity if the breakdown objective is to be assessed.', { italics: true }),
+      p('The one thing that does not transfer: triboelectric charging. Nothing in FLUX is rubbed against anything, because nothing predicts how much charge a sweater gives a balloon — there is no equation behind it to check against, and every other number in this app is checked against an independent second calculation. Activity # 5 therefore sets the charge with a slider and says so on screen. If seeing charge transfer by rubbing is itself an objective, the PhET balloon remains the better tool for that one thing.', { after: 140 }),
+      p('Otherwise the lesson stands on its own: Activities 1–5 as written need nothing but the link.', { italics: true }),
     ],
   }],
 });
