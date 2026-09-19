@@ -11,8 +11,9 @@ Deep links work the same as locally, e.g. `#/e3/potential` or a single problem a
 The practice bank is built for phones: full-screen problem sheet, thumb-sized targets, inputs that
 don't make Safari zoom. The 3D labs render and respond to touch, but they want a laptop.
 
-Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — no lecture notes,
-worksheets, or Canvas files. **[DEPLOY.md](DEPLOY.md)** covers rebuilding and republishing, and what
+Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — none of the course's
+lecture notes, worksheets, or Canvas files. (`lessons/` holds handouts written from scratch for this
+app; nothing in it reproduces course material.) **[DEPLOY.md](DEPLOY.md)** covers rebuilding and republishing, and what
 a public build exposes. **[PROVENANCE.md](PROVENANCE.md)** accounts for exactly which course
 material the problem bank draws on, and **[ERRATA.md](ERRATA.md)** lists the nine places the app's
 physics disagrees with a printed answer key.
