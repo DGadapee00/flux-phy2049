@@ -7,6 +7,7 @@ const loaders = {
   capacitor: () => import('./capacitor.js'),
   ohm: () => import('./ohm.js'),
   power: () => import('./power.js'),
+  breakdown: () => import('./breakdown.js'),
   vectors: () => import('./vectors.js'),
   conductors: () => import('./conductors.js'),
   biot: () => import('./biot.js'),

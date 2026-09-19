@@ -3,6 +3,20 @@ import { fieldAt } from './field.js';
 import { sampleSphere, sampleCylinder, sampleCube, enclosedCharge } from './surfaces.js';
 import { integrateFlux, gaussPrediction, matchQuality } from './flux.js';
 import {
+  paschen,
+  paschenMin,
+  paschenCurve,
+  strengthVolts,
+  sparkCheck,
+  sphereSurfaceField,
+  spherePotential,
+  chargeForPotential,
+  sphereCapacitance,
+  sparkEnergy,
+  P_ATM,
+  GASES,
+} from './breakdown.js';
+import {
   linePerpField,
   linePerpNumerical,
   ringAxisField,
@@ -986,6 +1000,63 @@ console.log('\nWave optics: interference, diffraction, thin films');
   approx(m.pathChange, 0.2e-3, 1e-12, 'Michelson: the path changes by 2Δd');
   approx(sinc(0), 1, 1e-12, 'sinc(0) = 1');
   approx(sinc(Math.PI), 0, 1e-12, 'sinc(π) = 0');
+}
+
+// ---------------------------------------------------------------- gas breakdown
+{
+  for (const gas of GASES) {
+    // The closed-form minimum against a numerical search of the curve it claims to minimise.
+    const m = paschenMin(gas);
+    let bestPd = m.pd;
+    let bestV = Infinity;
+    for (let i = 0; i <= 20000; i++) {
+      const pd = 0.05 * (200 / 0.05) ** (i / 20000);
+      const V = paschen(pd, 1, gas);
+      if (V < bestV) { bestV = V; bestPd = pd; }
+    }
+    approx(bestV, m.V, 1e-4, `${gas.name}: Paschen minimum, numerical vs closed form`);
+    approx(bestPd, m.pd, 2e-3, `${gas.name}: p·d at the minimum, numerical vs closed form`);
+
+    // Breakdown depends on the product p·d, not on p and d apart.
+    approx(paschen(2 * P_ATM, 0.0005, gas), paschen(P_ATM, 0.001, gas), 1e-12, `${gas.name}: V_b depends on p·d only`);
+
+    // Above the minimum the curve rises; below it, it rises too — that is the whole point.
+    const up = paschen(P_ATM, 0.01, gas);
+    ok(up > m.V, `${gas.name}: above the minimum the curve rises`);
+    ok(paschen(m.pd * 0.25, 1, gas) > m.V, `${gas.name}: below the minimum it rises again`);
+  }
+
+  // Too few collisions to avalanche at any voltage.
+  ok(!Number.isFinite(paschen(1e-9, 1e-9)), 'vanishing p·d cannot break down at any voltage');
+
+  // Air's minimum sits in the accepted band.
+  const air = paschenMin(GASES[0]);
+  ok(air.V > 300 && air.V < 360, `air's Paschen minimum is in the 300–360 V band (got ${air.V.toFixed(0)})`);
+  ok(air.d > 5e-6 && air.d < 2e-5, 'air breaks down most easily at ~10 µm at one atmosphere');
+
+  // The sampled curve never dips under the analytic minimum.
+  const lowest = Math.min(...paschenCurve(GASES[0]).map((q) => q.V));
+  ok(lowest >= air.V - 1e-6, 'no sampled point of the curve falls below the closed-form minimum');
+}
+
+{
+  // Sphere relations, each checked against another.
+  const R = 0.4;
+  const V = 25000;
+  const Q = chargeForPotential(V, R);
+  approx(spherePotential(Q, R), V, 1e-12, 'chargeForPotential inverts spherePotential');
+  approx(sphereSurfaceField(Q, R), V / R, 1e-12, 'at the surface E = V/R');
+  approx(Q, sphereCapacitance(R) * V, 1e-12, 'Q = CV for an isolated sphere');
+  approx(sparkEnergy(sphereCapacitance(R), V), 0.5 * Q * V, 1e-12, 'spark energy = ½QV');
+
+  // The constant-strength rule is linear in the gap; Paschen is not.
+  approx(strengthVolts(0.002) / strengthVolts(0.001), 2, 1e-12, '3 MV/m rule is linear in the gap');
+  const r = paschen(P_ATM, 0.002) / paschen(P_ATM, 0.001);
+  ok(r > 1 && r < 2, 'Paschen grows with the gap but sub-linearly at atmospheric pressure');
+
+  // Both criteria agree that a big enough voltage sparks and a small enough one does not.
+  ok(sparkCheck({ V: 1e6, d: 0.001 }).sparksPaschen && sparkCheck({ V: 1e6, d: 0.001 }).sparksStrength, '1 MV across 1 mm sparks either way');
+  ok(!sparkCheck({ V: 1, d: 0.001 }).sparksPaschen && !sparkCheck({ V: 1, d: 0.001 }).sparksStrength, '1 V across 1 mm sparks neither way');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

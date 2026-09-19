@@ -205,3 +205,65 @@ function nearest(xs, x) {
   }
   return best;
 }
+
+/**
+ * The Paschen curve, log–log, with the operating point on it.
+ *
+ * Log axes because the interesting part spans four decades of p·d, and because the minimum — the
+ * whole reason the curve is worth drawing — is invisible on linear axes.
+ */
+export function drawPaschen(canvas, { curve, pd, V, min, sparks }) {
+  if (!canvas || !curve?.length) return;
+  const { ctx, w, h } = setup(canvas);
+  const L = 26;
+  const R = 8;
+  const T = 8;
+  const B = 14;
+  const xs = curve.map((q) => Math.log10(q.pd));
+  const ys = curve.map((q) => Math.log10(q.V));
+  const x0 = Math.min(...xs);
+  const x1 = Math.max(...xs);
+  const y0 = Math.min(...ys);
+  const y1 = Math.max(...ys, Math.log10(Math.max(V, 1)));
+  const X = (lg) => L + ((lg - x0) / (x1 - x0 || 1)) * (w - L - R);
+  const Y = (lg) => h - B - ((lg - y0) / (y1 - y0 || 1)) * (h - T - B);
+
+  // Decade gridlines.
+  ctx.strokeStyle = 'rgba(41,171,202,0.18)';
+  ctx.lineWidth = 1;
+  for (let d = Math.ceil(x0); d <= Math.floor(x1); d++) {
+    ctx.beginPath();
+    ctx.moveTo(X(d), T);
+    ctx.lineTo(X(d), h - B);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = BLUE;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  curve.forEach((q, i) => (i ? ctx.lineTo(X(xs[i]), Y(ys[i])) : ctx.moveTo(X(xs[i]), Y(ys[i]))));
+  ctx.stroke();
+
+  // The minimum, which is the feature worth naming.
+  if (min) {
+    ctx.strokeStyle = 'rgba(244,211,69,0.5)';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(X(Math.log10(min.pd)), Y(Math.log10(min.V)));
+    ctx.lineTo(X(Math.log10(min.pd)), h - B);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    dot(ctx, X(Math.log10(min.pd)), Y(Math.log10(min.V)), YELLOW);
+  }
+
+  if (Number.isFinite(pd) && pd > 0 && Number.isFinite(V) && V > 0) {
+    dot(ctx, X(Math.log10(pd)), Y(Math.log10(V)), sparks ? RED : WHITE);
+  }
+
+  ctx.fillStyle = WHITE;
+  ctx.globalAlpha = 0.6;
+  ctx.font = SERIF;
+  ctx.fillText('V', 6, T + 10);
+  ctx.fillText('pd', w - 22, h - 3);
+  ctx.globalAlpha = 1;
+}

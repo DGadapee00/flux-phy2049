@@ -25,7 +25,7 @@ export const EXAMS = [
     title: 'Potential, R, P',
     chapters: '38–42',
     date: 'Fri 9/25',
-    labs: ['potential', 'capacitor', 'ohm', 'power'],
+    labs: ['potential', 'capacitor', 'ohm', 'power', 'breakdown'],
     coming: [],
   },
   {
@@ -100,6 +100,7 @@ export const LAB_META = {
   capacitor: { id: 'capacitor', exam: 'e3', title: 'Capacitor' },
   ohm: { id: 'ohm', exam: 'e3', title: 'Ohm' },
   power: { id: 'power', exam: 'e3', title: 'Power' },
+  breakdown: { id: 'breakdown', exam: 'e3', title: 'Breakdown' },
 };
 
 export function examById(id) {

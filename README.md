@@ -52,7 +52,7 @@ The self-test checks the code against independent methods rather than against it
 
 ## Practice
 
-Press **P** (or the yellow **Practice** button) for the problem bank: 200 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
+Press **P** (or the yellow **Practice** button) for the problem bank: 204 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
 
 1. **Open a problem.** It loads its own setup into the matching lab — the charges, distances and coordinates exactly as the question states them, with the scene scaled to fit (the note under the problem says what one grid square is worth). Nothing is rescaled, so the lab is reading the problem you are working. While it's unsolved, the lab's numbers are hidden: the readout, the equation panel, value labels in the scene, and the arrows that would show a direction answer. The geometry stays visible.
 2. **Symbols before numbers.** Most multi-step problems open with the formula, not the arithmetic. Write it in symbols and the panel typesets it underneath as you go — what you see is what the grader read, so `a/b+c` shows a fraction over `b` alone and a missing bracket is visible while you type. A row of keys under the box inserts the problem's own symbols in their real glyphs (`λ`, `ε₀`, `μ₀`, `π`, `√`, `²`), which is the only way to enter them on a phone; typing works too, and `λ` and `lam` are the same thing. `/` opens a bracketed denominator with the caret inside it, typed or tapped, because `q/Aε₀` means (q/A)·ε₀ to a parser and `q/(Aε₀)` to a physicist. Meanwhile the panel reads the units off what you've typed and prints them under the box, `units: N/C ✓` or `units: C/m — this one should come out in N/C`. That's the exam habit of writing the problem in units first and checking it lands in the right place, confirmed while you write it. The numeric boxes stay locked until the formula is right, so the numbers go into an expression you've already justified. A practice exam turns the lock off.
@@ -77,7 +77,7 @@ The number plane is labeled in real distance and the ticks change with the view,
 |---|---|---|
 | Exam 1 · Ch V, 34–35 | `#/e1/vectors` | Vectors, Force |
 | Exam 2 · Ch 36–37 | `#/e2/gauss` | Field, Integrals, Gauss, Conductors |
-| Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Capacitor, Ohm, Power |
+| Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Capacitor, Ohm, Power, Breakdown |
 | Exam 4 · Ch 43–47 | `#/e4/circuits` | Circuits, Biot–Savart, Ampère, Mag force |
 | Exam 5 · Ch 48–52 | `#/e5/faraday` | Faraday, AC |
 | Exam 6 · Ch 53–57 | `#/e6/emwave` | EM wave, Polarization |

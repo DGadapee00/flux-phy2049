@@ -2,6 +2,7 @@
 import { problem, kase, range, choice, SIGN, num, mc, sym, K, EPS0, QE, ME, MP, POSNEG, charge, layout, texNum } from '../kit.js';
 import { DIELECTRICS } from '../../physics/capacitor.js';
 import { MATERIALS } from '../../physics/circuit.js';
+import { paschen, paschenMin, strengthVolts, sphereCapacitance, sparkEnergy, chargeForPotential, P_ATM, GASES } from '../../physics/breakdown.js';
 
 const E3 = { exam: 'e3' };
 const kap = (id) => DIELECTRICS.find((d) => d.id === id).kappa;
@@ -828,6 +829,98 @@ export default [
       kase('#3', { ask: 'kappa', factor: 4 }, { ans: 'equal' }, { key: 'C) 4' }),
     ],
   }),
+  // ----------------------------------------------------------------- 40 · breakdown
+  problem({
+    ...E3, id: 'e3.40.spark-energy', ch: '40', lab: 'breakdown', title: 'Energy in a doorknob spark', kind: 'numeric', level: 2, topics: ['capacitance', 'energy', 'breakdown'],
+    vars: { R: range(0.2, 0.6, 0.05, 'm'), V: range(5, 30, 1, 'kV', 1e3) },
+    derive: ($) => {
+      const C = sphereCapacitance($.R);
+      return { C, Q: chargeForPotential($.V, $.R), U: sparkEnergy(C, $.V) };
+    },
+    text: (T) => `Treat a person as an isolated conducting sphere of radius ${T.R} m. Scuffing across a carpet raises them to ${T.V} kV. Find their self-capacitance and the energy released when they discharge to a doorknob.`,
+    parts: [
+      sym('C_sym', '4*pi*eps0*R', { R: 'm' }, ($) => $.C, { unit: 'F', label: String.raw`$C$ as a formula` }),
+      num('C', ($) => $.C, 'F'),
+      num('U', ($) => $.U, 'J', { label: String.raw`$U$ released` }),
+    ],
+    hints: [String.raw`An isolated sphere has $C = 4\pi\varepsilon_0 R$; the stored energy is $U = \tfrac12 CV^2$.`],
+    steps: ($, f) => [
+      String.raw`$C = 4\pi\varepsilon_0 R = ${texNum($.C)}\ \text{F}$`,
+      String.raw`$U = \tfrac12 CV^2 = ${texNum($.U)}\ \text{J}$`,
+    ],
+    sim: { scenario: 'doorknob', setup: (s, $) => { s.bd = { ...s.bd, R: $.R, V: $.V }; }, read: (c) => ({ C: c.bd.C, U: c.bd.U }) },
+    cases: [kase('10 kV on a 0.35 m sphere', { R: 0.35, V: 10 }, { C: 3.894e-11, U: 1.947e-3 })],
+  }),
+  problem({
+    ...E3, id: 'e3.40.gap-holds', ch: '40', lab: 'breakdown', title: 'Will the gap break down?', kind: 'numeric', level: 2, topics: ['breakdown', 'dielectrics'],
+    vars: { V: range(2, 40, 1, 'kV', 1e3), d: range(1, 12, 1, 'mm', 1e-3) },
+    derive: ($) => ({ E: $.V / $.d, Vs: strengthVolts($.d), Vp: paschen(P_ATM, $.d) }),
+    text: (T) => `A charged body sits ${T.d} mm from a grounded plate in dry air at one atmosphere, with ${T.V} kV across the gap. Find the field in the gap, and the voltage the gap would hold on the 3 MV/m dielectric-strength rule.`,
+    parts: [
+      num('E', ($) => $.E, 'V/m', { label: String.raw`$E$ in the gap` }),
+      num('Vs', ($) => $.Vs, 'V', { label: String.raw`$V_b$ from $E_{\text{DS}}d$` }),
+      mc('sparks', [['yes', 'Yes'], ['no', 'No']], ($) => ($.E >= 3e6 ? 'yes' : 'no'), { label: 'Does it break down by that rule?' }),
+    ],
+    hints: [String.raw`A uniform gap has $E = V/d$, and the rule says it lets go once $E$ reaches the dielectric strength.`],
+    steps: ($, f) => [
+      String.raw`$E = V/d = ${texNum($.E)}\ \text{V/m}$`,
+      String.raw`$V_b = E_{\text{DS}}\,d = (3\times10^6)(${texNum($.d)}) = ${texNum($.Vs)}\ \text{V}$`,
+    ],
+    sim: { scenario: 'doorknob', setup: (s, $) => { s.bd = { ...s.bd, V: $.V, d: $.d, p: P_ATM, gas: 'air' }; }, read: (c) => ({ E: c.bd.E, Vs: c.bd.Vstrength }) },
+    cases: [kase('18 kV across 4 mm', { V: 18, d: 4 }, { E: 4.5e6, Vs: 12000, sparks: 'yes' })],
+  }),
+  problem({
+    ...E3, id: 'e3.40.paschen-min', ch: '40', lab: 'breakdown', title: 'The easiest gap to break down', kind: 'numeric', level: 3, topics: ['breakdown'],
+    vars: { gas: choice(...GASES.map((g) => [g.id, g.name.toLowerCase()])) },
+    derive: ($) => {
+      const g = GASES.find((x) => x.id === $.gas);
+      const m = paschenMin(g);
+      return { Vmin: m.V, pd: m.pd, dAtm: m.d };
+    },
+    text: (T) => `Paschen's law gives the breakdown voltage of a gap as a function of the product of pressure and separation, p·d. For ${T.gas}, find the smallest voltage that can break down a gap at all, and the value of p·d at which it happens.`,
+    parts: [
+      num('Vmin', ($) => $.Vmin, 'V', { label: String.raw`$V_{\min}$` }),
+      num('pd', ($) => $.pd, 'Pa·m', { label: String.raw`$p\,d$ at the minimum` }),
+      mc('why', [
+        ['few', 'Below it there is too little gas for an avalanche to build'],
+        ['many', 'Below it there is so much gas that electrons cannot accelerate'],
+        ['none', 'Nothing special happens below it'],
+      ], 'few', { label: 'Why does the curve turn back up to the left of the minimum?' }),
+    ],
+    hints: [String.raw`Differentiating Paschen's law gives $(pd)_{\min} = e\ln(1+1/\gamma)/A$ and $V_{\min} = (B/A)\,e\ln(1+1/\gamma)$.`],
+    steps: ($, f) => [String.raw`$V_{\min} = ${texNum($.Vmin)}\ \text{V at } pd = ${texNum($.pd)}\ \text{Pa·m}$`],
+    sim: { scenario: 'minimum', setup: (s, $) => { s.bd = { ...s.bd, gas: $.gas }; }, read: (c) => ({ Vmin: c.bd.min.V, pd: c.bd.min.pd }) },
+    cases: [kase('air', { gas: 'air' }, { Vmin: 305.3, pd: 1.115, why: 'few' })],
+  }),
+  problem({
+    ...E3, id: 'e3.40.wider-gap', ch: '40', lab: 'breakdown', title: 'A wider gap that breaks down more easily', kind: 'conceptual', level: 3, topics: ['breakdown'],
+    vars: { p: range(10, 40, 5, 'Pa') },
+    derive: ($) => {
+      const dNarrow = 0.01;
+      const dWide = 0.06;
+      return { Vn: paschen($.p, dNarrow), Vw: paschen($.p, dWide), dNarrow, dWide };
+    },
+    text: (T) => `In a chamber at ${T.p} Pa, compare a 1.0 cm gap with a 6.0 cm gap. The 3 MV/m rule says the wider gap must hold six times the voltage.`,
+    parts: [
+      mc('which', [
+        ['wide', 'The 6.0 cm gap breaks down at a LOWER voltage than the 1.0 cm gap'],
+        ['narrow', 'The 1.0 cm gap breaks down at a lower voltage, as the rule predicts'],
+        ['same', 'They break down at the same voltage'],
+      ], ($) => ($.Vw < $.Vn ? 'wide' : 'narrow'), { label: 'Which actually breaks down first?' }),
+      mc('why', [
+        ['left', 'At this pressure the narrow gap sits left of the Paschen minimum, where less gas means a harder breakdown'],
+        ['rule', 'The 3 MV/m rule is simply wrong at all pressures'],
+        ['temp', 'Temperature differences between the gaps'],
+      ], 'left', { label: 'Why?' }),
+    ],
+    hints: [String.raw`Breakdown depends on $p\,d$, not on $d$ alone. Work out $p\,d$ for each gap and compare both with the minimum at $1.115$ Pa·m.`],
+    steps: ($, f) => [
+      String.raw`$p\,d = ${texNum($.p * $.dNarrow)}$ and $${texNum($.p * $.dWide)}$ Pa·m`,
+      String.raw`$V_b = ${texNum($.Vn)}$ V and $${texNum($.Vw)}$ V`,
+    ],
+    cases: [kase('20 Pa', { p: 20 }, { which: 'wide', why: 'left' })],
+  }),
+
   // ================================================================= 41
   problem({
     ...E3, id: 'e3.41.wire-R', ch: '41', lab: 'ohm', title: 'Resistance of a wire', kind: 'numeric', topics: ['resistance', 'ohms-law'],
