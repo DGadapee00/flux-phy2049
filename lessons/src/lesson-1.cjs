@@ -1,83 +1,24 @@
 const fs = require('fs');
+const K = require('./kit.cjs');
 const {
-  Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun,
-  LevelFormat, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, ExternalHyperlink,
-} = require('docx');
-
-const FONT = 'Calibri';
-const blank = (n = 1) => Array.from({ length: n }, () => new Paragraph({ children: [] }));
-const p = (text, o = {}) => new Paragraph({
-  spacing: { after: o.after ?? 120, line: 276 },
-  alignment: o.align,
-  children: [new TextRun({ text, bold: o.bold, italics: o.italics, size: o.size ?? 22, font: FONT, color: o.color })],
-});
-const rich = (runs, o = {}) => new Paragraph({
-  spacing: { after: o.after ?? 120, line: 276 },
-  children: runs.map((r) => (r.link
-    ? new ExternalHyperlink({ link: r.link, children: [new TextRun({ text: r.text, style: 'Hyperlink', size: 22, font: FONT })] })
-    : new TextRun({ text: r.text, bold: r.bold, italics: r.italics, size: r.size ?? 22, font: FONT, color: r.color }))),
-});
-const bullet = (text, o = {}) => new Paragraph({
-  numbering: { reference: 'dot', level: 0 },
-  spacing: { after: 80, line: 276 },
-  children: [new TextRun({ text, size: 22, font: FONT, bold: o.bold })],
-});
-const h1 = (text) => new Paragraph({
-  heading: HeadingLevel.HEADING_1, spacing: { before: 280, after: 140 },
-  children: [new TextRun({ text, bold: true, size: 30, font: FONT, color: '1F3864' })],
-});
-const h2 = (text) => new Paragraph({
-  heading: HeadingLevel.HEADING_2, spacing: { before: 240, after: 120 },
-  children: [new TextRun({ text, bold: true, size: 26, font: FONT, color: '2E5496' })],
-});
-/** A numbered question with ruled answer space, like the original's blank lines. */
-const q = (n, text, lines = 3) => [
-  new Paragraph({
-    spacing: { before: 200, after: 100, line: 276 },
-    children: [
-      new TextRun({ text: `Question ${n}) `, bold: true, size: 22, font: FONT }),
-      new TextRun({ text, size: 22, font: FONT }),
-    ],
-  }),
-  ...Array.from({ length: lines }, () => new Paragraph({
-    spacing: { after: 0, line: 360 },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'BFBFBF', space: 4 } },
-    children: [new TextRun({ text: '', size: 22, font: FONT })],
-  })),
-  new Paragraph({ children: [], spacing: { after: 80 } }),
-];
-const img = (file, caption) => [
-  new Paragraph({
-    alignment: AlignmentType.CENTER, spacing: { before: 160, after: 60 },
-    children: [new ImageRun({ type: 'png', data: fs.readFileSync(__dirname + '/' + file), transformation: { width: 600, height: 360 } })],
-  }),
-  p(caption, { italics: true, size: 18, align: AlignmentType.CENTER, after: 200 }),
-];
-const cell = (text, { bold = false, shade, width } = {}) => new TableCell({
-  width: { size: width, type: WidthType.DXA },
-  shading: shade ? { type: ShadingType.CLEAR, fill: shade, color: 'auto' } : undefined,
-  margins: { top: 80, bottom: 80, left: 120, right: 120 },
-  children: [p(text, { bold, size: 20, after: 0 })],
-});
-
-const COLS = [2600, 3400, 3400];
-const row = (a, b, c, o = {}) => new TableRow({
-  children: [cell(a, { bold: o.head, shade: o.head ? 'DEEAF6' : undefined, width: COLS[0] }),
-             cell(b, { shade: o.shade, width: COLS[1] }),
-             cell(c, { shade: o.shade, width: COLS[2] })],
-});
+  Document, Paragraph, TextRun, AlignmentType, Table, BorderStyle,
+  p, rich, bullet, h1, h2, q, row, nameLine, pageFooter, numbering, pageSetup, COLS,
+} = K;
+const { Packer } = require('docx');
+const img = (file, caption) => K.img(__dirname, file, caption);
 
 const LINK = 'https://flux-phy2049.pages.dev';
 
 const doc = new Document({
-  numbering: { config: [{ reference: 'dot', levels: [{ level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.LEFT,
-    style: { paragraph: { indent: { left: 460, hanging: 260 } } } }] }] },
-  styles: { default: { document: { run: { font: FONT, size: 22 } } } },
+  numbering,
+  styles: { default: { document: { run: { font: K.FONT, size: 22 } } } },
   sections: [{
-    properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1080, bottom: 1080, left: 1080, right: 1080 } } },
+    properties: pageSetup,
+    footers: { default: pageFooter('Interactive Lesson # 1 — Static Electricity, Charge and Coulomb\u2019s Law · FLUX') },
     children: [
       p('Interactive Lessons # 1 – Static Electricity, Charge and Coulomb’s Law', { bold: true, size: 32 }),
-      p('Calculus Physics 2', { bold: true, size: 26, after: 240 }),
+      p('Calculus Physics 2', { bold: true, size: 26, after: 160 }),
+      nameLine(),
 
       rich([
         { text: 'We will be using ' },
@@ -103,7 +44,6 @@ const doc = new Document({
       bullet('Explain why the electric field is zero inside a conductor, and what grounding changes.'),
       bullet('Explain what makes a gas break down, and what a spark’s energy actually is.'),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 1 – Coulomb’s law: attraction and repulsion'),
       rich([{ text: 'Open ' }, { text: 'Exam 1 → Force', bold: true }, { text: '. Choose the scenario ' },
@@ -119,7 +59,6 @@ const doc = new Document({
       ...q(4, 'Describe what changes about the force arrows when one charge is made negative. What stays the same?'),
       ...q(5, 'Change q₂ from −1.50 μC to −3.00 μC in the Setup panel. Predict the new |F_net| from your Question 4 reading first, then record the value the simulator gives.', 4),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 2 – Polarization: a neutral conductor near a charge'),
       rich([{ text: 'Open ' }, { text: 'Exam 2 → Conductors', bold: true }, { text: ' and choose the scenario ' },
@@ -134,7 +73,6 @@ const doc = new Document({
       ...q(10, 'Move the probe to a point inside the metal and record Region and |E| from the readout. Then move it outside. State the rule this demonstrates in one sentence.', 4),
       ...q(11, 'Drag the “Distance d of q” slider to bring q closer. What happens to the induced σ, and why?'),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 3 – Grounding'),
       rich([{ text: 'Stay in ' }, { text: 'Conductors', bold: true }, { text: ' and switch the scenario to ' },
@@ -151,7 +89,6 @@ const doc = new Document({
       ...q(15, 'A charge sits inside a hollow conductor. Describe the charge that appears on the inner wall and on the outer surface, and explain why each one is there.', 5),
       ...q(16, 'Move the probe into the metal shell and record |E|. Explain what this means for someone sitting inside a car during a lightning strike.', 5),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 5 – Breakdown: why you get a shock off a doorknob'),
       rich([{ text: 'Open ' }, { text: 'Exam 3 → Breakdown', bold: true }, { text: ' and choose the scenario ' },
@@ -167,8 +104,8 @@ const doc = new Document({
 
       p('When complete, upload this Lesson to this assignment in Canvas.', { bold: true, after: 200 }),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
+      new Paragraph({ children: [], pageBreakBefore: true }),
       h1('Note for the instructor — what carries over and what does not'),
       p('This is a direct conversion of Interactive Lesson # 1. All three original learning objectives transfer, two of them with more behind them than the PhET activities had. The one genuine gap is narrow and named below.', { after: 160 }),
 

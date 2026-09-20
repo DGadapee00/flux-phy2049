@@ -31,11 +31,35 @@ node lessons/src/lesson-1.cjs
 node lessons/src/lesson-2.cjs
 ```
 
+Both are built from `src/kit.cjs`, so a formatting change lands in both.
+
 That rewrites the `.docx` in place. The scripts are CommonJS (`.cjs`) because the app's
 `package.json` sets `"type": "module"`.
 
 Screenshots live beside the script. To refresh one, run the app, set the lab up as the lesson
 describes, and capture at 1500×900 with `deviceScaleFactor: 2`.
+
+## Looking at a lesson before it goes out
+
+Read the rendered pages, not the source. Two faults got through by being invisible in the code:
+
+- **Ruled answer lines collapsed to one rule.** Word and LibreOffice merge *consecutive paragraphs
+  carrying identical borders* into a single bordered block, so a run of four identical ruled
+  paragraphs drew one line with a void above it instead of four lines to write on. `kit.cjs`
+  alternates the rule colour by one imperceptible step to keep them separate.
+- **Forced page breaks before every activity.** An activity that ran short left most of a page
+  blank. The headings carry `keepNext` instead, so pages fill and a heading still never strands at
+  the foot of one.
+
+To see the pages:
+
+```bash
+soffice --headless --convert-to pdf --outdir /tmp lessons/Interactive-Lesson-2-Field-and-Potential-FLUX.docx
+pdftoppm -png -r 70 /tmp/Interactive-Lesson-2-Field-and-Potential-FLUX.pdf /tmp/pg
+montage /tmp/pg-0[1-8].png -tile 4x2 -geometry +6+6 -label '%f' /tmp/sheet.png
+```
+
+Needs `libreoffice-writer`, `poppler-utils` and `imagemagick`.
 
 ## Checking a lesson before it goes out
 

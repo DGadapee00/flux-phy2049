@@ -1,84 +1,24 @@
 const fs = require('fs');
+const K = require('./kit.cjs');
 const {
-  Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun,
-  LevelFormat, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, ExternalHyperlink,
-} = require('docx');
-
-const FONT = 'Calibri';
-const blank = (n = 1) => Array.from({ length: n }, () => new Paragraph({ children: [] }));
-const p = (text, o = {}) => new Paragraph({
-  spacing: { after: o.after ?? 120, line: 276 },
-  alignment: o.align,
-  children: [new TextRun({ text, bold: o.bold, italics: o.italics, size: o.size ?? 22, font: FONT, color: o.color })],
-});
-const rich = (runs, o = {}) => new Paragraph({
-  spacing: { after: o.after ?? 120, line: 276 },
-  children: runs.map((r) => (r.link
-    ? new ExternalHyperlink({ link: r.link, children: [new TextRun({ text: r.text, style: 'Hyperlink', size: 22, font: FONT })] })
-    : new TextRun({ text: r.text, bold: r.bold, italics: r.italics, size: r.size ?? 22, font: FONT, color: r.color }))),
-});
-const bullet = (text, o = {}) => new Paragraph({
-  numbering: { reference: 'dot', level: 0 },
-  spacing: { after: 80, line: 276 },
-  children: [new TextRun({ text, size: 22, font: FONT, bold: o.bold })],
-});
-const h1 = (text) => new Paragraph({
-  heading: HeadingLevel.HEADING_1, spacing: { before: 280, after: 140 },
-  children: [new TextRun({ text, bold: true, size: 30, font: FONT, color: '1F3864' })],
-});
-const h2 = (text) => new Paragraph({
-  heading: HeadingLevel.HEADING_2, spacing: { before: 240, after: 120 },
-  children: [new TextRun({ text, bold: true, size: 26, font: FONT, color: '2E5496' })],
-});
-/** A numbered question with ruled answer space, like the original's blank lines. */
-const q = (n, text, lines = 3) => [
-  new Paragraph({
-    spacing: { before: 200, after: 100, line: 276 },
-    children: [
-      new TextRun({ text: `Question ${n}) `, bold: true, size: 22, font: FONT }),
-      new TextRun({ text, size: 22, font: FONT }),
-    ],
-  }),
-  ...Array.from({ length: lines }, () => new Paragraph({
-    spacing: { after: 0, line: 360 },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'BFBFBF', space: 4 } },
-    children: [new TextRun({ text: '', size: 22, font: FONT })],
-  })),
-  new Paragraph({ children: [], spacing: { after: 80 } }),
-];
-const img = (file, caption) => [
-  new Paragraph({
-    alignment: AlignmentType.CENTER, spacing: { before: 160, after: 60 },
-    children: [new ImageRun({ type: 'png', data: fs.readFileSync(__dirname + '/' + file), transformation: { width: 600, height: 360 } })],
-  }),
-  p(caption, { italics: true, size: 18, align: AlignmentType.CENTER, after: 200 }),
-];
-const cell = (text, { bold = false, shade, width } = {}) => new TableCell({
-  width: { size: width, type: WidthType.DXA },
-  shading: shade ? { type: ShadingType.CLEAR, fill: shade, color: 'auto' } : undefined,
-  margins: { top: 80, bottom: 80, left: 120, right: 120 },
-  children: [p(text, { bold, size: 20, after: 0 })],
-});
-
-const COLS = [2600, 3400, 3400];
-const row = (a, b, c, o = {}) => new TableRow({
-  children: [cell(a, { bold: o.head, shade: o.head ? 'DEEAF6' : undefined, width: COLS[0] }),
-             cell(b, { shade: o.shade, width: COLS[1] }),
-             cell(c, { shade: o.shade, width: COLS[2] })],
-});
-
+  Document, Paragraph, TextRun, AlignmentType, Table, BorderStyle,
+  p, rich, bullet, h1, h2, q, row, nameLine, pageFooter, numbering, pageSetup, COLS,
+} = K;
+const { Packer } = require('docx');
+const img = (file, caption) => K.img(__dirname, file, caption);
 
 const LINK = 'https://flux-phy2049.pages.dev';
 
 const doc = new Document({
-  numbering: { config: [{ reference: 'dot', levels: [{ level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.LEFT,
-    style: { paragraph: { indent: { left: 460, hanging: 260 } } } }] }] },
-  styles: { default: { document: { run: { font: FONT, size: 22 } } } },
+  numbering,
+  styles: { default: { document: { run: { font: K.FONT, size: 22 } } } },
   sections: [{
-    properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1080, bottom: 1080, left: 1080, right: 1080 } } },
+    properties: pageSetup,
+    footers: { default: pageFooter('Interactive Lesson # 2 — The Electric Field and Potential · FLUX') },
     children: [
       p('Interactive Lessons # 2 – The Electric Field and Potential', { bold: true, size: 32 }),
-      p('Calculus Physics 2', { bold: true, size: 26, after: 240 }),
+      p('Calculus Physics 2', { bold: true, size: 26, after: 160 }),
+      nameLine(),
 
       rich([
         { text: 'We will be using ' },
@@ -105,7 +45,6 @@ const doc = new Document({
       bullet('Determine how plate area and plate separation control the capacitance of a capacitor.'),
       bullet('Describe how charge, field and potential change as a capacitor is charged, isolated, and discharged.'),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 1 – The dipole: equipotentials and field lines'),
       rich([{ text: 'Open ' }, { text: 'Exam 3 → Potential', bold: true }, { text: ' and choose the scenario ' },
@@ -119,7 +58,6 @@ const doc = new Document({
       ...q(3, 'Where are the equipotentials packed closest together, and where are they most spread out? Using E = −dV/dx, explain what the spacing of the equipotentials is telling you about the field strength.', 5),
       ...q(4, 'Put the probe somewhere between the charges and read both E_x and −dV/dx from the left panel. They are computed by two completely different routes. Record both and state how close they are.', 4),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 2 – Zero potential is not zero field'),
       p('Stay in the same scenario. Type the probe position directly into the P row of the Setup panel (x, y, z in centimetres) so you can place it exactly.', { after: 160 }),
@@ -131,7 +69,6 @@ const doc = new Document({
       ...q(9, 'Now change q₁ to +3.00 μC in the Setup panel and hunt for the new zero by moving the probe along the axis. Record the x you find. Does it confirm your prediction? (It should land near x = 9 cm.)', 4),
       ...q(10, 'For two unlike charges the zero of potential sits where kq₁/r₁ = k|q₂|/r₂. Use that to show by hand that the ratio r₁/r₂ must equal 2 for the charges in Question 9, and check that the position you recorded agrees.', 5),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 3 – Three charges on a line'),
       rich([{ text: 'Set q₁ back to ' }, { text: '+1.50 μC', bold: true },
@@ -148,7 +85,6 @@ const doc = new Document({
       ...q(14, 'At the point in Question 12, explain in terms of the three individual field vectors why they cancel. Which two oppose each other, and what is the third one doing?', 5),
       ...q(15, 'Set the test charge q to +1.00 μC. Move the probe to the zero-potential point from Question 11 and record PE_E. Then move it to the zero-field point from Question 12 and record PE_E again. Which location would a positive charge released from rest actually move away from, and why is that the field and not the potential energy alone?', 5),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 4 – Capacitance: what area and separation do'),
       rich([{ text: 'Open ' }, { text: 'Exam 3 → Capacitor', bold: true }, { text: ' and choose the scenario ' },
@@ -161,7 +97,6 @@ const doc = new Document({
       ...q(18, 'Put d back to 2.0 mm. Now halve the Plate area A from 1.50 m² to 0.75 m² and record C, q, E and U. Which of the four behaved differently from the separation test, and why?', 5),
       ...q(19, 'The field between the plates is E = V/d. Use that to explain why changing the area left E alone while changing the separation did not.', 5),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 5 – Disconnect the battery'),
       rich([{ text: 'Reset the scenario to ' }, { text: '“Ch 40: 1.5 m², 2 mm, 12 V”', bold: true },
@@ -175,20 +110,19 @@ const doc = new Document({
       ...q(22, 'Still isolated, put d back to 2.0 mm and halve the area A to 0.75 m². This time E does change. Using E = σ/(κε₀) with σ = q/A, explain why changing the area changes the field but changing the separation does not.', 5),
       ...q(23, 'The stored energy U went up when you pulled the isolated plates apart, with no battery connected to supply it. Where did that energy come from? (Consider that the two plates carry opposite charges.)', 5),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
       h1('Activity # 6 – Stored energy, dielectrics and discharge'),
       p('Return to Battery (V fixed) and the scenario “Ch 40: 1.5 m², 2 mm, 12 V”.', { after: 160 }),
 
       ...q(24, 'Change the Dielectric from Air to “Nylon (Ch 40 example κ = 410)” with the battery still connected. Record κ, C, q and U. By what factor did each change, and which quantity did not move at all?', 5),
       ...q(25, 'Set the Dielectric back to Air (dry) and the Separation to 1.0 mm. The panel reports V_bd, the voltage this gap can hold before the air breaks down, and a Breakdown row. Record V_bd, then raise the voltage until Breakdown turns red and record the voltage at which it happened. Air breaks down at about 3 MV/m — check that V_bd matches that figure for a 1.0 mm gap.', 6),
-      ...q(26, 'A capacitor discharged through a light bulb makes it glow, and the glow fades. Using U = ½CV² and q = CV, explain what is happening to q, to V and to U as it discharges, and why the bulb dims rather than going out all at once.', 6),
-      ...q(27, 'A capacitor charged to −1.5 V stores the same energy as one charged to +1.5 V. Explain why, and state what is physically different between the two.', 5),
+      ...q(26, 'A capacitor discharged through a light bulb makes it glow, and the glow fades. Using U = ½CV² and q = CV, explain what is happening to q, to V and to U as it discharges, and why the bulb dims rather than going out all at once.', 5),
+      ...q(27, 'A capacitor charged to −1.5 V stores the same energy as one charged to +1.5 V. Explain why, and state what is physically different between the two.', 4),
 
       p('When complete, upload this Lesson to this assignment in Canvas.', { bold: true, after: 200 }),
 
-      new Paragraph({ children: [], pageBreakBefore: true }),
 
+      new Paragraph({ children: [], pageBreakBefore: true }),
       h1('Note for the instructor — what carries over and what does not'),
       p('This is a direct conversion of Interactive Lesson # 2. All four original learning objectives transfer. Two activities do more than the PhET versions did; one feature of the PhET capacitor does not exist here and is named below.', { after: 160 }),
 
