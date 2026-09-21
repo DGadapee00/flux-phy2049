@@ -52,14 +52,56 @@
     text-overflow: ellipsis;
   }
 
-  /* Practice moves up beside the title — it is the primary action on a phone. */
-  .practice-row {
+  /*
+   * One header row instead of two: mark, title, the exam picker, then Practice.
+   *
+   * The exam tabs become a dropdown here, the same control as the lab's Scenario picker. As a
+   * scrolling strip they needed roughly 100px to show two of eight, and at 320px they collapsed to
+   * under 40px with the selected exam off screen entirely. A select is one compact control at any
+   * width, and it always shows where you are. The tab strip stays on desktop, where all eight fit.
+   *
+   * The row this replaces cost 47px of an 844px screen, on which the scene was getting 48%.
+   */
+  .brand {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+  }
+
+  .brand-text {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  /* "Exam 2" repeats the picker sitting beside it; the chapter range is not on screen elsewhere. */
+  .brand-text .sub-course {
+    display: none;
+  }
+
+  .exam-tabs {
+    display: none;
+  }
+
+  .exam-select {
+    display: block;
     grid-column: 3;
+    grid-row: 1;
+    align-self: center;
+    margin-left: 10px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .practice-row {
+    grid-column: 4;
     grid-row: 1;
     align-self: center;
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
+  }
+
+  .lab-tabs {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 
   .practice-stat,
@@ -91,11 +133,6 @@
   .toggles::-webkit-scrollbar,
   .readout::-webkit-scrollbar {
     display: none;
-  }
-
-  .exam-tabs {
-    margin-top: 6px;
-    padding-top: 6px;
   }
 
   .exam-tab,

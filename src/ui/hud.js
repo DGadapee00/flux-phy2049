@@ -1,5 +1,5 @@
 import { EXAMS, examById, LAB_META } from '../data/catalog.js';
-import { setLawEl, prose, mathText } from './shared.js';
+import { setLawEl, prose, mathText, escapeHTML } from './shared.js';
 import { drawVx, drawAC, drawVI, drawPaschen } from './plot.js';
 import { resetChargeListSig } from '../labs/charges-ui.js';
 import { sceneScale, workPlane, lenLabel, PLANE_AXES } from '../engine/frame.js';
@@ -24,12 +24,43 @@ export function createHUD(api) {
     $('scenario').closest('label').hidden = list.length === 0;
   }
 
+  /**
+   * Keep the selected tab on screen. Both strips scroll sideways on a phone and neither fits, so a
+   * freshly rendered strip can easily be showing everything except where you are.
+   */
+  function revealActive(el) {
+    const on = el?.querySelector('.active');
+    if (!on) return;
+    /*
+     * Measured with rects, not offsetLeft: offsetLeft is relative to the offsetParent, which here
+     * is the header, not the strip. Using it scrolled the strip by however far along the header the
+     * strip happened to start — putting the selected exam off screen rather than into view.
+     */
+    const box = el.getBoundingClientRect();
+    const tab = on.getBoundingClientRect();
+    const pad = 12;
+    const left = tab.left - box.left + el.scrollLeft - pad;
+    const right = left + tab.width + pad * 2;
+    if (left < el.scrollLeft) el.scrollLeft = Math.max(0, left);
+    else if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth;
+  }
+
   function renderExamTabs(examId) {
     $('exam-tabs').innerHTML = EXAMS.map((e) => {
       const on = e.id === examId;
       const label = e.id === 'wave' ? 'W' : String(e.n);
       return `<button type="button" class="exam-tab${on ? ' active' : ''}" data-exam="${e.id}" aria-selected="${on}" title="Exam ${e.n}: ${e.title}">${label}</button>`;
     }).join('');
+    revealActive($('exam-tabs'));
+    // The phone shows this instead of the strip; both are driven from the same EXAMS list.
+    const sel = $('exam-select');
+    if (sel) {
+      sel.innerHTML = EXAMS.map((e) => {
+        const label = e.id === 'wave' ? 'Waves' : `Exam ${e.n}`;
+        return `<option value="${e.id}">${label} · Ch ${escapeHTML(e.chapters)}</option>`;
+      }).join('');
+      sel.value = examId;
+    }
   }
 
   function renderLabTabs(exam, labId) {
@@ -46,6 +77,7 @@ export function createHUD(api) {
       .map((t) => `<button type="button" class="tab soon" disabled title="Coming soon">${t}</button>`)
       .join('');
     $('lab-tabs').innerHTML = built + soon;
+    revealActive($('lab-tabs'));
   }
 
   function renderToggles(lab, state) {
@@ -118,9 +150,14 @@ export function createHUD(api) {
     const labId = lab?.id || '';
     renderExamTabs(examId);
     renderLabTabs(exam, labId);
-    $('brand-sub').textContent = exam
-      ? `PHY 2049 · Exam ${exam.n === 8 ? 'final' : exam.n} · Ch ${exam.chapters}`
-      : 'PHY 2049';
+    /*
+     * Two spans so the phone can drop the first. "Exam 2" repeats the highlighted exam tab, which
+     * on a phone now sits in the same row — the chapter range is the part that is not on screen
+     * anywhere else.
+     */
+    $('brand-sub').innerHTML = exam
+      ? `<span class="sub-course">PHY 2049 · Exam ${exam.n === 8 ? 'final' : exam.n} · </span><span class="sub-ch">Ch ${escapeHTML(exam.chapters)}</span>`
+      : '<span class="sub-course">PHY 2049</span>';
     $('setup-hint').innerHTML = mathText(lab?.hint || exam?.coming?.join(' · ') || '');
     $('hint-action').innerHTML = mathText(lab?.hint || '');
     $('hint-orbit').textContent = lab && lab.orbit === false ? 'Rotation locked' : 'Drag to orbit';
@@ -147,6 +184,11 @@ export function createHUD(api) {
     if (state?.scenarioId) $('scenario').value = state.scenarioId;
   }
 
+  $('exam-select')?.addEventListener('change', (e) => {
+    Promise.resolve(api.setExam(e.target.value)).catch((err) => {
+      console.error('FLUX: could not open that exam', err);
+    });
+  });
   $('exam-tabs').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-exam]');
     if (btn) api.setExam(btn.dataset.exam);

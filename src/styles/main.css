@@ -150,6 +150,19 @@ body {
   border-top: 1px solid var(--border);
 }
 
+/* Hidden on desktop, where all eight tabs fit; mobile.css shows it instead of the strip. */
+.exam-select {
+  display: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-height: 34px;
+}
+
 .exam-tab {
   flex: 1;
   min-width: 0;
