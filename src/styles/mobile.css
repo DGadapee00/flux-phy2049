@@ -478,6 +478,15 @@
     left: 10px;
   }
 
+  /*
+   * The last rows were ending up under the browser's bottom bar: you could rubber-band past them,
+   * but at rest they sat behind the chrome. env(safe-area-inset-bottom) does not cover this — that
+   * is the home indicator, not the toolbar.
+   *
+   * (100lvh - 100svh) IS the toolbar: the large viewport is measured with it retracted and the
+   * small one with it shown, so their difference is exactly how much it can cover. It collapses to
+   * zero on a browser that has no such bar, so nothing gains dead space that does not need it.
+   */
   .problems {
     top: var(--hdr);
     left: 0;
@@ -487,7 +496,7 @@
     max-height: none;
     border-radius: 0;
     border-width: 1px 0 0;
-    padding: 0 14px calc(20px + env(safe-area-inset-bottom));
+    padding: 0 14px calc(28px + env(safe-area-inset-bottom) + (100lvh - 100svh));
     background: var(--panel-solid);
   }
 
@@ -504,7 +513,7 @@
     max-height: none;
     border-radius: 0;
     border-width: 1px 0 0;
-    padding: 4px 14px calc(20px + env(safe-area-inset-bottom));
+    padding: 4px 14px calc(28px + env(safe-area-inset-bottom) + (100lvh - 100svh));
     background: var(--panel-solid);
   }
 
