@@ -48,6 +48,10 @@ export function planeCamera(state) {
  *                             meters, when it is not made of charges (a rod's half-length, say)
  * cameraFor(state)          — optional per-scenario camera; falls back to `camera`
  * applyScenario(id, state)  — optional; otherwise data/scenarios.js applyScenario(lab.id, …)
+ *
+ * A lab's units reference is not declared here: the quantities it puts on screen are listed in
+ * data/quantities.js (LAB_UNITS), beside the catalog. A lab with no entry there fails the
+ * self-test.
  * afterFrame(dt, state, computed, ctx) — per-frame animation that does not need a recompute
  */
 export function defineLab(spec) {

@@ -1,4 +1,7 @@
 import { K, EPS0, QE, MU0, C } from './constants.js';
+import { QUANTITIES, LAB_UNITS, baseUnits } from '../data/quantities.js';
+import { parseUnit } from './units.js';
+import { EXAMS } from '../data/catalog.js';
 import { fieldAt } from './field.js';
 import { sampleSphere, sampleCylinder, sampleCube, enclosedCharge } from './surfaces.js';
 import { integrateFlux, gaussPrediction, matchQuality } from './flux.js';
@@ -1057,6 +1060,45 @@ console.log('\nWave optics: interference, diffraction, thin films');
   // Both criteria agree that a big enough voltage sparks and a small enough one does not.
   ok(sparkCheck({ V: 1e6, d: 0.001 }).sparksPaschen && sparkCheck({ V: 1e6, d: 0.001 }).sparksStrength, '1 MV across 1 mm sparks either way');
   ok(!sparkCheck({ V: 1, d: 0.001 }).sparksPaschen && !sparkCheck({ V: 1, d: 0.001 }).sparksStrength, '1 V across 1 mm sparks neither way');
+}
+
+{
+  console.log('units reference');
+  /*
+   * The reference guide states a unit for every quantity it lists. Those strings are fed to
+   * parseUnit(), the same engine that grades symbolic answers, so a typo here would show a student
+   * a unit the grader does not recognise. Check every one, and check the two catalogs agree.
+   */
+  let bad = 0;
+  for (const [id, qty] of Object.entries(QUANTITIES)) {
+    try {
+      parseUnit(qty.unit);
+    } catch (e) {
+      bad += 1;
+      console.log(`        ${id}: unit "${qty.unit}" does not parse — ${e.message}`);
+    }
+    if (!qty.name) bad += 1;
+  }
+  ok(bad === 0, 'every quantity declares a unit the engine can parse');
+
+  let missing = 0;
+  for (const [lab, ids] of Object.entries(LAB_UNITS)) {
+    for (const id of ids) if (!QUANTITIES[id]) { missing += 1; console.log(`        ${lab} lists unknown quantity "${id}"`); }
+  }
+  ok(missing === 0, 'every lab lists quantities that exist');
+
+  const labs = EXAMS.flatMap((e) => e.labs);
+  const uncovered = labs.filter((l) => !LAB_UNITS[l] || !LAB_UNITS[l].length);
+  ok(uncovered.length === 0, `every lab has a units list (missing: ${uncovered.join(', ') || 'none'})`);
+
+  const strays = Object.keys(LAB_UNITS).filter((l) => !labs.includes(l));
+  ok(strays.length === 0, `no units list for a lab that does not exist (${strays.join(', ') || 'none'})`);
+
+  // Base-SI expansion is derived, so spot-check it against what the course writes.
+  ok(baseUnits('V') === 'kg·m²·s⁻³·A⁻¹', 'V in base units');
+  ok(baseUnits('C') === 's·A', 'C in base units');
+  ok(baseUnits('F') === 'kg⁻¹·m⁻²·s⁴·A²', 'F in base units');
+  ok(baseUnits('1') === 'dimensionless', 'a pure number has no base units');
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

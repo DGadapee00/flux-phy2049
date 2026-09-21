@@ -1182,3 +1182,94 @@ select:focus-visible {
   }
 }
 
+
+/* ---------- Units reference ---------- */
+
+/*
+ * Sits in the same column as the Practice panel and opens the same way; the two close each other.
+ * Reference you read while working, so it is scrollable and does not cover the scene's centre.
+ */
+.units-ref {
+  top: var(--below-brand, 230px);
+  left: 16px;
+  width: min(384px, calc(100vw - 360px));
+  max-height: calc(100vh - var(--below-brand, 230px) - 118px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px 16px;
+  background: rgba(14, 15, 18, 0.94);
+}
+
+body.units-open #eq-panel {
+  display: none;
+}
+
+/* Same as the Practice panel: keep the lab's colour legend clear of the column. */
+body.units-open .legend {
+  left: calc(min(384px, 100vw - 360px) + 32px);
+}
+
+.ur-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ur-row {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 9px 2px;
+  border-top: 1px solid var(--border);
+}
+
+.ur-row:first-child {
+  border-top: 0;
+}
+
+.ur-sym {
+  font-size: 17px;
+  color: var(--accent, #e8c16a);
+  padding-top: 1px;
+  overflow: hidden;
+}
+
+.ur-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ur-unit {
+  font-size: 13px;
+  margin-top: 1px;
+}
+
+.ur-eq {
+  opacity: 0.62;
+  margin-left: 4px;
+}
+
+.ur-base {
+  font-size: 11px;
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+.ur-from {
+  margin-top: 5px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Constants are given, not measured — dimmer so the measured quantities read first. */
+.ur-const .ur-name {
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.ur-foot {
+  margin-top: 10px;
+  opacity: 0.6;
+}

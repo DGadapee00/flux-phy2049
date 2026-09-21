@@ -424,6 +424,31 @@
     background: var(--panel-solid);
   }
 
+  /*
+   * The units reference takes the whole screen below the header, like Practice. The desktop width
+   * is min(384px, 100vw - 360px), which on a 390px phone comes out at 30px.
+   */
+  .units-ref {
+    top: var(--hdr);
+    left: 0;
+    right: 0;
+    width: auto;
+    height: calc(100dvh - var(--hdr));
+    max-height: none;
+    border-radius: 0;
+    border-width: 1px 0 0;
+    padding: 4px 14px calc(20px + env(safe-area-inset-bottom));
+    background: var(--panel-solid);
+  }
+
+  body.units-open .legend,
+  body.units-open .readout,
+  body.units-open .sheet-switch,
+  body.units-open .controls,
+  body.units-open .toggles {
+    display: none;
+  }
+
   body.problem-blind .problems {
     max-height: none;
   }

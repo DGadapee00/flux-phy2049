@@ -12,6 +12,9 @@ import { addChargeTo, deleteSelectedFrom, setChargeQOn, setCoordOn } from './lab
 import { setFrame, refit, defaultView, sceneScale, workPlane } from './engine/frame.js';
 import { applyProblem } from './problems/simbridge.js';
 import { createPractice } from './ui/problems.js';
+import { createUnits } from './ui/units.js';
+// declared before use by createPractice's callbacks
+let units;
 import { ANSWER_LAYER } from './scene/manim.js';
 
 // Which build this is, so "is the live site current?" has an answer that isn't a guess.
@@ -78,7 +81,11 @@ const hud = createHUD({
   toggleShow,
   toggleSweep,
   handleKey,
-  togglePractice: () => practice.toggle(),
+  togglePractice: () => {
+    units?.close(); // they share the left column
+    practice.toggle();
+  },
+  toggleUnits: () => units.toggle(),
   escape: () => practice.escape(),
   bump,
   slice,
@@ -281,6 +288,7 @@ async function setLab(labId) {
   app.examId = lab.exam || exam.id;
   app.labId = labId;
   app.lab = lab;
+  units?.onLab(labId);
   if (!app.handles[labId]) app.handles[labId] = lab.init(ctx);
   if (!app.slices[labId]) {
     const s = lab.defaultState();
@@ -329,6 +337,11 @@ async function openProblemInApp(inst, { push = true, query = true } = {}) {
     loadingProblem = false;
   }
 }
+
+units = createUnits({
+  // One overlay at a time: they share the left column.
+  onOpen: () => practice?.close?.(),
+});
 
 practice = createPractice({
   openInLab: openProblemInApp,

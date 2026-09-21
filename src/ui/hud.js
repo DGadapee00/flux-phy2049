@@ -192,6 +192,10 @@ export function createHUD(api) {
       api.togglePractice();
       return;
     }
+    if (e.key === 'u' || e.key === 'U') {
+      api.toggleUnits();
+      return;
+    }
     if (e.key === '[') {
       api.shiftExam(-1);
       return;
