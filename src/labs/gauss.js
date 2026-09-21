@@ -226,7 +226,11 @@ export default defineLab({
         '',
       ],
       [closed ? 'Match' : 'Tiles', closed ? `${g.match.pct.toFixed(1)}%` : `${g.samples.length} dA`, closed ? matchClass(g.match.pct) : ''],
-      ['Enclosed', closed ? `${fmtCharge(g.Qin)} · ${g.nIn} in / ${g.nOut} out` : 'open surface', ''],
+      /*
+       * The census goes in the label, which is set smaller: "+1.00 μC · 1 in / 0 out" as a value
+       * was too wide for its quarter of the readout on anything narrower than a 1920px window.
+       */
+      [closed ? `Enclosed · ${g.nIn} in, ${g.nOut} out` : 'Enclosed', closed ? fmtCharge(g.Qin) : 'open surface', ''],
     ]);
   },
   coach(state, computed) {

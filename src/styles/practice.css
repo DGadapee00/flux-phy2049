@@ -54,9 +54,13 @@ body.practice-open #eq-panel {
   display: none;
 }
 
-/* Keep lab legends clear of the panel. */
+/*
+ * Keep lab legends clear of the panel. Sliding the legend right puts it over the readout, which
+ * starts at the same edge on a wide window, so it lifts clear of that at the same time.
+ */
 body.practice-open .legend {
   left: calc(min(384px, 100vw - 360px) + 32px);
+  bottom: 124px;
 }
 
 .readout:empty {

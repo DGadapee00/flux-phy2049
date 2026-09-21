@@ -1228,9 +1228,10 @@ body.units-open #eq-panel {
   display: none;
 }
 
-/* Same as the Practice panel: keep the lab's colour legend clear of the column. */
+/* Same as the Practice panel: clear of the column, and above the readout it would otherwise meet. */
 body.units-open .legend {
   left: calc(min(384px, 100vw - 360px) + 32px);
+  bottom: 124px;
 }
 
 .ur-list {
@@ -1296,4 +1297,64 @@ body.units-open .legend {
 .ur-foot {
   margin-top: 10px;
   opacity: 0.6;
+}
+
+/* ---------- Tablet-width windows ---------- */
+
+/*
+ * Wide enough for the desktop layout, too narrow for the margins it assumes. An iPad in portrait
+ * is 744–834px: above the phone breakpoint, so it gets three columns, but the readout's band
+ * between the side panels comes out at 100vw − 748px, which is 72px on an 820px screen. Values
+ * were being clipped to "1.13×1…".
+ *
+ * The toggles ran into the brand for the same reason. Adding the Units button grew the brand from
+ * 300px to 379px, which is the whole overlap at 820 and 834 and most of it at 744 — dropping the
+ * problem count and the keyboard chips, neither of which means anything on a touch screen, puts it
+ * back to its 300px minimum.
+ */
+@media (min-width: 721px) and (max-width: 1100px) {
+  .practice-stat,
+  .practice-btn kbd {
+    display: none;
+  }
+
+  /* Leave the brand its 300px plus a gap, whatever the toggle row is carrying. */
+  .toggles {
+    max-width: calc(100vw - 340px);
+  }
+
+
+
+}
+
+/*
+ * The readout's band needs widening further up than the overlap does. Between the side panels it
+ * is 100vw − 748px, so an iPad in landscape at 1133px still only gets 385px for four values. At
+ * the bottom of the window the only thing beside it is the legend, which ends at 192px, so it can
+ * start there instead and keep its 920px cap for wider windows.
+ */
+@media (min-width: 721px) and (max-width: 1280px) {
+  .readout {
+    left: 208px;
+    right: 16px;
+  }
+
+  /*
+   * With a panel open the legend has nowhere to go. Sliding it right lands it on the readout, which
+   * now runs the full width, and in portrait the readout wraps to two rows so no fixed lift clears
+   * it. Phones already drop the legend while a panel is open; tablets do the same.
+   */
+  body.practice-open .legend,
+  body.units-open .legend {
+    display: none;
+  }
+
+  /*
+   * Stop the Setup column short of the readout, which now runs underneath it. Setup scrolls, so
+   * the lost height costs nothing. This has to cover the same range as the rule above: capping it
+   * only to 1100 while the readout widened to 1280 left the two overlapping in between.
+   */
+  .controls {
+    max-height: calc(100vh - 326px);
+  }
 }
