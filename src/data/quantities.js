@@ -10,11 +10,11 @@ import { parseUnit } from '../physics/units.js';
 
 export const QUANTITIES = {
   // --- charge, force, field ---
-  q: { sym: 'q', name: 'Charge', unit: 'C', unitName: 'coulomb', equals: 'A·s', from: 'q = It' },
-  F: { sym: '\\vec F', name: 'Force', unit: 'N', unitName: 'newton', equals: 'kg·m/s²', from: 'F = \\dfrac{kq_1q_2}{r^2}' },
+  q: { sym: 'q', name: 'Charge', unit: 'C', unitName: 'coulomb', equals: '', from: 'q = It' },
+  F: { sym: '\\vec F', name: 'Force', unit: 'N', unitName: 'newton', equals: '', from: 'F = \\dfrac{kq_1q_2}{r^2}' },
   E: { sym: '\\vec E', name: 'Electric field', unit: 'N/C', unitName: 'newton per coulomb', equals: 'V/m', from: 'E = \\dfrac{F}{q} = -\\dfrac{dV}{dx}' },
-  k: { sym: 'k', name: 'Coulomb constant', unit: 'N*m^2/C^2', unitName: '', equals: '8.99×10⁹ N·m²/C²', from: 'k = \\dfrac{1}{4\\pi\\varepsilon_0}', constant: true },
-  eps0: { sym: '\\varepsilon_0', name: 'Permittivity of free space', unit: 'C^2/(N*m^2)', unitName: '', equals: '8.85×10⁻¹² C²/(N·m²)', from: '\\varepsilon_0 = \\dfrac{1}{4\\pi k}', constant: true },
+  k: { sym: 'k', name: 'Coulomb constant', unit: 'N*m^2/C^2', unitName: '', equals: '8.99×10⁹', from: 'k = \\dfrac{1}{4\\pi\\varepsilon_0}', constant: true },
+  eps0: { sym: '\\varepsilon_0', name: 'Permittivity of free space', unit: 'C^2/(N*m^2)', unitName: '', equals: '8.85×10⁻¹²', from: '\\varepsilon_0 = \\dfrac{1}{4\\pi k}', constant: true },
 
   // --- energy and potential ---
   U: { sym: 'U_E', name: 'Electric potential energy', unit: 'J', unitName: 'joule', equals: 'N·m', from: 'U_E = qV' },
@@ -27,7 +27,6 @@ export const QUANTITIES = {
   A: { sym: 'A', name: 'Area', unit: 'm^2', unitName: '', equals: '', from: '' },
   sigma: { sym: '\\sigma', name: 'Surface charge density', unit: 'C/m^2', unitName: '', equals: '', from: '\\sigma = \\dfrac{q}{A}' },
   lambda: { sym: '\\lambda', name: 'Linear charge density', unit: 'C/m', unitName: '', equals: '', from: '\\lambda = \\dfrac{q}{L}' },
-  rho: { sym: '\\rho', name: 'Volume charge density', unit: 'C/m^3', unitName: '', equals: '', from: '\\rho = \\dfrac{q}{\\mathcal{V}}' },
   phiE: { sym: '\\Phi_E', name: 'Electric flux', unit: 'N*m^2/C', unitName: '', equals: 'V·m', from: '\\Phi_E = \\oint \\vec E \\cdot d\\vec A = \\dfrac{q_{enc}}{\\varepsilon_0}' },
 
   // --- capacitance ---
@@ -44,7 +43,7 @@ export const QUANTITIES = {
 
   // --- magnetism ---
   B: { sym: '\\vec B', name: 'Magnetic field', unit: 'T', unitName: 'tesla', equals: 'N/(A·m) = Wb/m²', from: 'F = qvB\\sin\\theta' },
-  mu0: { sym: '\\mu_0', name: 'Permeability of free space', unit: 'T*m/A', unitName: '', equals: '4π×10⁻⁷ T·m/A', from: '\\mu_0 = 4\\pi\\times10^{-7}', constant: true },
+  mu0: { sym: '\\mu_0', name: 'Permeability of free space', unit: 'T*m/A', unitName: '', equals: '4π×10⁻⁷', from: '\\mu_0 = 4\\pi\\times10^{-7}', constant: true },
   phiB: { sym: '\\Phi_B', name: 'Magnetic flux', unit: 'Wb', unitName: 'weber', equals: 'T·m²', from: '\\Phi_B = \\int \\vec B \\cdot d\\vec A' },
   L: { sym: 'L', name: 'Inductance', unit: 'H', unitName: 'henry', equals: 'Wb/A = V·s/A', from: '\\varepsilon = -L\\dfrac{dI}{dt}' },
 
@@ -54,7 +53,7 @@ export const QUANTITIES = {
   X: { sym: 'X', name: 'Reactance (X_L, X_C)', unit: 'ohm', unitName: 'ohm', equals: 'V/A', from: 'X_L = \\omega L,\\quad X_C = \\dfrac{1}{\\omega C}' },
   Z: { sym: 'Z', name: 'Impedance', unit: 'ohm', unitName: 'ohm', equals: 'V/A', from: 'Z = \\sqrt{R^2 + (X_L - X_C)^2}' },
   S: { sym: 'S', name: 'Intensity', unit: 'W/m^2', unitName: '', equals: 'J/(s·m²)', from: 'S = \\dfrac{P}{A}' },
-  c: { sym: 'c', name: 'Speed of light', unit: 'm/s', unitName: '', equals: '3.00×10⁸ m/s', from: 'c = \\dfrac{1}{\\sqrt{\\mu_0\\varepsilon_0}}', constant: true },
+  c: { sym: 'c', name: 'Speed of light', unit: 'm/s', unitName: '', equals: '3.00×10⁸', from: 'c = \\dfrac{1}{\\sqrt{\\mu_0\\varepsilon_0}}', constant: true },
   wavelength: { sym: '\\lambda', name: 'Wavelength', unit: 'm', unitName: 'metre', equals: 'often nm', from: '\\lambda = \\dfrac{v}{f}' },
 
   // --- optics ---
@@ -109,10 +108,44 @@ export function baseUnits(unit) {
   return parts.length ? parts.join('·') : 'dimensionless';
 }
 
-/** The quantities for a lab, resolved and ready to render. */
+/**
+ * The unit as a person writes it. The stored strings are what parseUnit() reads — "C^2/(N*m^2)",
+ * "ohm*m" — and those were going straight to the panel, carets and asterisks and all.
+ */
+export const prettyUnit = (u) =>
+  String(u)
+    .replace(/\bohm\b/g, '\u03a9')
+    .replace(/\*/g, '\u00b7')
+    .replace(/\^2/g, '\u00b2')
+    .replace(/\^3/g, '\u00b3')
+    .replace(/\^4/g, '\u2074');
+
+/** How the unit is written here, in the notation baseUnits() returns. */
+const normalise = (u) =>
+  String(u).replace(/\s+/g, '').replace(/\*/g, '\u00b7').replace(/\^2/g, '\u00b2').replace(/\^3/g, '\u00b3');
+
+/**
+ * The quantities for a lab, resolved and ready to render.
+ *
+ * Lines that repeat the line above are dropped. The ampere expands to "A", so Current was showing
+ * "A — ampere" and then a lone "A" underneath; the angular frequency's familiar form is rad/s,
+ * which is also its unit; and a dimensionless quantity was saying "a pure number" and then
+ * "dimensionless". A reference is read by scanning it, and a repeated line costs a glance.
+ */
 export function unitsForLab(labId) {
   return (LAB_UNITS[labId] || []).map((id) => {
     const qty = QUANTITIES[id];
-    return qty ? { id, ...qty, base: baseUnits(qty.unit) } : null;
+    if (!qty) return null;
+    const base = baseUnits(qty.unit);
+    const sameAsUnit = base === normalise(qty.unit);
+    const dimensionless = base === 'dimensionless';
+    return {
+      id,
+      ...qty,
+      unit: prettyUnit(qty.unit),
+      base: sameAsUnit || dimensionless ? '' : base,
+      // Compared after prettifying, or "ohm*m" and "Ω·m" read as different strings.
+      equals: prettyUnit(qty.equals) === prettyUnit(qty.unit) ? '' : qty.equals,
+    };
   }).filter(Boolean);
 }

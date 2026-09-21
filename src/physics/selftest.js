@@ -1,5 +1,5 @@
 import { K, EPS0, QE, MU0, C } from './constants.js';
-import { QUANTITIES, LAB_UNITS, baseUnits } from '../data/quantities.js';
+import { QUANTITIES, LAB_UNITS, baseUnits, unitsForLab, prettyUnit } from '../data/quantities.js';
 import { parseUnit } from './units.js';
 import { EXAMS } from '../data/catalog.js';
 import { fieldAt } from './field.js';
@@ -1093,6 +1093,21 @@ console.log('\nWave optics: interference, diffraction, thin films');
 
   const strays = Object.keys(LAB_UNITS).filter((l) => !labs.includes(l));
   ok(strays.length === 0, `no units list for a lab that does not exist (${strays.join(', ') || 'none'})`);
+
+  // A quantity no lab shows is a quantity nobody would notice was wrong.
+  const used = new Set(Object.values(LAB_UNITS).flat());
+  const orphans = Object.keys(QUANTITIES).filter((id) => !used.has(id));
+  ok(orphans.length === 0, `every quantity is shown by some lab (${orphans.join(', ') || 'none'})`);
+
+  // And no row repeats the row above it — the panel is read by scanning.
+  let repeated = 0;
+  for (const lab of Object.keys(LAB_UNITS)) {
+    for (const row of unitsForLab(lab)) {
+      if (row.equals && prettyUnit(row.equals) === prettyUnit(row.unit)) repeated += 1;
+      if (row.base && row.base === row.unit) repeated += 1;
+    }
+  }
+  ok(repeated === 0, 'no quantity restates its unit on the line below');
 
   // Base-SI expansion is derived, so spot-check it against what the course writes.
   ok(baseUnits('V') === 'kg·m²·s⁻³·A⁻¹', 'V in base units');

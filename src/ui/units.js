@@ -27,7 +27,7 @@ export function createUnits({ onOpen } = {}) {
         <div class="ur-body">
           <div class="ur-name">${escapeHTML(qty.name)}</div>
           <div class="ur-unit">${unit} ${same}</div>
-          <div class="ur-base">${escapeHTML(qty.base)}</div>
+          ${qty.base ? `<div class="ur-base">${escapeHTML(qty.base)}</div>` : ''}
           ${from}
         </div>
       </div>`;
