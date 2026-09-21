@@ -55,9 +55,14 @@ export function createHUD(api) {
     // The phone shows this instead of the strip; both are driven from the same EXAMS list.
     const sel = $('exam-select');
     if (sel) {
+      /*
+       * Short labels: a native select shows the selected option's own text, and "Exam 2 · Ch 36-37"
+       * does not fit the width this row can spare. The chapter range sits beside the picker in the
+       * brand line, and title carries the full text for a hover or long press.
+       */
       sel.innerHTML = EXAMS.map((e) => {
         const label = e.id === 'wave' ? 'Waves' : `Exam ${e.n}`;
-        return `<option value="${e.id}">${label} · Ch ${escapeHTML(e.chapters)}</option>`;
+        return `<option value="${e.id}" title="${label} · Ch ${escapeHTML(e.chapters)}">${label}</option>`;
       }).join('');
       sel.value = examId;
     }

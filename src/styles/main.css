@@ -159,8 +159,19 @@ body {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 6px 8px;
   min-height: 34px;
+  /*
+   * Own chevron rather than the platform's. The native control reserves about 30px for its arrow,
+   * which on a 390px row was the difference between "Exam 2" and "Exan", and it renders as a light
+   * system widget in a dark panel.
+   */
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 6px 20px 6px 9px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c9c4bd' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  background-size: 10px 6px;
 }
 
 .exam-tab {

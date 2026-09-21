@@ -71,7 +71,7 @@
     grid-row: 1;
   }
 
-  /* "Exam 2" repeats the picker sitting beside it; the chapter range is not on screen elsewhere. */
+  /* "Exam 2" is the picker sitting beside it; the chapter range is not on screen anywhere else. */
   .brand-text .sub-course {
     display: none;
   }
@@ -85,9 +85,14 @@
     grid-column: 3;
     grid-row: 1;
     align-self: center;
-    margin-left: 10px;
     min-width: 0;
-    width: 100%;
+    /*
+     * The width has to allow for the margins. A select does not shrink to fit its grid track the
+     * way a div does — left to itself it took the full track width and its margins then sat outside
+     * it, so the picker ended flush against the Practice button with no gap at all.
+     */
+    margin-inline: 10px;
+    width: calc(100% - 20px);
   }
 
   .practice-row {
@@ -104,6 +109,29 @@
     grid-row: 2;
   }
 
+  /*
+   * Below about 360px there is no room for the wordmark as well: the picker was squeezed to 20px,
+   * which is the dropdown arrow and nothing else. The mark still says whose app this is, and the
+   * picker's own label carries both the exam and its chapters.
+   */
+  /* Below ~360px the wordmark has to go too, or the picker is squeezed to the arrow alone. */
+  @media (max-width: 360px) {
+    .brand-text {
+      display: none;
+    }
+
+    .practice-btn {
+      padding: 4px 8px;
+    }
+
+    /* Tighter still: at this width the label was running into the chevron. */
+    .exam-select {
+      margin-inline: 6px;
+      width: calc(100% - 12px);
+      padding-right: 18px;
+    }
+  }
+
   .practice-stat,
   .practice-btn kbd {
     display: none;
@@ -111,7 +139,9 @@
 
   .practice-btn {
     min-height: 34px;
-    padding: 4px 14px;
+    /* Trimmed from 14px: the 16px it frees across the two buttons is what lets the exam picker
+       show "Exam 2" rather than "Exan". */
+    padding: 4px 10px;
   }
 
   /*
