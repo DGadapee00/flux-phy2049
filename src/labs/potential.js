@@ -110,10 +110,19 @@ export default defineLab({
     const eqOn = !!state.show.equipot;
     equipot.setVisible(eqOn);
     if (eqOn) {
-      // Contour the plane the charges are laid out in, over the part of it that is on screen.
+      /*
+       * Contour the work plane — the one the grid is drawn in and the charges are laid out in —
+       * over the part of it that is on screen.
+       *
+       * The slice used to be taken at the probe's out-of-plane coordinate. The dipole scenario
+       * starts its probe at y = 35 cm, an off-axis point of the midplane chosen to show that V = 0
+       * across the whole plane and not merely at the midpoint, and that lifted the equipotentials
+       * 35 cm clear of the charges: rings floating above the grid, drawn for a slice nothing else
+       * in the scene was on.
+       */
       const plane = state.view?.plane || 'xz';
       const half = (GRID_HALF - 1) / sceneScale();
-      const at = plane === 'xy' ? state.probe.z : state.probe.y;
+      const at = 0;
       equipot.rebuild(state.charges, state.extraE, { plane, half, at, soften: contourSoftenFor(state.view) });
     }
     const u = sceneScale();
