@@ -1,10 +1,13 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { M, fatSegments, markAnswer, setFatSegments, segmentCapacity } from '../scene/manim.js';
+import { M, fatLine, fatSegments, markAnswer, setFatSegments, segmentCapacity } from '../scene/manim.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import { doubleSlit, doubleSlitIntensity, wavelengthRGB } from '../physics/waveoptics.js';
-import { createRuler, createTank, drawnL, drawnLambda, drawnLog, lengthUnit, niceCeil, paintScreen } from '../scene/wavebench.js';
+import {
+  CARD_DX, CARD_DZ, createCard, createRuler, createTank, curvePoints, drawTwoWaves, drawnL, drawnLambda, drawnLog, lengthUnit, niceCeil,
+  paintScreen, stepVerdict,
+} from '../scene/wavebench.js';
 import { kv, cells, qv, eq } from '../ui/shared.js';
 
 /**
@@ -30,10 +33,8 @@ const X_SOURCE = -0.38;
 const X_SLITS = -0.17;
 const BARRIER_H = 0.3;
 const SCREEN_H = 0.33;
-const SCREEN_W = 0.04;
 const BEAM = 0.16;
-const TEX_W = 8;
-const TEX_H = 1024;
+const CURVE_STEPS = 240;
 // Below this the drawn crests are a few pixels apart and read as noise, so the ripples fade out.
 const LAMBDA_DRAW_MIN = 0.006;
 
@@ -66,62 +67,6 @@ function benchPoint(e, camera) {
   raycaster.setFromCamera(ndc, camera);
   if (!raycaster.ray.intersectPlane(zPlane, hitPt)) return null;
   return { x: hitPt.x / UNITS_PER_METER, y: hitPt.y / UNITS_PER_METER };
-}
-
-/**
- * The inset: the wave from each slit as it reaches P, and their sum. The lower trace is shifted by
- * the path difference δ, so a whole number of wavelengths lines the crests up and half a wavelength
- * puts crest on trough.
- */
-function drawInset(canvas, phase, cycles, rgb) {
-  const g = canvas.getContext('2d');
-  const W = canvas.width;
-  const H = canvas.height;
-  g.clearRect(0, 0, W, H);
-  const rows = [
-    { y: 34, amp: 18, shift: 0, color: '#5cd0b3', name: 'slit 1' },
-    { y: 86, amp: 18, shift: cycles, color: '#f0ac5f', name: 'slit 2' },
-    { y: 152, amp: 18, shift: null, color: `rgb(${rgb.r},${rgb.g},${rgb.b})`, name: 'sum' },
-  ];
-  const x0 = 64;
-  const x1 = W - 10;
-  const waves = 2.5; // wavelengths across the trace
-  const k = (2 * Math.PI * waves) / (x1 - x0);
-  const f = (x, shift) => Math.cos(k * (x - x0) - phase - 2 * Math.PI * shift);
-  g.font = '22px Inter, system-ui, sans-serif';
-  g.textBaseline = 'middle';
-  for (const r of rows) {
-    g.strokeStyle = 'rgba(236,230,226,0.15)';
-    g.lineWidth = 1;
-    g.beginPath();
-    g.moveTo(x0, r.y);
-    g.lineTo(x1, r.y);
-    g.stroke();
-    g.fillStyle = '#aaa39e';
-    g.fillText(r.name, 4, r.y);
-    g.strokeStyle = r.color;
-    g.lineWidth = r.shift == null ? 4 : 3;
-    g.beginPath();
-    for (let x = x0; x <= x1; x += 2) {
-      const v = r.shift == null ? (f(x, 0) + f(x, cycles)) / 2 : f(x, r.shift);
-      const y = r.y - v * (r.shift == null ? 2 * r.amp : r.amp);
-      if (x === x0) g.moveTo(x, y);
-      else g.lineTo(x, y);
-    }
-    g.stroke();
-  }
-  // The sum's reach: |cos(πδ/λ)| of the full height either wave alone would give it twice over.
-  const env = Math.abs(Math.cos(Math.PI * cycles)) * 36;
-  g.setLineDash([6, 6]);
-  g.strokeStyle = 'rgba(236,230,226,0.35)';
-  g.lineWidth = 1.5;
-  for (const s of [1, -1]) {
-    g.beginPath();
-    g.moveTo(x0, 152 - s * env);
-    g.lineTo(x1, 152 - s * env);
-    g.stroke();
-  }
-  g.setLineDash([]);
 }
 
 export default defineLab({
@@ -257,22 +202,14 @@ export default defineLab({
     group.add(axis);
     const barrier = fatSegments(segmentCapacity(8), { color: M.white, width: 3 });
     group.add(barrier);
-    const frame = fatSegments(segmentCapacity(1), { color: 0x8a8a8a, width: 2 });
-    group.add(frame);
-
-    // The screen itself: a strip carrying the fringe pattern as a texture.
-    const canvas = document.createElement('canvas');
-    canvas.width = TEX_W;
-    canvas.height = TEX_H;
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    const screen = new THREE.Mesh(
-      new THREE.PlaneGeometry(SCREEN_W * u, 2 * SCREEN_H * u),
-      new THREE.MeshBasicMaterial({ map: texture, toneMapped: false, transparent: false }),
-    );
-    group.add(screen);
+    // The screen: a card turned to show its face, the fringes painted on it.
+    const card = createCard(group, SCREEN_H);
     const ruler = createRuler(group);
+    // I(y) beside the screen, on the ruler's scale, with a dot where P sits on it.
+    const curve = fatLine(new Array((CURVE_STEPS + 1) * 3).fill(0), { color: M.teal, width: 1.8, opacity: 0.9 });
+    group.add(curve);
+    const curveDot = new THREE.Mesh(new THREE.CircleGeometry(0.06, 20), new THREE.MeshBasicMaterial({ color: M.teal }));
+    group.add(curveDot);
 
     const rays = fatSegments(segmentCapacity(8), { color: M.gold, width: 1.6 });
     group.add(rays);
@@ -316,7 +253,7 @@ export default defineLab({
 
     group.visible = false;
     return {
-      group, tank, axis, barrier, frame, screen, canvas, texture, ruler, rays, paths, pathMark, pDot, pRing, marker, labels,
+      group, tank, axis, barrier, card, curve, curveDot, ruler, rays, paths, pathMark, pDot, pRing, marker, labels,
       inset, insetCanvas: insetEl.querySelector('canvas'), insetCaption, geo: null,
     };
   },
@@ -332,7 +269,7 @@ export default defineLab({
       const p = g && benchPoint(e, ctx.camera);
       if (!p) return;
       // Anywhere on or just beside the screen picks up P, and puts it there.
-      if (p.x < g.xScreen - 0.06 || p.x > g.xScreen + SCREEN_W + 0.05 || Math.abs(p.y) > SCREEN_H + 0.03) return;
+      if (p.x < g.xScreen - 0.06 || p.x > g.xScreen + CARD_DX + 0.03 || Math.abs(p.y) > SCREEN_H + 0.03) return;
       draggingP = true;
       ctx.controls.enabled = false;
       this.move(e, ctx);
@@ -401,9 +338,8 @@ export default defineLab({
     h.geo = { xScreen, span };
 
     setFatSegments(h.axis, [X_SOURCE * u, 0, 0, xScreen * u, 0, 0]);
-    setFatSegments(h.frame, [xScreen * u, -SCREEN_H * u, 0, xScreen * u, SCREEN_H * u, 0]);
-    h.screen.position.set((xScreen + SCREEN_W / 2) * u, 0, 0);
-    h.ruler.update({ x: xScreen + SCREEN_W, halfH: SCREEN_H, span, units: lengthUnit });
+    h.card.place(xScreen);
+    h.ruler.update({ x: xScreen + CARD_DX + 0.012, z: CARD_DZ, halfH: SCREEN_H, span, units: lengthUnit });
 
     // Barrier with two gaps at ±half, each as wide as the slit (a stand-in when there's no envelope).
     const gap = state.envelope ? Math.max(0.006, (sep * state.aOverD) / 2) : 0.012;
@@ -415,8 +351,15 @@ export default defineLab({
     setFatSegments(h.barrier, seg);
 
     // Fringe pattern painted from the real intensity, against the fixed ruler.
-    paintScreen(h.canvas, rgb, span, (y) => doubleSlitIntensity(Math.atan2(y, state.L), { lambda: state.lam, d: state.d, a: c.a }));
-    h.texture.needsUpdate = true;
+    const Iy = (y) => doubleSlitIntensity(Math.atan2(y, state.L), { lambda: state.lam, d: state.d, a: c.a });
+    paintScreen(h.card.canvas, rgb, span, Iy);
+    h.card.texture.needsUpdate = true;
+    const prof = [];
+    for (let i = 0; i <= CURVE_STEPS; i++) {
+      const y = -span + (2 * span * i) / CURVE_STEPS;
+      prof.push([y, Iy(y)]);
+    }
+    h.curve.geometry.setPositions(curvePoints(prof, { x: xScreen, span, halfH: SCREEN_H }));
 
     // The ripples: a plane wave up to the barrier, then a circular wave out of each slit. The drawn
     // wavelength is whatever sends the drawn geometry's first bright fringe to the real one's place.
@@ -481,6 +424,7 @@ export default defineLab({
     setFatSegments(h.pathMark, pm);
     h.pDot.position.set(xScreen * u, yPd * u, 0.02);
     h.pRing.position.set(xScreen * u, yPd * u, 0.02);
+    h.curveDot.position.set((xScreen - 0.02 - 0.14 * c.IP) * u, yPd * u, 0.03);
 
     // Tick at the marked order, on the side the paths come in from.
     const mk = [];
@@ -495,17 +439,14 @@ export default defineLab({
     L.L.position.set(((X_SLITS + xScreen) / 2) * u, -(SCREEN_H + 0.035) * u, 0);
     L.L.element.innerHTML = `L = ${state.L.toFixed(2)} m &middot; bench not to scale`;
     L.order.visible = c.exists;
-    L.order.position.set((xScreen - 0.055) * u, yOrder * u, 0);
+    L.order.position.set((xScreen - 0.055) * u, (yOrder + 0.022) * u, 0);
     L.order.element.innerHTML = c.exists ? `m = ${state.m}` : '';
-    L.P.position.set((xScreen - 0.03) * u, (yPd + 0.04) * u, 0);
+    L.P.position.set((xScreen - 0.025) * u, (yPd - 0.035) * u, 0);
     L.P.element.innerHTML = 'P';
 
     h.inset.position.set((X_SOURCE + 0.015) * u, (SCREEN_H + 0.02) * u, 0);
     h.insetCaption.position.set((X_SOURCE + 0.015) * u, (SCREEN_H + 0.02) * u, 0);
-    const frac = cyc - Math.floor(cyc);
-    const off = Math.min(frac, 1 - frac); // how far from a whole number of wavelengths
-    const verdict = off < 0.1 ? 'in step: bright' : off > 0.4 ? 'half a wave out: dark' : 'partly out of step';
-    h.insetCaption.element.innerHTML = `δ = ${cyc.toFixed(2)} λ &middot; ${verdict}`;
+    h.insetCaption.element.innerHTML = `δ = ${cyc.toFixed(2)} λ &middot; ${stepVerdict(cyc)}`;
 
     ctx.grid.visible = false;
   },
@@ -514,7 +455,7 @@ export default defineLab({
     const c = computed.interf;
     if (!h || !c) return;
     h.tank.tick(dt);
-    drawInset(h.insetCanvas, h.tank.phase(), c.cyclesP, wavelengthRGB(state.lam));
+    drawTwoWaves(h.insetCanvas, h.tank.phase(), [0, c.cyclesP], wavelengthRGB(state.lam), ['slit 1', 'slit 2', 'sum']);
   },
   law: () => [
     String.raw`d\sin\theta = m\lambda\quad\text{(bright)}`,
@@ -550,7 +491,7 @@ export default defineLab({
       [String.raw`$\Delta y$`, `${(c.dy * 1e3).toFixed(3)} mm`, 'ok'],
       [`$y_{${state.m}}$`, c.exists ? `${(c.y * 1e3).toFixed(2)} mm` : '—', ''],
       [`$\\theta_{${state.m}}$`, c.exists ? `${c.thetaDeg.toFixed(3)}°` : '—', ''],
-      ['highest order', String(c.maxOrder), ''],
+      [String.raw`$\delta$ at P`, `${Math.abs(c.cyclesP).toFixed(2)}λ`, ''],
     ]);
   },
   coach(state, computed) {

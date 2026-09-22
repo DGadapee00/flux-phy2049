@@ -12,7 +12,10 @@ import {
   airyIntensity,
   wavelengthRGB,
 } from '../physics/waveoptics.js';
-import { angleUnit, createRuler, createTank, drawnL, drawnLambda, drawnLog, lengthUnit, niceCeil, paintScreen } from '../scene/wavebench.js';
+import {
+  CARD_DX, CARD_DZ, angleUnit, createCard, createRuler, createTank, curvePoints, drawnL, drawnLambda, drawnLog, lengthUnit, niceCeil,
+  paintScreen,
+} from '../scene/wavebench.js';
 import { kv, cells, qv, eq } from '../ui/shared.js';
 
 /**
@@ -37,10 +40,11 @@ const X_SOURCE = -0.38;
 const X_APERTURE = -0.17;
 const BARRIER_H = 0.3;
 const SCREEN_H = 0.33;
-const SCREEN_W = 0.04;
 const BEAM = 0.2;
-const TEX_W = 8;
-const TEX_H = 1024;
+const CURVE_STEPS = 240;
+// The two sources in the resolution view, each with its own colour so its Airy pattern can be told apart.
+const SRC_A = M.teal;
+const SRC_B = M.gold;
 const LAMBDA_DRAW_MIN = 0.006;
 // A grating's screen covers every angle there is, so it never needs refitting.
 const GRATING_SPAN = Math.PI / 2;
@@ -261,36 +265,35 @@ export default defineLab({
     // Built at full capacity: a grating comb needs far more segments than a single slit.
     const barrier = fatSegments(segmentCapacity(64), { color: M.white, width: 3 });
     group.add(barrier);
-    const frame = fatSegments(segmentCapacity(1), { color: 0x8a8a8a, width: 2 });
-    group.add(frame);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = TEX_W;
-    canvas.height = TEX_H;
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    const screen = new THREE.Mesh(
-      new THREE.PlaneGeometry(SCREEN_W * u, 2 * SCREEN_H * u),
-      new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }),
-    );
-    group.add(screen);
+    const card = createCard(group, SCREEN_H);
     const ruler = createRuler(group);
 
     const rays = fatSegments(segmentCapacity(64), { color: M.gold, width: 1.6 });
     group.add(rays);
+    // Resolution: each source's rays in its own colour, and a star for each source.
+    const raysA = fatSegments(segmentCapacity(2), { color: SRC_A, width: 1.8 });
+    const raysB = fatSegments(segmentCapacity(2), { color: SRC_B, width: 1.8 });
+    group.add(raysA, raysB);
+    const starA = new THREE.Mesh(new THREE.CircleGeometry(0.09, 20), new THREE.MeshBasicMaterial({ color: SRC_A }));
+    const starB = new THREE.Mesh(new THREE.CircleGeometry(0.09, 20), new THREE.MeshBasicMaterial({ color: SRC_B }));
+    group.add(starA, starB);
+    const curveA = fatLine(new Array((CURVE_STEPS + 1) * 3).fill(0), { color: SRC_A, width: 1.5, opacity: 0.85 });
+    const curveB = fatLine(new Array((CURVE_STEPS + 1) * 3).fill(0), { color: SRC_B, width: 1.5, opacity: 0.85 });
+    group.add(curveA, curveB);
     const marker = fatSegments(segmentCapacity(8), { color: M.gold, width: 3 });
     markAnswer(marker);
     group.add(marker);
     // A Line2 needs at least one segment up front; syncViews replaces these points every frame.
-    const envelope = fatLine([0, 0, 0, 0, 0, 0], { color: M.teal, width: 1.8, opacity: 0.9 });
+    const envelope = fatLine(new Array((CURVE_STEPS + 1) * 3).fill(0), { color: M.teal, width: 1.8, opacity: 0.9 });
     group.add(envelope);
 
-    const labels = { source: label(''), aperture: label(''), order: label('', 1), note: label('') };
+    const labels = { source: label(''), aperture: label(''), order: label('', 1), note: label(''), dip: label('', 1) };
     markAnswer(labels.order);
     Object.values(labels).forEach((l) => group.add(l));
     group.visible = false;
-    return { group, tank, axis, barrier, frame, screen, canvas, texture, ruler, rays, marker, envelope, labels };
+    return {
+      group, tank, axis, barrier, card, ruler, rays, raysA, raysB, starA, starB, curveA, curveB, marker, envelope, labels,
+    };
   },
   enter(ctx, handle) {
     handle.group.visible = true;
@@ -348,9 +351,10 @@ export default defineLab({
     const yOf = (theta) => Math.max(-SCREEN_H, Math.min(SCREEN_H, (coordOf(theta) / span) * SCREEN_H));
 
     setFatSegments(h.axis, [X_SOURCE * u, 0, 0, xScreen * u, 0, 0]);
-    setFatSegments(h.frame, [xScreen * u, -SCREEN_H * u, 0, xScreen * u, SCREEN_H * u, 0]);
-    h.screen.position.set((xScreen + SCREEN_W / 2) * u, 0, 0);
-    h.ruler.update({ x: xScreen + SCREEN_W, halfH: SCREEN_H, span, units: slit ? lengthUnit : angleUnit, want: slit || rayl ? 3 : 5 });
+    h.card.place(xScreen);
+    h.ruler.update({
+      x: xScreen + CARD_DX + 0.012, z: CARD_DZ, halfH: SCREEN_H, span, units: slit ? lengthUnit : angleUnit, want: slit || rayl ? 3 : 5,
+    });
 
     // The aperture, drawn as one gap, a comb of slits, or a round hole seen edge-on. The same
     // openings are where the ripples start.
@@ -393,15 +397,14 @@ export default defineLab({
 
     // Paint the screen from the real intensity for this mode.
     const sep = c.thetaMin * state.sepFactor;
+    const airyA = (v) => airyIntensity(v - sep / 2, { lambda: state.lam, D: state.D });
+    const airyB = (v) => airyIntensity(v + sep / 2, { lambda: state.lam, D: state.D });
     let I;
     if (slit) I = (v) => singleSlitIntensity(thetaOf(v), { lambda: state.lam, a: state.a });
     else if (state.mode === 'grating') I = (v) => gratingIntensity(v, { lambda: state.lam, d: c.d, N: 12 });
-    else {
-      I = (v) => 0.5 * airyIntensity(v - sep / 2, { lambda: state.lam, D: state.D })
-        + 0.5 * airyIntensity(v + sep / 2, { lambda: state.lam, D: state.D });
-    }
-    paintScreen(h.canvas, rgb, span, I, state.mode === 'grating' ? 12 : 6);
-    h.texture.needsUpdate = true;
+    else I = (v) => 0.5 * airyA(v) + 0.5 * airyB(v);
+    paintScreen(h.card.canvas, rgb, span, I, state.mode === 'grating' ? 12 : 6);
+    h.card.texture.needsUpdate = true;
 
     // Rays: in the rays view, in to the aperture and out to whatever this mode marks. The Rayleigh
     // view has no ripples, so its two incoming directions always show.
@@ -425,29 +428,53 @@ export default defineLab({
         }
       }
       if (c.thetaOrder != null) tick(yOf(c.thetaOrder));
-    } else if (rayl) {
-      for (const s of [1, -1]) {
-        const y = yOf((s * sep) / 2);
-        rays.push(X_SOURCE * u, s * 0.12 * u, 0, X_APERTURE * u, 0, 0);
-        tick(y);
-      }
+    }
+    // Resolution: two point sources far off to the left, each sending light through the middle
+    // of the aperture to its own peak on the screen.
+    h.starA.visible = rayl;
+    h.starB.visible = rayl;
+    if (rayl) {
+      const yA = yOf(sep / 2);
+      const yB = yOf(-sep / 2);
+      const sy = 0.1 + 0.08 * Math.min(1, state.sepFactor / 3);
+      h.starA.position.set((X_SOURCE + 0.03) * u, -sy * u, 0.02);
+      h.starB.position.set((X_SOURCE + 0.03) * u, sy * u, 0.02);
+      setFatSegments(h.raysA, [(X_SOURCE + 0.03) * u, -sy * u, 0, X_APERTURE * u, 0, 0, X_APERTURE * u, 0, 0, xScreen * u, yA * u, 0]);
+      setFatSegments(h.raysB, [(X_SOURCE + 0.03) * u, sy * u, 0, X_APERTURE * u, 0, 0, X_APERTURE * u, 0, 0, xScreen * u, yB * u, 0]);
+      tick(yA);
+      tick(yB);
+    } else {
+      setFatSegments(h.raysA, []);
+      setFatSegments(h.raysB, []);
     }
     setFatSegments(h.rays, rays);
     h.rays.material.color.copy(beam);
     setFatSegments(h.marker, marks);
 
-    // For one slit, trace sinc² beside the screen: the shape the bands are painted from.
-    const env = [];
-    if (slit) {
-      const steps = 160;
-      for (let i = 0; i <= steps; i++) {
-        const v = -span + (2 * span * i) / steps;
-        const Iv = singleSlitIntensity(thetaOf(v), { lambda: state.lam, a: state.a });
-        env.push((xScreen - 0.02 - 0.14 * Iv) * u, ((v / span) * SCREEN_H) * u, 0.01);
+    // Trace I beside the screen, on the ruler's scale: the shape the bands are painted from. For
+    // resolution, each source's Airy pattern in its own colour, and their sum in white.
+    const profile = (fn) => {
+      const out = [];
+      for (let i = 0; i <= CURVE_STEPS; i++) {
+        const v = -span + (2 * span * i) / CURVE_STEPS;
+        out.push([v, fn(v)]);
       }
+      return curvePoints(out, { x: xScreen, span, halfH: SCREEN_H });
+    };
+    h.envelope.geometry.setPositions(profile(I));
+    h.envelope.material.color.set(rayl ? M.white : M.teal);
+    h.curveA.visible = rayl;
+    h.curveB.visible = rayl;
+    h.labels.dip.visible = rayl;
+    if (rayl) {
+      h.curveA.geometry.setPositions(profile((v) => 0.5 * airyA(v)));
+      h.curveB.geometry.setPositions(profile((v) => 0.5 * airyB(v)));
+      // How deep the dip between the two peaks goes: about 73 % at Rayleigh's limit.
+      const ratio = I(0) / Math.max(I(sep / 2), 1e-9);
+      // Beside the white curve's middle, where the dip is.
+      h.labels.dip.position.set((xScreen - 0.035 - 0.14 * I(0)) * u, 0.018 * u, 0);
+      h.labels.dip.element.innerHTML = ratio > 0.99 ? '<small>one hump</small>' : `<small>dip to ${Math.round(100 * ratio)}%</small>`;
     }
-    h.envelope.visible = env.length > 0;
-    if (env.length) h.envelope.geometry.setPositions(env);
 
     const L = h.labels;
     L.source.position.set((X_SOURCE + 0.05) * u, (BEAM + 0.03) * u, 0);

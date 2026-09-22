@@ -93,23 +93,24 @@ export function createRuler(group) {
    * x: drawing metres of the ruler's spine; halfH: drawn half-height; span: real half-span;
    * units: lengthUnit or angleUnit.
    */
-  function update({ x, halfH, span, units = lengthUnit, visible = true, want = 3 }) {
+  function update({ x, z = 0, halfH, span, units = lengthUnit, visible = true, want = 3 }) {
     const { f, unit } = units(span);
     // Round ticks in the unit they are read in: 10 mm, 20° — not 0.5 rad.
     const step = niceCeil((span * f) / want) / f;
     const maj = [];
     const min = [];
-    maj.push(x * u, -halfH * u, 0, x * u, halfH * u, 0);
+    const zu = z * u;
+    maj.push(x * u, -halfH * u, zu, x * u, halfH * u, zu);
     const toY = (v) => (v / span) * halfH;
     const n = Math.floor(span / step + 1e-9);
     let li = 0;
     for (let k = -n; k <= n; k++) {
       const y = toY(k * step);
-      maj.push(x * u, y * u, 0, (x + 0.022) * u, y * u, 0);
+      maj.push(x * u, y * u, zu, (x + 0.022) * u, y * u, zu);
       if (li < labels.length) {
         const l = labels[li++];
         l.visible = visible;
-        l.position.set((x + 0.03) * u, y * u, 0);
+        l.position.set((x + 0.03) * u, y * u, zu);
         l.element.textContent = trim(k * step * f);
       }
     }
@@ -119,12 +120,12 @@ export function createRuler(group) {
     for (let k = -m; k <= m; k++) {
       if (k % 5 === 0) continue;
       const y = toY(k * sub);
-      min.push(x * u, y * u, 0, (x + 0.011) * u, y * u, 0);
+      min.push(x * u, y * u, zu, (x + 0.011) * u, y * u, zu);
     }
     setFatSegments(major, visible ? maj : []);
     setFatSegments(minor, visible ? min : []);
     unitLabel.visible = visible;
-    unitLabel.position.set((x + 0.03) * u, (halfH + 0.035) * u, 0);
+    unitLabel.position.set((x + 0.03) * u, (halfH + 0.035) * u, zu);
     unitLabel.element.textContent = unit;
   }
   return { update };
@@ -134,7 +135,8 @@ export function createRuler(group) {
  * Paint an intensity profile down a screen texture. `intensityAt(v)` takes the screen's own
  * coordinate (real metres, or an angle) and returns 0…1. Each row averages several samples, so a
  * pattern finer than the texture washes out to an even glow — which is what an eye would see —
- * instead of aliasing into bands that are not there.
+ * instead of aliasing into bands that are not there. Across the card the light fades out at the
+ * ends of the slits' length, so each band reads as a bar of light on a card, as it would on a wall.
  */
 export function paintScreen(canvas, rgb, span, intensityAt, samples = 6) {
   const W = canvas.width;
@@ -149,13 +151,132 @@ export function paintScreen(canvas, rgb, span, intensityAt, samples = 6) {
     I /= samples;
     for (let col = 0; col < W; col++) {
       const i = (row * W + col) * 4;
-      img.data[i] = rgb.r * I;
-      img.data[i + 1] = rgb.g * I;
-      img.data[i + 2] = rgb.b * I;
+      const a = I * across(W, col);
+      // The card itself is faintly lit grey where no light falls, so it reads as a surface.
+      img.data[i] = 22 + rgb.r * a;
+      img.data[i + 1] = 23 + rgb.g * a;
+      img.data[i + 2] = 26 + rgb.b * a;
       img.data[i + 3] = 255;
     }
   }
   g2.putImageData(img, 0, 0);
+}
+
+/** How bright a band is across the card: flat through the middle, falling off at the ends. */
+function across(W, col) {
+  if (W < 16) return 1;
+  const x = (col + 0.5) / W - 0.5;
+  return Math.exp(-((x / 0.44) ** 10));
+}
+
+// Turned 58° about the vertical, so the card faces back down the bench toward the slits and is
+// still seen from the front: a card standing on the bench, with the pattern on its face.
+const CARD_TURN = (58 * Math.PI) / 180;
+export const CARD_W = 0.13;
+/** How far the card's far edge sits right of, and toward the camera from, its hinge. */
+export const CARD_DX = CARD_W * Math.cos(CARD_TURN);
+export const CARD_DZ = CARD_W * Math.sin(CARD_TURN);
+
+/**
+ * The screen: a card hinged on the line the light lands on, turned so its face shows. Returns the
+ * mesh and the canvas to paint. place(x) moves the hinge.
+ */
+export function createCard(group, halfH, texW = 64, texH = 1024) {
+  const canvas = document.createElement('canvas');
+  canvas.width = texW;
+  canvas.height = texH;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(CARD_W * u, 2 * halfH * u),
+    new THREE.MeshBasicMaterial({ map: texture, toneMapped: false, side: THREE.DoubleSide }),
+  );
+  mesh.rotation.y = CARD_TURN;
+  group.add(mesh);
+  const edge = fatSegments(segmentCapacity(4), { color: 0x8a8a8a, width: 1.6 });
+  group.add(edge);
+  function place(x) {
+    mesh.position.set((x + CARD_DX / 2) * u, 0, (CARD_DZ / 2) * u);
+    const x1 = (x + CARD_DX) * u;
+    const z1 = CARD_DZ * u;
+    const h = halfH * u;
+    setFatSegments(edge, [x * u, -h, 0, x * u, h, 0, x * u, h, 0, x1, h, z1, x * u, -h, 0, x1, -h, z1, x1, -h, z1, x1, h, z1]);
+  }
+  return { mesh, canvas, texture, place };
+}
+
+/**
+ * Two waves and their sum, as three traces, for an inset. `shifts` are each wave's lag in
+ * wavelengths; a whole number between them lines the crests up, a half puts crest on trough.
+ */
+export function drawTwoWaves(canvas, phase, shifts, rgb, names) {
+  const g = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  g.clearRect(0, 0, W, H);
+  const [s1, s2] = shifts;
+  const rows = [
+    { y: 34, shift: s1, color: '#5cd0b3', name: names[0] },
+    { y: 86, shift: s2, color: '#f0ac5f', name: names[1] },
+    { y: 152, shift: null, color: `rgb(${rgb.r},${rgb.g},${rgb.b})`, name: names[2] },
+  ];
+  const x0 = 76;
+  const x1 = W - 10;
+  const amp = 18;
+  const k = (2 * Math.PI * 2.5) / (x1 - x0); // two and a half wavelengths across
+  const f = (x, shift) => Math.cos(k * (x - x0) - phase - 2 * Math.PI * shift);
+  g.font = '22px Inter, system-ui, sans-serif';
+  g.textBaseline = 'middle';
+  for (const r of rows) {
+    g.strokeStyle = 'rgba(236,230,226,0.15)';
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(x0, r.y);
+    g.lineTo(x1, r.y);
+    g.stroke();
+    g.fillStyle = '#aaa39e';
+    g.fillText(r.name, 4, r.y);
+    g.strokeStyle = r.color;
+    g.lineWidth = r.shift == null ? 4 : 3;
+    g.beginPath();
+    for (let x = x0; x <= x1; x += 2) {
+      const v = r.shift == null ? f(x, s1) + f(x, s2) : f(x, r.shift);
+      const y = r.y - v * amp;
+      if (x === x0) g.moveTo(x, y);
+      else g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+  // How far the sum can reach: 2|cos(π Δ)| of either wave alone, Δ the lag between them.
+  const env = 2 * Math.abs(Math.cos(Math.PI * (s2 - s1))) * amp;
+  g.setLineDash([6, 6]);
+  g.strokeStyle = 'rgba(236,230,226,0.35)';
+  g.lineWidth = 1.5;
+  for (const sgn of [1, -1]) {
+    g.beginPath();
+    g.moveTo(x0, 152 - sgn * env);
+    g.lineTo(x1, 152 - sgn * env);
+    g.stroke();
+  }
+  g.setLineDash([]);
+}
+
+/** A crest-to-crest verdict for a lag of `cycles` wavelengths. */
+export function stepVerdict(cycles) {
+  const frac = ((cycles % 1) + 1) % 1;
+  const off = Math.min(frac, 1 - frac);
+  return off < 0.1 ? 'in step: bright' : off > 0.4 ? 'half a wave out: dark' : 'partly out of step';
+}
+
+/**
+ * An intensity curve I(v) beside the screen, on the screen's own scale: `profile` is a list of
+ * [v, I] pairs, drawn leftward from the hinge at x.
+ */
+export function curvePoints(profile, { x, span, halfH, width = 0.14, z = 0.01 }) {
+  const out = [];
+  for (const [v, I] of profile) out.push((x - 0.02 - width * I) * u, ((v / span) * halfH) * u, z);
+  return out;
 }
 
 // ---------------------------------------------------------------- the ripple tank
