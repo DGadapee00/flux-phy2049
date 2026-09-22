@@ -252,6 +252,8 @@ export default defineLab({
     $('int-L-val').textContent = `${state.integral.L.toFixed(2)} m`;
     $('int-lambda').value = state.integral.lambda * 1e6;
     $('int-lambda-val').textContent = `${state.integral.lambda >= 0 ? '+' : ''}${(state.integral.lambda * 1e6).toFixed(2)} μC/m`;
+    // A problem can put P on the rod's own line (d = 0), below the slider's usual start.
+    if (state.integral.d < Number($('int-d').min)) $('int-d').min = String(state.integral.d);
     $('int-d').value = state.integral.d;
     $('int-d-val').textContent = `${state.integral.d.toFixed(2)} m`;
     const x0 = state.integral.x0 || 0;

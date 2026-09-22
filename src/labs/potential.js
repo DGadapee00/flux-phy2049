@@ -52,6 +52,7 @@ export default defineLab({
             </div>
           </label>
           <p class="tiny">Click empty space to move the probe (point B). Path A is the gold marker — ΔV and W use A → probe.</p>
+          <p class="tiny">Charge spread along a rod, a ring, an arc or a disk: the <a href="#/e3/integral">Integrals</a> tab adds up V = ∫ k dq/r piece by piece.</p>
         </div>`;
   },
   bind(api) {

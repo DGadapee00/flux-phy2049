@@ -15,6 +15,41 @@ function potSetup(list, probe, pathA) {
   return (s, $) => layout(s, { charges: list($), probe: probe($), pathA: pathA ? pathA($) : null });
 }
 
+/**
+ * A graph of V against x for a problem to read, as SVG markup: straight pieces through the points
+ * (xs[i], Vs[i]), each labelled A, B, C… above its middle, on a grid ruled every metre and volt.
+ */
+function vGraphSVG(xs, Vs) {
+  const W = 340;
+  const H = 210;
+  const L = 44;
+  const Rt = W - 16;
+  const T = 18;
+  const B = H - 34;
+  const xMax = xs[xs.length - 1];
+  const vLo = Math.min(0, ...Vs) - 1;
+  const vHi = Math.max(0, ...Vs) + 1;
+  const X = (x) => L + ((Rt - L) * x) / xMax;
+  const Y = (v) => B - ((B - T) * (v - vLo)) / (vHi - vLo);
+  const out = [];
+  for (let x = 0; x <= xMax; x++) out.push(`<line x1="${X(x)}" y1="${T}" x2="${X(x)}" y2="${B}" stroke="#2a2d33" />`);
+  for (let v = Math.ceil(vLo); v <= vHi; v++) {
+    out.push(`<line x1="${L}" y1="${Y(v)}" x2="${Rt}" y2="${Y(v)}" stroke="${v === 0 ? '#77716c' : '#2a2d33'}" />`);
+    out.push(`<text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="#aaa39e">${v}</text>`);
+  }
+  for (let x = 0; x <= xMax; x++) out.push(`<text x="${X(x)}" y="${B + 15}" text-anchor="middle" font-size="11" fill="#aaa39e">${x}</text>`);
+  out.push(`<line x1="${L}" y1="${T}" x2="${L}" y2="${B}" stroke="#aaa39e" />`);
+  out.push(`<text x="${L - 30}" y="${T - 4}" font-size="12" fill="#ece6e2">V (V)</text>`);
+  out.push(`<text x="${Rt}" y="${B + 29}" text-anchor="end" font-size="12" fill="#ece6e2">x (m)</text>`);
+  out.push(`<polyline points="${xs.map((x, i) => `${X(x)},${Y(Vs[i])}`).join(' ')}" fill="none" stroke="#58c4dd" stroke-width="2.5" />`);
+  for (let i = 0; i < xs.length - 1; i++) {
+    const xm = X((xs[i] + xs[i + 1]) / 2);
+    const ym = Math.min(Y(Vs[i]), Y(Vs[i + 1])) - 8;
+    out.push(`<text x="${xm}" y="${Math.max(T + 10, ym)}" text-anchor="middle" font-size="13" font-weight="600" fill="#f4d345">${'ABCDEF'[i]}</text>`);
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Graph of V against x">${out.join('')}</svg>`;
+}
+
 export default [
   // ================================================================= 38
   problem({
@@ -478,6 +513,184 @@ export default [
     ],
   }),
   problem({
+    ...E3, id: 'e3.38.work-nonuniform', ch: '38', src: 'Worksheet 3 #11', title: 'Work in a field that changes with x', kind: 'derivation', level: 3, topics: ['potential', 'work', 'integral'],
+    vars: {
+      q: range(10, 500, 10, 'μC', 1e-6), s: SIGN,
+      c: range(1, 12, 1, 'N/(C·m²)'), dir: choice([1, '+x̂'], [-1, '−x̂']),
+      xB: range(0, 3, 0.5, 'm'), xA: range(0.5, 4, 0.5, 'm'),
+    },
+    derive: ($) => {
+      const cs = $.dir * $.c; // E_x = cs·x²
+      const I = (cs * ($.xA ** 3 - $.xB ** 3)) / 3; // ∫ E_x dx from B to A
+      return { cs, W: $.s * $.q * I, dV: -I };
+    },
+    valid: ($) => $.xA !== $.xB,
+    text: (T, $) => String.raw`A ${T.s} ${T.q} μC charge moves along the x-axis from point B at x = ${T.xB} m to point A at x = ${T.xA} m, through an electric field $\vec{E} = [(${T.c}\ \text{N/(C·m}^2\text{)})\,x^2]\,(${$.dir > 0 ? '+' : '-'}\hat{x})$. Find the work the field does on the charge, and the potential difference $V_A - V_B$.`,
+    parts: [
+      sym('W_sym', 'q*c*(xA^3 - xB^3)/3', { q: 'C', c: 'N/(C*m^2)', xA: 'm', xB: 'm' }, ($) => ($.q * $.c * ($.xA ** 3 - $.xB ** 3)) / 3, {
+        unit: 'J', label: String.raw`$W$ as a formula for a positive $q$ and $\vec{E}$ along $+\hat{x}$ (use q, c, xA, xB)`,
+      }),
+      num('W', ($) => $.W, 'J', { label: String.raw`$W_{\text{field}}$ (signed)` }),
+      num('dV', ($) => $.dV, 'V', { label: String.raw`$V_A - V_B$` }),
+    ],
+    hints: [
+      String.raw`The field changes along the path, so $W = qEd$ does not apply. Add up $dW = qE_x\,dx$: $W = q\displaystyle\int_{x_B}^{x_A} E_x\,dx$.`,
+      String.raw`Keep every sign: $q$ carries its own, $E_x$ is negative if $\vec{E}$ points along $-\hat{x}$, and $V_A - V_B = -\displaystyle\int_B^A E_x\,dx = -W/q$.`,
+    ],
+    steps: ($) => [
+      String.raw`$W = q\displaystyle\int_{x_B}^{x_A} E_x\,dx = q\,c\left[\frac{x^3}{3}\right]_{${texNum($.xB)}}^{${texNum($.xA)}} = ${texNum($.W)}\ \text{J}$`,
+      String.raw`$V_A - V_B = -\displaystyle\int_{x_B}^{x_A} E_x\,dx = -\dfrac{W}{q} = ${texNum($.dV)}\ \text{V}$`,
+      $.W > 0
+        ? 'The field does positive work: left to itself the charge would speed up along this path.'
+        : 'The field does negative work: something else has to push the charge along this path.',
+    ],
+    cases: [kase('Worksheet 3 #11, field as the formula writes it (+x̂)', { q: 200, s: -1, c: 6, dir: 1, xB: 1, xA: 2 }, { W: -2.8e-3, dV: -14 }, {
+      note: 'The worksheet formula says E points along +x̂ but its figure draws E to the left. Along +x̂ the field does −2.8 mJ on the −200 μC charge; along −x̂ it would be +2.8 mJ.',
+    })],
+  }),
+  problem({
+    ...E3, id: 'e3.38.V-graph', ch: '38', src: 'Practice 38 #20–22, Worksheet 3 #5', title: 'Reading E off a graph of V', kind: 'numeric', level: 2, topics: ['potential', 'gradient', 'graphs'],
+    vars: {
+      V0: range(-2, 2, 1, 'V'), V1: range(-5, 6, 1, 'V'), V2: range(-5, 6, 1, 'V'), V3: range(-6, 6, 1, 'V'),
+      w1: range(1, 3, 1, 'm'), w2: range(1, 3, 1, 'm'), w3: range(1, 3, 1, 'm'),
+    },
+    derive: ($) => {
+      const E = [-($.V1 - $.V0) / $.w1, -($.V2 - $.V1) / $.w2, -($.V3 - $.V2) / $.w3];
+      const mags = E.map(Math.abs);
+      const top = Math.max(...mags);
+      return { EA: E[0], EB: E[1], EC: E[2], biggest: mags.indexOf(top), top, sorted: [...mags].sort((a, b) => b - a) };
+    },
+    // One segment clearly the steepest, and at least two that slope, so the question has teeth.
+    valid: ($) => $.sorted[0] - $.sorted[1] >= 0.5 && $.sorted[1] > 0,
+    text: () => 'The graph shows the electric potential V along the x-axis. It is made of three straight pieces, A, B and C. Find the x component of the electric field on each piece, and say where the field is strongest.',
+    figure: ($) => vGraphSVG([0, $.w1, $.w1 + $.w2, $.w1 + $.w2 + $.w3], [$.V0, $.V1, $.V2, $.V3]),
+    parts: [
+      num('EA', ($) => $.EA, 'V/m', { label: String.raw`$E_x$ on A`, abs: 0.05 }),
+      num('EB', ($) => $.EB, 'V/m', { label: String.raw`$E_x$ on B`, abs: 0.05 }),
+      num('EC', ($) => $.EC, 'V/m', { label: String.raw`$E_x$ on C`, abs: 0.05 }),
+      mc('big', [[0, 'On A'], [1, 'On B'], [2, 'On C']], ($) => $.biggest, { label: 'Where is the field strongest?' }),
+    ],
+    hints: [
+      String.raw`$E_x = -\dfrac{dV}{dx}$: the field is minus the *slope* of the graph, not its height. A flat piece has $E = 0$ however high it sits.`,
+      'Uphill in V means E points toward −x; downhill means +x. The steepest piece, whichever way it slopes, has the strongest field.',
+    ],
+    steps: ($) => [
+      String.raw`A: $E_x = -\dfrac{${texNum($.V1)} - (${texNum($.V0)})}{${texNum($.w1)}} = ${texNum($.EA)}\ \text{V/m}$`,
+      String.raw`B: $E_x = -\dfrac{${texNum($.V2)} - (${texNum($.V1)})}{${texNum($.w2)}} = ${texNum($.EB)}\ \text{V/m}$`,
+      String.raw`C: $E_x = -\dfrac{${texNum($.V3)} - (${texNum($.V2)})}{${texNum($.w3)}} = ${texNum($.EC)}\ \text{V/m}$`,
+      `The steepest piece is ${'ABC'[$.biggest]}, so that is where |E| is largest — the sign only says which way it points.`,
+    ],
+    cases: [
+      // Practice 38 #20–21: 0 → 4 V over 3 m, then down to −4 V by 4 m, then flat.
+      kase('Practice 38 #20–21', { V0: 0, V1: 4, V2: -4, V3: -4, w1: 3, w2: 1, w3: 2 }, { EA: -1.333, EB: 8, EC: 0, big: 1 }, {
+        key: '#20 A) from r = 3 m to 4 m; #21 1.33 V/m',
+      }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.38.V-cubic', ch: '38', src: 'Worksheet 3 #13', title: 'Where the field vanishes, from V(x)', kind: 'numeric', level: 3, topics: ['potential', 'gradient'],
+    vars: { a: range(1, 4, 1, 'V/m³'), b: range(-24, -3, 1, 'V/m²'), c: range(1, 30, 1, 'V/m'), d: range(0, 5, 1, 'V') },
+    derive: ($) => {
+      // E = 0 where dV/dx = 3a x² + 2b x + c = 0.
+      const disc = 4 * $.b * $.b - 12 * $.a * $.c;
+      const r = Math.sqrt(Math.max(disc, 0));
+      const x1 = (-2 * $.b - r) / (6 * $.a);
+      const x2 = (-2 * $.b + r) / (6 * $.a);
+      const V = (x) => $.a * x ** 3 + $.b * x ** 2 + $.c * x + $.d;
+      return { disc, x1, x2, dV: V(x2) - V(x1) };
+    },
+    valid: ($) => $.disc > 20 && $.x1 > 0.1 && $.x2 < 12 && $.x2 - $.x1 > 0.5,
+    text: (T) => String.raw`Along the x-axis the potential is $V(x) = (${T.a}\ \text{V/m}^3)x^3 - (${String(-Number(T.b))}\ \text{V/m}^2)x^2 + (${T.c}\ \text{V/m})x + ${T.d}\ \text{V}$. Find the two positions where the electric field is zero, and the potential difference between them, $V(x_2) - V(x_1)$ with $x_1 < x_2$.`,
+    parts: [
+      num('x1', ($) => $.x1, 'm', { label: String.raw`$x_1$ (the smaller)` }),
+      num('x2', ($) => $.x2, 'm', { label: String.raw`$x_2$ (the larger)` }),
+      num('dV', ($) => $.dV, 'V', { label: String.raw`$V(x_2) - V(x_1)$`, abs: 0.05 }),
+    ],
+    hints: [
+      String.raw`$E_x = -\dfrac{dV}{dx}$, so $E = 0$ exactly where $\dfrac{dV}{dx} = 0$ — the flat spots of $V(x)$. That is a quadratic: use the quadratic formula.`,
+      String.raw`The potential difference comes from $V$ itself, not from its derivative: put each $x$ back into $V(x)$ and subtract.`,
+    ],
+    steps: ($) => [
+      String.raw`$\dfrac{dV}{dx} = ${texNum(3 * $.a)}x^2 ${$.b < 0 ? '-' : '+'} ${texNum(Math.abs(2 * $.b))}x + ${texNum($.c)} = 0$`,
+      String.raw`$x = \dfrac{${texNum(-2 * $.b)} \pm \sqrt{${texNum(4 * $.b * $.b)} - ${texNum(12 * $.a * $.c)}}}{${texNum(6 * $.a)}} \;\Rightarrow\; x_1 = ${texNum($.x1)}\ \text{m},\ x_2 = ${texNum($.x2)}\ \text{m}$`,
+      String.raw`$V(x_2) - V(x_1) = ${texNum($.dV)}\ \text{V}$`,
+    ],
+    cases: [kase('Worksheet 3 #13', { a: 3, b: -18, c: 20, d: 2 }, { x1: 0.6667, x2: 3.333, dV: -28.44 })],
+  }),
+  problem({
+    ...E3, id: 'e3.38.uniform-path', ch: '38', lab: 'potential', src: 'Worksheet 3 #2, #4', title: 'Uniform field: only the part along E counts', kind: 'numeric', level: 2, topics: ['potential', 'work'],
+    vars: {
+      E: range(200, 3000, 100, 'N/C'), r1: range(0.1, 0.6, 0.1, 'm'), r2: range(0.1, 0.8, 0.1, 'm'),
+      q: range(10, 400, 10, 'μC', 1e-6), s: SIGN, m: range(1, 50, 1, 'g', 1e-3),
+    },
+    derive: ($) => {
+      // Field along +x. B at the origin, A a distance r1 across the field, C a distance r2 along it.
+      const dV = -$.E * $.r2; // V_C − V_A: only the displacement along E counts
+      return { dV, Wext: $.s * $.q * dV, r3: Math.hypot($.r1, $.r2) };
+    },
+    text: (T, $, f) => `A uniform ${T.E} N/C field points along +x. Point B is at the origin, point A is ${T.r1} m from B straight across the field (along y), and point C is ${T.r2} m from B along the field (along x) — so A and C are ${f($.r3)} m apart. A ${T.s} ${T.q} μC sphere of mass ${T.m} g is carried slowly from A to C. Find $V_C - V_A$, $V_B - V_A$, and the work the carrier must do.`,
+    parts: [
+      num('dV', ($) => $.dV, 'V', { label: String.raw`$V_C - V_A$` }),
+      num('dVBA', () => 0, 'V', { label: String.raw`$V_B - V_A$`, abs: 0.01 }),
+      num('Wext', ($) => $.Wext, 'J', { label: String.raw`$W_{\text{ext}}$, A → C` }),
+    ],
+    hints: [
+      String.raw`$\Delta V = -\vec{E}\cdot\Delta\vec{r}$: only the part of the move along $\vec{E}$ changes $V$. The distance across the field, the straight-line distance, and the mass do not enter.`,
+      String.raw`Carried slowly, the kinetic energy does not change, so $W_{\text{ext}} = \Delta U = q\,\Delta V$.`,
+    ],
+    steps: ($) => [
+      String.raw`A and B lie on the same equipotential (the move between them is across the field): $V_B - V_A = 0$.`,
+      String.raw`$V_C - V_A = V_C - V_B = -E\,r_2 = ${texNum($.dV)}\ \text{V}$`,
+      String.raw`$W_{\text{ext}} = q\,(V_C - V_A) = ${texNum($.Wext)}\ \text{J}$ — the mass and the ${texNum($.r3)} m diagonal were never needed.`,
+    ],
+    sim: {
+      scenario: 'v-plates',
+      setup(s, $) {
+        s.charges = [];
+        s.extraE = { x: $.E, y: 0, z: 0 };
+        s.pathA = { x: 0, y: $.r1, z: 0 };
+        s.probe = { x: $.r2, y: 0, z: 0 };
+        s.qTest = $.s * $.q;
+      },
+      read: (c) => ({ dV: c.V - c.VA }),
+    },
+    cases: [kase('Worksheet 3 #4', { E: 1000, r1: 0.3, r2: 0.4, q: 200, s: 1, m: 20 }, { dV: -400, dVBA: 0, Wext: -0.08 })],
+  }),
+  problem({
+    ...E3, id: 'e3.38.pe-rank', ch: '38', src: 'Worksheet 3 #1, #3', title: 'Where is the potential energy largest?', kind: 'conceptual', level: 2, topics: ['potential', 'energy'],
+    vars: {
+      ask: choice(
+        ['neg-max', 'A +Q and a −Q charge sit on the x-axis. A small negative test charge can be placed at P₁ (close to +Q), P₂ (the midpoint), P₃ (close to −Q) or P₄ (very far away). Where is its potential energy largest?'],
+        ['pos-max', 'A +Q and a −Q charge sit on the x-axis. A small positive test charge can be placed at P₁ (close to +Q), P₂ (the midpoint), P₃ (close to −Q) or P₄ (very far away). Where is its potential energy largest?'],
+        ['electron-along', 'An electron moves in the direction of the electric field. What happens to its potential energy and to the electric potential where it is?'],
+      ),
+    },
+    text: (T) => T.ask,
+    parts: [
+      mc('ans', [
+        ['p1', 'At P₁, close to +Q'],
+        ['p2', 'At P₂, the midpoint'],
+        ['p3', 'At P₃, close to −Q'],
+        ['p4', 'At P₄, far away'],
+        ['upDown', 'Its potential energy increases and the electric potential decreases'],
+        ['downDown', 'Both decrease'],
+        ['upUp', 'Both increase'],
+      ], ($) => ({ 'neg-max': 'p3', 'pos-max': 'p1', 'electron-along': 'upDown' })[$.ask]),
+    ],
+    hints: [String.raw`$U = qV$. First find where $V$ is high and low (high near $+Q$, low near $-Q$, zero at the midpoint and far away), then let the sign of $q$ flip the ranking.`],
+    steps: ($) => [
+      $.ask === 'neg-max'
+        ? String.raw`$V$ is most negative near $-Q$. With $q < 0$, $U = qV$ is then most *positive*: a negative charge has its largest potential energy where the potential is lowest.`
+        : $.ask === 'pos-max'
+          ? String.raw`$V$ is highest near $+Q$, and with $q > 0$, $U = qV$ follows $V$: largest at P₁.`
+          : String.raw`Along $\vec{E}$ the potential always falls. The electron's $q$ is negative, so $U = qV$ rises as $V$ falls — it is being pushed against the force on it.`,
+    ],
+    cases: [
+      kase('negative test charge', { ask: 'neg-max' }, { ans: 'p3' }),
+      kase('Worksheet 3 #3', { ask: 'electron-along' }, { ans: 'upDown' }),
+    ],
+  }),
+  problem({
     ...E3, id: 'e3.39.speed-with-v0', ch: '39', src: 'Practice 39 #4', title: 'Final speed when it was already moving', kind: 'numeric', level: 2, topics: ['potential', 'energy'],
     vars: { v0: range(0.5, 4, 0.1, '×10⁵ m/s', 1e5), V: range(50, 400, 10, 'V') },
     // q and m are in scope so the symbolic answer can be written the way the sheet states it.
@@ -588,6 +801,107 @@ export default [
       kase('#19', { ask: 'orient' }, { ans: 'perp' }, { key: 'B)' }),
       kase('#20', { ask: 'spacing' }, { ans: 'bigger' }, { key: 'A)' }),
     ],
+  }),
+  problem({
+    ...E3, id: 'e3.39.sphere-accelerate', ch: '39', src: 'Worksheet 3 #6, Practice 39 #1–2', title: 'A charged sphere accelerated through ΔV', kind: 'numeric', topics: ['potential', 'energy'],
+    vars: { m: range(0.5, 20, 0.5, 'g', 1e-3), q: range(5, 200, 5, 'μC', 1e-6), V: range(500, 20000, 500, 'V') },
+    derive: ($) => {
+      const K = $.q * $.V;
+      return { K, v: Math.sqrt((2 * K) / $.m) };
+    },
+    text: (T) => `A small sphere of mass ${T.m} g carrying +${T.q} μC starts from rest and is accelerated through a potential difference of ${T.V} V. Find the kinetic energy it gains and its final speed.`,
+    parts: [
+      sym('v_sym', 'sqrt(2*q*V/m)', { q: 'C', V: 'V', m: 'kg' }, ($) => $.v, { unit: 'm/s', label: String.raw`$v$ as a formula` }),
+      num('K', ($) => $.K, 'J', { label: String.raw`$\Delta K$` }),
+      num('v', ($) => $.v, 'm/s'),
+    ],
+    hints: [String.raw`Energy is conserved: the field's work $|q|\Delta V$ all becomes kinetic energy, $\tfrac12 mv^2 = |q|\,\Delta V$. Convert grams to kilograms first.`],
+    steps: ($) => [
+      String.raw`$\Delta K = |q|\,\Delta V = ${texNum($.K)}\ \text{J}$`,
+      String.raw`$v = \sqrt{\dfrac{2|q|\,\Delta V}{m}} = ${texNum($.v)}\ \text{m/s}$`,
+    ],
+    cases: [kase('Worksheet 3 #6', { m: 2, q: 50, V: 10000 }, { K: 0.5, v: 22.36 })],
+  }),
+  problem({
+    ...E3, id: 'e3.39.rod-axis-V', ch: '39', lab: 'integral', src: 'Practice 39 #26', title: 'Potential past the end of a line charge', kind: 'derivation', level: 3, topics: ['potential', 'continuous-distribution'],
+    vars: { lam: range(-5, 5, 0.1, 'μC/m', 1e-6, { exclude: [0] }), L: range(0.2, 1.2, 0.05, 'm'), a: range(0.05, 0.8, 0.05, 'm') },
+    derive: ($) => ({ V: K * $.lam * Math.log(($.L + $.a) / $.a) }),
+    text: (T) => `A thin rod of length ${T.L} m carries a uniform λ = ${T.lam} μC/m. Point P lies on the rod's own line, ${T.a} m beyond one end. Find the potential at P.`,
+    parts: [
+      sym('V_sym', 'k*lam*ln((L + a)/a)', { lam: 'C/m', L: 'm', a: 'm' }, ($) => $.V, { unit: 'V', label: String.raw`$V$ as a formula` }),
+      num('V', ($) => $.V, 'V'),
+    ],
+    hints: [
+      String.raw`Put the origin at P and slice the rod: a piece $dx$ at distance $x$ from P carries $dq = \lambda\,dx$ and adds $dV = k\lambda\,dx/x$. The rod runs from $x = a$ to $x = L + a$.`,
+      String.raw`$\displaystyle\int \frac{dx}{x} = \ln x$ — so the answer has a logarithm in it.`,
+    ],
+    steps: ($) => [
+      String.raw`$V = \displaystyle\int \frac{k\,dq}{r} = k\lambda\int_{a}^{L+a} \frac{dx}{x} = k\lambda\ln\!\left(\frac{L+a}{a}\right)$`,
+      String.raw`$V = ${texNum($.V)}\ \text{V}$`,
+    ],
+    sim: {
+      scenario: 'rod-off',
+      setup(s, $) {
+        Object.assign(s.integral, { kind: 'rod', L: $.L, lambda: $.lam, d: 0, x0: $.L / 2 + $.a, quantity: 'V' });
+      },
+      read: (c) => ({ V: c.integral.analytic.V, V_sym: c.integral.analytic.V }),
+    },
+    cases: [kase('Practice 39 #26, with numbers', { lam: 2, L: 0.8, a: 0.2 }, { V: 28930 }, {
+      key: 'V = kλ[(L + a)/a]',
+      note: 'The key drops the logarithm. ∫ dx/x from a to L + a is ln[(L + a)/a], so V = kλ ln[(L + a)/a]; as printed the key is not even dimensionally a potential per unit λ.',
+    })],
+  }),
+  problem({
+    ...E3, id: 'e3.39.arc-center-V', ch: '39', lab: 'integral', src: 'Practice 39 #27', title: 'Potential at the centre of a semicircle', kind: 'derivation', level: 2, topics: ['potential', 'continuous-distribution'],
+    vars: { lam: range(-5, 5, 0.1, 'μC/m', 1e-6, { exclude: [0] }), R: range(0.05, 0.6, 0.01, 'm') },
+    derive: ($) => ({ V: K * $.lam * Math.PI }),
+    text: (T) => `A thin wire bent into a semicircle of radius ${T.R} m carries a uniform λ = ${T.lam} μC/m. Find the potential at the centre of the circle. Then: if the radius were doubled with the same λ, what would happen to V?`,
+    parts: [
+      sym('V_sym', 'k*lam*pi', { lam: 'C/m' }, ($) => $.V, { unit: 'V', label: String.raw`$V$ as a formula` }),
+      num('V', ($) => $.V, 'V'),
+      mc('double', [['same', 'It stays the same'], ['half', 'It halves'], ['twice', 'It doubles']], 'same', { label: 'Radius doubled, same λ' }),
+    ],
+    hints: [
+      String.raw`Every piece of the arc is the same distance $R$ from the centre, and $V$ is a scalar, so nothing cancels: $V = kQ/R$ with $Q = \lambda\cdot\pi R$.`,
+    ],
+    steps: ($) => [
+      String.raw`$dq = \lambda R\,d\theta$, all at $r = R$: $V = \displaystyle\int_0^{\pi} \frac{k\lambda R\,d\theta}{R} = k\lambda\pi = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$R$ cancels: a bigger arc holds more charge ($\propto R$) but holds it farther away ($\propto 1/R$), so $V$ does not change.`,
+    ],
+    sim: {
+      scenario: 'half-ring',
+      setup(s, $) {
+        Object.assign(s.integral, { kind: 'ring', Q: $.lam * Math.PI * $.R, a: $.R, R: $.R, y: 0, span: Math.PI, quantity: 'V' });
+      },
+      read: (c) => ({ V: c.integral.analytic.V, V_sym: c.integral.analytic.V }),
+    },
+    cases: [kase('Practice 39 #27, with numbers', { lam: 1, R: 0.3 }, { V: 28235, double: 'same' }, { key: 'V = kλπ' })],
+  }),
+  problem({
+    ...E3, id: 'e3.39.disk-V', ch: '39', lab: 'integral', src: 'Practice 39 #28', title: 'Potential on the axis of a charged disk', kind: 'derivation', level: 3, topics: ['potential', 'continuous-distribution'],
+    vars: { sig: range(0.5, 10, 0.5, 'μC/m²', 1e-6), R: range(0.05, 0.5, 0.01, 'm'), s: range(0.02, 0.8, 0.01, 'm') },
+    derive: ($) => ({ V: 2 * Math.PI * K * $.sig * (Math.hypot($.R, $.s) - $.s) }),
+    text: (T) => `A thin disk of radius ${T.R} m carries a uniform σ = ${T.sig} μC/m². Find the potential on its axis, ${T.s} m from the centre.`,
+    parts: [
+      sym('V_sym', '2*pi*k*sig*(sqrt(R^2 + s^2) - s)', { sig: 'C/m^2', R: 'm', s: 'm' }, ($) => $.V, { unit: 'V', label: String.raw`$V$ as a formula` }),
+      num('V', ($) => $.V, 'V'),
+    ],
+    hints: [
+      String.raw`Slice the disk into rings. A ring of radius $r'$ and width $dr'$ carries $dq = \sigma\,2\pi r'\,dr'$, and all of it is $\sqrt{r'^2 + s^2}$ from P.`,
+      String.raw`$\displaystyle\int_0^R \frac{r'\,dr'}{\sqrt{r'^2+s^2}} = \sqrt{R^2+s^2} - s$`,
+    ],
+    steps: ($) => [
+      String.raw`$V = \displaystyle\int_0^R \frac{k\,\sigma\,2\pi r'\,dr'}{\sqrt{r'^2+s^2}} = 2\pi k\sigma\left(\sqrt{R^2+s^2} - s\right)$`,
+      String.raw`$V = ${texNum($.V)}\ \text{V}$`,
+    ],
+    sim: {
+      scenario: 'disk',
+      setup(s, $) {
+        Object.assign(s.integral, { kind: 'disk', Q: $.sig * Math.PI * $.R * $.R, R: $.R, y: $.s, quantity: 'V' });
+      },
+      read: (c) => ({ V: c.integral.analytic.V, V_sym: c.integral.analytic.V }),
+    },
+    cases: [kase('Practice 39 #28, with numbers', { sig: 2, R: 0.2, s: 0.15 }, { V: 11294 }, { key: 'V = 2πkσ[√(R² + s²) − s]' })],
   }),
   // ================================================================= 40
   problem({
@@ -831,7 +1145,7 @@ export default [
   }),
   // ----------------------------------------------------------------- 40 · breakdown
   problem({
-    ...E3, id: 'e3.40.spark-energy', ch: '40', lab: 'breakdown', title: 'Energy in a doorknob spark', kind: 'numeric', level: 2, topics: ['capacitance', 'energy', 'breakdown'],
+    ...E3, id: 'e3.40.spark-energy', enrichment: true, ch: '40', lab: 'breakdown', title: 'Energy in a doorknob spark', kind: 'numeric', level: 2, topics: ['capacitance', 'energy', 'breakdown'],
     vars: { R: range(0.2, 0.6, 0.05, 'm'), V: range(5, 30, 1, 'kV', 1e3) },
     derive: ($) => {
       const C = sphereCapacitance($.R);
@@ -852,7 +1166,7 @@ export default [
     cases: [kase('10 kV on a 0.35 m sphere', { R: 0.35, V: 10 }, { C: 3.894e-11, U: 1.947e-3 })],
   }),
   problem({
-    ...E3, id: 'e3.40.gap-holds', ch: '40', lab: 'breakdown', title: 'Will the gap break down?', kind: 'numeric', level: 2, topics: ['breakdown', 'dielectrics'],
+    ...E3, id: 'e3.40.gap-holds', enrichment: true, ch: '40', lab: 'breakdown', title: 'Will the gap break down?', kind: 'numeric', level: 2, topics: ['breakdown', 'dielectrics'],
     vars: { V: range(2, 40, 1, 'kV', 1e3), d: range(1, 12, 1, 'mm', 1e-3) },
     derive: ($) => ({ E: $.V / $.d, Vs: strengthVolts($.d), Vp: paschen(P_ATM, $.d) }),
     text: (T) => `A charged body sits ${T.d} mm from a grounded plate in dry air at one atmosphere, with ${T.V} kV across the gap. Find the field in the gap, and the voltage the gap would hold on the 3 MV/m dielectric-strength rule.`,
@@ -870,7 +1184,7 @@ export default [
     cases: [kase('18 kV across 4 mm', { V: 18, d: 4 }, { E: 4.5e6, Vs: 12000, sparks: 'yes' })],
   }),
   problem({
-    ...E3, id: 'e3.40.paschen-min', ch: '40', lab: 'breakdown', title: 'The easiest gap to break down', kind: 'numeric', level: 3, topics: ['breakdown'],
+    ...E3, id: 'e3.40.paschen-min', enrichment: true, ch: '40', lab: 'breakdown', title: 'The easiest gap to break down', kind: 'numeric', level: 3, topics: ['breakdown'],
     vars: { gas: choice(...GASES.map((g) => [g.id, g.name.toLowerCase()])) },
     derive: ($) => {
       const g = GASES.find((x) => x.id === $.gas);
@@ -893,7 +1207,7 @@ export default [
     cases: [kase('air', { gas: 'air' }, { Vmin: 305.3, pd: 1.115, why: 'few' })],
   }),
   problem({
-    ...E3, id: 'e3.40.wider-gap', ch: '40', lab: 'breakdown', title: 'A wider gap that breaks down more easily', kind: 'conceptual', level: 3, topics: ['breakdown'],
+    ...E3, id: 'e3.40.wider-gap', enrichment: true, ch: '40', lab: 'breakdown', title: 'A wider gap that breaks down more easily', kind: 'conceptual', level: 3, topics: ['breakdown'],
     vars: { p: range(10, 40, 5, 'Pa') },
     derive: ($) => {
       const dNarrow = 0.01;
@@ -1116,6 +1430,30 @@ export default [
       kase('#13', { ask: 'heat' }, { ans: 'up' }, { key: 'C) increases' }),
       kase('#17', { ask: 'nonohmic' }, { ans: 'notconst' }, { key: 'B)' }),
     ],
+  }),
+  problem({
+    ...E3, id: 'e3.41.block-R', ch: '41', src: 'Worksheet 3 #8', title: 'Which way through the block?', kind: 'numeric', level: 2, topics: ['resistance', 'proportional-reasoning'],
+    vars: { a: range(1, 3, 1, 'cm', 1e-2), b: range(2, 6, 1, 'cm', 1e-2), c: range(6, 15, 1, 'cm', 1e-2) },
+    derive: ($) => {
+      // Current along each edge in turn, entering through the face made by the other two.
+      const R = [$.a / ($.b * $.c), $.b / ($.a * $.c), $.c / ($.a * $.b)]; // × ρ
+      const hi = R.indexOf(Math.max(...R));
+      const lo = R.indexOf(Math.min(...R));
+      return { hi, ratio: R[hi] / R[lo] };
+    },
+    valid: ($) => $.a < $.b && $.b < $.c,
+    text: (T) => `A copper block measures ${T.a} cm × ${T.b} cm × ${T.c} cm. Wires can be attached to any pair of opposite faces, so the current runs along one of the three edges. Which way gives the largest resistance, and how many times larger is it than the smallest?`,
+    parts: [
+      mc('hi', [[0, 'Along the shortest edge'], [1, 'Along the middle edge'], [2, 'Along the longest edge'], [3, 'All three are the same']], ($) => $.hi, { label: 'Largest resistance' }),
+      num('ratio', ($) => $.ratio, '', { label: String.raw`$R_{\max}/R_{\min}$` }),
+    ],
+    hints: [String.raw`$R = \rho L/A$: the current wants to be short and wide. The largest $R$ is the longest path through the smallest face.`],
+    steps: ($, f, T) => [
+      String.raw`Along the longest edge: $L = ${T.c}$ cm through a ${T.a} × ${T.b} cm face — the longest path and the smallest area together.`,
+      String.raw`Along the shortest edge: $L = ${T.a}$ cm through a ${T.b} × ${T.c} cm face.`,
+      String.raw`$\dfrac{R_{\max}}{R_{\min}} = \dfrac{${T.c}/(${T.a}\cdot${T.b})}{${T.a}/(${T.b}\cdot${T.c})} = \dfrac{${T.c}^2}{${T.a}^2} = ${texNum($.ratio)}$`,
+    ],
+    cases: [kase('Worksheet 3 #8', { a: 1, b: 4, c: 10 }, { hi: 2, ratio: 100 })],
   }),
   // ================================================================= 42
   problem({

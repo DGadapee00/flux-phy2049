@@ -17,6 +17,7 @@ export const EXAMS = [
     chapters: '36–37',
     date: 'Fri 9/11',
     labs: ['field', 'integral', 'gauss', 'conductors'],
+    labDefaults: { integral: (s) => void (s.integral.quantity = 'E') },
     coming: [],
   },
   {
@@ -25,7 +26,10 @@ export const EXAMS = [
     title: 'Potential, R, P',
     chapters: '38–42',
     date: 'Fri 9/25',
-    labs: ['potential', 'capacitor', 'ohm', 'power', 'breakdown'],
+    // Integrals is Exam 2's lab, listed here too: its ∫ dV mode is the Ch 39 continuous-charge potentials.
+    labs: ['potential', 'integral', 'capacitor', 'ohm', 'power', 'breakdown'],
+    // Applied to a lab's state when it is opened under this exam after being used under another.
+    labDefaults: { integral: (s) => void (s.integral.quantity = 'V') },
     coming: [],
   },
   {

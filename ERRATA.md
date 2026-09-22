@@ -1,12 +1,14 @@
 # Where the app and the answer keys disagree
 
-Nine places where a printed answer and the app's own physics came out differently. Each was found
-by the app computing the quantity independently and flagging the mismatch, and each is recorded in
-the code beside the problem it belongs to (`grep -rn "note: '" src/problems/bank/`).
+Fourteen places where a printed answer and the app's own physics came out differently. Most were
+found by the app computing the quantity independently and flagging the mismatch, and those are
+recorded in the code beside the problem they belong to (`grep -rn "note: '" src/problems/bank/`).
+Entries 10–14 came out of a review of the Exam 3 material against every printed answer, worked by
+hand.
 
-**Three look like genuine slips. Three are convention differences where both answers are
-defensible. Three are not disagreements at all** — they are cases where the app cannot see a printed
-figure, noted here for completeness so the list is the whole list.
+**Seven look like genuine slips. Four are convention differences or ambiguities where both answers
+are defensible. Three are not disagreements at all** — they are cases where the app cannot see a
+printed figure, noted here for completeness so the list is the whole list.
 
 Everything below uses k = 1/(4πε₀) = 8.99 × 10⁹ N·m²/C² unless stated otherwise.
 
@@ -118,10 +120,59 @@ intermediate values has to be read carefully to see it.
 
 ---
 
+## Found in the Exam 3 review
+
+Every answer on Practice 38–42 and Worksheet 3 was worked by hand ahead of the Exam 3 date. These are
+the ones that disagree.
+
+### 10 · Practice 39 #3 — speed of an electron through 550 V · *slip*
+- **Key:** 1.37 × 10⁷ **J**
+- **Should be:** **1.39 × 10⁷ m/s**
+
+v = √(2eΔV/m) = √(2 · 1.60×10⁻¹⁹ · 550 / 9.11×10⁻³¹) = 1.39 × 10⁷ m/s. The question asks for a speed,
+so the unit is wrong; the digits are also about 1.5% low.
+
+### 11 · Practice 39 #26 — potential past the end of a line charge · *slip*
+- **Key:** V = kλ[(L + a)/a]
+- **Should be:** V = kλ **ln**[(L + a)/a]
+
+The rod runs from x = a to x = L + a measured from P, and ∫dx/x = ln x. Without the logarithm the
+key is not a potential at all (it does not even vanish as the rod shrinks to nothing).
+
+*Template `e3.39.rod-axis-V`, which the Integrals lab checks against a Riemann sum.*
+
+### 12 · Practice 41 #14A — current in a warmed copper wire · *slip*
+- **Key:** 12.04 Ω
+- **Should be:** **9.97 A**
+
+The part asks how much *current* flows at 50 °C. 12.04 Ω is the resistance at 50 °C, one step short:
+I = 120 V / 12.04 Ω = 9.97 A. (Part B, the 1.2 A drop, is right.)
+
+### 13 · Practice 42 #13 — frequency "through the 50 Ω resistor" · *slip*
+- **Key:** 60 Hz
+
+"From the above problem … through the 50 Ω resistor" points back to #11, whose current is
+(0.80 A) sin(240t): f = 240/2π = **38.2 Hz**. The key's 60 Hz is 377/2π, the frequency in #12 (the
+blender). One of the two sentences is wrong; as written the key answers a different problem.
+
+### 14 · Worksheet 3 #11 — work in a field that grows as x² · *ambiguity*
+The formula writes $\vec{E} = [(6\ \text{N/(C·m}^2))x^2]\,\hat{x}$, along **+x**, but the figure draws
+**E pointing left**. For the −200 μC charge moving from x = 1 m to 2 m that is the whole answer:
+**−2.8 mJ** with the formula's direction, **+2.8 mJ** with the figure's. Worth settling before it is
+graded.
+
+*Template `e3.38.work-nonuniform`, which follows the formula and says so.*
+
+**Also worth knowing, not an error:** Practice 39 #15's key (309 000 V) rounds √0.08 m to 0.28 m.
+Exactly, V = 3.07 × 10⁵ V; both are fine at the precision the sheet works to.
+
+---
+
 ## How these were found
 
 Not by proofreading. Every printed answer in the bank is stored as a test fixture, and
 `npm run test` recomputes each one from the app's own physics — which is itself checked against a
-second independent method in 307 further assertions. A mismatch fails the build. These nine are the
-mismatches that survived investigation; everything else in the bank agrees with the key to within
-rounding.
+second independent method in 354 further assertions. A mismatch fails the build. Entries 1–9 are
+the mismatches that survived investigation; everything else in the bank agrees with the key to within
+rounding. Entries 10–14 were found by working the Exam 3 sheets by hand, and the ones with a
+template (11 and 14) are now checked the same way.

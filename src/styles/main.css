@@ -1346,3 +1346,7 @@ body.units-open .legend {
   padding-top: 4px;
   text-shadow: 0 0 3px #000;
 }
+
+.lab-block .tiny a {
+  color: var(--accent);
+}

@@ -35,6 +35,7 @@ const err = (id, msg) => errors.push(`${id}: ${msg}`);
 
 function checkRender(tpl, inst) {
   const r = render(inst);
+  if (r.figure != null && (!/^<svg[\s>]/.test(r.figure) || /undefined|NaN/.test(r.figure))) err(tpl.id, 'figure is not clean SVG markup');
   const strings = [r.text, ...r.parts.map((p) => `${p.label ?? ''} ${(p.options || []).map((o) => o.label).join(' ')} ${p.rubric ?? ''}`), ...r.steps, ...r.hints];
   const blob = strings.join('\n');
   if (/undefined|NaN|\[object/.test(blob)) err(tpl.id, `rendered text contains undefined/NaN:\n${blob.slice(0, 300)}`);

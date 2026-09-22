@@ -118,27 +118,36 @@ export function createHUD(api) {
    * Give every slider a box you can type an exact value into. A slider is good for sweeping and bad
    * for matching a number in a problem, so the box writes straight into the same input — widening
    * the slider's range when the problem asks for a value it could not otherwise reach.
+   *
+   * A log slider (`data-log="10"`) holds an exponent, so its box shows base^value instead, divided
+   * by `data-box-scale` to read in the unit the label uses (1e-3 for mm, 1e3 for kPa).
    */
   function enhanceSliders(host) {
     for (const row of host.querySelectorAll('.slider-row')) {
       const range = row.querySelector("input[type='range']");
       if (!range || row.querySelector('.slider-num')) continue;
       const step = Number(range.step);
+      const base = Number(range.dataset.log) || 0;
+      const k = Number(range.dataset.boxScale) || 1;
+      const toBox = (v) => (base ? base ** v / k : v);
+      const fromBox = (b) => (base ? Math.log(b * k) / Math.log(base) : b);
       // Fractional steps become continuous, so a typed value is never snapped back to the grid.
       // Whole-number steps (piece counts, turns) stay discrete.
       if (Number.isFinite(step) && step > 0 && step < 1) range.step = 'any';
       const box = document.createElement('input');
       box.type = 'number';
       box.className = 'slider-num';
-      box.step = Number.isFinite(step) && step > 0 ? String(step) : 'any';
-      box.setAttribute('aria-label', 'Exact value');
+      box.step = !base && Number.isFinite(step) && step > 0 ? String(step) : 'any';
+      box.setAttribute('aria-label', range.dataset.boxUnit ? `Exact value in ${range.dataset.boxUnit}` : 'Exact value');
+      if (range.dataset.boxUnit) box.title = range.dataset.boxUnit;
       const show = () => {
-        if (box !== document.activeElement) box.value = String(Number(Number(range.value).toPrecision(6)));
+        if (box !== document.activeElement) box.value = String(Number(toBox(Number(range.value)).toPrecision(base ? 4 : 6)));
       };
       show();
       box.addEventListener('input', () => {
-        const v = Number(box.value);
-        if (box.value === '' || !Number.isFinite(v)) return;
+        const b = Number(box.value);
+        if (box.value === '' || !Number.isFinite(b) || (base && b <= 0)) return;
+        const v = fromBox(b);
         if (v < Number(range.min)) range.min = String(v);
         if (v > Number(range.max)) range.max = String(v);
         range.value = String(v);

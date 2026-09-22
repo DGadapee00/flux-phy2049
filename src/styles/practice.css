@@ -365,6 +365,28 @@ body.problem-blind .problems {
   color: var(--text);
 }
 
+.pb-extra {
+  margin-left: 4px;
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 10px;
+  color: var(--text-dim);
+  vertical-align: 1px;
+}
+
+.pb-figure {
+  margin: 6px 0 10px;
+}
+
+.pb-figure svg {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+}
+
 .pb-note {
   font-size: 11px;
   color: var(--text-muted);

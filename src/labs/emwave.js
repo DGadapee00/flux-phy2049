@@ -71,7 +71,7 @@ export default defineLab({
           <label class="field">
             <span>Wavelength λ (log)</span>
             <div class="slider-row">
-              <input type="range" id="em-logL" min="-12" max="2" step="0.01" value="-6.27" />
+              <input type="range" id="em-logL" min="-12" max="2" step="0.01" value="-6.27" data-log="10" data-box-unit="m" />
               <span class="mono val" id="em-logL-val">532 nm</span>
             </div>
           </label>

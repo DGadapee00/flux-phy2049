@@ -113,6 +113,8 @@ export function render(inst) {
     })),
     hints: tpl.hints,
     steps: tpl.steps($, sig, T),
+    // A drawn figure (SVG markup), for problems that are about reading a graph.
+    figure: tpl.figure ? tpl.figure($, T) : null,
   };
 }
 

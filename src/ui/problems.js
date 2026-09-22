@@ -361,8 +361,11 @@ export function createPractice(api) {
     return s.ids[i + 1] || null;
   }
 
+  // Enrichment problems (beyond the course's practice sheets) are for browsing, not for drilling.
+  const drillable = (examId) => problemsForExam(examId).filter((t) => !t.enrichment);
+
   function startMixed() {
-    const tpls = problemsForExam(st.listExam);
+    const tpls = drillable(st.listExam);
     const ids = pickSet(tpls, progress, { n: Math.min(MIXED_SIZE, tpls.length), maxConceptual: 0.4 }).map((t) => t.id);
     if (!ids.length) return;
     openProblem(ids[0], { session: { label: 'Mixed set', ids } });
@@ -377,7 +380,7 @@ export function createPractice(api) {
   // ------------------------------------------------------------------ practice exam
   function startExam() {
     const examId = st.listExam;
-    const tpls = problemsForExam(examId);
+    const tpls = drillable(examId);
     const set = pickSet(tpls, progress, { n: Math.min(EXAM_SIZE, tpls.length) });
     const now = Date.now();
     st.exam = {
@@ -534,7 +537,7 @@ export function createPractice(api) {
             const here = t.lab && t.lab === labId;
             return `<button type="button" class="pb-item" data-open="${esc(t.id)}">
               <span class="pb-dot s-${s}" title="${STATUS_LABEL[s]}"></span>
-              <span class="pb-item-title">${esc(t.title)}</span>
+              <span class="pb-item-title">${esc(t.title)}${t.enrichment ? ' <span class="pb-extra" title="Beyond the practice sheets and worksheets: left out of mixed sets and practice exams">extra</span>' : ''}</span>
               <span class="pb-item-meta">${levelDots(t.level)}${labTitle ? `<span class="pb-lab-badge${here ? ' here' : ''}">${esc(labTitle)}</span>` : ''}</span>
             </button>`;
           })
@@ -828,6 +831,7 @@ export function createPractice(api) {
       <div class="pb-kicker">Ch ${esc(tpl.ch)} · ${esc(CHAPTER_TITLES[tpl.ch] || '')} · ${levelDots(tpl.level)} ${KIND_LABEL[tpl.kind] || ''}${src}</div>
       <h2 class="pb-h">${esc(tpl.title)}</h2>
       <p class="pb-text">${prose(cur.view.text)}</p>
+      ${cur.view.figure ? `<div class="pb-figure">${cur.view.figure}</div>` : ''}
       ${cur.note ? `<p class="pb-note">${esc(cur.note)}</p>` : ''}
       ${bannerHTML(cur)}
       <form class="pb-parts" onsubmit="return false">${tpl.parts.map((p, i) => partHTML(cur, p, i)).join('')}</form>

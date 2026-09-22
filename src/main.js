@@ -261,7 +261,7 @@ async function setExam(examId, preferredLab) {
   await loadExamLabs(exam.labs);
   const id = preferredLab && exam.labs.includes(preferredLab) ? preferredLab : exam.labs[0];
   if (id) {
-    await setLab(id);
+    await setLab(id, { examId: exam.id });
   } else {
     if (app.lab) app.lab.exit(ctx, app.handles[app.labId], slice());
     app.lab = null;
@@ -274,18 +274,24 @@ async function setExam(examId, preferredLab) {
   }
 }
 
-async function setLab(labId) {
+/**
+ * Switch to a lab. A lab can be listed under more than one exam (Integrals serves Exam 2 and Exam 3),
+ * so it opens under `examId`, or the exam already showing, when that exam lists it — and under its
+ * home exam otherwise.
+ */
+async function setLab(labId, { examId = app.examId } = {}) {
   if (!labId) return;
-  if (app.labId === labId && app.lab) return;
+  const listed = examId && examById(examId).labs.includes(labId);
+  const exam = listed ? examById(examId) : examForLab(labId);
+  if (app.labId === labId && app.lab && app.examId === exam.id) return;
   const my = ++app.gen;
-  const exam = examForLab(labId);
   await loadExamLabs(exam.labs);
   const lab = await loadLab(labId);
   if (!lab || my !== app.gen) return;
 
   if (app.lab) app.lab.exit(ctx, app.handles[app.labId], slice());
 
-  app.examId = lab.exam || exam.id;
+  app.examId = exam.id;
   app.labId = labId;
   app.lab = lab;
   units?.onLab(labId);
@@ -298,6 +304,12 @@ async function setLab(labId) {
   }
   const s = app.slices[labId];
   s.lab = labId;
+  // A lab shared between exams starts in the mode this exam wants (Integrals in ∫ dV for Exam 3),
+  // but only on arriving from the other exam, so a mode chosen here is left alone.
+  if (s.openedUnder !== exam.id) {
+    exam.labDefaults?.[labId]?.(s);
+    s.openedUnder = exam.id;
+  }
   applyFrame();
   lab.enter(ctx, app.handles[labId], s);
   setOrbit(lab.orbit);
@@ -320,9 +332,9 @@ async function openProblemInApp(inst, { push = true, query = true } = {}) {
   loadingProblem = true;
   try {
     if (tpl.lab) {
-      await setLab(tpl.lab);
+      await setLab(tpl.lab, { examId: tpl.exam });
       // A lab switch started elsewhere (e.g. a second URL event) can supersede ours; finish the switch.
-      if (app.lab?.id !== tpl.lab) await setLab(tpl.lab);
+      if (app.lab?.id !== tpl.lab) await setLab(tpl.lab, { examId: tpl.exam });
     } else if (app.examId !== tpl.exam) await setExam(tpl.exam);
     let note = '';
     if (tpl.lab && app.lab?.id === tpl.lab) {
@@ -367,7 +379,7 @@ function followUrl() {
   const { examId, labId, problemId, seed } = parseHash();
   if (practice.followUrl(problemId, seed)) return;
   if (examId === app.examId && labId === app.labId) return;
-  if (labId) setLab(labId);
+  if (labId) setLab(labId, { examId });
   else setExam(examId);
 }
 // Typed / bookmarked hashes fire hashchange; Back / Forward over pushState entries fire popstate.

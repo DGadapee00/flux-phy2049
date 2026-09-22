@@ -54,14 +54,14 @@ export default defineLab({
           <label class="field">
             <span>Gap d</span>
             <div class="slider-row">
-              <input type="range" id="bd-d" min="-5.3" max="-1.4" step="0.01" value="-2.4" />
+              <input type="range" id="bd-d" min="-5.3" max="-1.4" step="0.01" value="-2.4" data-log="10" data-box-scale="1e-3" data-box-unit="mm" />
               <span class="mono val" id="bd-d-val">4.00 mm</span>
             </div>
           </label>
           <label class="field">
             <span>Pressure p</span>
             <div class="slider-row">
-              <input type="range" id="bd-p" min="0" max="5.3" step="0.01" value="5.006" />
+              <input type="range" id="bd-p" min="0" max="5.3" step="0.01" value="5.006" data-log="10" data-box-scale="1e3" data-box-unit="kPa" />
               <span class="mono val" id="bd-p-val">101 kPa</span>
             </div>
           </label>

@@ -19,11 +19,11 @@ with the physics.
 
 | | |
 |---|---|
-| Problem templates | **200** |
-| …that cite a practice sheet (`src: 'Practice 39 #8–10'`) | **62** |
-| …that use a printed answer as a ground-truth check | **55** |
-| Individual printed answers stored | **92**, across 268 worked cases |
-| Templates checked only against physics the app computes itself | **145** |
+| Problem templates | **214** |
+| …that cite a practice sheet or worksheet (`src: 'Practice 39 #8–10'`) | **72** |
+| …that use a printed answer as a ground-truth check | **59** |
+| Individual printed answers stored | **96**, across 283 worked cases |
+| Templates checked only against physics the app computes itself | **155** |
 
 So roughly **three quarters of the bank owes nothing to the course's answer keys.** Where a printed
 answer is used, it is used as a test fixture — a check that the app's own physics reproduces the
@@ -43,29 +43,29 @@ Git history is available if useful.
 
 ## How the physics is verified
 
-The app does not trust itself. `npm test` runs **307 assertions**, each checking a result against an
+The app does not trust itself. `npm test` runs **354 assertions**, each checking a result against an
 independent method rather than against a stored value — Biot–Savart sums against closed forms,
 Ampère loops, Boris-integrated orbits, image-charge surface potentials, Kirchhoff's rules on every
 circuit layout, −ΔΦ/Δt for Faraday, RK4 integration of each AC circuit against its phasor current,
 and paraxial ray tracing that must land every principal ray on the computed image. A further check
-runs all 200 templates through **8,903 comparisons** against the labs.
+runs all 214 templates through **9,696 comparisons** against the labs.
 
 This is why the app can disagree with an answer key and be worth listening to. See
-[ERRATA.md](ERRATA.md) for the nine places it does, three of which look like genuine slips.
+[ERRATA.md](ERRATA.md) for the fourteen places it does, seven of which look like genuine slips.
 
 ## Where it is hosted, and who can read it
 
 Public on Cloudflare Pages, at an unlisted URL, with `robots.txt` and an `X-Robots-Tag` header
 asking search engines to skip it. It will not surface in a search for a problem's wording.
 
-**That is a courtesy, not a lock.** Anyone given the link can read everything, including the 92
+**That is a courtesy, not a lock.** Anyone given the link can read everything, including the 96
 printed answers. If those practice sheets are reused from term to term, that is worth deciding
 deliberately rather than by default. Two remedies, either of which can be done the same day:
 
 1. **Gate it.** Cloudflare Access restricts the site to a named list of email addresses, free for up
    to 50 users. Setup is about fifteen minutes and is documented in [DEPLOY.md](DEPLOY.md).
-2. **Remove the printed answers.** Deleting the 92 `key` values costs nothing functionally — those
-   55 templates would simply be checked against the app's own physics, like the other 145.
+2. **Remove the printed answers.** Deleting the 96 `key` values costs nothing functionally — those
+   59 templates would simply be checked against the app's own physics, like the other 155.
 
 ## Student data
 
@@ -92,5 +92,5 @@ Four things worth settling early rather than late:
 grep -c "src: '" src/problems/bank/*.js        # templates citing a practice sheet
 grep -c "key: "  src/problems/bank/*.js        # printed answers stored as test fixtures
 grep -rn "note: '" src/problems/bank/*.js      # every recorded disagreement
-npm test                                       # the 307 independent physics checks
+npm test                                       # the 354 independent physics checks
 ```

@@ -15,7 +15,7 @@ Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — none 
 lecture notes, worksheets, or Canvas files. (`lessons/` holds handouts written from scratch for this
 app; nothing in it reproduces course material.) **[DEPLOY.md](DEPLOY.md)** covers rebuilding and republishing, and what
 a public build exposes. **[PROVENANCE.md](PROVENANCE.md)** accounts for exactly which course
-material the problem bank draws on, and **[ERRATA.md](ERRATA.md)** lists the nine places the app's
+material the problem bank draws on, and **[ERRATA.md](ERRATA.md)** lists the fourteen places the app's
 physics disagrees with a printed answer key.
 
 ## Run locally
@@ -52,7 +52,7 @@ The self-test checks the code against independent methods rather than against it
 
 ## Practice
 
-Press **P** (or the yellow **Practice** button) for the problem bank: 204 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
+Press **P** (or the yellow **Practice** button) for the problem bank: 214 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
 
 1. **Open a problem.** It loads its own setup into the matching lab — the charges, distances and coordinates exactly as the question states them, with the scene scaled to fit (the note under the problem says what one grid square is worth). Nothing is rescaled, so the lab is reading the problem you are working. While it's unsolved, the lab's numbers are hidden: the readout, the equation panel, value labels in the scene, and the arrows that would show a direction answer. The geometry stays visible.
 2. **Symbols before numbers.** Most multi-step problems open with the formula, not the arithmetic. Write it in symbols and the panel typesets it underneath as you go — what you see is what the grader read, so `a/b+c` shows a fraction over `b` alone and a missing bracket is visible while you type. A row of keys under the box inserts the problem's own symbols in their real glyphs (`λ`, `ε₀`, `μ₀`, `π`, `√`, `²`), which is the only way to enter them on a phone; typing works too, and `λ` and `lam` are the same thing. `/` opens a bracketed denominator with the caret inside it, typed or tapped, because `q/Aε₀` means (q/A)·ε₀ to a parser and `q/(Aε₀)` to a physicist. Meanwhile the panel reads the units off what you've typed and prints them under the box, `units: N/C ✓` or `units: C/m — this one should come out in N/C`. That's the exam habit of writing the problem in units first and checking it lands in the right place, confirmed while you write it. The numeric boxes stay locked until the formula is right, so the numbers go into an expression you've already justified. A practice exam turns the lock off.
@@ -77,12 +77,21 @@ The number plane is labeled in real distance and the ticks change with the view,
 |---|---|---|
 | Exam 1 · Ch V, 34–35 | `#/e1/vectors` | Vectors, Force |
 | Exam 2 · Ch 36–37 | `#/e2/gauss` | Field, Integrals, Gauss, Conductors |
-| Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Capacitor, Ohm, Power, Breakdown |
+| Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Integrals, Capacitor, Ohm, Power, Breakdown |
 | Exam 4 · Ch 43–47 | `#/e4/circuits` | Circuits, Biot–Savart, Ampère, Mag force |
 | Exam 5 · Ch 48–52 | `#/e5/faraday` | Faraday, AC |
 | Exam 6 · Ch 53–57 | `#/e6/emwave` | EM wave, Polarization |
 | Exam 7 · Ch 58–62 | `#/e7/refraction` | Refraction, Mirrors, Lenses |
 | Wave optics · Ch 63–65 | `#/wave` | Interference, Diffraction, Thin film |
+
+### Exam 3 labs
+
+- **Potential** (`#/e3/potential`) — V = Σ kq/r for any charges you place, equipotentials, ΔV and the field's work from point A to the probe, a uniform field, and U = qV for a test charge of either sign.
+- **Integrals** (`#/e3/integral`) — Exam 2's lab, listed here too and opened in its **∫ dV** mode: V from a rod (on its bisector, above an end, or on its own line past the end), a ring or arc, and a disk, as a Riemann sum next to the closed form. It is the lab behind the Ch 39 continuous-charge problems.
+- **Capacitor** (`#/e3/capacitor`) — C = κε₀A/d, battery-connected against isolated when a dielectric goes in, and the energy stored.
+- **Ohm** (`#/e3/ohm`) — R = ρL/A, ρ(T), drift speed, and I = V/R with the charges moving.
+- **Power** (`#/e3/power`) — P = IV four ways, rms against peak, and P(t) for AC.
+- **Breakdown** (`#/e3/breakdown`) — Paschen's law and the doorknob spark. Beyond the practice sheets: its problems are marked *extra* and kept out of mixed sets and practice exams.
 
 ### Exam 4 labs
 

@@ -159,11 +159,11 @@ export default defineLab({
     Object.assign(state, rest, { scenarioId: sc.id });
   },
   controls() {
-    const slider = (id, text, min, max, step, cls = '', kinds = '') => `
+    const slider = (id, text, min, max, step, cls = '', kinds = '', extra = '') => `
           <label class="field" id="wrap-${id}" data-kinds="${kinds}">
             <span>${text}</span>
             <div class="slider-row">
-              <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" />
+              <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" ${extra}/>
               <span class="mono val ${cls}" id="${id}-val"></span>
             </div>
           </label>`;
@@ -173,10 +173,10 @@ export default defineLab({
             <button type="button" data-p="proton">Proton (+e)</button>
             <button type="button" data-p="electron">Electron (−e)</button>
           </div>
-          ${slider('mf-v', 'Speed v (log)', 5, 7.6, 0.01, '', 'particle selector')}
-          ${slider('mf-B', 'Field B (log, along +y)', -5, 0, 0.01, 'qB', 'particle selector wire')}
+          ${slider('mf-v', 'Speed v (log)', 5, 7.6, 0.01, '', 'particle selector', 'data-log="10" data-box-unit="m/s"')}
+          ${slider('mf-B', 'Field B (log, along +y)', -5, 0, 0.01, 'qB', 'particle selector wire', 'data-log="10" data-box-unit="T"')}
           ${slider('mf-pitch', 'Angle of v above the xz plane', 0, 45, 1, '', 'particle')}
-          ${slider('mf-E', 'Field E (log, along −z)', 3, 7, 0.01, '', 'selector')}
+          ${slider('mf-E', 'Field E (log, along −z)', 3, 7, 0.01, '', 'selector', 'data-log="10" data-box-unit="V/m"')}
           ${slider('mf-I', 'Current I', -10, 10, 0.5, 'qI', 'wire')}
           ${slider('mf-L', 'Wire length L', 0.1, 1.2, 0.01, '', 'wire')}
           ${slider('mf-theta', 'Angle θ between L and B', 0, 180, 1, '', 'wire')}

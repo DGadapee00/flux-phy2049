@@ -18,7 +18,8 @@ export function linePerpField(lambda, L, d, x0 = 0) {
   const u2 = L / 2 - x0;
   const r1 = Math.hypot(u1, d);
   const r2 = Math.hypot(u2, d);
-  const Ey = ((K * lambda) / d) * (u2 / r2 - u1 / r1);
+  // On the line itself, past an end (d = 0), there is no perpendicular component to divide out.
+  const Ey = d > 0 ? ((K * lambda) / d) * (u2 / r2 - u1 / r1) : 0;
   const Ex = K * lambda * (1 / r2 - 1 / r1);
   return {
     E: { x: Ex, y: Ey, z: 0 },
@@ -242,7 +243,13 @@ export function linePerpPotential(lambda, L, d, x0 = 0) {
   const u2 = L / 2 - x0;
   // asinh(u/d) rather than ln(u + √(u²+d²)): the log form cancels to nothing once P is well off
   // the end, where u is large and negative and u + r is the difference of two near-equal numbers.
-  const V = K * lambda * (Math.asinh(u2 / d) - Math.asinh(u1 / d));
+  // On the line past an end (d = 0, both ends on one side) the integral of du/|u| is a plain log:
+  // V = kλ ln(far/near) — P a distance a beyond a rod of length L gives kλ ln[(L + a)/a].
+  const V = d > 0
+    ? K * lambda * (Math.asinh(u2 / d) - Math.asinh(u1 / d))
+    : u1 * u2 > 0
+      ? K * lambda * Math.log(Math.max(Math.abs(u1), Math.abs(u2)) / Math.min(Math.abs(u1), Math.abs(u2)))
+      : Infinity;
   return { V, r1: Math.hypot(u1, d), r2: Math.hypot(u2, d), rEnd: Math.hypot(u2, d) };
 }
 

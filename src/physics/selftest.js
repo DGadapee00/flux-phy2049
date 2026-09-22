@@ -324,6 +324,34 @@ console.log('Gauss lab self-test');
 }
 
 {
+  // P on the rod's own line, a distance a past its end: V = kλ ln[(L + a)/a], the Practice 39 #26
+  // answer, against a fine Riemann sum along the rod.
+  const lambda = 2e-6;
+  const L = 0.8;
+  const a = 0.25;
+  const closed = linePerpPotential(lambda, L, 0, L / 2 + a);
+  const num = linePerpPotentialNumerical(lambda, L, 0, 4000, L / 2 + a);
+  approx(closed.V, K * lambda * Math.log((L + a) / a), 1e-9, 'rod V on its axis: kλ ln[(L+a)/a]');
+  approx(num.V, closed.V, 0.002, 'rod V on its axis: numerical vs analytic');
+  const f = linePerpField(lambda, L, 0, L / 2 + a);
+  approx(f.E.x, K * lambda * (1 / a - 1 / (L + a)), 1e-9, 'rod E on its axis: kλ[1/a − 1/(L+a)]');
+}
+
+{
+  // Semicircle of charge, P at its centre: every dq at the same R, so V = kQ/R = kλπ.
+  const lambda = 1.5e-6;
+  const R = 0.3;
+  const num = ringAxisPotentialNumerical(lambda * Math.PI * R, R, 0, 64, Math.PI);
+  approx(num.V, K * lambda * Math.PI, 1e-9, 'semicircle V at centre = kλπ, independent of R');
+  // Disk on its axis: 2πkσ(√(R²+s²) − s).
+  const sigma = 4e-6;
+  const Rd = 0.2;
+  const s0 = 0.15;
+  const dq = diskAxisPotentialNumerical(sigma * Math.PI * Rd * Rd, Rd, s0, 400);
+  approx(dq.V, 2 * Math.PI * K * sigma * (Math.hypot(Rd, s0) - s0), 0.005, 'disk V on axis: numerical vs 2πkσ(√(R²+s²) − s)');
+}
+
+{
   const Qr = 3e-6;
   const a = 0.3;
   const y = 0.4;
