@@ -1297,3 +1297,52 @@ body.units-open .legend {
   margin-top: 10px;
   opacity: 0.6;
 }
+
+/* Wave bench (Interference, Diffraction): the ruler beside the screen and the inset at P. */
+.ruler-label {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 0 3px #000;
+}
+
+.ruler-label.unit {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.wave-inset {
+  width: 190px;
+  padding: 6px 8px 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.wave-inset canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.wave-inset-title {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.wave-inset-caption {
+  white-space: nowrap;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--text);
+  text-align: center;
+  pointer-events: none;
+  padding-top: 4px;
+  text-shadow: 0 0 3px #000;
+}

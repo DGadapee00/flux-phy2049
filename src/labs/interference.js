@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { M, fatLine, fatSegments, markAnswer, setFatSegments, segmentCapacity } from '../scene/manim.js';
+import { M, fatSegments, markAnswer, setFatSegments, segmentCapacity } from '../scene/manim.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import { doubleSlit, doubleSlitIntensity, wavelengthRGB } from '../physics/waveoptics.js';
+import { createRuler, createTank, drawnL, drawnLambda, drawnLog, lengthUnit, niceCeil, paintScreen } from '../scene/wavebench.js';
 import { kv, cells, qv, eq } from '../ui/shared.js';
 
 /**
@@ -16,59 +17,130 @@ import { kv, cells, qv, eq } from '../ui/shared.js';
  */
 
 const SCENARIOS = [
-  { id: 'young', name: 'Double slit · 600 nm, d = 0.2 mm, L = 2 m', lam: 600e-9, d: 0.2e-3, L: 2, m: 3, envelope: false },
-  { id: 'wide', name: 'Slits far apart — fringes crowd together', lam: 600e-9, d: 0.8e-3, L: 2, m: 3, envelope: false },
-  { id: 'narrow', name: 'Slits close together — fringes spread out', lam: 600e-9, d: 0.06e-3, L: 2, m: 2, envelope: false },
-  { id: 'blue', name: 'Blue light — shorter λ, tighter fringes', lam: 450e-9, d: 0.2e-3, L: 2, m: 3, envelope: false },
-  { id: 'envelope', name: 'With the single-slit envelope — a missing order', lam: 600e-9, d: 0.3e-3, L: 2, m: 3, envelope: true },
+  { id: 'young', name: 'Double slit · 600 nm, d = 0.2 mm, L = 2 m', lam: 600e-9, d: 0.2e-3, L: 2, m: 3, envelope: false, span: 0.03 },
+  { id: 'wide', name: 'Slits far apart — fringes crowd together', lam: 600e-9, d: 0.8e-3, L: 2, m: 3, envelope: false, span: 0.03 },
+  { id: 'narrow', name: 'Slits close together — fringes spread out', lam: 600e-9, d: 0.06e-3, L: 2, m: 1, envelope: false, span: 0.03 },
+  { id: 'blue', name: 'Blue light — shorter λ, tighter fringes', lam: 450e-9, d: 0.2e-3, L: 2, m: 3, envelope: false, span: 0.03 },
+  { id: 'envelope', name: 'With the single-slit envelope — a missing order', lam: 600e-9, d: 0.3e-3, L: 2, m: 3, envelope: true, span: 0.03 },
 ];
 
-// The bench, in drawing metres (× UNITS_PER_METER for the scene). Nothing here is to scale.
-// Everything sits left of centre so the screen and its labels stay clear of the Setup panel.
-const X_SOURCE = -0.34;
-const X_SLITS = -0.14;
-const X_SCREEN = 0.28;
-const BARRIER_H = 0.22;
+// The bench, in drawing metres (× UNITS_PER_METER for the scene). Nothing here is to scale except
+// the pattern on the screen, which is measured by the ruler beside it.
+const X_SOURCE = -0.38;
+const X_SLITS = -0.17;
+const BARRIER_H = 0.3;
 const SCREEN_H = 0.33;
-const SCREEN_W = 0.055;
-const ORDERS_ON_SCREEN = 8;
+const SCREEN_W = 0.04;
+const BEAM = 0.16;
 const TEX_W = 8;
 const TEX_H = 1024;
+// Below this the drawn crests are a few pixels apart and read as noise, so the ripples fade out.
+const LAMBDA_DRAW_MIN = 0.006;
 
-/** Drawn slit separation: a visible stand-in that still grows and shrinks with the real d. */
-function drawnSep(d) {
-  const t = Math.min(1, Math.max(0, (d - 0.05e-3) / (1e-3 - 0.05e-3)));
-  return 0.05 + 0.13 * t;
+/** Drawn slit separation: a log stand-in that still grows and shrinks with the real d. */
+const drawnSep = (d) => drawnLog(d, 0.02e-3, 2e-3, 0.06, 0.26);
+
+/** The half-span the screen is fitted to: five bright fringes either side of the middle. */
+function fitSpan(state) {
+  return niceCeil((5 * state.lam * state.L) / state.d);
 }
 
-/** How much of the screen one drawing-metre covers, chosen to show a useful number of fringes. */
-function screenScale(ds) {
-  const want = Math.max(Math.abs(ds.ySmall(ORDERS_ON_SCREEN)), 1e-6);
-  return SCREEN_H / want; // drawing metres per real metre
-}
-
-function label(html, cls = 'circuit-label') {
+function label(html, anchorX = 0.5) {
   const el = document.createElement('div');
-  el.className = cls;
+  el.className = 'circuit-label';
   el.innerHTML = html;
-  return new CSS2DObject(el);
+  const o = new CSS2DObject(el);
+  o.center.set(anchorX, 0.5);
+  return o;
+}
+
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const zPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const hitPt = new THREE.Vector3();
+let draggingP = false;
+
+/** Where the pointer meets the bench, in drawing metres. */
+function benchPoint(e, camera) {
+  ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  if (!raycaster.ray.intersectPlane(zPlane, hitPt)) return null;
+  return { x: hitPt.x / UNITS_PER_METER, y: hitPt.y / UNITS_PER_METER };
+}
+
+/**
+ * The inset: the wave from each slit as it reaches P, and their sum. The lower trace is shifted by
+ * the path difference δ, so a whole number of wavelengths lines the crests up and half a wavelength
+ * puts crest on trough.
+ */
+function drawInset(canvas, phase, cycles, rgb) {
+  const g = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  g.clearRect(0, 0, W, H);
+  const rows = [
+    { y: 34, amp: 18, shift: 0, color: '#5cd0b3', name: 'slit 1' },
+    { y: 86, amp: 18, shift: cycles, color: '#f0ac5f', name: 'slit 2' },
+    { y: 152, amp: 18, shift: null, color: `rgb(${rgb.r},${rgb.g},${rgb.b})`, name: 'sum' },
+  ];
+  const x0 = 64;
+  const x1 = W - 10;
+  const waves = 2.5; // wavelengths across the trace
+  const k = (2 * Math.PI * waves) / (x1 - x0);
+  const f = (x, shift) => Math.cos(k * (x - x0) - phase - 2 * Math.PI * shift);
+  g.font = '22px Inter, system-ui, sans-serif';
+  g.textBaseline = 'middle';
+  for (const r of rows) {
+    g.strokeStyle = 'rgba(236,230,226,0.15)';
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(x0, r.y);
+    g.lineTo(x1, r.y);
+    g.stroke();
+    g.fillStyle = '#aaa39e';
+    g.fillText(r.name, 4, r.y);
+    g.strokeStyle = r.color;
+    g.lineWidth = r.shift == null ? 4 : 3;
+    g.beginPath();
+    for (let x = x0; x <= x1; x += 2) {
+      const v = r.shift == null ? (f(x, 0) + f(x, cycles)) / 2 : f(x, r.shift);
+      const y = r.y - v * (r.shift == null ? 2 * r.amp : r.amp);
+      if (x === x0) g.moveTo(x, y);
+      else g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+  // The sum's reach: |cos(πδ/λ)| of the full height either wave alone would give it twice over.
+  const env = Math.abs(Math.cos(Math.PI * cycles)) * 36;
+  g.setLineDash([6, 6]);
+  g.strokeStyle = 'rgba(236,230,226,0.35)';
+  g.lineWidth = 1.5;
+  for (const s of [1, -1]) {
+    g.beginPath();
+    g.moveTo(x0, 152 - s * env);
+    g.lineTo(x1, 152 - s * env);
+    g.stroke();
+  }
+  g.setLineDash([]);
 }
 
 export default defineLab({
   id: 'interference',
   exam: 'wave',
   title: 'Interference',
-  hint: 'Two slits, one screen — slide d and λ and watch the fringes breathe',
+  hint: 'Drag P along the screen — the two waves arrive in step on the bright bands and cancel on the dark ones',
   orbit: false,
   camera: { pos: new THREE.Vector3(0, 0, 11.2), target: new THREE.Vector3(0, 0, 0) },
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
-    return { scenarioId: 'young', lam: 600e-9, d: 0.2e-3, L: 2, m: 3, envelope: false, aOverD: 1 / 3 };
+    return { scenarioId: 'young', lam: 600e-9, d: 0.2e-3, L: 2, m: 3, envelope: false, aOverD: 1 / 3, span: 0.03, yP: 0, waves: true };
   },
   applyScenario(id, state) {
     const sc = SCENARIOS.find((s) => s.id === id) || SCENARIOS[0];
-    Object.assign(state, { scenarioId: sc.id, lam: sc.lam, d: sc.d, L: sc.L, m: sc.m, envelope: sc.envelope });
+    // The screen is sized on the next recompute, once the setup is final: a problem changes λ, d and L
+    // after this. Left as the scenario had it, every scenario shares one scale so they compare.
+    Object.assign(state, { scenarioId: sc.id, lam: sc.lam, d: sc.d, L: sc.L, m: sc.m, envelope: sc.envelope, span: null, spanFrom: sc.id, yP: 0 });
   },
   controls() {
     return `
@@ -105,7 +177,9 @@ export default defineLab({
             </div>
           </label>
           <label class="check"><input type="checkbox" id="if-env" /> <span>each slit has width a = d/3 (adds the diffraction envelope)</span></label>
-          <p class="tiny">The bench is stretched — real slits are far closer together than this, and the screen is metres away. The fringes on the screen are not: they are painted from the real I(θ) for the λ, d and L above, so the spacing there is the Δy in the panel.</p>
+          <label class="check"><input type="checkbox" id="if-waves" checked /> <span>show the waves (off: rays only)</span></label>
+          <button type="button" class="btn ghost" id="if-fit">Fit screen to the pattern</button>
+          <p class="tiny">Drag <b>P</b> up and down the screen. The screen keeps its scale while you slide — read the pattern off the ruler, in real units. The bench itself is stretched: real slits are far closer together and the screen metres away, so the ripples use a stand-in wavelength chosen to land on the same bands.</p>
         </div>`;
   },
   bind(api) {
@@ -141,6 +215,14 @@ export default defineLab({
       api.slice().envelope = e.target.checked;
       api.bump(false);
     });
+    $('if-waves').addEventListener('change', (e) => {
+      api.slice().waves = e.target.checked;
+      api.bump(false);
+    });
+    $('if-fit').addEventListener('click', () => {
+      Object.assign(api.slice(), { span: null, spanFrom: null });
+      api.bump(false);
+    });
   },
   syncControls(state) {
     const $ = (id) => document.getElementById(id);
@@ -162,22 +244,21 @@ export default defineLab({
     set('m', state.m, `m = ${state.m}`);
     const env = $('if-env');
     if (env) env.checked = !!state.envelope;
+    const waves = $('if-waves');
+    if (waves) waves.checked = state.waves !== false;
   },
   init(ctx) {
     const u = UNITS_PER_METER;
     const group = new THREE.Group();
     ctx.scene.add(group);
 
-    // Source, bench axis, barrier and screen frame.
-    group.add(fatLine([X_SOURCE * u, 0, 0, X_SCREEN * u, 0, 0], { color: 0x4a4a4a, width: 1.2 }));
+    const tank = createTank(group);
+    const axis = fatSegments(segmentCapacity(1), { color: 0x4a4a4a, width: 1.2 });
+    group.add(axis);
     const barrier = fatSegments(segmentCapacity(8), { color: M.white, width: 3 });
     group.add(barrier);
-    group.add(
-      fatLine(
-        [X_SCREEN * u, -SCREEN_H * u, 0, X_SCREEN * u, SCREEN_H * u, 0],
-        { color: 0x8a8a8a, width: 2 },
-      ),
-    );
+    const frame = fatSegments(segmentCapacity(1), { color: 0x8a8a8a, width: 2 });
+    group.add(frame);
 
     // The screen itself: a strip carrying the fringe pattern as a texture.
     const canvas = document.createElement('canvas');
@@ -190,32 +271,54 @@ export default defineLab({
       new THREE.PlaneGeometry(SCREEN_W * u, 2 * SCREEN_H * u),
       new THREE.MeshBasicMaterial({ map: texture, toneMapped: false, transparent: false }),
     );
-    screen.position.set((X_SCREEN + SCREEN_W / 2) * u, 0, 0);
     group.add(screen);
+    const ruler = createRuler(group);
 
     const rays = fatSegments(segmentCapacity(8), { color: M.gold, width: 1.6 });
     group.add(rays);
-    const pathMark = fatSegments(segmentCapacity(4), { color: M.teal, width: 2.4 });
+    // The two paths to P, and the extra length δ the lower one travels, ticked off in wavelengths.
+    const paths = fatSegments(segmentCapacity(2), { color: M.white, width: 1.4, opacity: 0.85 });
+    group.add(paths);
+    const pathMark = fatSegments(segmentCapacity(24), { color: M.teal, width: 3 });
     group.add(pathMark);
+    const pDot = new THREE.Mesh(new THREE.CircleGeometry(0.075, 24), new THREE.MeshBasicMaterial({ color: M.white }));
+    const pRing = new THREE.Mesh(new THREE.RingGeometry(0.11, 0.14, 32), new THREE.MeshBasicMaterial({ color: M.white }));
+    group.add(pDot, pRing);
     // The marker that points at the answer (which fringe is order m) is an answer, so it hides
     // in blind mode along with the readout.
-    const marker = fatSegments(segmentCapacity(4), { color: M.gold, width: 3 });
+    const marker = fatSegments(segmentCapacity(2), { color: M.gold, width: 3 });
     markAnswer(marker);
     group.add(marker);
 
     const labels = {
       d: label('d'),
       L: label('L'),
-      order: label('m'),
-      spacing: label('Δy'),
+      order: label('m', 1),
       source: label('λ'),
+      P: label('P', 1),
     };
     markAnswer(labels.order);
-    markAnswer(labels.spacing);
     Object.values(labels).forEach((l) => group.add(l));
 
+    // The inset: what arrives at P from each slit, and what they add up to.
+    const insetEl = document.createElement('div');
+    insetEl.className = 'wave-inset';
+    insetEl.innerHTML = '<div class="wave-inset-title">What arrives at P</div><canvas width="360" height="200"></canvas>';
+    const inset = new CSS2DObject(insetEl);
+    inset.center.set(0, 1); // bottom-left corner at the anchor
+    group.add(inset);
+    const insetCaptionEl = document.createElement('div');
+    insetCaptionEl.className = 'wave-inset-caption';
+    const insetCaption = new CSS2DObject(insetCaptionEl);
+    insetCaption.center.set(0, 0);
+    markAnswer(insetCaption);
+    group.add(insetCaption);
+
     group.visible = false;
-    return { group, barrier, screen, canvas, texture, rays, pathMark, marker, labels };
+    return {
+      group, tank, axis, barrier, frame, screen, canvas, texture, ruler, rays, paths, pathMark, pDot, pRing, marker, labels,
+      inset, insetCanvas: insetEl.querySelector('canvas'), insetCaption, geo: null,
+    };
   },
   enter(ctx, handle) {
     handle.group.visible = true;
@@ -223,10 +326,45 @@ export default defineLab({
   exit(ctx, handle) {
     handle.group.visible = false;
   },
+  pointer: {
+    down(e, ctx) {
+      const g = ctx.handle?.geo;
+      const p = g && benchPoint(e, ctx.camera);
+      if (!p) return;
+      // Anywhere on or just beside the screen picks up P, and puts it there.
+      if (p.x < g.xScreen - 0.06 || p.x > g.xScreen + SCREEN_W + 0.05 || Math.abs(p.y) > SCREEN_H + 0.03) return;
+      draggingP = true;
+      ctx.controls.enabled = false;
+      this.move(e, ctx);
+    },
+    move(e, ctx) {
+      if (!draggingP) return;
+      const g = ctx.handle?.geo;
+      const p = g && benchPoint(e, ctx.camera);
+      if (!p) return;
+      const yd = Math.max(-SCREEN_H, Math.min(SCREEN_H, p.y));
+      ctx.state.yP = (yd / SCREEN_H) * g.span;
+      ctx.bump(false);
+    },
+    up(e, ctx) {
+      draggingP = false;
+      ctx.controls.enabled = true;
+    },
+  },
   recompute(state, computed) {
+    if (!(state.span > 0)) {
+      const sc = SCENARIOS.find((x) => x.id === state.spanFrom);
+      const same = sc && sc.lam === state.lam && sc.d === state.d && sc.L === state.L;
+      state.span = same ? sc.span : fitSpan(state);
+      state.spanFrom = null;
+    }
     const a = state.envelope ? state.d * state.aOverD : 0;
     const ds = doubleSlit({ lambda: state.lam, d: state.d, L: state.L, a });
     const th = ds.thetaBright(state.m);
+    // P, clamped to the screen: its angle, the path difference there, and the brightness.
+    const yP = Math.max(-state.span, Math.min(state.span, state.yP ?? 0));
+    const thetaP = Math.atan2(yP, state.L);
+    const deltaP = state.d * Math.sin(thetaP);
     computed.interf = {
       dy: ds.dy,
       y: ds.ySmall(state.m),
@@ -238,6 +376,12 @@ export default defineLab({
       a,
       exists: th != null,
       ds,
+      span: state.span,
+      yP,
+      thetaP,
+      deltaP,
+      cyclesP: deltaP / state.lam,
+      IP: doubleSlitIntensity(thetaP, { lambda: state.lam, d: state.d, a }),
     };
   },
   syncViews(state, computed, ctx) {
@@ -247,92 +391,130 @@ export default defineLab({
     const u = UNITS_PER_METER;
     const sep = drawnSep(state.d);
     const half = sep / 2;
-    const scale = screenScale(c.ds);
+    const Ld = drawnL(state.L);
+    const xScreen = X_SLITS + Ld;
+    const span = c.span;
+    const toDraw = (y) => (y / span) * SCREEN_H; // real metres on the screen → drawing metres
+    const clampD = (y) => Math.max(-SCREEN_H, Math.min(SCREEN_H, y));
     const rgb = wavelengthRGB(state.lam);
     const beamColor = new THREE.Color(`rgb(${rgb.r},${rgb.g},${rgb.b})`);
+    h.geo = { xScreen, span };
 
-    // Barrier with two gaps at ±half.
+    setFatSegments(h.axis, [X_SOURCE * u, 0, 0, xScreen * u, 0, 0]);
+    setFatSegments(h.frame, [xScreen * u, -SCREEN_H * u, 0, xScreen * u, SCREEN_H * u, 0]);
+    h.screen.position.set((xScreen + SCREEN_W / 2) * u, 0, 0);
+    h.ruler.update({ x: xScreen + SCREEN_W, halfH: SCREEN_H, span, units: lengthUnit });
+
+    // Barrier with two gaps at ±half, each as wide as the slit (a stand-in when there's no envelope).
+    const gap = state.envelope ? Math.max(0.006, (sep * state.aOverD) / 2) : 0.012;
     const seg = [];
     const push = (y0, y1) => seg.push(X_SLITS * u, y0 * u, 0, X_SLITS * u, y1 * u, 0);
-    const gap = 0.016;
     push(-BARRIER_H, -half - gap);
     push(-half + gap, half - gap);
     push(half + gap, BARRIER_H);
     setFatSegments(h.barrier, seg);
 
-    // Fringe pattern painted from the real intensity.
-    const g2 = h.canvas.getContext('2d');
-    const img = g2.createImageData(TEX_W, TEX_H);
-    for (let row = 0; row < TEX_H; row++) {
-      // Texture rows run top → bottom; the screen's +y is up.
-      const frac = 0.5 - row / (TEX_H - 1); // +0.5 … −0.5
-      const yDraw = frac * 2 * SCREEN_H; // drawing metres from the axis
-      const yReal = yDraw / scale; // real metres on the screen
-      const theta = Math.atan2(yReal, state.L);
-      const I = doubleSlitIntensity(theta, { lambda: state.lam, d: state.d, a: c.a });
-      for (let col = 0; col < TEX_W; col++) {
-        const i = (row * TEX_W + col) * 4;
-        img.data[i] = rgb.r * I;
-        img.data[i + 1] = rgb.g * I;
-        img.data[i + 2] = rgb.b * I;
-        img.data[i + 3] = 255;
-      }
-    }
-    g2.putImageData(img, 0, 0);
+    // Fringe pattern painted from the real intensity, against the fixed ruler.
+    paintScreen(h.canvas, rgb, span, (y) => doubleSlitIntensity(Math.atan2(y, state.L), { lambda: state.lam, d: state.d, a: c.a }));
     h.texture.needsUpdate = true;
 
-    // Rays: source → each slit → the marked order.
-    const yOrder = c.exists ? Math.max(-SCREEN_H, Math.min(SCREEN_H, c.y * scale)) : 0;
+    // The ripples: a plane wave up to the barrier, then a circular wave out of each slit. The drawn
+    // wavelength is whatever sends the drawn geometry's first bright fringe to the real one's place.
+    const y1 = c.ds.yBright(1);
+    const lamD = y1 == null ? sep * 1.2 : drawnLambda(sep, toDraw(y1), Ld);
+    const sources = [];
+    const sub = state.envelope ? 6 : 1;
+    for (const yc of [half, -half]) {
+      for (let i = 0; i < sub; i++) {
+        const off = sub === 1 ? 0 : ((i + 0.5) / sub - 0.5) * 2 * gap;
+        sources.push([X_SLITS, yc + off]);
+      }
+    }
+    const fade = Math.max(0, Math.min(1, (lamD - 0.6 * LAMBDA_DRAW_MIN) / (0.4 * LAMBDA_DRAW_MIN)));
+    h.tank.mesh.visible = state.waves !== false && fade > 0;
+    h.tank.update({
+      sources, lambda: lamD, xSource: X_SOURCE, xBarrier: X_SLITS, xScreen, beam: BEAM, halfH: SCREEN_H,
+      color: beamColor, alpha: 0.95 * fade, rRef: Ld,
+    });
+
+    // Rays view: source → each slit → the marked order.
+    const yOrder = c.exists ? clampD(toDraw(c.yExact)) : 0;
     const r = [];
-    r.push(X_SOURCE * u, 0, 0, X_SLITS * u, -half * u, 0);
-    r.push(X_SOURCE * u, 0, 0, X_SLITS * u, half * u, 0);
-    if (c.exists) {
-      r.push(X_SLITS * u, -half * u, 0, X_SCREEN * u, yOrder * u, 0);
-      r.push(X_SLITS * u, half * u, 0, X_SCREEN * u, yOrder * u, 0);
+    if (state.waves === false) {
+      r.push(X_SOURCE * u, 0, 0, X_SLITS * u, -half * u, 0);
+      r.push(X_SOURCE * u, 0, 0, X_SLITS * u, half * u, 0);
+      if (c.exists) {
+        r.push(X_SLITS * u, -half * u, 0, xScreen * u, yOrder * u, 0);
+        r.push(X_SLITS * u, half * u, 0, xScreen * u, yOrder * u, 0);
+      }
     }
     setFatSegments(h.rays, r);
     h.rays.material.color.copy(beamColor);
 
-    // The little right triangle at the slits: the extra path δ = d sinθ the lower ray travels.
+    // P: the two paths, and δ laid along the lower one as a run of wavelengths.
+    const yPd = clampD(toDraw(c.yP));
+    setFatSegments(h.paths, [
+      X_SLITS * u, half * u, 0, xScreen * u, yPd * u, 0,
+      X_SLITS * u, -half * u, 0, xScreen * u, yPd * u, 0,
+    ]);
     const pm = [];
-    if (c.exists && state.m !== 0) {
-      const dirX = X_SCREEN - X_SLITS;
-      const dirY = yOrder - half;
-      const len = Math.hypot(dirX, dirY);
-      const ux = dirX / len;
-      const uy = dirY / len;
-      const drop = sep * Math.abs(Math.sin(c.theta)) * 6; // exaggerated, like the rest of the bench
-      const footX = X_SLITS + ux * drop;
-      const footY = -half + uy * drop;
-      pm.push(X_SLITS * u, -half * u, 0, footX * u, footY * u, 0);
-      pm.push(X_SLITS * u, half * u, 0, footX * u, footY * u, 0);
+    const cyc = Math.abs(c.cyclesP);
+    if (cyc > 0.02) {
+      // The longer path starts at the slit farther from P.
+      const y0 = c.yP >= 0 ? -half : half;
+      const dx = xScreen - X_SLITS;
+      const dy = yPd - y0;
+      const len = Math.hypot(dx, dy);
+      const ux = dx / len;
+      const uy = dy / len;
+      const run = Math.min(cyc, 12) * lamD;
+      pm.push(X_SLITS * u, y0 * u, 0, (X_SLITS + ux * run) * u, (y0 + uy * run) * u, 0);
+      // A cross tick at every whole wavelength along δ.
+      const nx = -uy;
+      const ny = ux;
+      for (let k = 0; k <= Math.min(Math.floor(cyc), 12); k++) {
+        const cx = X_SLITS + ux * k * lamD;
+        const cy = y0 + uy * k * lamD;
+        pm.push((cx - nx * 0.012) * u, (cy - ny * 0.012) * u, 0, (cx + nx * 0.012) * u, (cy + ny * 0.012) * u, 0);
+      }
     }
     setFatSegments(h.pathMark, pm);
+    h.pDot.position.set(xScreen * u, yPd * u, 0.02);
+    h.pRing.position.set(xScreen * u, yPd * u, 0.02);
 
-    // Tick marks at the marked order and at one fringe spacing.
+    // Tick at the marked order, on the side the paths come in from.
     const mk = [];
-    if (c.exists) {
-      mk.push((X_SCREEN + SCREEN_W) * u, yOrder * u, 0, (X_SCREEN + SCREEN_W + 0.07) * u, yOrder * u, 0);
-      const yNext = Math.max(-SCREEN_H, Math.min(SCREEN_H, (c.y + c.dy) * scale));
-      mk.push((X_SCREEN + SCREEN_W) * u, yNext * u, 0, (X_SCREEN + SCREEN_W + 0.05) * u, yNext * u, 0);
-    }
+    if (c.exists) mk.push((xScreen - 0.05) * u, yOrder * u, 0, (xScreen - 0.005) * u, yOrder * u, 0);
     setFatSegments(h.marker, mk);
 
     const L = h.labels;
-    L.source.position.set((X_SOURCE + 0.02) * u, 0.09 * u, 0);
+    L.source.position.set((X_SOURCE + 0.05) * u, (BEAM + 0.03) * u, 0);
     L.source.element.innerHTML = `${(state.lam * 1e9).toFixed(0)} nm`;
-    L.d.position.set((X_SLITS - 0.02) * u, -0.27 * u, 0);
+    L.d.position.set(X_SLITS * u, -(BARRIER_H + 0.03) * u, 0);
     L.d.element.innerHTML = `d = ${(state.d * 1e3).toFixed(3)} mm`;
-    L.L.position.set(((X_SLITS + X_SCREEN) / 2) * u, -0.3 * u, 0);
-    L.L.element.innerHTML = `L = ${state.L.toFixed(2)} m &middot; not to scale`;
+    L.L.position.set(((X_SLITS + xScreen) / 2) * u, -(SCREEN_H + 0.035) * u, 0);
+    L.L.element.innerHTML = `L = ${state.L.toFixed(2)} m &middot; bench not to scale`;
     L.order.visible = c.exists;
-    L.order.position.set((X_SCREEN + 0.07) * u, yOrder * u, 0);
+    L.order.position.set((xScreen - 0.055) * u, yOrder * u, 0);
     L.order.element.innerHTML = c.exists ? `m = ${state.m}` : '';
-    L.spacing.visible = c.exists;
-    L.spacing.position.set((X_SCREEN + 0.07) * u, (yOrder + 0.075) * u, 0);
-    L.spacing.element.innerHTML = `&Delta;y = ${(c.dy * 1e3).toFixed(2)} mm`;
+    L.P.position.set((xScreen - 0.03) * u, (yPd + 0.04) * u, 0);
+    L.P.element.innerHTML = 'P';
+
+    h.inset.position.set((X_SOURCE + 0.015) * u, (SCREEN_H + 0.02) * u, 0);
+    h.insetCaption.position.set((X_SOURCE + 0.015) * u, (SCREEN_H + 0.02) * u, 0);
+    const frac = cyc - Math.floor(cyc);
+    const off = Math.min(frac, 1 - frac); // how far from a whole number of wavelengths
+    const verdict = off < 0.1 ? 'in step: bright' : off > 0.4 ? 'half a wave out: dark' : 'partly out of step';
+    h.insetCaption.element.innerHTML = `δ = ${cyc.toFixed(2)} λ &middot; ${verdict}`;
 
     ctx.grid.visible = false;
+  },
+  afterFrame(dt, state, computed, ctx) {
+    const h = ctx.handle;
+    const c = computed.interf;
+    if (!h || !c) return;
+    h.tank.tick(dt);
+    drawInset(h.insetCanvas, h.tank.phase(), c.cyclesP, wavelengthRGB(state.lam));
   },
   law: () => [
     String.raw`d\sin\theta = m\lambda\quad\text{(bright)}`,
@@ -356,6 +538,9 @@ export default defineLab({
       rows.push(kv(`$m = ${state.m}$`, 'past sinθ = 1 — that order does not exist'));
     }
     if (c.a) rows.push(kv('slit width $a$', `${(c.a * 1e3).toFixed(3)} mm (envelope on)`));
+    rows.push(kv('$y_P$', `${(c.yP * 1e3).toFixed(2)} mm`));
+    rows.push(kv(String.raw`$\delta_P = d\sin\theta_P$`, qv('qV', `${(c.deltaP * 1e9).toFixed(0)} nm = ${c.cyclesP.toFixed(2)}λ`)));
+    rows.push(kv('$I_P/I_0$', qv('qV', c.IP.toFixed(2))));
     return rows.join('');
   },
   readout(state, computed) {
@@ -392,7 +577,7 @@ export default defineLab({
     return {
       title: 'The fringe spacing is a ratio, not a wavelength',
       body: [
-        String.raw`Light leaves both slits in step. Going to a point on the screen at angle $\theta$, the lower path is longer by $\delta = d\sin\theta$ — the little teal triangle. A whole number of wavelengths in that gap means the waves arrive in step and the screen is bright:`,
+        String.raw`Light leaves both slits in step. Going to a point on the screen at angle $\theta$, the path from the farther slit is longer by $\delta = d\sin\theta$ — the teal run along it, ticked off in wavelengths. Drag P and watch the inset. A whole number of wavelengths in that gap means the waves arrive in step and the screen is bright:`,
         eq(String.raw`d\sin\theta = m\lambda`),
         String.raw`For the small angles of a real bench, $\sin\theta \approx \tan\theta = y/L$, and the bright fringes come out evenly spaced:`,
         eq(String.raw`\Delta y = \frac{\lambda L}{d}`),

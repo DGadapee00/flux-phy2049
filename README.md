@@ -111,11 +111,21 @@ The number plane is labeled in real distance and the ticks change with the view,
 
 The bench in these three cannot be drawn to scale — slits sit tenths of a millimetre apart and the
 screen is metres away — so the geometry is stretched and **the pattern is not**: every band on the
-screen is painted pixel by pixel from the real I(θ) for the λ, d, a and L in the panel, and the
-spacing you measure there is the Δy the panel reports.
+screen is painted pixel by pixel from the real I(θ) for the λ, d, a and L in the panel.
 
-- **Interference** (`#/wave/interference`) — Young's double slit. d sinθ = mλ, Δy = λL/d, the path-difference triangle at the slits, and any order marked on the screen. Switch on a finite slit width and the single-slit envelope appears over the fringes — at a = d/3 the m = 3 order goes missing, which you can watch happen.
-- **Diffraction** (`#/wave/diffraction`) — three modes. Single slit (a sinθ = mλ for the *dark* fringes, central width 2λL/a, with the sinc² traced beside the screen), grating (d = 1/N, every order drawn out to m_max = ⌊d/λ⌋, peaks narrowing as 1/N), and Rayleigh resolution (θ_min = 1.22λ/D, two Airy patterns you can slide together until they merge).
+In Interference and Diffraction the screen **keeps its scale** while you slide, with a ruler beside it
+in real units (mm for a flat screen, degrees for a grating, μrad for resolution). Narrow the slits and
+you watch the pattern spread against a ruler that stays put; **Fit screen** refits on demand. Every
+scenario in a lab shares one scale, so switching scenarios compares them honestly. Moving the screen
+back (L) moves it back on the bench too.
+
+Behind the slits the light is drawn as **waves**: a plane wave up to the barrier, then an animated
+ripple tank from each opening. The ripples use a stand-in wavelength chosen so the drawn geometry puts
+its first order exactly where the real pattern does, so the dark, still lanes between the ripples
+land on the dark bands of the screen. Untick *show the waves* for the ray diagram.
+
+- **Interference** (`#/wave/interference`) — Young's double slit. d sinθ = mλ, Δy = λL/d. **Drag P** along the screen: the two paths to it are drawn, the extra length δ is laid along the longer one and ticked off in wavelengths, and an inset shows the wave from each slit arriving at P and their sum — crests lined up on a bright band, crest on trough on a dark one. Switch on a finite slit width and the single-slit envelope appears over the fringes — at a = d/3 the m = 3 order goes missing, which you can watch happen.
+- **Diffraction** (`#/wave/diffraction`) — three modes. Single slit (a sinθ = mλ for the *dark* fringes, central width 2λL/a, with the sinc² traced beside the screen and a row of Huygens wavelets across the opening), grating (d = 1/N, every order drawn out to m_max = ⌊d/λ⌋ on a screen marked in angle, peaks narrowing as 1/N), and Rayleigh resolution (θ_min = 1.22λ/D, two Airy patterns you can slide together until they merge).
 - **Thin film** (`#/wave/thinfilm`) — the two reflected rays, each labelled with whether it flips by half a wavelength, the extra path 2nt, and t_min for bright and for dark. The swatch above the film is the colour it sends back in white light. Anti-reflection coating and soap bubble are both scenarios.
 
 Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up. Faraday uses the same loop convention for Lenz. The EM wave uses E ŷ, B ẑ, travel +x̂ so ŷ × ẑ = x̂.

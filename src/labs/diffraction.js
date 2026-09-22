@@ -12,48 +12,61 @@ import {
   airyIntensity,
   wavelengthRGB,
 } from '../physics/waveoptics.js';
+import { angleUnit, createRuler, createTank, drawnL, drawnLambda, drawnLog, lengthUnit, niceCeil, paintScreen } from '../scene/wavebench.js';
 import { kv, cells, qv, eq } from '../ui/shared.js';
 
 /**
  * Ch 64 · one slit, a grating, and the resolution limit.
  *
  * Same honesty as the Interference lab: the bench is stretched, the pattern is not. Every band on
- * the screen is painted from the real I(θ) for the numbers in the panel.
+ * the screen is painted from the real I(θ) for the numbers in the panel, against a ruler that keeps
+ * its scale (src/scene/wavebench.js). A single slit's screen is flat and read in mm; a grating's
+ * orders swing out to wide angles, so its screen is read in degrees; the resolution screen, in the
+ * microradians an Airy disk actually spans.
  */
 
 const SCENARIOS = [
-  { id: 'single', name: 'Single slit · 633 nm, a = 0.10 mm, L = 2 m', mode: 'slit', lam: 633e-9, a: 0.1e-3, L: 2 },
-  { id: 'narrow', name: 'Narrower slit — the pattern spreads out', mode: 'slit', lam: 633e-9, a: 0.03e-3, L: 2 },
+  { id: 'single', name: 'Single slit · 633 nm, a = 0.10 mm, L = 2 m', mode: 'slit', lam: 633e-9, a: 0.1e-3, L: 2, span: 0.05 },
+  { id: 'narrow', name: 'Narrower slit — the pattern spreads out', mode: 'slit', lam: 633e-9, a: 0.03e-3, L: 2, span: 0.05 },
   { id: 'grating', name: 'Grating · 600 lines/mm, 500 nm', mode: 'grating', lam: 500e-9, linesPerMM: 600, m: 2, L: 2 },
   { id: 'grating-dense', name: 'Grating · 1200 lines/mm — orders fly apart', mode: 'grating', lam: 500e-9, linesPerMM: 1200, m: 1, L: 2 },
-  { id: 'rayleigh', name: 'Rayleigh · 5 mm aperture at 10 km', mode: 'rayleigh', lam: 550e-9, D: 5e-3, Lobj: 10e3, sepFactor: 1 },
+  { id: 'rayleigh', name: 'Rayleigh · 5 mm aperture at 10 km', mode: 'rayleigh', lam: 550e-9, D: 5e-3, Lobj: 10e3, sepFactor: 1, span: 5e-4 },
 ];
 
-const X_SOURCE = -0.34;
-const X_APERTURE = -0.14;
-const X_SCREEN = 0.28;
-const BARRIER_H = 0.22;
+const X_SOURCE = -0.38;
+const X_APERTURE = -0.17;
+const BARRIER_H = 0.3;
 const SCREEN_H = 0.33;
-const SCREEN_W = 0.055;
+const SCREEN_W = 0.04;
+const BEAM = 0.2;
 const TEX_W = 8;
 const TEX_H = 1024;
+const LAMBDA_DRAW_MIN = 0.006;
+// A grating's screen covers every angle there is, so it never needs refitting.
+const GRATING_SPAN = Math.PI / 2;
+const GRATING_MAX_DRAWN = 9;
 
-function label(html) {
+function label(html, anchorX = 0.5) {
   const el = document.createElement('div');
   el.className = 'circuit-label';
   el.innerHTML = html;
-  return new CSS2DObject(el);
+  const o = new CSS2DObject(el);
+  o.center.set(anchorX, 0.5);
+  return o;
 }
 
-/** Half the angular range the screen shows, per mode — enough to see the structure, not more. */
-function halfAngle(state, c) {
-  if (state.mode === 'slit') return Math.min(Math.PI / 2, 3.2 * (c.ss.theta1 ?? 0.3));
-  if (state.mode === 'grating') {
-    const last = c.g.thetaOrder(c.g.maxOrder) ?? Math.PI / 2.2;
-    return Math.min(Math.PI / 2, last * 1.12 + 0.05);
-  }
-  return 3.4 * c.r.thetaMin;
+/**
+ * The screen's half-span when it is fitted: for one slit, real metres that take in the first two
+ * minima each side; for resolution, radians across a couple of Airy rings.
+ */
+function fitSpan(state) {
+  if (state.mode === 'rayleigh') return niceCeil((3.4 * 1.22 * state.lam) / state.D);
+  return niceCeil((2.5 * state.lam * state.L) / state.a);
 }
+
+/** Drawn slit width, and drawn grating pitch: log stand-ins that follow the real a and d. */
+const drawnA = (a) => drawnLog(a, 0.01e-3, 1e-3, 0.02, 0.2);
+const drawnPitch = (d) => drawnLog(d, 0.5e-6, 20e-6, 0.05, 0.14);
 
 export default defineLab({
   id: 'diffraction',
@@ -65,7 +78,10 @@ export default defineLab({
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
-    return { scenarioId: 'single', mode: 'slit', lam: 633e-9, a: 0.1e-3, L: 2, linesPerMM: 600, m: 2, D: 5e-3, Lobj: 10e3, sepFactor: 1, slitsDrawn: 6 };
+    return {
+      scenarioId: 'single', mode: 'slit', lam: 633e-9, a: 0.1e-3, L: 2, linesPerMM: 600, m: 2, D: 5e-3, Lobj: 10e3, sepFactor: 1,
+      spans: { slit: 0.05, rayleigh: 5e-4 }, spanFrom: null, waves: true,
+    };
   },
   applyScenario(id, state) {
     const sc = SCENARIOS.find((s) => s.id === id) || SCENARIOS[0];
@@ -73,6 +89,9 @@ export default defineLab({
     for (const k of ['lam', 'a', 'L', 'linesPerMM', 'm', 'D', 'Lobj', 'sepFactor']) {
       if (sc[k] !== undefined) state[k] = sc[k];
     }
+    // Sized on the next recompute, once a problem has had its say (see Interference).
+    state.spans = { ...(state.spans || {}), [sc.mode]: null };
+    state.spanFrom = sc.id;
   },
   controls() {
     return `
@@ -136,7 +155,9 @@ export default defineLab({
               <input type="number" class="num" id="df-L-num" min="0.05" max="50" step="0.05" value="2" />
             </div>
           </label>
-          <p class="tiny">The bench is stretched; the pattern is not. The screen is painted from the real I(θ) for the numbers above — sinc² for one slit, the N-slit function for a grating, the Airy disk for a round aperture.</p>
+          <label class="check" id="wrap-df-waves"><input type="checkbox" id="df-waves" checked /> <span>show the waves (off: rays only)</span></label>
+          <button type="button" class="btn ghost" id="df-fit">Fit screen to the pattern</button>
+          <p class="tiny">The screen keeps its scale while you slide, so what you see grow and shrink is the pattern — read it off the ruler. The bench is stretched; the pattern is not. It is painted from the real I(θ) for the numbers above — sinc² for one slit, the N-slit function for a grating, the Airy disk for a round aperture. A grating's screen is marked in angle.</p>
         </div>`;
   },
   bind(api) {
@@ -178,6 +199,16 @@ export default defineLab({
       api.slice().sepFactor = Number(e.target.value);
       api.bump(false);
     });
+    $('df-waves').addEventListener('change', (e) => {
+      api.slice().waves = e.target.checked;
+      api.bump(false);
+    });
+    $('df-fit').addEventListener('click', () => {
+      const st = api.slice();
+      st.spans = { ...(st.spans || {}), [st.mode]: null };
+      st.spanFrom = null;
+      api.bump(false);
+    });
   },
   syncControls(state) {
     const $ = (id) => document.getElementById(id);
@@ -207,6 +238,12 @@ export default defineLab({
       if (el) el.hidden = !on;
     };
     show('a', state.mode === 'slit');
+    show('waves', !rayl);
+    show('L', state.mode !== 'grating');
+    const fit = $('df-fit');
+    if (fit) fit.hidden = state.mode === 'grating';
+    const waves = $('df-waves');
+    if (waves) waves.checked = state.waves !== false;
     show('N', state.mode === 'grating');
     show('m', state.mode === 'grating');
     show('D', rayl);
@@ -218,11 +255,14 @@ export default defineLab({
     const u = UNITS_PER_METER;
     const group = new THREE.Group();
     ctx.scene.add(group);
-    group.add(fatLine([X_SOURCE * u, 0, 0, X_SCREEN * u, 0, 0], { color: 0x4a4a4a, width: 1.2 }));
+    const tank = createTank(group);
+    const axis = fatSegments(segmentCapacity(1), { color: 0x4a4a4a, width: 1.2 });
+    group.add(axis);
     // Built at full capacity: a grating comb needs far more segments than a single slit.
     const barrier = fatSegments(segmentCapacity(64), { color: M.white, width: 3 });
     group.add(barrier);
-    group.add(fatLine([X_SCREEN * u, -SCREEN_H * u, 0, X_SCREEN * u, SCREEN_H * u, 0], { color: 0x8a8a8a, width: 2 }));
+    const frame = fatSegments(segmentCapacity(1), { color: 0x8a8a8a, width: 2 });
+    group.add(frame);
 
     const canvas = document.createElement('canvas');
     canvas.width = TEX_W;
@@ -234,8 +274,8 @@ export default defineLab({
       new THREE.PlaneGeometry(SCREEN_W * u, 2 * SCREEN_H * u),
       new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }),
     );
-    screen.position.set((X_SCREEN + SCREEN_W / 2) * u, 0, 0);
     group.add(screen);
+    const ruler = createRuler(group);
 
     const rays = fatSegments(segmentCapacity(64), { color: M.gold, width: 1.6 });
     group.add(rays);
@@ -246,11 +286,11 @@ export default defineLab({
     const envelope = fatLine([0, 0, 0, 0, 0, 0], { color: M.teal, width: 1.8, opacity: 0.9 });
     group.add(envelope);
 
-    const labels = { source: label(''), aperture: label(''), order: label(''), note: label('') };
+    const labels = { source: label(''), aperture: label(''), order: label('', 1), note: label('') };
     markAnswer(labels.order);
     Object.values(labels).forEach((l) => group.add(l));
     group.visible = false;
-    return { group, barrier, screen, canvas, texture, rays, marker, envelope, labels };
+    return { group, tank, axis, barrier, frame, screen, canvas, texture, ruler, rays, marker, envelope, labels };
   },
   enter(ctx, handle) {
     handle.group.visible = true;
@@ -259,6 +299,14 @@ export default defineLab({
     handle.group.visible = false;
   },
   recompute(state, computed) {
+    if (!state.spans) state.spans = {};
+    if (state.mode !== 'grating' && !(state.spans[state.mode] > 0)) {
+      const sc = SCENARIOS.find((x) => x.id === state.spanFrom);
+      const keys = ['lam', 'a', 'L', 'D'];
+      const same = sc && sc.mode === state.mode && keys.every((k) => sc[k] === undefined || sc[k] === state[k]);
+      state.spans[state.mode] = same && sc.span ? sc.span : fitSpan(state);
+      state.spanFrom = null;
+    }
     const ss = singleSlit({ lambda: state.lam, a: state.a, L: state.L });
     const g = grating({ lambda: state.lam, linesPerM: state.linesPerMM * 1e3, N: 12 });
     const r = rayleigh({ lambda: state.lam, D: state.D, L: state.Lobj });
@@ -268,6 +316,7 @@ export default defineLab({
       ss,
       g,
       r,
+      span: state.mode === 'grating' ? GRATING_SPAN : state.spans[state.mode],
       theta1: ss.theta1,
       theta1Deg: ss.theta1 == null ? null : (ss.theta1 * 180) / Math.PI,
       width: ss.width,
@@ -287,114 +336,143 @@ export default defineLab({
     const u = UNITS_PER_METER;
     const rgb = wavelengthRGB(state.lam);
     const beam = new THREE.Color(`rgb(${rgb.r},${rgb.g},${rgb.b})`);
-    const thMax = halfAngle(state, c);
+    const span = c.span;
+    const slit = state.mode === 'slit';
+    const rayl = state.mode === 'rayleigh';
+    // Only the single slit's screen moves with L; the other two are read in angle.
+    const Ld = drawnL(slit ? state.L : 2);
+    const xScreen = X_APERTURE + Ld;
+    // Screen coordinate of a direction θ: real metres (L tanθ) for the slit, the angle itself otherwise.
+    const coordOf = (theta) => (slit ? state.L * Math.tan(theta) : theta);
+    const thetaOf = (v) => (slit ? Math.atan2(v, state.L) : v);
+    const yOf = (theta) => Math.max(-SCREEN_H, Math.min(SCREEN_H, (coordOf(theta) / span) * SCREEN_H));
 
-    // The aperture, drawn as one gap, a comb of slits, or a round hole seen edge-on.
+    setFatSegments(h.axis, [X_SOURCE * u, 0, 0, xScreen * u, 0, 0]);
+    setFatSegments(h.frame, [xScreen * u, -SCREEN_H * u, 0, xScreen * u, SCREEN_H * u, 0]);
+    h.screen.position.set((xScreen + SCREEN_W / 2) * u, 0, 0);
+    h.ruler.update({ x: xScreen + SCREEN_W, halfH: SCREEN_H, span, units: slit ? lengthUnit : angleUnit, want: slit || rayl ? 3 : 5 });
+
+    // The aperture, drawn as one gap, a comb of slits, or a round hole seen edge-on. The same
+    // openings are where the ripples start.
     const seg = [];
+    const sources = [];
+    let lamD = null;
     if (state.mode === 'grating') {
-      const pitch = 0.055;
-      const n = state.slitsDrawn;
+      const pitch = drawnPitch(c.d);
+      const n = Math.min((GRATING_MAX_DRAWN - 1) / 2, Math.floor(0.2 / pitch));
+      const open = Math.min(0.01, pitch / 4);
+      let y = -BARRIER_H;
       for (let i = -n; i <= n; i++) {
-        const y = i * pitch;
-        seg.push(X_APERTURE * u, (y + 0.012) * u, 0, X_APERTURE * u, (y + pitch - 0.012) * u, 0);
+        seg.push(X_APERTURE * u, y * u, 0, X_APERTURE * u, (i * pitch - open) * u, 0);
+        y = i * pitch + open;
+        sources.push([X_APERTURE, i * pitch]);
       }
+      seg.push(X_APERTURE * u, y * u, 0, X_APERTURE * u, BARRIER_H * u, 0);
+      const th1 = c.g.thetaOrder(1);
+      lamD = th1 == null ? pitch * 1.2 : drawnLambda(pitch, yOf(th1), Ld);
     } else {
-      const half = state.mode === 'rayleigh' ? 0.075 : Math.max(0.012, Math.min(0.08, 0.012 + state.a * 90));
+      const half = rayl ? 0.075 : drawnA(state.a) / 2;
       seg.push(X_APERTURE * u, -BARRIER_H * u, 0, X_APERTURE * u, -half * u, 0);
       seg.push(X_APERTURE * u, half * u, 0, X_APERTURE * u, BARRIER_H * u, 0);
+      if (slit) {
+        // Huygens: a row of wavelets across the opening.
+        const n = 16;
+        for (let i = 0; i < n; i++) sources.push([X_APERTURE, ((i + 0.5) / n - 0.5) * 2 * half]);
+        lamD = c.theta1 == null ? 2 * half * 1.2 : drawnLambda(2 * half, yOf(c.theta1), Ld);
+      }
     }
     setFatSegments(h.barrier, seg);
+    const fade = lamD == null ? 0 : Math.max(0, Math.min(1, (lamD - 0.6 * LAMBDA_DRAW_MIN) / (0.4 * LAMBDA_DRAW_MIN)));
+    h.tank.mesh.visible = !rayl && state.waves !== false && fade > 0;
+    if (h.tank.mesh.visible) {
+      h.tank.update({
+        sources, lambda: lamD, xSource: X_SOURCE, xBarrier: X_APERTURE, xScreen, beam: BEAM, halfH: SCREEN_H,
+        color: beam, alpha: 0.95 * fade, rRef: Ld,
+      });
+    }
 
     // Paint the screen from the real intensity for this mode.
-    const g2 = h.canvas.getContext('2d');
-    const img = g2.createImageData(TEX_W, TEX_H);
     const sep = c.thetaMin * state.sepFactor;
-    for (let row = 0; row < TEX_H; row++) {
-      const frac = 0.5 - row / (TEX_H - 1);
-      const theta = frac * 2 * thMax;
-      let I;
-      if (state.mode === 'slit') I = singleSlitIntensity(theta, { lambda: state.lam, a: state.a });
-      else if (state.mode === 'grating') I = gratingIntensity(theta, { lambda: state.lam, d: c.d, N: 12 });
-      else {
-        I = 0.5 * airyIntensity(theta - sep / 2, { lambda: state.lam, D: state.D })
-          + 0.5 * airyIntensity(theta + sep / 2, { lambda: state.lam, D: state.D });
-      }
-      for (let col = 0; col < TEX_W; col++) {
-        const i = (row * TEX_W + col) * 4;
-        img.data[i] = rgb.r * I;
-        img.data[i + 1] = rgb.g * I;
-        img.data[i + 2] = rgb.b * I;
-        img.data[i + 3] = 255;
-      }
+    let I;
+    if (slit) I = (v) => singleSlitIntensity(thetaOf(v), { lambda: state.lam, a: state.a });
+    else if (state.mode === 'grating') I = (v) => gratingIntensity(v, { lambda: state.lam, d: c.d, N: 12 });
+    else {
+      I = (v) => 0.5 * airyIntensity(v - sep / 2, { lambda: state.lam, D: state.D })
+        + 0.5 * airyIntensity(v + sep / 2, { lambda: state.lam, D: state.D });
     }
-    g2.putImageData(img, 0, 0);
+    paintScreen(h.canvas, rgb, span, I, state.mode === 'grating' ? 12 : 6);
     h.texture.needsUpdate = true;
 
-    const yOf = (theta) => Math.max(-SCREEN_H, Math.min(SCREEN_H, (theta / (2 * thMax)) * 2 * SCREEN_H));
-
-    // Rays in, and out to whatever this mode marks.
+    // Rays: in the rays view, in to the aperture and out to whatever this mode marks. The Rayleigh
+    // view has no ripples, so its two incoming directions always show.
+    const showRays = rayl || state.waves === false;
     const rays = [];
-    rays.push(X_SOURCE * u, 0, 0, X_APERTURE * u, 0, 0);
+    if (showRays && !rayl) rays.push(X_SOURCE * u, 0, 0, X_APERTURE * u, 0, 0);
     const marks = [];
-    if (state.mode === 'slit' && c.theta1 != null) {
+    const tick = (y) => marks.push((xScreen - 0.05) * u, y * u, 0, (xScreen - 0.005) * u, y * u, 0);
+    if (slit && c.theta1 != null) {
       for (const s of [1, -1]) {
         const y = yOf(s * c.theta1);
-        rays.push(X_APERTURE * u, 0, 0, X_SCREEN * u, y * u, 0);
-        marks.push((X_SCREEN + SCREEN_W) * u, y * u, 0, (X_SCREEN + SCREEN_W + 0.06) * u, y * u, 0);
+        if (showRays) rays.push(X_APERTURE * u, 0, 0, xScreen * u, y * u, 0);
+        tick(y);
       }
-    } else if (state.mode === 'grating' && c.thetaOrder != null) {
-      for (let m = -c.maxOrder; m <= c.maxOrder; m++) {
-        const th = c.g.thetaOrder(m);
-        if (th == null) continue;
-        const y = yOf(th);
-        rays.push(X_APERTURE * u, 0, 0, X_SCREEN * u, y * u, 0);
+    } else if (state.mode === 'grating') {
+      if (showRays) {
+        for (let m = -c.maxOrder; m <= c.maxOrder; m++) {
+          const th = c.g.thetaOrder(m);
+          if (th == null) continue;
+          rays.push(X_APERTURE * u, 0, 0, xScreen * u, yOf(th) * u, 0);
+        }
       }
-      const y = yOf(c.thetaOrder);
-      marks.push((X_SCREEN + SCREEN_W) * u, y * u, 0, (X_SCREEN + SCREEN_W + 0.07) * u, y * u, 0);
-    } else if (state.mode === 'rayleigh') {
+      if (c.thetaOrder != null) tick(yOf(c.thetaOrder));
+    } else if (rayl) {
       for (const s of [1, -1]) {
         const y = yOf((s * sep) / 2);
-        rays.push(X_SOURCE * u, y * 0.7 * u, 0, X_APERTURE * u, 0, 0);
-        marks.push((X_SCREEN + SCREEN_W) * u, y * u, 0, (X_SCREEN + SCREEN_W + 0.06) * u, y * u, 0);
+        rays.push(X_SOURCE * u, s * 0.12 * u, 0, X_APERTURE * u, 0, 0);
+        tick(y);
       }
     }
     setFatSegments(h.rays, rays);
     h.rays.material.color.copy(beam);
     setFatSegments(h.marker, marks);
 
-    // For a grating, trace the single-slit-style envelope as a curve beside the screen.
+    // For one slit, trace sinc² beside the screen: the shape the bands are painted from.
     const env = [];
-    if (state.mode === 'slit') {
-      const steps = 120;
+    if (slit) {
+      const steps = 160;
       for (let i = 0; i <= steps; i++) {
-        const theta = -thMax + (2 * thMax * i) / steps;
-        const I = singleSlitIntensity(theta, { lambda: state.lam, a: state.a });
-        env.push((X_SCREEN - 0.02 - 0.16 * I) * u, yOf(theta) * u, 0);
+        const v = -span + (2 * span * i) / steps;
+        const Iv = singleSlitIntensity(thetaOf(v), { lambda: state.lam, a: state.a });
+        env.push((xScreen - 0.02 - 0.14 * Iv) * u, ((v / span) * SCREEN_H) * u, 0.01);
       }
     }
     h.envelope.visible = env.length > 0;
     if (env.length) h.envelope.geometry.setPositions(env);
 
     const L = h.labels;
-    L.source.position.set((X_SOURCE + 0.02) * u, 0.09 * u, 0);
+    L.source.position.set((X_SOURCE + 0.05) * u, (BEAM + 0.03) * u, 0);
     L.source.element.innerHTML = `${(state.lam * 1e9).toFixed(0)} nm`;
-    L.aperture.position.set((X_APERTURE - 0.02) * u, -0.27 * u, 0);
+    L.aperture.position.set(X_APERTURE * u, -(BARRIER_H + 0.03) * u, 0);
     L.aperture.element.innerHTML =
-      state.mode === 'slit' ? `a = ${(state.a * 1e3).toFixed(3)} mm`
+      slit ? `a = ${(state.a * 1e3).toFixed(3)} mm`
         : state.mode === 'grating' ? `${state.linesPerMM.toFixed(0)} lines/mm &middot; d = ${(c.d * 1e6).toFixed(3)} μm`
           : `D = ${(state.D * 1e3).toFixed(1)} mm`;
-    L.order.position.set((X_SCREEN + 0.07) * u, yOf(state.mode === 'grating' ? c.thetaOrder ?? 0 : c.theta1 ?? 0) * u, 0);
+    const yLab = rayl ? yOf(sep / 2) + 0.05 : yOf(state.mode === 'grating' ? c.thetaOrder ?? 0 : c.theta1 ?? 0);
+    L.order.position.set((xScreen - 0.055) * u, yLab * u, 0);
     L.order.element.innerHTML =
-      state.mode === 'slit' ? (c.theta1 == null ? '' : `θ₁ = ${c.theta1Deg.toFixed(2)}°`)
+      slit ? (c.theta1 == null ? '' : `θ₁ = ${c.theta1Deg.toFixed(2)}°`)
         : state.mode === 'grating' ? (c.thetaOrder == null ? '' : `m = ${state.m}`)
           : c.resolved ? 'resolved' : 'not resolved';
-    L.note.position.set(((X_APERTURE + X_SCREEN) / 2) * u, -0.3 * u, 0);
+    L.note.position.set(((X_APERTURE + xScreen) / 2) * u, -(SCREEN_H + 0.035) * u, 0);
     L.note.element.innerHTML =
-      state.mode === 'rayleigh'
-        ? `${(state.Lobj / 1e3).toFixed(1)} km away &middot; not to scale`
-        : `L = ${state.L.toFixed(2)} m &middot; not to scale`;
+      rayl ? `${(state.Lobj / 1e3).toFixed(1)} km away &middot; screen marked in angle`
+        : state.mode === 'grating' ? 'screen marked in angle θ &middot; bench not to scale'
+          : `L = ${state.L.toFixed(2)} m &middot; bench not to scale`;
 
     ctx.grid.visible = false;
+  },
+  afterFrame(dt, state, computed, ctx) {
+    if (ctx.handle?.tank) ctx.handle.tank.tick(dt);
   },
   law(state) {
     if (state.mode === 'grating') {
