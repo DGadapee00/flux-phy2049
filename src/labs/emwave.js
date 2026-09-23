@@ -4,7 +4,7 @@ import { defineLab } from './define.js';
 import { Arrow, M, fatLine, updateFatLine } from '../scene/manim.js';
 import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, C_SHEET } from '../physics/constants.js';
-import { planeWave, spectrumBand, wavelengthRGB } from '../physics/emwave.js';
+import { planeWave, spectrumBand, wavelengthRGB, BANDS } from '../physics/emwave.js';
 import { kv, cells, eq } from '../ui/shared.js';
 import { fmtE, fmtHz, fmtWaveLen, fmtIrr, sciHTML } from '../ui/format.js';
 import { fmtB } from './biot.js';
@@ -30,6 +30,47 @@ const N_CURVE = 97;
 const T_CYCLE = 2;
 const TEAL = M.teal;
 
+/*
+ * The spectrum ruler. The wave in the scene is drawn the same size whatever λ is (it has to be, to
+ * be seen), so on its own it hides the one thing Ch 54 is about: λ spans some fifteen powers of ten.
+ * The ruler is a log scale from 1 pm to 1 km with each band, a marker at this λ, and things the size
+ * of one wavelength — so moving from radio to X-ray visibly travels across the page.
+ */
+const RULER_LO = -12; // log10 m
+const RULER_HI = 3;
+const SIZES = [
+  [-10, 'atom'],
+  [-8, 'virus'],
+  [-5, 'cell'],
+  [-3.3, 'pinhead'],
+  [-1, 'hand'],
+  [1, 'house'],
+  [2.5, 'stadium'],
+];
+const BAND_COLOR = { radio: '#8a6a4a', microwave: '#a3743f', ir: '#9e3b2f', vis: null, uv: '#6b4fa0', xray: '#3f6f9e', gamma: '#2f8f7f' };
+const pct = (lg) => (100 * (lg - RULER_LO)) / (RULER_HI - RULER_LO);
+
+function rulerHTML() {
+  const segs = BANDS.map((b) => {
+    const lo = Math.max(RULER_LO, b.min > 0 ? Math.log10(b.min) : RULER_LO);
+    const hi = Math.min(RULER_HI, Number.isFinite(b.max) ? Math.log10(b.max) : RULER_HI);
+    const bg = b.id === 'vis'
+      ? 'linear-gradient(to right, #7a3cff, #3c6cff, #2fd3a0, #d8e33a, #ff8a2a, #e33a2a)'
+      : BAND_COLOR[b.id];
+    return `<div class="spec-band" style="left:${pct(lo)}%;width:${pct(hi) - pct(lo)}%;background:${bg}"><span>${b.id === 'vis' ? '' : b.name}</span></div>`;
+  }).join('');
+  const ticks = [];
+  for (let e = RULER_LO; e <= RULER_HI; e += 3) {
+    const t = e === 0 ? '1 m' : e === -3 ? '1 mm' : e === -6 ? '1 μm' : e === -9 ? '1 nm' : e === -12 ? '1 pm' : e === 3 ? '1 km' : `10<sup>${e}</sup> m`;
+    ticks.push(`<div class="spec-tick" style="left:${pct(e)}%"><span>${t}</span></div>`);
+  }
+  const sizes = SIZES.map(([lg, name]) => `<div class="spec-size" style="left:${pct(lg)}%">${name}</div>`).join('');
+  return `<div class="spec-title">One wavelength of this wave is… <span id="spec-now"></span></div>
+    <div class="spec-bar">${segs}<div class="spec-vis-label" style="left:${pct(-6.25)}%">visible</div><div class="spec-marker" id="spec-marker"></div></div>
+    <div class="spec-ticks">${ticks.join('')}</div>
+    <div class="spec-sizes">${sizes}</div>`;
+}
+
 function label(html, x, y, z) {
   const el = document.createElement('div');
   el.className = 'circuit-label';
@@ -47,7 +88,8 @@ export default defineLab({
   hint: 'E, B, and the direction of travel are mutually perpendicular — S = E × B / μ₀',
   live: true,
   orbit: true,
-  camera: { pos: new THREE.Vector3(8.5, 5.6, 14), target: new THREE.Vector3(0.7, 0.2, 0) },
+  // Aimed a little low so the wave sits above the spectrum ruler at the bottom of the screen.
+  camera: { pos: new THREE.Vector3(8.5, 4.6, 15), target: new THREE.Vector3(0.7, -1.3, 0) },
   keys: { ' ': 'sweep', r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
@@ -117,13 +159,20 @@ export default defineLab({
     const sLab = label('<span style="color:#F0AC5F"><i>S</i>, direction of travel</span>', (X1 + 0.2) * u, 0.5, 0);
     group.add(eLab, bLab, sLab);
     group.visible = false;
-    return { group, Ebatch, Bbatch, eCurve, bCurve, Sarr, eLab };
+    const ruler = document.createElement('div');
+    ruler.className = 'hud panel spectrum-ruler';
+    ruler.innerHTML = rulerHTML();
+    ruler.hidden = true;
+    document.body.appendChild(ruler);
+    return { group, Ebatch, Bbatch, eCurve, bCurve, Sarr, eLab, ruler };
   },
   enter(ctx, handle) {
     handle.group.visible = true;
+    handle.ruler.hidden = false;
   },
   exit(ctx, handle) {
     handle.group.visible = false;
+    handle.ruler.hidden = true;
   },
   recompute(state, computed) {
     const w = planeWave({ E0: state.E0, lambda: state.lambda, t: 0, x: 0 });
@@ -137,6 +186,14 @@ export default defineLab({
     const k = (2 * Math.PI) / LAM_VIS;
     const om = (2 * Math.PI) / T_CYCLE;
     const t = em.tDisp;
+    const lg = Math.log10(state.lambda);
+    const m = h.ruler.querySelector('#spec-marker');
+    if (m) m.style.left = `${Math.max(0, Math.min(100, pct(lg)))}%`;
+    const now = h.ruler.querySelector('#spec-now');
+    if (now) {
+      const near = SIZES.reduce((a, s) => (Math.abs(s[0] - lg) < Math.abs(a[0] - lg) ? s : a));
+      now.innerHTML = `${fmtWaveLen(state.lambda)} — ${em.band.name.toLowerCase()}, about the size of a${/^[aeiou]/.test(near[1]) ? 'n' : ''} ${near[1]}`;
+    }
     const vis = em.band.id === 'vis';
     const eColor = vis ? new THREE.Color(em.rgb.r, em.rgb.g, em.rgb.b) : new THREE.Color(M.red);
     const bColor = new THREE.Color(TEAL);

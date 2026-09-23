@@ -154,7 +154,7 @@ export default [
     cases: [kase('hand', { E: 12, r: 0.5, R: 5.5 }, { I: 2, V: 11, Pr: 2 })],
   }),
   problem({
-    ...E4, id: 'e4.44.rc-charge', ch: '44', lab: 'circuits', title: 'Charging an RC circuit', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
+    ...E4, id: 'e4.44.rc-charge', ch: '44', title: 'Charging an RC circuit', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
     vars: { R: range(1, 100, 1, 'kΩ', 1e3), C: range(10, 1000, 10, 'μF', 1e-6), E: range(3, 24, 1, 'V'), n: range(0.2, 4, 0.1, 'τ') },
     derive: ($) => {
       const tau = $.R * $.C;
@@ -162,7 +162,9 @@ export default [
       return { tau, t, q: $.C * $.E * (1 - Math.exp(-$.n)), I: ($.E / $.R) * Math.exp(-$.n) };
     },
     text: (T, $, f) => `An uncharged ${T.C} μF capacitor is connected through ${T.R} kΩ to a ${T.E} V battery at t = 0. Find the time constant, and the charge and current at t = ${f($.t)} s.`,
-    parts: [num('tau', ($) => $.tau, 's', { label: 'τ' }), num('q', ($) => $.q, 'C'), num('I', ($) => $.I, 'A')],
+    parts: [
+      sym('tau_sym', 'R*C', { R: 'Ω', C: 'F' }, ($) => $.tau, { unit: 's', label: String.raw`$\tau$ as a formula` }),
+      num('tau', ($) => $.tau, 's', { label: 'τ' }), num('q', ($) => $.q, 'C'), num('I', ($) => $.I, 'A')],
     hints: [String.raw`$q(t) = C\varepsilon\left(1 - e^{-t/\tau}\right)$ and $I(t) = \dfrac{\varepsilon}{R}e^{-t/\tau}$`],
     steps: ($, f) => [
       String.raw`$\tau = RC = ${texNum($.tau)}\ \text{s}$`,
@@ -172,7 +174,7 @@ export default [
     cases: [kase('hand', { R: 10, C: 100, E: 12, n: 1 }, { tau: 1, q: 7.585e-4, I: 4.415e-4 })],
   }),
   problem({
-    ...E4, id: 'e4.44.rc-discharge', ch: '44', lab: 'circuits', title: 'Discharging a capacitor', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
+    ...E4, id: 'e4.44.rc-discharge', ch: '44', title: 'Discharging a capacitor', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
     vars: { R: range(0.5, 50, 0.5, 'kΩ', 1e3), C: range(5, 500, 5, 'μF', 1e-6), f: range(0.05, 0.9, 0.05) },
     derive: ($) => ({ tau: $.R * $.C, t: -$.R * $.C * Math.log($.f) }),
     text: (T) => `A charged ${T.C} μF capacitor discharges through ${T.R} kΩ. How long until its charge falls to ${T.f} of the starting value?`,
@@ -263,7 +265,9 @@ export default [
     vars: { E: range(1, 50, 1, '×10⁵ V/m', 1e5), B: range(0.05, 1, 0.05, 'T') },
     derive: ($) => ({ v: $.E / $.B }),
     text: (T) => `Crossed fields E = ${T.E} × 10⁵ V/m and B = ${T.B} T. What speed passes straight through? Does the answer depend on the particle's charge or mass?`,
-    parts: [num('v', ($) => $.v, 'm/s'), mc('dep', [[0, 'No, it is the same for any charge and mass'], [1, 'Yes, it depends on q'], [2, 'Yes, it depends on m']], 0, { label: 'Depends on q or m?' })],
+    parts: [
+      sym('v_sym', 'E/B', { E: 'V/m', B: 'T' }, ($) => $.v, { unit: 'm/s', label: String.raw`$v$ as a formula` }),
+      num('v', ($) => $.v, 'm/s'), mc('dep', [[0, 'No, it is the same for any charge and mass'], [1, 'Yes, it depends on q'], [2, 'Yes, it depends on m']], 0, { label: 'Depends on q or m?' })],
     steps: ($, f) => [String.raw`$qE = qvB \;\Longrightarrow\; v = \dfrac{E}{B} = ${texNum($.v)}\ \text{m/s}$`],
     sim: {
       scenario: 'selector',
@@ -327,7 +331,9 @@ export default [
     vars: { I: range(0.5, 8, 0.1, 'A'), rho: range(2, 50, 1, 'cm', 1e-2) },
     derive: ($) => ({ B: (MU0 * $.I) / (2 * Math.PI * $.rho) }),
     text: (T) => `How strong is the magnetic field ${T.rho} cm from a long straight wire carrying ${T.I} A?`,
-    parts: [num('B', ($) => $.B, 'T')],
+    parts: [
+      sym('B_sym', 'mu0*I/(2*pi*rho)', { I: 'A', rho: 'm' }, ($) => $.B, { unit: 'T', label: String.raw`$B$ as a formula ($\rho$ is the distance)` }),
+      num('B', ($) => $.B, 'T')],
     steps: ($, f) => [String.raw`$B = \dfrac{\mu_0 I}{2\pi\rho} = ${texNum($.B)}\ \text{T}$`],
     sim: {
       scenario: 'wire',
@@ -389,7 +395,9 @@ export default [
     vars: { N: range(100, 5000, 100, 'turns'), L: range(0.1, 1, 0.05, 'm'), I: range(0.1, 10, 0.1, 'A') },
     derive: ($) => ({ n: $.N / $.L, B: (MU0 * $.N * $.I) / $.L }),
     text: (T) => `A solenoid ${T.L} m long has ${T.N} turns and carries ${T.I} A. Find n and the field inside.`,
-    parts: [num('n', ($) => $.n, 'turns/m'), num('B', ($) => $.B, 'T')],
+    parts: [
+      sym('B_sym', 'mu0*N*I/L', { N: '1', I: 'A', L: 'm' }, ($) => $.B, { unit: 'T', label: String.raw`$B$ as a formula` }),
+      num('n', ($) => $.n, 'turns/m'), num('B', ($) => $.B, 'T')],
     steps: ($, f) => [
       String.raw`$n = \dfrac{N}{L} = ${texNum($.n)}\ \text{m}^{-1}$`,
       String.raw`$B = \mu_0 n I = ${texNum($.B)}\ \text{T}$`,

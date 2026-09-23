@@ -70,18 +70,24 @@ export class CapacitorView {
       );
       this.group.add(die);
       this.dielectric = die;
-      this.addLabel(`κ = ${result.kappa}`, 0, 0, (side / 2) * u + 0.2, 'probe-label');
+      // Below the slab, clear of the field arrows that run through it.
+      this.addLabel(`κ = ${result.kappa}`, 0, -(side / 2) * u - 0.35, 0, 'probe-label');
     }
 
-    const n = 5;
+    // A 3 × 3 grid reads as field lines; a denser one, seen nearly edge-on, merges into a comb.
+    // Arrow length follows E: with the battery connected E = V/d is unchanged when the dielectric
+    // goes in, but on isolated plates it drops to E/κ — the arrows shrink, which is the lesson.
+    const n = 3;
     const Edir = new THREE.Vector3(1, 0, 0);
-    const L = d * 0.72 * u;
+    const ratio = cap.mode === 'isolated' && result.E_vac_sameQ > 0 ? result.E / result.E_vac_sameQ : 1;
+    const L = d * 0.72 * u * Math.max(0.2, Math.min(1, ratio));
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         const y = ((i + 0.5) / n - 0.5) * side * 0.7;
         const z = ((j + 0.5) / n - 0.5) * side * 0.7;
         const origin = new THREE.Vector3((-d / 2 + 0.08 * d) * u, y * u, z * u);
-        const arrow = new Arrow(Edir.clone(), origin, L, result.breakdown ? M.red : M.yellow, 0.2, 0.14, 0.022);
+        // Heads scale with the arrow, so a short (weak-field) arrow stays an arrow, not a blob.
+        const arrow = new Arrow(Edir.clone(), origin, L, result.breakdown ? M.red : M.yellow, Math.min(0.2, L * 0.3), Math.min(0.14, L * 0.2), 0.022);
         this.group.add(arrow);
         this.field.push(arrow);
       }

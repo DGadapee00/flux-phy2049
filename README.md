@@ -107,7 +107,7 @@ The number plane is labeled in real distance and the ticks change with the view,
 
 ### Exam 6 labs
 
-- **EM wave** (`#/e6/emwave`) — traveling plane wave, E ŷ, B ẑ, S along +x̂. E/B = c = 1/√(μ₀ε₀). Intensity I = ½ c ε₀ E₀². The drawing is stretched and slowed; the HUD has the real λ, f, and spectrum band (Ch 54).
+- **EM wave** (`#/e6/emwave`) — traveling plane wave, E ŷ, B ẑ, S along +x̂. E/B = c = 1/√(μ₀ε₀). Intensity I = ½ c ε₀ E₀². The drawing is stretched and slowed, so a log-scale **spectrum ruler** (1 pm to 1 km) marks where this λ really sits, and what one wavelength is about the size of — an atom for X-rays, a house for FM radio (Ch 54).
 - **Polarization** (`#/e6/polar`) — Malus I = I₀ cos²θ. Unpolarized → one filter is I₀/2. Crossed filters go dark; a 45° filter in the middle brings back I₀/8.
 
 ### Exam 7 labs

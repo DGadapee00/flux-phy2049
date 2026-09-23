@@ -1350,3 +1350,114 @@ body.units-open .legend {
 .lab-block .tiny a {
   color: var(--accent);
 }
+
+/* EM wave: the log-scale spectrum ruler above the readout. */
+.spectrum-ruler {
+  position: fixed;
+  left: 416px;
+  right: 332px;
+  bottom: 124px;
+  max-width: 920px;
+  margin-inline: auto;
+  padding: 8px 14px 6px;
+  font-family: var(--font);
+  pointer-events: none;
+}
+
+.spectrum-ruler[hidden] {
+  display: none;
+}
+
+.spec-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.spec-title span {
+  color: var(--text);
+}
+
+.spec-bar {
+  position: relative;
+  height: 16px;
+  border-radius: 3px;
+  overflow: visible;
+}
+
+.spec-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  opacity: 0.85;
+  overflow: hidden;
+}
+
+.spec-band span {
+  display: block;
+  font-size: 9.5px;
+  line-height: 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+.spec-vis-label {
+  position: absolute;
+  top: 17px;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  color: var(--text-muted);
+}
+
+.spec-marker {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  margin-left: -1.5px;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 0 6px #fff;
+  transition: left 0.25s ease;
+}
+
+.spec-ticks,
+.spec-sizes {
+  position: relative;
+  height: 14px;
+}
+
+.spec-ticks {
+  margin-top: 10px;
+}
+
+.spec-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 4px;
+  background: var(--text-dim);
+}
+
+.spec-tick span,
+.spec-size {
+  position: absolute;
+  top: 3px;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.spec-size {
+  top: 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+@media (max-width: 900px) {
+  .spectrum-ruler {
+    display: none;
+  }
+}

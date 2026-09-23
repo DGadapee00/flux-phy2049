@@ -24,7 +24,9 @@ export default [
       return { emf, I: emf / $.R };
     },
     text: (T) => `A ${T.N}-turn coil of radius ${T.r} cm (resistance ${T.R} Ω) is perpendicular to a field that increases steadily by ${T.dB} T in ${T.dt} s. Find the induced emf and current.`,
-    parts: [num('emf', ($) => $.emf, 'V', { label: '|ε|' }), num('I', ($) => $.I, 'A')],
+    parts: [
+      sym('emf_sym', 'N*pi*r^2*dB/dt', { N: '1', r: 'm', dB: 'T', dt: 's' }, ($) => $.emf, { unit: 'V', label: String.raw`$|\varepsilon|$ as a formula` }),
+      num('emf', ($) => $.emf, 'V', { label: '|ε|' }), num('I', ($) => $.I, 'A')],
     steps: ($, f) => [
       String.raw`$|\mathcal{E}| = NA\dfrac{\Delta B}{\Delta t} = ${texNum($.emf)}\ \text{V}$`,
       String.raw`$I = \dfrac{\mathcal{E}}{R} = ${texNum($.I)}\ \text{A}$`,
@@ -92,7 +94,7 @@ export default [
 
   // ================================================================= 49
   problem({
-    ...E5, id: 'e5.49.solenoid-L', ch: '49', lab: 'faraday', title: 'Inductance of a solenoid', kind: 'numeric', topics: ['inductance'],
+    ...E5, id: 'e5.49.solenoid-L', ch: '49', title: 'Inductance of a solenoid', kind: 'numeric', topics: ['inductance'],
     vars: { N: range(50, 2000, 50, 'turns'), r: range(0.5, 5, 0.5, 'cm', 1e-2), l: range(5, 50, 1, 'cm', 1e-2) },
     derive: ($) => ({ L: (MU0 * $.N ** 2 * Math.PI * $.r ** 2) / $.l }),
     text: (T) => `A solenoid has ${T.N} turns, radius ${T.r} cm and length ${T.l} cm. Find its inductance.`,
@@ -104,16 +106,18 @@ export default [
     cases: [kase('hand', { N: 500, r: 2, l: 30 }, { L: 1.3159 })],
   }),
   problem({
-    ...E5, id: 'e5.49.self-emf', ch: '49', lab: 'faraday', title: 'Self-induced emf', kind: 'numeric', topics: ['inductance'],
+    ...E5, id: 'e5.49.self-emf', ch: '49', title: 'Self-induced emf', kind: 'numeric', topics: ['inductance'],
     vars: { L: range(1, 500, 1, 'mH', 1e-3), dI: range(0.1, 10, 0.1, 'A'), dt: range(1, 500, 1, 'ms', 1e-3) },
     derive: ($) => ({ emf: ($.L * $.dI) / $.dt }),
     text: (T) => `The current in a ${T.L} mH inductor changes steadily by ${T.dI} A in ${T.dt} ms. What is the magnitude of the self-induced emf?`,
-    parts: [num('emf', ($) => $.emf, 'V'), mc('dir', [[1, 'It opposes the change in current'], [2, 'It helps the change along'], [3, 'It is zero once the current is steady'], [4, 'Both the first and third statements are true']], 4, { label: 'Which is correct?' })],
+    parts: [
+      sym('emf_sym', 'L*dI/dt', { L: 'H', dI: 'A', dt: 's' }, ($) => $.emf, { unit: 'V', label: String.raw`$|\varepsilon|$ as a formula` }),
+      num('emf', ($) => $.emf, 'V'), mc('dir', [[1, 'It opposes the change in current'], [2, 'It helps the change along'], [3, 'It is zero once the current is steady'], [4, 'Both the first and third statements are true']], 4, { label: 'Which is correct?' })],
     steps: ($, f) => [String.raw`$|\mathcal{E}| = L\dfrac{\Delta I}{\Delta t} = ${texNum($.emf)}\ \text{V}$`],
     cases: [kase('hand', { L: 50, dI: 2, dt: 10 }, { emf: 10, dir: 4 })],
   }),
   problem({
-    ...E5, id: 'e5.49.rl', ch: '49', lab: 'faraday', title: 'RL circuit growth and stored energy', kind: 'numeric', level: 2, topics: ['inductance', 'rl'],
+    ...E5, id: 'e5.49.rl', ch: '49', title: 'RL circuit growth and stored energy', kind: 'numeric', level: 2, topics: ['inductance', 'rl'],
     vars: { L: range(10, 1000, 10, 'mH', 1e-3), R: range(1, 100, 1, 'Ω'), E: range(3, 24, 1, 'V'), n: range(0.2, 4, 0.1, 'τ') },
     derive: ($) => {
       const tau = $.L / $.R;
@@ -121,7 +125,9 @@ export default [
       return { tau, t: $.n * tau, I: If * (1 - Math.exp(-$.n)), U: 0.5 * $.L * If ** 2 };
     },
     text: (T, $, f) => `A ${T.L} mH inductor and a ${T.R} Ω resistor are switched onto a ${T.E} V battery at t = 0. Find the time constant, the current at t = ${f($.t)} s, and the energy stored once the current is steady.`,
-    parts: [num('tau', ($) => $.tau, 's', { label: 'τ' }), num('I', ($) => $.I, 'A'), num('U', ($) => $.U, 'J')],
+    parts: [
+      sym('tau_sym', 'L/R', { L: 'H', R: 'Ω' }, ($) => $.tau, { unit: 's', label: String.raw`$\tau$ as a formula` }),
+      num('tau', ($) => $.tau, 's', { label: 'τ' }), num('I', ($) => $.I, 'A'), num('U', ($) => $.U, 'J')],
     hints: [String.raw`$I(t) = \dfrac{\varepsilon}{R}\left(1 - e^{-t/\tau}\right)$ with $\tau = L/R$, and $U = \tfrac{1}{2}LI^2$`],
     steps: ($, f) => [
       String.raw`$\tau = \dfrac{L}{R} = ${texNum($.tau)}\ \text{s}$`,
@@ -133,12 +139,14 @@ export default [
 
   // ================================================================= 50
   problem({
-    ...E5, id: 'e5.50.transformer', ch: '50', lab: 'ac', title: 'Ideal transformer', kind: 'numeric', topics: ['transformer'],
+    ...E5, id: 'e5.50.transformer', ch: '50', title: 'Ideal transformer', kind: 'numeric', topics: ['transformer'],
     vars: { Np: range(50, 2000, 50, 'turns'), Ns: range(10, 5000, 10, 'turns'), Vp: range(12, 480, 12, 'V'), Ip: range(0.1, 10, 0.1, 'A') },
     derive: ($) => ({ Vs: ($.Vp * $.Ns) / $.Np, Is: ($.Ip * $.Np) / $.Ns }),
     valid: ($) => $.Np !== $.Ns,
     text: (T) => `An ideal transformer has ${T.Np} primary turns and ${T.Ns} secondary turns. The primary has ${T.Vp} V (rms) and draws ${T.Ip} A. Find the secondary voltage and current. Is it step-up or step-down?`,
-    parts: [num('Vs', ($) => $.Vs, 'V'), num('Is', ($) => $.Is, 'A'), mc('type', [[1, 'Step-up'], [-1, 'Step-down']], ($) => ($.Ns > $.Np ? 1 : -1), { label: 'Type' })],
+    parts: [
+      sym('Vs_sym', 'Vp*Ns/Np', { Vp: 'V', Ns: '1', Np: '1' }, ($) => $.Vs, { unit: 'V', label: String.raw`$V_s$ as a formula` }),
+      num('Vs', ($) => $.Vs, 'V'), num('Is', ($) => $.Is, 'A'), mc('type', [[1, 'Step-up'], [-1, 'Step-down']], ($) => ($.Ns > $.Np ? 1 : -1), { label: 'Type' })],
     steps: ($, f) => [
       String.raw`$V_s = V_p\dfrac{N_s}{N_p} = ${texNum($.Vs)}\ \text{V}$`,
       String.raw`Power in = power out, so $I_s = I_p\dfrac{N_p}{N_s} = ${texNum($.Is)}\ \text{A}$`,

@@ -18,7 +18,7 @@ const SCENARIOS = [
 const I0 = 1000;
 /** Beam along +x (meters). Polarizer planes are yz; an axis angle θ points along (0, cosθ, sinθ). */
 const XS = [-0.38, 0, 0.38];
-const X_SOURCE = -0.72;
+const X_SOURCE = -0.6; // close enough in that the source and its label clear the left panel
 const X_END = 0.72;
 const R_POL = 0.2;
 const E_LEN = 0.14;
@@ -76,7 +76,7 @@ export default defineLab({
   hint: 'Cross two polarizers, then slide a third in at 45° — light comes back',
   live: false,
   orbit: true,
-  camera: { pos: new THREE.Vector3(4.6, 3.4, 12), target: new THREE.Vector3(0, 0, 0) },
+  camera: { pos: new THREE.Vector3(4.2, 3.4, 12.6), target: new THREE.Vector3(-0.4, 0, 0) },
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
@@ -154,7 +154,7 @@ export default defineLab({
       group.add(mesh);
       return mesh;
     });
-    const labs = [label('unpolarized', X_SOURCE * u, 0.3 * u, 0), ...XS.map((x, i) => label(`P${i + 1}`, x * u, (R_POL + 0.07) * u, 0))];
+    const labs = [label('unpolarized', (X_SOURCE + 0.06) * u, -0.3 * u, 0), ...XS.map((x, i) => label(`P${i + 1}`, x * u, (R_POL + 0.07) * u, 0))];
     labs.forEach((l) => group.add(l));
     group.add(fatLine([X_SOURCE * u - 0.4, 0, 0, X_END * u, 0, 0], { color: 0x555555, width: 1.2 }));
     const glyphs = new THREE.Group();

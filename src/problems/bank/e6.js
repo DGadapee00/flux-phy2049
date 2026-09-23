@@ -31,7 +31,9 @@ export default [
     vars: { E0: range(1, 2000, 1, 'V/m') },
     derive: ($) => ({ B0: $.E0 / C_LIGHT }),
     text: (T) => `An EM wave in vacuum has an electric field amplitude of ${T.E0} V/m. What is its magnetic field amplitude?`,
-    parts: [num('B0', ($) => $.B0, 'T')],
+    parts: [
+      sym('B0_sym', 'E0/c', { E0: 'V/m' }, ($) => $.B0, { unit: 'T', label: String.raw`$B_0$ as a formula` }),
+      num('B0', ($) => $.B0, 'T')],
     steps: ($, f) => [String.raw`$B_0 = \dfrac{E_0}{c} = ${texNum($.B0)}\ \text{T}$`],
     sim: {
       scenario: 'green',
@@ -113,7 +115,9 @@ export default [
     vars: { E0: range(1, 2000, 1, 'V/m') },
     derive: ($) => ({ I: 0.5 * C_LIGHT * EPS0 * $.E0 ** 2 }),
     text: (T) => `What is the average intensity of an EM wave with E₀ = ${T.E0} V/m?`,
-    parts: [num('I', ($) => $.I, 'W/m²')],
+    parts: [
+      sym('I_sym', 'c*eps0*E0^2/2', { E0: 'V/m' }, ($) => $.I, { unit: 'W/m^2', label: String.raw`$I$ as a formula` }),
+      num('I', ($) => $.I, 'W/m²')],
     steps: ($, f) => [String.raw`$I = \tfrac{1}{2}c\varepsilon_0 E_0^2 = ${texNum($.I)}\ \text{W/m}^2$`],
     sim: {
       scenario: 'sun',
@@ -130,7 +134,9 @@ export default [
       return { E0, B0: E0 / C_LIGHT };
     },
     text: (T) => `Sunlight reaching a surface has an intensity of ${T.I} W/m². Find E₀ and B₀.`,
-    parts: [num('E0', ($) => $.E0, 'V/m'), num('B0', ($) => $.B0, 'T')],
+    parts: [
+      sym('E0_sym', 'sqrt(2*I/(c*eps0))', { I: 'W/m^2' }, ($) => $.E0, { unit: 'V/m', label: String.raw`$E_0$ as a formula` }),
+      num('E0', ($) => $.E0, 'V/m'), num('B0', ($) => $.B0, 'T')],
     steps: ($, f) => [
       String.raw`$E_0 = \sqrt{\dfrac{2I}{c\varepsilon_0}} = ${texNum($.E0)}\ \text{V/m}$`,
       String.raw`$B_0 = \dfrac{E_0}{c} = ${texNum($.B0)}\ \text{T}$`,

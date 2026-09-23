@@ -16,8 +16,8 @@ const SCENARIOS = [
 ];
 
 /** Layout in scene units: circuit upper left, phasor diagram right. */
-const CX0 = -5.4;
-const CX1 = -1.2;
+const CX0 = -4.4;
+const CX1 = -0.2;
 const CY0 = 0.2;
 const CY1 = 2.6;
 const PX = 2.4;
@@ -50,9 +50,9 @@ function setHTML(obj, html) {
 function buildCircuit(group, a) {
   const y = CY1;
   const slots = [
-    { kind: 'R', x0: -4.6, x1: -3.8 },
-    { kind: 'L', x0: -3.3, x1: -2.5, on: a.hasL },
-    { kind: 'C', x0: -2.0, x1: -1.7, on: a.hasC },
+    { kind: 'R', x0: -3.6, x1: -2.8 },
+    { kind: 'L', x0: -2.3, x1: -1.5, on: a.hasL },
+    { kind: 'C', x0: -1.0, x1: -0.7, on: a.hasC },
   ];
   const wire = { color: M.white, width: 2.5 };
   let x = CX0;
@@ -102,7 +102,7 @@ export default defineLab({
   hint: String.raw`Tune $f$ through resonance — $I$ peaks when $X_L = X_C$`,
   live: true,
   orbit: false,
-  camera: { pos: new THREE.Vector3(-0.8, 0.9, 15.5), target: new THREE.Vector3(-0.8, 0.9, 0) },
+  camera: { pos: new THREE.Vector3(-0.4, 0.9, 16.5), target: new THREE.Vector3(-0.4, 0.9, 0) },
   keys: { r: 'reset', R: 'reset' },
   scenarios: SCENARIOS,
   defaultState() {
@@ -193,10 +193,11 @@ export default defineLab({
       VL: label('<span style="color:#5CD0B3"><i>V</i><sub>L</sub></span>', 0, 0),
       VC: label('<span style="color:#F0AC5F"><i>V</i><sub>C</sub></span>', 0, 0),
       title: label('<small>phasors · vertical shadow = instantaneous value</small>', PX, PY + RD + 0.75),
-      src: label('', CX0 - 1.05, (CY0 + CY1) / 2),
-      R: label('', -4.2, CY1 + 0.62),
-      L: label('', -2.9, CY1 + 0.62),
-      C: label('', -1.85, CY1 + 0.62),
+      src: label('', CX0 + 1.3, CY0 - 0.55),
+      // R and C above the wire, L below it, so the three never run into each other.
+      R: label('', -3.2, CY1 + 0.62),
+      L: label('', -1.9, CY1 - 0.62),
+      C: label('', -0.85, CY1 + 0.62),
     };
     Object.values(labels).forEach((l) => group.add(l));
     group.visible = false;
@@ -242,7 +243,9 @@ export default defineLab({
     const thI = wt - a.phi;
     const reach = Math.max(a.Vp, a.VRp + Math.max(a.VLp, a.VCp), 1e-9);
     const k = RD / reach;
-    const place = (arr, lab, x0, y0, len, th, on = true) => {
+    // V and I are labelled past their tips. The V_R → V_L → V_C chain ends exactly on V's tip, so
+    // its labels sit beside the middle of each arrow instead, where they cannot land on V's.
+    const place = (arr, lab, x0, y0, len, th, on = true, side = 0) => {
       arr.visible = on && len > 1e-3;
       lab.visible = arr.visible;
       if (!arr.visible) return { x: x0, y: y0 };
@@ -251,7 +254,8 @@ export default defineLab({
       arr.position.set(x0, y0, 0.02);
       arr.setDirection(new THREE.Vector3(dx, dy, 0));
       arr.setLength(len, Math.min(0.3, len * 0.45), 0.22);
-      lab.position.set(x0 + dx * (len + 0.28), y0 + dy * (len + 0.28), 0.02);
+      if (side) lab.position.set(x0 + dx * len * 0.5 - dy * 0.32 * side, y0 + dy * len * 0.5 + dx * 0.32 * side, 0.02);
+      else lab.position.set(x0 + dx * (len + 0.28), y0 + dy * (len + 0.28), 0.02);
       return { x: x0 + dx * len, y: y0 + dy * len };
     };
     h.circle.scale.set(a.Vp * k, a.Vp * k, 1);
@@ -259,18 +263,19 @@ export default defineLab({
     const vTip = place(h.arrows.V, h.labels.V, PX, PY, a.Vp * k, wt);
     const iLen = 0.75 * RD;
     const iTip = place(h.arrows.I, h.labels.I, PX, PY, iLen, thI);
-    const p1 = place(h.arrows.VR, h.labels.VR, PX, PY, a.VRp * k, thI);
-    const p2 = place(h.arrows.VL, h.labels.VL, p1.x, p1.y, a.VLp * k, thI + Math.PI / 2, a.hasL);
-    place(h.arrows.VC, h.labels.VC, p2.x, p2.y, a.VCp * k, thI - Math.PI / 2, a.hasC);
+    const p1 = place(h.arrows.VR, h.labels.VR, PX, PY, a.VRp * k, thI, true, -1);
+    const p2 = place(h.arrows.VL, h.labels.VL, p1.x, p1.y, a.VLp * k, thI + Math.PI / 2, a.hasL, -1);
+    place(h.arrows.VC, h.labels.VC, p2.x, p2.y, a.VCp * k, thI - Math.PI / 2, a.hasC, 1);
     updateFatLine(h.projV, [vTip.x, vTip.y, 0.01, PX, vTip.y, 0.01]);
     updateFatLine(h.projI, [iTip.x, iTip.y, 0.01, PX, iTip.y, 0.01]);
   },
   law(state, computed) {
     const a = computed.ac;
     const z = String.raw`Z = \sqrt{\qR^2+(X_L-X_C)^2}\qquad \qI_{\text{rms}}=\dfrac{\qV_{\text{rms}}}{Z}`;
-    const x = String.raw`X_L=\omega L\qquad X_C=\dfrac{1}{\omega C}\qquad \varphi=\tan^{-1}\dfrac{X_L-X_C}{\qR}`;
-    if (a?.hasL && a?.hasC) return [z, x, String.raw`\omega_0 = \dfrac{1}{\sqrt{LC}}\qquad Q=\dfrac{\omega_0 L}{\qR}`];
-    return [z, x];
+    const x = String.raw`X_L=\omega L\qquad X_C=\dfrac{1}{\omega C}`;
+    const phi = String.raw`\varphi=\tan^{-1}\dfrac{X_L-X_C}{\qR}`;
+    if (a?.hasL && a?.hasC) return [z, x, phi, String.raw`\omega_0 = \dfrac{1}{\sqrt{LC}}\qquad Q=\dfrac{\omega_0 L}{\qR}`];
+    return [z, x, phi];
   },
   liveRows(state, computed) {
     const a = computed.ac;

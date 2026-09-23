@@ -152,10 +152,15 @@ export function createPractice(api) {
     return st.view === 'exam' && examActive();
   }
 
-  /** Blind while an attempt is unsolved and not peeked, and for the whole of a practice exam. */
+  /**
+   * Blind while an attempt is unsolved and not peeked, and for the whole of a practice exam. A
+   * problem that only opens its topic's lab, without loading its own numbers (no `sim`), leaves the
+   * lab readable: nothing on screen is its answer.
+   */
   function syncBlind() {
     const cur = st.cur;
-    const blind = st.open && ((inExamView() && !!cur) || (!!cur && cur.mode === 'practice' && !cur.finished && !cur.peeked));
+    const holdsSetup = !!cur?.tpl.sim;
+    const blind = st.open && ((inExamView() && !!cur) || (!!cur && holdsSetup && cur.mode === 'practice' && !cur.finished && !cur.peeked));
     body.classList.toggle('problem-blind', blind);
     api.setSceneBlind?.(blind);
   }
@@ -732,6 +737,9 @@ export function createPractice(api) {
     const labTitle = LAB_META[cur.tpl.lab]?.title || cur.tpl.lab;
     if (api.labId() !== cur.tpl.lab) {
       return `<div class="pb-banner warn"><span>The ${esc(labTitle)} lab for this problem isn't on screen.</span><button type="button" class="linkish" data-act="restore">Show it</button></div>`;
+    }
+    if (!cur.tpl.sim) {
+      return `<div class="pb-banner quiet"><span>The ${esc(labTitle)} lab is open for this topic. It isn't set to this problem's numbers, so explore it freely.</span></div>`;
     }
     if (st.edited) {
       return `<div class="pb-banner warn"><span>You changed the setup, so the lab no longer matches this problem.</span><button type="button" class="linkish" data-act="restore">Reset to the problem</button></div>`;
