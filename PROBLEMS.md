@@ -26,11 +26,11 @@ node scripts/problems-check.mjs --samples 200 --list   # deeper run, with notes 
 | `src/problems/simbridge.js` | `applyProblem(lab, slice, inst)` loads an instance into a lab's state slice; `headlessCtx()` is for Node |
 | `src/problems/index.js` | `PROBLEMS`, `problemById`, `problemsForExam`, `problemsForLab`, `CHAPTER_ORDER`, `CHAPTER_TITLES` |
 | `src/problems/progress.js` | Per-problem history, Leitner-box spaced review, `pickSet` for mixed sets and practice exams. No DOM; storage is injected |
-| `src/problems/bank/e1.js … e7.js, wave.js` | 214 templates covering every chapter on the Fall 2026 syllabus (V, 34–65) |
+| `src/problems/bank/e1.js … e7.js, wave.js` | 219 templates covering every chapter on the Fall 2026 syllabus (V, 34–65) |
 | `src/ui/problems.js`, `src/styles/practice.css` | The Practice panel (§4) |
 | `scripts/problems-check.mjs` | Test runner (see §3) |
 
-Coverage by exam: e1 18 · e2 46 · e3 64 · e4 24 · e5 19 · e6 18 · e7 14 · wave 11. Every chapter has at least one template, and every exam now has labs — the wave-optics templates drive Interference, Diffraction and Thin film. Ch 36–37 and Ch 38–42 reproduce Montgomery's practice sheets, and those cases carry the printed key.
+Coverage by exam: e1 18 · e2 46 · e3 69 · e4 24 · e5 19 · e6 18 · e7 14 · wave 11. Every chapter has at least one template, and every exam now has labs — the wave-optics templates drive Interference, Diffraction and Thin film. Ch 36–37 and Ch 38–42 reproduce Montgomery's practice sheets, and those cases carry the printed key.
 
 **Answer-key issues found** (they show up as NOTE lines in `--list`):
 
@@ -71,7 +71,7 @@ problem({
 
   `vars` is either the plain list `['lam','L','d']` or, better, a **map of symbol → unit**: `{ lam: 'C/m', L: 'm', d: 'm' }`. With the map and `opts.unit` (the unit the answer comes out in), the panel reads the units off whatever the student has typed so far and prints them under the box — `units: N/C ✓`, or `units: C/m — this one should come out in N/C`. That is the check a student does by hand on an exam: write it in symbols, read off the units, see whether it lands in the right place. Declare both or neither; the bank check rejects half a declaration.
 
-  **Symbols before numbers.** When a problem has a symbolic part and a numeric one, the numeric inputs stay disabled until the symbolic part is graded right — the panel shows *"Write the formula above first — then put the numbers in."* in their place. The lock is off in a practice exam (there is no feedback to unlock it), and off once the attempt is finished or the solution has been opened. 73 of the 214 templates now carry a symbolic part ahead of their numbers.
+  **Symbols before numbers.** When a problem has a symbolic part and a numeric one, the numeric inputs stay disabled until the symbolic part is graded right — the panel shows *"Write the formula above first — then put the numbers in."* in their place. The lock is off in a practice exam (there is no feedback to unlock it), and off once the attempt is finished or the solution has been opened. 74 of the 219 templates now carry a symbolic part ahead of their numbers.
 - `figure($, T)` (optional) returns SVG markup drawn under the statement, for problems that are about
   reading a graph (`e3.38.V-graph` draws its V(x) this way). The check fails on anything that is not
   a clean `<svg>`.

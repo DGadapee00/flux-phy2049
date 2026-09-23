@@ -260,6 +260,37 @@ export default [
     cases: [kase('Ch 39 example (a)', { q1: 2, s1: 1, a: 0.8, q2: 1, s2: -1, b: 0.4 }, { V: 0 }), kase('Ch 39 example (b)', { q1: 2, s1: 1, a: 0.4, q2: 1, s2: -1, b: 0.8 }, { V: 33705 })],
   }),
   problem({
+    ...E3, id: 'e3.39.three-charges-V', ch: '39', lab: 'potential', src: 'Class Activity 3 #9', title: 'Potential from three charges at the corners', kind: 'numeric', level: 2, topics: ['potential', 'superposition'],
+    vars: {
+      q1: range(1, 10, 1, 'nC', 1e-9), s1: SIGN, q2: range(1, 10, 1, 'nC', 1e-9), s2: SIGN, q3: range(1, 10, 1, 'nC', 1e-9), s3: SIGN,
+      r1: range(0.05, 0.5, 0.05, 'm'), r2: range(0.05, 0.5, 0.05, 'm'),
+    },
+    derive: ($) => {
+      const d1 = Math.hypot($.r1, $.r2);
+      return { d1, V: K * (($.s1 * $.q1) / d1 + ($.s2 * $.q2) / $.r2 + ($.s3 * $.q3) / $.r1) };
+    },
+    text: (T, $, f) => `q₁ = ${T.q1} nC (${T.s1}) sits at the origin, q₂ = ${T.q2} nC (${T.s2}) at (${T.r1} m, 0) and q₃ = ${T.q3} nC (${T.s3}) at (0, −${T.r2} m). Point P is at (${T.r1} m, −${T.r2} m), the fourth corner of the rectangle. Find the electric potential at P relative to infinity.`,
+    parts: [num('V', ($) => $.V, 'V', { abs: 0.05 })],
+    hints: [
+      'Find each charge’s distance to P first: two are sides of the rectangle, one is its diagonal.',
+      String.raw`$V$ is a scalar: add $kq/r$ for each charge, signs included. No components.`,
+    ],
+    steps: ($) => [
+      String.raw`$r_{1P} = \sqrt{${texNum($.r1)}^2 + ${texNum($.r2)}^2} = ${texNum($.d1)}\ \text{m}$, $r_{2P} = ${texNum($.r2)}\ \text{m}$, $r_{3P} = ${texNum($.r1)}\ \text{m}$`,
+      String.raw`$V_P = k\left(\dfrac{q_1}{r_{1P}} + \dfrac{q_2}{r_{2P}} + \dfrac{q_3}{r_{3P}}\right) = ${texNum($.V)}\ \text{V}$`,
+    ],
+    sim: {
+      scenario: 'v-ch39a',
+      setup: potSetup(
+        ($) => [charge($.s1 * $.q1, 0, 0), charge($.s2 * $.q2, $.r1, 0), charge($.s3 * $.q3, 0, -$.r2)],
+        ($) => ({ x: $.r1, y: -$.r2 }),
+        ($) => ({ x: -$.r1, y: $.r2 }),
+      ),
+      read: (c) => ({ V: c.V }),
+    },
+    cases: [kase('Class Activity 3 #9', { q1: 8, s1: 1, q2: 2, s2: -1, q3: 2, s3: -1, r1: 0.1, r2: 0.3 }, { V: -12.31 })],
+  }),
+  problem({
     ...E3, id: 'e3.39.zero-V-point', ch: '39', lab: 'potential', title: 'Where V = 0 between opposite charges', kind: 'numeric', level: 2, topics: ['potential', 'superposition'],
     vars: { q1: range(1, 10, 1, 'μC', 1e-6), q2: range(1, 10, 1, 'μC', 1e-6), d: range(0.2, 2, 0.1, 'm') },
     derive: ($) => ({ x: ($.d * $.q1) / ($.q1 + $.q2) }),
@@ -657,12 +688,13 @@ export default [
     cases: [kase('Worksheet 3 #4', { E: 1000, r1: 0.3, r2: 0.4, q: 200, s: 1, m: 20 }, { dV: -400, dVBA: 0, Wext: -0.08 })],
   }),
   problem({
-    ...E3, id: 'e3.38.pe-rank', ch: '38', src: 'Worksheet 3 #1, #3', title: 'Where is the potential energy largest?', kind: 'conceptual', level: 2, topics: ['potential', 'energy'],
+    ...E3, id: 'e3.38.pe-rank', ch: '38', src: 'Worksheet 3 #1, #3, Class Activity 3 #1, #4', title: 'Where is the potential energy largest?', kind: 'conceptual', level: 2, topics: ['potential', 'energy'],
     vars: {
       ask: choice(
         ['neg-max', 'A +Q and a −Q charge sit on the x-axis. A small negative test charge can be placed at P₁ (close to +Q), P₂ (the midpoint), P₃ (close to −Q) or P₄ (very far away). Where is its potential energy largest?'],
         ['pos-max', 'A +Q and a −Q charge sit on the x-axis. A small positive test charge can be placed at P₁ (close to +Q), P₂ (the midpoint), P₃ (close to −Q) or P₄ (very far away). Where is its potential energy largest?'],
         ['electron-along', 'An electron moves in the direction of the electric field. What happens to its potential energy and to the electric potential where it is?'],
+        ['pair-apart', 'Two point charges of opposite sign are pulled farther and farther apart. What happens to the potential energy of the pair?'],
       ),
     },
     text: (T) => T.ask,
@@ -675,7 +707,9 @@ export default [
         ['upDown', 'Its potential energy increases and the electric potential decreases'],
         ['downDown', 'Both decrease'],
         ['upUp', 'Both increase'],
-      ], ($) => ({ 'neg-max': 'p3', 'pos-max': 'p1', 'electron-along': 'upDown' })[$.ask]),
+        ['Uup', 'It increases'],
+        ['Udown', 'It decreases'],
+      ], ($) => ({ 'neg-max': 'p3', 'pos-max': 'p1', 'electron-along': 'upDown', 'pair-apart': 'Uup' })[$.ask]),
     ],
     hints: [String.raw`$U = qV$. First find where $V$ is high and low (high near $+Q$, low near $-Q$, zero at the midpoint and far away), then let the sign of $q$ flip the ranking.`],
     steps: ($) => [
@@ -683,12 +717,90 @@ export default [
         ? String.raw`$V$ is most negative near $-Q$. With $q < 0$, $U = qV$ is then most *positive*: a negative charge has its largest potential energy where the potential is lowest.`
         : $.ask === 'pos-max'
           ? String.raw`$V$ is highest near $+Q$, and with $q > 0$, $U = qV$ follows $V$: largest at P₁.`
-          : String.raw`Along $\vec{E}$ the potential always falls. The electron's $q$ is negative, so $U = qV$ rises as $V$ falls — it is being pushed against the force on it.`,
+          : $.ask === 'pair-apart'
+            ? String.raw`$U = \dfrac{kq_1q_2}{r}$ is *negative* for opposite charges. Pulling them apart makes $r$ larger and $U$ less negative — closer to zero, so it increases. You have to do work to separate things that attract.`
+            : String.raw`Along $\vec{E}$ the potential always falls. The electron's $q$ is negative, so $U = qV$ rises as $V$ falls — it is being pushed against the force on it, so it slows down and its kinetic energy drops.`,
     ],
     cases: [
       kase('negative test charge', { ask: 'neg-max' }, { ans: 'p3' }),
       kase('Worksheet 3 #3', { ask: 'electron-along' }, { ans: 'upDown' }),
+      kase('Class Activity 3 #1', { ask: 'pair-apart' }, { ans: 'Uup' }),
     ],
+  }),
+  problem({
+    ...E3, id: 'e3.38.uniform-rank', ch: '38', lab: 'potential', src: 'Class Activity 3 #2–3', title: 'Uniform field: which point is highest?', kind: 'conceptual', topics: ['potential', 'energy'],
+    vars: {
+      ask: choice(
+        ['V', 'A uniform field points to the right. A and B sit one above the other on the left; C is further right. How do the electric potentials at A, B and C compare?'],
+        ['U', 'A uniform field points to the right. A and B sit one above the other on the left; C is further right. Where does a positive charge have the most electric potential energy?'],
+      ),
+    },
+    text: (T) => T.ask,
+    parts: [
+      mc('ans', [
+        ['ABhigh', 'A and B are equal, and C is lower'],
+        ['Chigh', 'A and B are equal, and C is higher'],
+        ['same', 'All three are the same, because the field is uniform'],
+        ['ABmostU', 'At A and B equally, more than at C'],
+        ['CmostU', 'At C'],
+      ], ($) => ($.ask === 'V' ? 'ABhigh' : 'ABmostU')),
+    ],
+    hints: [String.raw`$\Delta V = -\vec{E}\cdot\Delta\vec{r}$: only motion *along* $\vec{E}$ changes $V$. A move across the field stays on one equipotential.`],
+    steps: ($) => [
+      String.raw`A and B differ only across the field, so they share an equipotential. C is further along $\vec{E}$, and $V$ falls along $\vec{E}$, so $V_C < V_A = V_B$.`,
+      $.ask === 'U'
+        ? String.raw`For $q > 0$, $U = qV$ follows $V$: largest at A and B. "Uniform field" means uniform *force*, not uniform potential.`
+        : 'A uniform field means the potential falls at a steady rate — not that it is the same everywhere.',
+    ],
+    sim: {
+      scenario: 'v-plates',
+      setup(s) {
+        s.charges = [];
+        s.extraE = { x: 1000, y: 0, z: 0 };
+        s.pathA = { x: -0.1, y: 0.08, z: 0 };
+        s.probe = { x: 0.1, y: 0, z: 0 };
+        s.qTest = 1e-6;
+      },
+    },
+    cases: [kase('Class Activity 3 #3', { ask: 'V' }, { ans: 'ABhigh' }), kase('Class Activity 3 #2', { ask: 'U' }, { ans: 'ABmostU' })],
+  }),
+  problem({
+    ...E3, id: 'e3.38.uniform-zero-V', ch: '38', lab: 'potential', src: 'Class Activity 3 #6', title: 'Uniform field: the field, V at B, and where V = 0', kind: 'numeric', level: 2, topics: ['potential'],
+    vars: { dV: range(20, 400, 10, 'V'), d: range(0.1, 1.5, 0.05, 'm'), VA: range(100, 1000, 10, 'V') },
+    derive: ($) => {
+      const E = $.dV / $.d;
+      const VB = $.VA - $.dV;
+      return { E, VB, zB: VB / E };
+    },
+    valid: ($) => $.VA > $.dV,
+    text: (T) => `A uniform electric field points from A toward B, which are ${T.d} m apart, and the potential difference between them is ${T.dV} V. A is at ${T.VA} V. Find the field strength, the potential at B, and how far past B (continuing along the field) the potential is zero.`,
+    parts: [
+      num('E', ($) => $.E, 'V/m'),
+      num('VB', ($) => $.VB, 'V', { label: String.raw`$V_B$` }),
+      num('zB', ($) => $.zB, 'm', { label: 'Distance past B to V = 0' }),
+    ],
+    hints: [
+      String.raw`$|\Delta V| = E\,d$ in a uniform field, and $V$ falls in the direction $\vec{E}$ points.`,
+      String.raw`Keep going along $\vec{E}$ from B: $V$ keeps falling at $E$ volts per metre until it reaches zero.`,
+    ],
+    steps: ($) => [
+      String.raw`$E = \dfrac{\Delta V}{d} = ${texNum($.E)}\ \text{V/m}$`,
+      String.raw`$V_B = V_A - \Delta V = ${texNum($.VB)}\ \text{V}$ — lower, because B is downstream along $\vec{E}$.`,
+      String.raw`$V = 0$ a further $\dfrac{V_B}{E} = ${texNum($.zB)}\ \text{m}$ past B, on the side away from A.`,
+    ],
+    sim: {
+      scenario: 'v-plates',
+      // Field along −x with V = 0 at the origin: then V = E·x, so A sits at x = V_A/E and B at V_B/E.
+      setup(s, $) {
+        s.charges = [];
+        s.extraE = { x: -$.E, y: 0, z: 0 };
+        s.probe = { x: $.VA / $.E, y: 0, z: 0 };
+        s.pathA = { x: $.VB / $.E, y: 0, z: 0 };
+        s.qTest = 1e-6;
+      },
+      read: (c, s, $) => ({ VB: c.VA, '@V at A': [c.V, $.VA] }),
+    },
+    cases: [kase('Class Activity 3 #6', { dV: 120, d: 0.5, VA: 200 }, { E: 240, VB: 80, zB: 0.3333 })],
   }),
   problem({
     ...E3, id: 'e3.39.speed-with-v0', ch: '39', src: 'Practice 39 #4', title: 'Final speed when it was already moving', kind: 'numeric', level: 2, topics: ['potential', 'energy'],
@@ -1392,13 +1504,16 @@ export default [
     ],
   }),
   problem({
-    ...E3, id: 'e3.41.geometry-concepts', ch: '41', src: 'Practice 41 #9–10, 13, 17', title: 'How geometry and temperature change R', kind: 'conceptual', topics: ['resistance', 'proportional-reasoning'],
+    ...E3, id: 'e3.41.geometry-concepts', ch: '41', src: 'Practice 41 #9–10, 13, 17, Class Activity 3 #18, #21–22', title: 'How geometry and temperature change R', kind: 'conceptual', topics: ['resistance', 'proportional-reasoning'],
     vars: {
       ask: choice(
         ['half-radius', 'The radius of a round wire is halved, with its length unchanged. What happens to its resistance?'],
         ['thicker', 'Two copper wires have the same length but different thickness. The thicker one has'],
         ['heat', 'A copper wire is heated. Its electrical resistance'],
         ['nonohmic', 'If a material is non-ohmic, what do we know about its resistance?'],
+        ['both-half', 'A round wire has its length AND its radius both cut in half. What happens to its resistance?'],
+        ['rho-half', 'A round wire has its length and its radius both cut in half. What happens to its resistivity?'],
+        ['drift', 'When current flows in a metal wire, how fast are the electrons themselves moving along it?'],
       ),
     },
     text: (T) => T.ask,
@@ -1412,7 +1527,10 @@ export default [
         ['down', 'decreases'],
         ['notconst', 'It does not stay constant as the voltage changes'],
         ['const', 'It stays constant as the voltage changes'],
-      ], ($) => ({ 'half-radius': 'x4', thicker: 'less', heat: 'up', nonohmic: 'notconst' })[$.ask]),
+        ['same', 'It does not change'],
+        ['slow', 'Slowly — a drift of well under a millimetre per second'],
+        ['light', 'At nearly the speed of light'],
+      ], ($) => ({ 'half-radius': 'x4', thicker: 'less', heat: 'up', nonohmic: 'notconst', 'both-half': 'x2', 'rho-half': 'same', drift: 'slow' })[$.ask]),
     ],
     hints: [String.raw`$R = \dfrac{\rho L}{A}$ with $A = \pi r^2$ — so $R$ goes as $1/r^2$, not $1/r$.`],
     steps: ($) => [
@@ -1422,13 +1540,57 @@ export default [
           ? String.raw`More cross-section is more room for the current: bigger $A$, smaller $R$.`
           : $.ask === 'heat'
             ? String.raw`In a metal, heating makes the lattice vibrate harder and scatter electrons more, so $\rho$ and $R$ rise.`
-            : String.raw`Non-ohmic means the $I$ vs $V$ graph is not a straight line, so the ratio $V/I$ — the resistance — changes as you move along it.`,
+            : $.ask === 'nonohmic'
+              ? String.raw`Non-ohmic means the $I$ vs $V$ graph is not a straight line, so the ratio $V/I$ — the resistance — changes as you move along it.`
+              : $.ask === 'both-half'
+                ? String.raw`$R = \rho L/\pi r^2$: halving $L$ halves $R$, halving $r$ quarters the area and multiplies $R$ by 4. Together: $\tfrac12 \times 4 = 2$, so $R \to 2R$.`
+                : $.ask === 'rho-half'
+                  ? String.raw`Resistivity $\rho$ belongs to the *material*, not the shape. Cutting the wire changes $R$, never $\rho$.`
+                  : String.raw`The signal travels at nearly $c$, but each electron only drifts — $v_d = I/(neA)$ is typically a fraction of a mm/s. The Ohm lab shows $v_d$ for its wire.`,
     ],
     cases: [
       kase('#9', { ask: 'half-radius' }, { ans: 'x4' }, { key: 'D) increased by a factor of 4' }),
       kase('#10', { ask: 'thicker' }, { ans: 'less' }, { key: 'B) less resistance' }),
       kase('#13', { ask: 'heat' }, { ans: 'up' }, { key: 'C) increases' }),
       kase('#17', { ask: 'nonohmic' }, { ans: 'notconst' }, { key: 'B)' }),
+      kase('Class Activity 3 #21a', { ask: 'both-half' }, { ans: 'x2' }),
+      kase('Class Activity 3 #21b', { ask: 'rho-half' }, { ans: 'same' }),
+      kase('Class Activity 3 #18', { ask: 'drift' }, { ans: 'slow' }),
+    ],
+  }),
+  problem({
+    ...E3, id: 'e3.41.across-resistor', ch: '41', lab: 'circuits', src: 'Class Activity 3 #17', title: 'Current and potential across a resistor', kind: 'conceptual', topics: ['current', 'potential'],
+    vars: {
+      ask: choice(
+        ['current', 'Conventional current flows from a to b through a resistor. How does the current at a compare with the current at b?'],
+        ['potential', 'Conventional current flows from a to b through a resistor. Which end is at the higher electric potential?'],
+        ['energy', 'Conventional current flows from a to b through a resistor. What happens to the charges’ electric potential energy as they pass through?'],
+      ),
+    },
+    text: (T) => T.ask,
+    parts: [
+      mc('ans', [
+        ['sameI', 'The current is the same at a and b'],
+        ['moreA', 'There is more current at a — the resistor uses some up'],
+        ['highA', 'a is at the higher potential'],
+        ['highB', 'b is at the higher potential'],
+        ['loseU', 'They lose electric potential energy, which becomes heat'],
+        ['gainU', 'They gain electric potential energy'],
+      ], ($) => ({ current: 'sameI', potential: 'highA', energy: 'loseU' })[$.ask]),
+    ],
+    hints: ['Charge is conserved: whatever enters the resistor each second leaves it. What the resistor takes is energy, not charge.'],
+    steps: ($) => [
+      $.ask === 'current'
+        ? 'No charge piles up inside, so the same current flows in and out. A resistor uses up energy, never current.'
+        : $.ask === 'potential'
+          ? String.raw`Current flows downhill in potential through a resistor, so a is higher: $V_a - V_b = IR$.`
+          : String.raw`Positive charge drops by $IR$ in potential, so it loses $q\,IR$ of potential energy, which the resistor turns into heat at the rate $P = I^2R$.`,
+    ],
+    sim: { scenario: 'series' },
+    cases: [
+      kase('Class Activity 3 #17 C', { ask: 'current' }, { ans: 'sameI' }),
+      kase('Class Activity 3 #17 E', { ask: 'potential' }, { ans: 'highA' }),
+      kase('Class Activity 3 #17 F', { ask: 'energy' }, { ans: 'loseU' }),
     ],
   }),
   problem({
@@ -1690,6 +1852,39 @@ export default [
       kase('#3', { ask: 'I', V: 110, R: 100, P: 100 }, { ans: 0.909, I2: 0.909 }, { key: '0.91 A' }),
       kase('#4', { ask: 'both', V: 12, R: 100, P: 100 }, { ans: 1.44, I2: 8.333 }, { key: 'A) 1.44 Ω  B) 8.33 A' }),
     ],
+  }),
+  problem({
+    ...E3, id: 'e3.42.hot-wire', ch: '42', lab: 'ohm', src: 'Class Activity 3 #23', title: 'Power of a wire, cold and glowing', kind: 'numeric', level: 3, topics: ['power', 'resistance', 'temperature'],
+    vars: { L: range(1, 10, 0.5, 'm'), r: range(0.1, 0.5, 0.05, 'mm', 1e-3), V: range(12, 240, 12, 'V'), T: range(200, 2000, 100, '°C') },
+    derive: ($) => {
+      const Nc = mat('nichrome');
+      const A = Math.PI * $.r ** 2;
+      const R20 = (Nc.rho * $.L) / A;
+      const RT = R20 * (1 + Nc.alpha * ($.T - 20));
+      return { rho: Nc.rho, A, R20, RT, P20: ($.V * $.V) / R20, PT: ($.V * $.V) / RT };
+    },
+    text: (T) => `A nichrome wire (ρ = 1.00×10⁻⁶ Ω·m at 20 °C, α = 4.0×10⁻⁴ /°C) is ${T.L} m long with a radius of ${T.r} mm, connected across ${T.V} V. Find the power it dissipates at 20 °C, and at ${T.T} °C once it glows.`,
+    parts: [
+      sym('P_sym', 'V^2*pi*r^2/(rho*L)', { V: 'V', r: 'm', rho: 'Ω*m', L: 'm' }, ($) => $.P20, { unit: 'W', label: String.raw`$P$ at 20 °C as a formula (use V, r, ρ, L)` }),
+      num('P20', ($) => $.P20, 'W', { label: String.raw`$P$ at 20 °C` }),
+      num('PT', ($) => $.PT, 'W', { label: 'P when hot' }),
+    ],
+    hints: [
+      String.raw`$R = \rho L/A$ with $A = \pi r^2$, then $P = V^2/R$ — the voltage is what the supply fixes.`,
+      String.raw`Hot: $R_T = R_{20}\left[1 + \alpha(T - 20\,^\circ\text{C})\right]$. More resistance at the same voltage means *less* power.`,
+    ],
+    steps: ($) => [
+      String.raw`$R_{20} = \dfrac{\rho L}{\pi r^2} = ${texNum($.R20)}\ \Omega$, so $P_{20} = \dfrac{V^2}{R_{20}} = ${texNum($.P20)}\ \text{W}$`,
+      String.raw`$R_T = R_{20}\left[1 + \alpha\,\Delta T\right] = ${texNum($.RT)}\ \Omega$, so $P_T = ${texNum($.PT)}\ \text{W}$`,
+    ],
+    sim: {
+      scenario: 'ohm-hot',
+      setup(s, $) {
+        s.ohm = { material: 'nichrome', L: $.L, A: Math.PI * $.r ** 2, V: $.V, T: $.T };
+      },
+      read: (c) => ({ PT: c.ohm.P }),
+    },
+    cases: [kase('Class Activity 3 #23', { L: 4, r: 0.2, V: 120, T: 2000 }, { P20: 452.4, PT: 252.4 })],
   }),
   problem({
     ...E3, id: 'e3.42.ac-from-equation', ch: '42', src: 'Practice 42 #11–13', title: 'Reading an ac current equation', kind: 'numeric', level: 2, topics: ['power', 'rms', 'ac'],

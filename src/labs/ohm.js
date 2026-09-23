@@ -109,14 +109,22 @@ export default defineLab({
   },
   syncControls(state) {
     const $ = (id) => document.getElementById(id);
+    // A problem can ask for a value past a slider's end (a wire at 2000 °C); widen it rather than
+    // let the browser clamp the slider, and the number box beside it, to the old limit.
+    const fit = (id, v) => {
+      const el = $(id);
+      if (v > Number(el.max)) el.max = String(v);
+      if (v < Number(el.min)) el.min = String(v);
+      el.value = v;
+    };
     $('ohm-material').value = state.ohm.material;
-    $('ohm-L').value = state.ohm.L;
+    fit('ohm-L', state.ohm.L);
     $('ohm-L-val').textContent = `${state.ohm.L.toFixed(1)} m`;
-    $('ohm-A').value = state.ohm.A * 1e6;
+    fit('ohm-A', state.ohm.A * 1e6);
     $('ohm-A-val').textContent = `${(state.ohm.A * 1e6).toFixed(2)} mm²`;
-    $('ohm-V').value = state.ohm.V;
+    fit('ohm-V', state.ohm.V);
     $('ohm-V-val').textContent = fmtV(state.ohm.V);
-    $('ohm-T').value = state.ohm.T;
+    fit('ohm-T', state.ohm.T);
     $('ohm-T-val').textContent = `${state.ohm.T.toFixed(0)} °C`;
   },
   recompute(state, computed) {
