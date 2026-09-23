@@ -12,6 +12,7 @@
  * this module only calls api.openInLab(inst) and reads api.computed / api.slice().
  */
 import { PROBLEMS, problemById, problemsForExam, CHAPTER_ORDER, CHAPTER_TITLES } from '../problems/index.js';
+import { sequenceRank, stageOf } from '../problems/sequence.js';
 import { instance, render, grade, expected, sig, withinTol, compile, checkUnits, exprToTex, GLYPH } from '../problems/engine.js';
 import { createProgress, pickSet, MASTERED_BOX, INTERVAL_DAYS } from '../problems/progress.js';
 import { examById, LAB_META } from '../data/catalog.js';
@@ -476,8 +477,15 @@ export function createPractice(api) {
     return tpls;
   }
 
+  /** Chapter by chapter, and within a chapter along its learning path (src/problems/sequence.js). */
   function orderByChapter(tpls) {
-    return [...tpls].sort((a, b) => CHAPTER_ORDER.indexOf(a.ch) - CHAPTER_ORDER.indexOf(b.ch));
+    const bank = new Map(tpls.map((t, i) => [t.id, i]));
+    return [...tpls].sort(
+      (a, b) =>
+        CHAPTER_ORDER.indexOf(a.ch) - CHAPTER_ORDER.indexOf(b.ch) ||
+        sequenceRank(a.id) - sequenceRank(b.id) ||
+        bank.get(a.id) - bank.get(b.id),
+    );
   }
 
   // ------------------------------------------------------------------ rendering
@@ -536,11 +544,16 @@ export function createPractice(api) {
           <span class="pb-ch-count">${cc.mastered}/${cc.total}</span>
         </div>
         ${inCh
-          .map((t) => {
+          .map((t, i) => {
+            const stage = stageOf(t.id);
+            const prev = i > 0 ? stageOf(inCh[i - 1].id) : null;
+            const heading = stage && stage.name !== prev?.name
+              ? `<div class="pb-stage"><span class="pb-stage-n">${stage.index + 1}</span>${esc(stage.name)}</div>`
+              : '';
             const s = progress.status(t.id);
             const labTitle = t.lab ? LAB_META[t.lab]?.title : '';
             const here = t.lab && t.lab === labId;
-            return `<button type="button" class="pb-item" data-open="${esc(t.id)}">
+            return `${heading}<button type="button" class="pb-item" data-open="${esc(t.id)}">
               <span class="pb-dot s-${s}" title="${STATUS_LABEL[s]}"></span>
               <span class="pb-item-title">${esc(t.title)}${t.enrichment ? ' <span class="pb-extra" title="Beyond the practice sheets and worksheets: left out of mixed sets and practice exams">extra</span>' : ''}</span>
               <span class="pb-item-meta">${levelDots(t.level)}${labTitle ? `<span class="pb-lab-badge${here ? ' here' : ''}">${esc(labTitle)}</span>` : ''}</span>

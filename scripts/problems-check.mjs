@@ -19,6 +19,7 @@ import { applyProblem, headlessCtx } from '../src/problems/simbridge.js';
 import { mathProse } from '../src/ui/shared.js';
 import { loadLab } from '../src/labs/load.js';
 import { LAB_META, EXAMS } from '../src/data/catalog.js';
+import { SEQUENCE } from '../src/problems/sequence.js';
 
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
@@ -27,6 +28,7 @@ const opt = (name, dflt) => {
 };
 const SAMPLES = Number(opt('--samples', 60));
 const ONLY = opt('--only', '');
+
 
 const errors = [];
 const notes = [];
@@ -201,6 +203,16 @@ for (const [s, v] of [
   if (parseNumber(s) !== v) err('engine', `parseNumber(${s}) = ${parseNumber(s)}`);
 }
 if (!Number.isNaN(parseNumber('abc'))) err('engine', 'parseNumber accepts text');
+
+// A chapter's learning path must name each of its templates exactly once, and nothing else.
+for (const [ch, stages] of Object.entries(SEQUENCE)) {
+  const listed = stages.flatMap(([, ids]) => ids);
+  const inBank = PROBLEMS.filter((p) => p.ch === ch).map((p) => p.id);
+  for (const id of listed) if (!inBank.includes(id)) err('sequence', `Ch ${ch} lists ${id}, which is not a Ch ${ch} template`);
+  for (const id of inBank) if (!listed.includes(id)) err('sequence', `Ch ${ch} leaves out ${id}`);
+  const dup = listed.filter((id, i) => listed.indexOf(id) !== i);
+  if (dup.length) err('sequence', `Ch ${ch} lists ${dup.join(', ')} twice`);
+}
 {
   const angle = { kind: 'numeric', get: () => 330, scale: 1, tol: 0.005, abs: 0.6, wrap: 360, unit: '°' };
   if (!grade(angle, {}, '-30').correct) err('engine', 'wrapped angle: −30° should equal 330°');

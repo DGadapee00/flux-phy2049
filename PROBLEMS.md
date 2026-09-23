@@ -25,6 +25,7 @@ node scripts/problems-check.mjs --samples 200 --list   # deeper run, with notes 
 | `src/physics/waveoptics.js` | Ch 63–65: double and single slit, gratings, Rayleigh/Airy, thin films, and the intensity profiles the wave labs paint |
 | `src/problems/simbridge.js` | `applyProblem(lab, slice, inst)` loads an instance into a lab's state slice; `headlessCtx()` is for Node |
 | `src/problems/index.js` | `PROBLEMS`, `problemById`, `problemsForExam`, `problemsForLab`, `CHAPTER_ORDER`, `CHAPTER_TITLES` |
+| `src/problems/sequence.js` | The learning path through each chapter: named stages, in study order. The Practice list and its Next button follow it; mixed sets, review and practice exams stay shuffled. A listed chapter must name every template once (the check enforces it). Exam 3 so far |
 | `src/problems/progress.js` | Per-problem history, Leitner-box spaced review, `pickSet` for mixed sets and practice exams. No DOM; storage is injected |
 | `src/problems/bank/e1.js … e7.js, wave.js` | 219 templates covering every chapter on the Fall 2026 syllabus (V, 34–65) |
 | `src/ui/problems.js`, `src/styles/practice.css` | The Practice panel (§4) |
