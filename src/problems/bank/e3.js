@@ -659,7 +659,7 @@ export default [
       const dV = -$.E * $.r2; // V_C − V_A: only the displacement along E counts
       return { dV, Wext: $.s * $.q * dV, r3: Math.hypot($.r1, $.r2) };
     },
-    text: (T, $, f) => `A uniform ${T.E} N/C field points along +x. Point B is at the origin, point A is ${T.r1} m from B straight across the field (along y), and point C is ${T.r2} m from B along the field (along x) — so A and C are ${f($.r3)} m apart. A ${T.s} ${T.q} μC sphere of mass ${T.m} g is carried slowly from A to C. Find $V_C - V_A$, $V_B - V_A$, and the work the carrier must do.`,
+    text: (T, $, f) => `A uniform ${T.E} N/C field points along +x. Point B is at the origin, point A is ${T.r1} m from B straight across the field (along −z), and point C is ${T.r2} m from B along the field (along x) — so A and C are ${f($.r3)} m apart. A ${T.s} ${T.q} μC sphere of mass ${T.m} g is carried slowly from A to C. Find $V_C - V_A$, $V_B - V_A$, and the work the carrier must do.`,
     parts: [
       num('dV', ($) => $.dV, 'V', { label: String.raw`$V_C - V_A$` }),
       num('dVBA', () => 0, 'V', { label: String.raw`$V_B - V_A$`, abs: 0.01 }),
@@ -679,7 +679,12 @@ export default [
       setup(s, $) {
         s.charges = [];
         s.extraE = { x: $.E, y: 0, z: 0 };
-        s.pathA = { x: 0, y: $.r1, z: 0 };
+        // All in the xz work plane: A across the field from B, C along it. The probe is C.
+        s.pathA = { x: 0, y: 0, z: -$.r1 };
+        s.marks = [
+          { label: 'B', x: 0, y: 0, z: 0 },
+          { label: 'C', x: $.r2, y: 0, z: 0 },
+        ];
         s.probe = { x: $.r2, y: 0, z: 0 };
         s.qTest = $.s * $.q;
       },
