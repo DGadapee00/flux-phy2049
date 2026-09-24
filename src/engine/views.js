@@ -47,6 +47,43 @@ export function createViewPool(scene) {
         mesh.visible = false;
         return mesh;
       }),
+    // Extra labelled points a problem names (B, C, …) — shown only, never moved by the pointer.
+    marks: () =>
+      once('marks', () => {
+        const group = new THREE.Group();
+        scene.add(group);
+        group.visible = false;
+        const geo = new THREE.SphereGeometry(0.07, 18, 12);
+        const mat = new THREE.MeshBasicMaterial({ color: M.teal, toneMapped: false });
+        const items = [];
+        return {
+          group,
+          setVisible(v) {
+            group.visible = v;
+          },
+          sync(marks = [], u = 1) {
+            while (items.length < marks.length) {
+              const mesh = new THREE.Mesh(geo, mat);
+              const el = document.createElement('div');
+              el.className = 'probe-label mark-label';
+              const label = new CSS2DObject(el);
+              label.position.set(0, -0.3, 0);
+              mesh.add(label);
+              group.add(mesh);
+              items.push({ mesh, el });
+            }
+            items.forEach((it, i) => {
+              const m = marks[i];
+              it.mesh.visible = !!m;
+              // CSS2D labels ignore their parent's visibility; hide the text too.
+              it.el.style.display = m ? '' : 'none';
+              if (!m) return;
+              it.mesh.position.set(m.x * u, m.y * u, (m.z || 0) * u);
+              it.el.textContent = m.label;
+            });
+          },
+        };
+      }),
     hideAll() {
       made.charges?.setVisible(false);
       made.patches?.setVisible(false);
@@ -59,6 +96,8 @@ export function createViewPool(scene) {
       made.cap?.setVisible(false);
       made.circuit?.setVisible(false);
       if (made.pathA) made.pathA.visible = false;
+      made.marks?.sync([]);
+      made.marks?.setVisible(false);
       made.lines?.clear?.();
       made.forces?.clear?.();
       made.equipot?.clear?.();

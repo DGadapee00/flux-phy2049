@@ -35,6 +35,7 @@ export default defineLab({
       show: { flux: false, E: true, nHat: false, lines: true, forces: false, equipot: true },
       probe: { x: 0.5, y: 0, z: 0 },
       pathA: { x: 1, y: 0, z: 0 },
+      marks: [],
       qTest: 1e-6,
       selectedId: null,
       anim: { playing: false, i: 0 },
@@ -100,6 +101,7 @@ export default defineLab({
     const lines = pool.lines();
     const equipot = pool.equipot();
     const pathA = pool.pathA();
+    const marks = pool.marks();
     charges.setVisible(true);
     probe.setVisible(true);
     pathA.visible = true;
@@ -128,6 +130,8 @@ export default defineLab({
     }
     const u = sceneScale();
     pathA.position.set(state.pathA.x * u, state.pathA.y * u, state.pathA.z * u);
+    marks.setVisible(true);
+    marks.sync(state.marks || [], u);
     ctx.grid.visible = true;
   },
   law: () => [String.raw`V = \dfrac{kq}{r} \qquad \Delta PE_E = q\,\Delta V`, String.raw`E_x = -\dfrac{dV}{dx}`],

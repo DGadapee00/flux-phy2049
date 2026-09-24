@@ -1030,6 +1030,11 @@ input[type='checkbox'] {
   color: var(--text);
 }
 
+/* Problem-named points (B, C, …) label below the dot, clear of the probe's own label above it. */
+.mark-label {
+  transform: translate(-50%, 0);
+}
+
 .axis-label {
   font-family: var(--math);
   font-style: italic;
