@@ -94,7 +94,7 @@ export class ChargeView {
     rec.stem.visible = !c.small && Math.abs(h) > 0.05;
     rec.stem.scale.set(1, h, 1);
     rec.label.position.set(0, r * 2.6, 0);
-    rec.el.textContent = fmtCharge(c.q);
+    rec.el.textContent = c.name ? `${c.name} = ${fmtCharge(c.q)}` : fmtCharge(c.q);
     rec.el.className = `charge-label ${pos ? 'pos' : 'neg'}${selected ? ' selected' : ''}${c.small ? ' small' : ''}`;
     rec.mesh.userData.chargeId = c.id;
   }

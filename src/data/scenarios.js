@@ -377,6 +377,7 @@ export function applyScenario(lab, id, state) {
     state.marks = (sc.marks || []).map((m) => ({ ...m }));
     state.markShow = sc.markShow || '';
     state.hideA = !!sc.hideA;
+    state.probeName = sc.probeName || '';
   }
   if (lab === 'capacitor' || lab === 'ohm' || lab === 'power') {
     if (!sc.charges) state.charges = [];

@@ -197,6 +197,9 @@ export function renderChargeList(state, { gauss = false, fit = true } = {}) {
   renderCoords(state, fit);
 }
 
+/** "q₃" → "q<sub>3</sub>", to match the q<sub>i</sub> the charge rows use. */
+const subHTML = (name) => name.replace(/[₀-₉]+/g, (d) => `<sub>${[...d].map((c) => c.charCodeAt(0) - 0x2080).join('')}</sub>`);
+
 /** Coordinates of the selected charge, the probe and (in Potential) point A, in typable boxes. */
 function renderCoords(state, fit) {
   const host = document.getElementById('coord-block');
@@ -206,12 +209,12 @@ function renderCoords(state, fit) {
   const rows = (state.charges || [])
     .filter((c) => !c.small)
     .map((c, i) => ({ key: `charge:${c.id}`, name: `q<sub>${i + 1}</sub>`, p: c, id: c.id }));
-  if (state.probe) rows.push({ key: 'probe', name: 'P', p: state.probe });
+  if (state.probe) rows.push({ key: 'probe', name: state.probeName ? subHTML(state.probeName) : 'P', p: state.probe });
   if (state.pathA && !state.hideA) rows.push({ key: 'pathA', name: 'A', p: state.pathA });
 
   const fitBtn = document.getElementById('btn-fit');
   if (fitBtn) fitBtn.hidden = !fit;
-  const sig = `${state.lab}|${unit}|${rows.map((r) => r.key).join(',')}`;
+  const sig = `${state.lab}|${unit}|${rows.map((r) => `${r.key}:${r.name}`).join(',')}`;
   if (sig !== coordSig) {
     coordSig = sig;
     host.innerHTML = rows.length

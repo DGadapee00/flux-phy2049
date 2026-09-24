@@ -144,9 +144,12 @@ export default [
     sim: {
       scenario: 'v-plus',
       setup(s, $) {
-        const note = potSetup(() => [charge($.s1 * $.q1, 0, 0)], () => ({ x: $.r, y: 0 }), () => ({ x: 3 * $.r, y: 0 }))(s, $);
+        // q1 in the scene; q2 rides the probe, drawn as a charge, so the lab's PE is the pair's U.
+        const note = potSetup(() => [charge($.s1 * $.q1, 0, 0, 0, { name: 'q₁' })], () => ({ x: $.r, y: 0 }))(s, $);
         s.qTest = $.s2 * $.q2;
-        return note;
+        s.probeName = 'q₂';
+        s.hideA = true;
+        return `${note}. q₂ is the probe: the colors and field lines are from q₁ alone, the field q₂ is brought into.`;
       },
       read: (c) => ({ U: c.PE }),
     },
@@ -193,14 +196,16 @@ export default [
     sim: {
       scenario: 'v-plus',
       setup(s, $) {
-        // q1 and q2 in the scene; q3 rides the probe, so the lab's PE is exactly the third step.
+        // q1 and q2 in the scene; q3 rides the probe, drawn as a charge, so the lab's PE is exactly
+        // the third step. Point A plays no part in assembling the charges, so it is hidden.
         const note = potSetup(
-          () => [charge($.q1, 0, 0), charge($.q2, $.r12, 0)],
+          () => [charge($.q1, 0, 0, 0, { name: 'q₁' }), charge($.q2, $.r12, 0, 0, { name: 'q₂' })],
           () => ({ x: $.x3, y: $.y3 }),
-          () => ({ x: $.r12 / 2, y: -$.r13 }),
         )(s, $);
         s.qTest = $.q3;
-        return note;
+        s.probeName = 'q₃';
+        s.hideA = true;
+        return `${note}. q₃ is the probe, placed last: the colors and field lines are from q₁ and q₂ alone, the field it is brought into.`;
       },
       read: (c) => ({ U3: c.PE }),
     },

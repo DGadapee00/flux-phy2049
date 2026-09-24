@@ -31,6 +31,8 @@ export function createViewPool(scene) {
     equipot: () => once('equipot', () => new EquipotentialView(scene)),
     cap: () => once('cap', () => new CapacitorView(scene)),
     circuit: () => once('circuit', () => new CircuitView(scene)),
+    // The probe drawn as a charge, for a problem whose test charge is one of its named charges.
+    testCharge: () => once('testCharge', () => new ChargeView(scene)),
     pathA: () =>
       once('pathA', () => {
         const el = document.createElement('div');
@@ -101,6 +103,8 @@ export function createViewPool(scene) {
       made.arrows?.setVisible(false);
       made.lines?.setVisible(false);
       made.probe?.setVisible(false);
+      made.probe?.setAsCharge(false);
+      made.testCharge?.setVisible(false);
       made.forces?.setVisible(false);
       made.dist?.setVisible(false);
       made.equipot?.setVisible(false);

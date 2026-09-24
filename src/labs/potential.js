@@ -40,6 +40,8 @@ export default defineLab({
       markShow: '',
       // A problem with no use for the path start hides it; shift-click brings it back.
       hideA: false,
+      // A problem whose test charge is one of its named charges (q₃ …) draws the probe as it.
+      probeName: '',
       qTest: 1e-6,
       selectedId: null,
       anim: { playing: false, i: 0 },
@@ -115,6 +117,12 @@ export default defineLab({
     pathA.visible = !state.hideA;
     charges.sync(state.charges, state.selectedId);
     probe.sync(state.probe, computed.probeE, `V = ${fmtV(computed.V)}`);
+    if (state.probeName) {
+      probe.setAsCharge(true);
+      const tc = pool.testCharge();
+      tc.setVisible(true);
+      tc.sync([{ id: 'test', q: state.qTest, name: state.probeName, ...state.probe }], null);
+    }
     lines.setVisible(!!state.show.lines);
     const soft = softenFor(state.view);
     if (state.show.lines) lines.rebuild(state.charges, state.extraE, soft);

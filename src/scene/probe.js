@@ -14,6 +14,7 @@ export class ProbeView {
       new THREE.MeshBasicMaterial({ color: M.white, toneMapped: false }),
     );
     this.group.add(core);
+    this.core = core;
 
     this.arrow = markAnswer(new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 1, M.yellow, 0.3, 0.2, 0.04));
     this.group.add(this.arrow);
@@ -29,6 +30,18 @@ export class ProbeView {
 
   setVisible(v) {
     this.group.visible = v;
+  }
+
+  /**
+   * A probe that stands for one of a problem's named charges is drawn as that charge by the lab: the
+   * white dot goes, and the label hangs below, clear of the charge's own label above.
+   */
+  setAsCharge(on) {
+    if (this._asCharge === on) return;
+    this._asCharge = on;
+    this.core.visible = !on;
+    this.label.center.set(0.5, on ? 0 : 0.5);
+    this.label.position.set(0, on ? -0.5 : 0.35, 0);
   }
 
   sync(probe, E, extra = '') {
