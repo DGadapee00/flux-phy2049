@@ -1,6 +1,7 @@
 /** Exam 3 · Ch 38–39 (potential), 40 (capacitors), 41 (current, resistance), 42 (power). */
 import { problem, kase, range, choice, SIGN, num, mc, sym, K, EPS0, QE, ME, MP, POSNEG, charge, layout, texNum } from '../kit.js';
 import { DIELECTRICS } from '../../physics/capacitor.js';
+import { applyScenario } from '../../data/scenarios.js';
 import { MATERIALS } from '../../physics/circuit.js';
 import { paschen, paschenMin, strengthVolts, sphereCapacitance, sparkEnergy, chargeForPotential, P_ATM, GASES } from '../../physics/breakdown.js';
 
@@ -693,7 +694,7 @@ export default [
     cases: [kase('Worksheet 3 #4', { E: 1000, r1: 0.3, r2: 0.4, q: 200, s: 1, m: 20 }, { dV: -400, dVBA: 0, Wext: -0.08 })],
   }),
   problem({
-    ...E3, id: 'e3.38.pe-rank', ch: '38', src: 'Worksheet 3 #1, #3, Class Activity 3 #1, #4', title: 'Where is the potential energy largest?', kind: 'conceptual', level: 2, topics: ['potential', 'energy'],
+    ...E3, id: 'e3.38.pe-rank', ch: '38', lab: 'potential', src: 'Worksheet 3 #1, #3, Class Activity 3 #1, #4', title: 'Where is the potential energy largest?', kind: 'conceptual', level: 2, topics: ['potential', 'energy'],
     vars: {
       ask: choice(
         ['neg-max', 'A +Q and a −Q charge sit on the x-axis. A small negative test charge can be placed at P₁ (close to +Q), P₂ (the midpoint), P₃ (close to −Q) or P₄ (very far away). Where is its potential energy largest?'],
@@ -726,6 +727,53 @@ export default [
             ? String.raw`$U = \dfrac{kq_1q_2}{r}$ is *negative* for opposite charges. Pulling them apart makes $r$ larger and $U$ less negative — closer to zero, so it increases. You have to do work to separate things that attract.`
             : String.raw`Along $\vec{E}$ the potential always falls. The electron's $q$ is negative, so $U = qV$ rises as $V$ falls — it is being pushed against the force on it, so it slows down and its kinetic energy drops.`,
     ],
+    sim: {
+      scenario: 'v-dipole',
+      setup(s, $) {
+        // Every version is drawn in the x–y plane, seen from above, like the other point-charge setups.
+        if ($.ask === 'electron-along') {
+          applyScenario('potential', 'v-plates', s);
+          layout(s, { pathA: { x: -0.15, y: 0 }, probe: { x: 0.15, y: 0 } });
+          s.extraE = { x: 2000, y: 0, z: 0 };
+          s.qTest = -1e-6;
+          return 'A −1 μC test charge stands in for the electron (only its sign matters). It starts at A and moves along E to the probe.';
+        }
+        if ($.ask === 'pair-apart') {
+          applyScenario('potential', 'v-plus', s);
+          layout(s, { charges: [charge(1e-6, 0, 0)], pathA: { x: 0.15, y: 0 }, probe: { x: 0.45, y: 0 } });
+          s.qTest = -1e-6;
+          return 'One charge is fixed at the origin. The other, the −1 μC test charge, starts at A and is pulled out to the probe.';
+        }
+        // The four candidate spots, with V and U = qV under each once the problem is solved. Field
+        // lines off, so the V colors read clearly.
+        layout(s, {
+          charges: [charge(2e-6, -0.4, 0), charge(-2e-6, 0.4, 0)],
+          probe: { x: 0, y: -0.45 },
+          marks: [
+            { id: 'p1', label: 'P₁', x: -0.2, y: 0 },
+            { id: 'p2', label: 'P₂', x: 0, y: 0 },
+            { id: 'p3', label: 'P₃', x: 0.2, y: 0 },
+            { id: 'p4', label: 'P₄ (far away)', x: 0, y: 0.6 },
+          ],
+        });
+        s.markShow = 'VU';
+        s.hideA = true;
+        s.show.lines = false;
+        s.qTest = $.ask === 'neg-max' ? -1e-6 : 1e-6;
+        return 'P₄ stands in for “very far away”: the lab can’t draw infinity, so it sits out on the line halfway between the charges, where V matches its value far away. The white probe is the test charge; click to move it.';
+      },
+      read(c, s, $) {
+        if ($.ask === 'neg-max' || $.ask === 'pos-max') {
+          const U = c.marks.map((m) => m.U);
+          return { ans: s.marks[U.indexOf(Math.max(...U))].id };
+        }
+        const dV = c.V - c.VA;
+        const dU = s.qTest * dV;
+        if ($.ask === 'pair-apart') return { ans: dU > 0 ? 'Uup' : 'Udown' };
+        const ans = dU > 0 ? (dV < 0 ? 'upDown' : 'upUp') : dV < 0 ? 'downDown' : null;
+        return ans ? { ans } : {};
+      },
+    },
     cases: [
       kase('negative test charge', { ask: 'neg-max' }, { ans: 'p3' }),
       kase('Worksheet 3 #3', { ask: 'electron-along' }, { ans: 'upDown' }),

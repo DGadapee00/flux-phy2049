@@ -373,7 +373,11 @@ export function applyScenario(lab, id, state) {
   if (sc.ohm) state.ohm = { ...sc.ohm };
   if (sc.power) state.power = { ...sc.power };
   if (sc.pathA) state.pathA = { ...sc.pathA };
-  if (lab === 'potential') state.marks = (sc.marks || []).map((m) => ({ ...m }));
+  if (lab === 'potential') {
+    state.marks = (sc.marks || []).map((m) => ({ ...m }));
+    state.markShow = sc.markShow || '';
+    state.hideA = !!sc.hideA;
+  }
   if (lab === 'capacitor' || lab === 'ohm' || lab === 'power') {
     if (!sc.charges) state.charges = [];
   }

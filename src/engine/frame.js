@@ -99,11 +99,13 @@ export function snapTo(v, step) {
 const FIN = (v) => (Number.isFinite(v) ? Math.abs(v) : 0);
 const COORD = (p) => Math.max(FIN(p.x), FIN(p.y), FIN(p.z));
 
-/** Largest coordinate, in meters, of everything the student can see and move. */
+/** Largest coordinate, in meters, of everything the student can see and move, and of the marked points. */
 export function contentExtent(state) {
   let m = 0;
   for (const c of state?.charges || []) m = Math.max(m, COORD(c));
-  for (const key of ['probe', 'pathA']) if (state?.[key]) m = Math.max(m, COORD(state[key]));
+  if (state?.probe) m = Math.max(m, COORD(state.probe));
+  if (state?.pathA && !state.hideA) m = Math.max(m, COORD(state.pathA));
+  for (const p of state?.marks || []) m = Math.max(m, COORD(p));
   const surf = state?.surface;
   if (surf) m = Math.max(m, COORD(surf.origin || {}) + Math.max(surf.R || 0, (surf.L || 0) / 2));
   return m;

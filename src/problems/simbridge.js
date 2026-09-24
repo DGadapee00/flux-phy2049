@@ -17,6 +17,11 @@ export function applyProblem(lab, slice, inst) {
   if (!sim) return '';
   const list = scenarioList(lab);
   const id = sim.scenario ?? list[0]?.id;
+  // Start from the lab's own view plane. A setup that places points in the work plane without
+  // choosing one would otherwise inherit whatever the last problem or the student left, and its
+  // points could land off the grid; setups that want another plane (layout()) set it themselves.
+  const base = slice.view && lab.defaultState?.().view;
+  if (base) slice.view = { ...base };
   if (id != null) {
     if (lab.applyScenario) lab.applyScenario(id, slice);
     else applyDataScenario(lab.id, id, slice);

@@ -31,10 +31,9 @@ export default [
     sim: {
       scenario: 'single-plus',
       setup(s, $) {
-        s.charges = [charge($.s * 1e-6, 0, 0), charge(1e-12, 0.6, 0.6)];
+        // "Upward" is +y: drawn in the x–y plane, seen from above, like the other 36A setups.
+        layout(s, { charges: [charge($.s * 1e-6, 0, 0), charge(1e-12, 0.6, 0.6)], probe: { x: 0.3, y: 0.3 } });
         s.extraE = { x: 5e4 * Math.cos($.ang * DEG), y: 5e4 * Math.sin($.ang * DEG), z: 0 };
-        s.probe = { x: 0.3, y: 0.3, z: 0 };
-        s.selectedId = s.charges[0].id;
       },
     },
     cases: [kase('#1', { ang: 180, s: 1 }, { dir: 180 }, { key: 'A' }), kase('#2', { ang: 180, s: -1 }, { dir: 0 }, { key: 'B' })],

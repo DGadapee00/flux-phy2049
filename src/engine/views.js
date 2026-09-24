@@ -47,7 +47,9 @@ export function createViewPool(scene) {
         mesh.visible = false;
         return mesh;
       }),
-    // Extra labelled points a problem names (B, C, …) — shown only, never moved by the pointer.
+    // Extra labelled points a problem names (B, C, P₁ …): shown only, never moved by the pointer.
+    // Each can carry value lines under its name ("V = …"); the Practice veil hides those spans while
+    // a problem is unsolved and leaves the name alone.
     marks: () =>
       once('marks', () => {
         const group = new THREE.Group();
@@ -55,31 +57,40 @@ export function createViewPool(scene) {
         group.visible = false;
         const geo = new THREE.SphereGeometry(0.07, 18, 12);
         const mat = new THREE.MeshBasicMaterial({ color: M.teal, toneMapped: false });
+        const span = (cls) => Object.assign(document.createElement('span'), { className: cls });
         const items = [];
         return {
-          group,
           setVisible(v) {
             group.visible = v;
           },
-          sync(marks = [], u = 1) {
+          sync(marks = [], u = 1, lines = []) {
             while (items.length < marks.length) {
               const mesh = new THREE.Mesh(geo, mat);
               const el = document.createElement('div');
               el.className = 'probe-label mark-label';
+              const name = span('mark-name');
+              const vals = [span('mark-val'), span('mark-val')];
+              el.append(name, ...vals);
               const label = new CSS2DObject(el);
-              label.position.set(0, -0.3, 0);
+              // Hung by its top edge just under the dot, clear of the probe's label above. The
+              // renderer writes the element's transform itself, so the anchor has to be set here.
+              label.center.set(0.5, 0);
+              label.position.set(0, -0.14, 0);
               mesh.add(label);
               group.add(mesh);
-              items.push({ mesh, el });
+              items.push({ mesh, name, vals });
             }
             items.forEach((it, i) => {
               const m = marks[i];
-              it.mesh.visible = !!m;
-              // CSS2D labels ignore their parent's visibility; hide the text too.
-              it.el.style.display = m ? '' : 'none';
+              it.mesh.visible = !!m; // the renderer hides a hidden mesh's label along with it
               if (!m) return;
               it.mesh.position.set(m.x * u, m.y * u, (m.z || 0) * u);
-              it.el.textContent = m.label;
+              it.name.textContent = m.label;
+              it.vals.forEach((v, j) => {
+                const text = lines[i]?.[j] || '';
+                if (v.textContent !== text) v.textContent = text;
+                v.style.display = text ? '' : 'none';
+              });
             });
           },
         };

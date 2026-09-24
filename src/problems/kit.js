@@ -145,13 +145,14 @@ export const charge = (q, x, y, z = 0, extra = {}) => ({ id: ++uid, q, x, y, z, 
  * Now the geometry is the question's, and the *view* adapts — so a value read off the lab is the
  * value being solved for, and the setup can be rebuilt by hand from the problem text.
  */
-export function layout(s, { charges = [], probe = null, pathA = null, plane = 'xy', select = 0 } = {}) {
+export function layout(s, { charges = [], probe = null, pathA = null, marks = null, plane = 'xy', select = 0 } = {}) {
   const pt = (p) => ({ x: p.x || 0, y: p.y || 0, z: p.z || 0 });
-  const all = [...charges, probe, pathA].filter(Boolean).map(pt);
+  const all = [...charges, probe, pathA, ...(marks || [])].filter(Boolean).map(pt);
   const extent = Math.max(1e-9, ...all.map((p) => Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z))));
   s.charges = charges;
   if (probe) s.probe = pt(probe);
   if (pathA) s.pathA = pt(pathA);
+  if (marks) s.marks = marks.map((m) => ({ ...m, ...pt(m) }));
   s.extraE = { x: 0, y: 0, z: 0 };
   s.selectedId = charges[select]?.id ?? charges[0]?.id ?? null;
   const upm = fitScale(extent);

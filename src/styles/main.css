@@ -1030,9 +1030,17 @@ input[type='checkbox'] {
   color: var(--text);
 }
 
-/* Problem-named points (B, C, …) label below the dot, clear of the probe's own label above it. */
+/* Problem-named points (B, C, P₁ …): the name, with any value lines stacked under it. */
 .mark-label {
-  transform: translate(-50%, 0);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.mark-label .mark-val {
+  display: block;
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .axis-label {

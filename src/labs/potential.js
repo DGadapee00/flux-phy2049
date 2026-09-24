@@ -35,7 +35,11 @@ export default defineLab({
       show: { flux: false, E: true, nHat: false, lines: true, forces: false, equipot: true },
       probe: { x: 0.5, y: 0, z: 0 },
       pathA: { x: 1, y: 0, z: 0 },
+      // Problem-named points; markShow picks their value lines: 'V', 'U' or 'VU'.
       marks: [],
+      markShow: '',
+      // A problem with no use for the path start hides it; shift-click brings it back.
+      hideA: false,
       qTest: 1e-6,
       selectedId: null,
       anim: { playing: false, i: 0 },
@@ -81,6 +85,10 @@ export default defineLab({
     computed.Wfield = workByField(state.qTest, computed.VA, computed.V);
     computed.grad = gradientCheck(state.probe, state.charges, state.extraE, stepFor(state.view), soft);
     computed.Vcontrib = potentialContributions(state.probe, state.charges, state.extraE, soft);
+    computed.marks = (state.marks || []).map((m) => {
+      const V = potentialAt(m, state.charges, state.extraE, soft);
+      return { V, U: potentialEnergy(state.qTest, V) };
+    });
     // V(x) across the visible width, so the plot follows the view instead of a fixed ±1 m.
     const half = state.view ? 5 / state.view.upm : 1;
     const xs = [];
@@ -104,7 +112,7 @@ export default defineLab({
     const marks = pool.marks();
     charges.setVisible(true);
     probe.setVisible(true);
-    pathA.visible = true;
+    pathA.visible = !state.hideA;
     charges.sync(state.charges, state.selectedId);
     probe.sync(state.probe, computed.probeE, `V = ${fmtV(computed.V)}`);
     lines.setVisible(!!state.show.lines);
@@ -130,8 +138,13 @@ export default defineLab({
     }
     const u = sceneScale();
     pathA.position.set(state.pathA.x * u, state.pathA.y * u, state.pathA.z * u);
+    const show = state.markShow || '';
+    const markLines = (computed.marks || []).map(({ V, U }) => [
+      show.includes('V') ? `V = ${fmtV(V)}` : '',
+      show.includes('U') ? `U = ${fmtEnergy(U)}` : '',
+    ].filter(Boolean));
     marks.setVisible(true);
-    marks.sync(state.marks || [], u);
+    marks.sync(state.marks || [], u, markLines);
     ctx.grid.visible = true;
   },
   law: () => [String.raw`V = \dfrac{kq}{r} \qquad \Delta PE_E = q\,\Delta V`, String.raw`E_x = -\dfrac{dV}{dx}`],
@@ -141,13 +154,15 @@ export default defineLab({
     const PE = computed.PE ?? 0;
     const W = computed.Wfield ?? 0;
     const g = computed.grad;
-    const rows = [
-      kv(String.raw`$V$ at the probe ($B$)`, fmtV(V)),
-      kv(String.raw`$V$ at $A$`, fmtV(VA)),
-      kv(String.raw`$\Delta V = V_B - V_A$`, fmtV(V - VA)),
-      kv(String.raw`$PE_E = qV$`, fmtEnergy(PE)),
-      kv(String.raw`$W_{\text{field}}$, $A \to B$`, fmtEnergy(W)),
-    ];
+    const rows = state.hideA
+      ? [kv(String.raw`$V$ at the probe`, fmtV(V)), kv(String.raw`$PE_E = qV$`, fmtEnergy(PE))]
+      : [
+          kv(String.raw`$V$ at the probe ($B$)`, fmtV(V)),
+          kv(String.raw`$V$ at $A$`, fmtV(VA)),
+          kv(String.raw`$\Delta V = V_B - V_A$`, fmtV(V - VA)),
+          kv(String.raw`$PE_E = qV$`, fmtEnergy(PE)),
+          kv(String.raw`$W_{\text{field}}$, $A \to B$`, fmtEnergy(W)),
+        ];
     if (g) {
       rows.push(kv(String.raw`$E_x$`, fmtE(g.Ex)));
       rows.push(kv(String.raw`$-dV/dx$`, fmtE(g.negdVdx)));
@@ -161,16 +176,20 @@ export default defineLab({
   readout(state, computed) {
     const V = computed.V ?? 0;
     const VA = computed.VA ?? 0;
-    return cells([
+    const here = [
       [String.raw`$V$ at the probe`, fmtV(V), ''],
       [String.raw`$PE_E$`, fmtEnergy(computed.PE ?? 0), ''],
+    ];
+    if (state.hideA) return cells(here);
+    return cells([
+      ...here,
       [String.raw`$\Delta V\ (A \to B)$`, fmtV(V - VA), ''],
       [String.raw`$W_{\text{field}}$`, fmtEnergy(computed.Wfield ?? 0), ''],
     ]);
   },
   plot(state, computed) {
     if (!computed.Vx) return null;
-    return { type: 'Vx', xs: computed.Vx.xs, Vs: computed.Vx.Vs, xProbe: state.probe.x, xA: state.pathA?.x };
+    return { type: 'Vx', xs: computed.Vx.xs, Vs: computed.Vx.Vs, xProbe: state.probe.x, xA: state.hideA ? null : state.pathA?.x };
   },
   coach: (state, computed) => coachPotential(state, computed),
 });

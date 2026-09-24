@@ -207,7 +207,7 @@ function renderCoords(state, fit) {
     .filter((c) => !c.small)
     .map((c, i) => ({ key: `charge:${c.id}`, name: `q<sub>${i + 1}</sub>`, p: c, id: c.id }));
   if (state.probe) rows.push({ key: 'probe', name: 'P', p: state.probe });
-  if (state.pathA) rows.push({ key: 'pathA', name: 'A', p: state.pathA });
+  if (state.pathA && !state.hideA) rows.push({ key: 'pathA', name: 'A', p: state.pathA });
 
   const fitBtn = document.getElementById('btn-fit');
   if (fitBtn) fitBtn.hidden = !fit;

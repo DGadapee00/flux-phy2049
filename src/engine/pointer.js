@@ -163,6 +163,7 @@ export function createChargePointer({ camera, controls, canvas, getState, getPoo
       setPointer(e);
       raycaster.setFromCamera(pointer, camera);
       const shiftA = state.lab === 'potential' && e.shiftKey && state.pathA;
+      if (shiftA) state.hideA = false; // a problem may have hidden A; setting it shows it again
       const target = shiftA ? state.pathA : state.probe;
       const axes = dragPlane(target, false);
       if (raycaster.ray.intersectPlane(plane, hit) && usableHit()) {
