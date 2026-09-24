@@ -98,6 +98,11 @@ export function sig(x, n = 3) {
   return `${Number(m)} × 10${exp}`;
 }
 
+/** A choice part's options for this instance: its fixed list, or the one this version asks for. */
+export function choiceOptions(part, $) {
+  return typeof part.options === 'function' ? part.options($) : part.options;
+}
+
 export function render(inst) {
   const { tpl, $, T } = inst;
   return {
@@ -107,7 +112,7 @@ export function render(inst) {
       kind: p.kind,
       label: typeof p.label === 'function' ? p.label(T, $, sig) : p.label,
       unit: p.unit ?? null,
-      options: p.options?.map((o) => ({ value: o.value, label: typeof o.label === 'function' ? o.label(T, $) : o.label })),
+      options: p.options ? choiceOptions(p, $).map((o) => ({ value: o.value, label: typeof o.label === 'function' ? o.label(T, $) : o.label })) : undefined,
       multi: p.multi ?? false,
       rubric: p.rubric ?? null,
     })),

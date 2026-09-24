@@ -199,7 +199,14 @@ export default [
     ...E4, id: 'e4.45.magnets', ch: '45', lab: 'biot', title: 'Magnets and field lines', kind: 'conceptual', topics: ['magnetism'],
     vars: { ask: choice([1, 'Outside a bar magnet, field lines run…'], [2, 'If a bar magnet is cut in half, you get…'], [3, "The Earth's geographic North Pole is near…"], [4, 'A compass needle\'s north pole points…']) },
     text: (T) => T.ask,
-    parts: [mc('ans', [[1, 'from the N pole to the S pole'], [2, 'two smaller magnets, each with N and S poles'], [3, 'a magnetic south pole'], [4, 'along the local field, toward a magnetic south pole'], [5, 'from S to N']], ($) => $.ask)],
+    parts: [
+      mc('ans', ($) => ({
+        1: [[5, 'from the S pole to the N pole'], [1, 'from the N pole to the S pole'], [6, 'straight out of both poles, never returning']],
+        2: [[7, 'an isolated N pole and an isolated S pole'], [2, 'two smaller magnets, each with N and S poles'], [8, 'two pieces that are no longer magnetic']],
+        3: [[9, 'a magnetic north pole'], [3, 'a magnetic south pole']],
+        4: [[10, 'along the local field, toward a magnetic north pole'], [4, 'along the local field, toward a magnetic south pole'], [11, 'across the local field, at right angles to it']],
+      })[$.ask], ($) => $.ask),
+    ],
     steps: () => ['Field lines leave N and enter S outside a magnet. There are no isolated magnetic poles. A compass N pole is drawn toward a magnetic S pole, which is why the Arctic has one.'],
     cases: [kase('cut', { ask: 2 }, { ans: 2 })],
   }),

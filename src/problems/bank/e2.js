@@ -102,7 +102,7 @@ export default [
     ...A, id: 'e2.36a.accel', lab: 'field', src: 'Practice 36A #9', title: 'Acceleration of a proton or electron', kind: 'numeric', topics: ['field-definition', 'kinematics'],
     vars: { p: choice([1, 'proton'], [-1, 'electron']), E: range(100, 2000, 50, 'N/C') },
     derive: ($) => ({ a: (QE * $.E) / ($.p > 0 ? MP : ME) }),
-    text: (T) => `A ${T.p} is placed in a ${T.E} N/C electric field that points in the +x direction. Find the magnitude and direction of its acceleration.`,
+    text: (T) => `${/^[aeiou]/i.test(T.p) ? 'An' : 'A'} ${T.p} is placed in a ${T.E} N/C electric field that points in the +x direction. Find the magnitude and direction of its acceleration.`,
     parts: [num('a', ($) => $.a, 'm/s²'), mc('dir', [[1, '+x'], [-1, '−x']], ($) => $.p, { label: 'Direction' })],
     steps: ($, f) => [
       String.raw`$a = \dfrac{eE}{m} = ${texNum($.a)}\ \text{m/s}^2$`,

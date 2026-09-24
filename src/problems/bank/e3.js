@@ -435,7 +435,9 @@ export default [
       ? 'Electric potential, measured in volts, is the ratio of electric potential energy to what?'
       : `What are the units of ${T.q}?`),
     parts: [
-      mc('ans', [['J', 'J'], ['J/C', 'J/C'], ['N/C', 'N/C'], ['J/kg', 'J/kg'], ['charge', 'the amount of electric charge'], ['current', 'the electric current']],
+      mc('ans', ($) => ($.q === 'ratio'
+        ? [['current', 'the electric current'], ['charge', 'the amount of electric charge'], ['field', 'the electric field'], ['mass', 'the mass of the object']]
+        : [['J', 'J'], ['J/C', 'J/C'], ['N/C', 'N/C'], ['J/kg', 'J/kg']]),
         ($) => ({ U: 'J', V: 'J/C', E: 'N/C', ratio: 'charge' })[$.q]),
     ],
     hints: [String.raw`$V = U/q$, so a volt is a joule per coulomb; the energy itself is just joules.`],
@@ -477,7 +479,9 @@ export default [
     },
     text: (T) => T.claim,
     parts: [
-      mc('ans', [['T', 'True'], ['F', 'False'], ['zero', 'Zero'], ['unknown', 'Impossible to determine from the information given']],
+      mc('ans', ($) => ($.claim === 'V0E'
+        ? [['zero', 'Zero'], ['nonzero', 'Not zero'], ['unknown', 'Impossible to determine from the information given']]
+        : [['T', 'True'], ['F', 'False']]),
         ($) => ({ E0V0: 'F', Vconst: 'T', V0E: 'unknown' })[$.claim]),
     ],
     hints: [String.raw`$\vec{E}$ is the *slope* of $V$, not its value: $E_x = -\dfrac{dV}{dx}$.`],
@@ -505,13 +509,18 @@ export default [
     },
     text: (T) => T.what,
     parts: [
-      mc('ans', [
-        ['both-down', 'Both its potential energy and its electric potential decrease'],
-        ['low-to-high', 'From low potential toward high potential'],
-        ['both-same', 'Both its electric potential and its potential energy stay the same'],
-        ['both-up', 'Both its potential energy and its electric potential increase'],
-        ['field-dir', 'In the direction of the electric field'],
-      ], ($) => ({ 'proton-along': 'both-down', 'neg-free': 'low-to-high', 'proton-perp': 'both-same' })[$.what]),
+      mc('ans', ($) => ($.what === 'neg-free'
+        ? [
+            ['high-to-low', 'From high potential toward low potential'],
+            ['low-to-high', 'From low potential toward high potential'],
+            ['equip', 'Along an equipotential, so its potential stays the same'],
+          ]
+        : [
+            ['both-up', 'Both its potential energy and its electric potential increase'],
+            ['both-down', 'Both its potential energy and its electric potential decrease'],
+            ['both-same', 'Both its electric potential and its potential energy stay the same'],
+            ['split', 'Its electric potential decreases, but its potential energy increases'],
+          ]), ($) => ({ 'proton-along': 'both-down', 'neg-free': 'low-to-high', 'proton-perp': 'both-same' })[$.what]),
     ],
     hints: [
       String.raw`$\vec{E}$ points from high $V$ toward low $V$. A positive charge released freely runs downhill in $V$; a negative one runs uphill.`,
@@ -710,17 +719,16 @@ export default [
     },
     text: (T) => T.ask,
     parts: [
-      mc('ans', [
-        ['p1', 'At P₁, close to +Q'],
-        ['p2', 'At P₂, the midpoint'],
-        ['p3', 'At P₃, close to −Q'],
-        ['p4', 'At P₄, far away'],
-        ['upDown', 'Its potential energy increases and the electric potential decreases'],
-        ['downDown', 'Both decrease'],
-        ['upUp', 'Both increase'],
-        ['Uup', 'It increases'],
-        ['Udown', 'It decreases'],
-      ], ($) => ({ 'neg-max': 'p3', 'pos-max': 'p1', 'electron-along': 'upDown', 'pair-apart': 'Uup' })[$.ask]),
+      mc('ans', ($) => ({
+        'electron-along': [
+          ['downDown', 'Both its potential energy and the electric potential decrease'],
+          ['upUp', 'Both its potential energy and the electric potential increase'],
+          ['upDown', 'Its potential energy increases and the electric potential decreases'],
+          ['downUp', 'Its potential energy decreases and the electric potential increases'],
+        ],
+        'pair-apart': [['Udown', 'It decreases'], ['Usame', 'It stays the same'], ['Uup', 'It increases']],
+      })[$.ask] ?? [['p1', 'At P₁, close to +Q'], ['p2', 'At P₂, the midpoint'], ['p3', 'At P₃, close to −Q'], ['p4', 'At P₄, far away']],
+      ($) => ({ 'neg-max': 'p3', 'pos-max': 'p1', 'electron-along': 'upDown', 'pair-apart': 'Uup' })[$.ask]),
     ],
     hints: [String.raw`$U = qV$. First find where $V$ is high and low (high near $+Q$, low near $-Q$, zero at the midpoint and far away), then let the sign of $q$ flip the ranking.`],
     steps: ($) => [
@@ -774,9 +782,9 @@ export default [
         }
         const dV = c.V - c.VA;
         const dU = s.qTest * dV;
-        if ($.ask === 'pair-apart') return { ans: dU > 0 ? 'Uup' : 'Udown' };
-        const ans = dU > 0 ? (dV < 0 ? 'upDown' : 'upUp') : dV < 0 ? 'downDown' : null;
-        return ans ? { ans } : {};
+        if ($.ask === 'pair-apart') return { ans: dU > 0 ? 'Uup' : dU < 0 ? 'Udown' : 'Usame' };
+        if (dU === 0 || dV === 0) return {};
+        return { ans: `${dU > 0 ? 'up' : 'down'}${dV > 0 ? 'Up' : 'Down'}` };
       },
     },
     cases: [
@@ -795,13 +803,19 @@ export default [
     },
     text: (T) => T.ask,
     parts: [
-      mc('ans', [
-        ['ABhigh', 'A and B are equal, and C is lower'],
-        ['Chigh', 'A and B are equal, and C is higher'],
-        ['same', 'All three are the same, because the field is uniform'],
-        ['ABmostU', 'At A and B equally, more than at C'],
-        ['CmostU', 'At C'],
-      ], ($) => ($.ask === 'V' ? 'ABhigh' : 'ABmostU')),
+      mc('ans', ($) => ($.ask === 'V'
+        ? [
+            ['same', 'All three are the same, because the field is uniform'],
+            ['Chigh', 'A and B are equal, and C is higher'],
+            ['ABhigh', 'A and B are equal, and C is lower'],
+            ['AgtB', 'A is higher than B, and B is higher than C'],
+          ]
+        : [
+            ['CmostU', 'At C'],
+            ['sameU', 'The same at all three, because the field is uniform'],
+            ['ABmostU', 'At A and B equally, more than at C'],
+            ['AmostU', 'At A, more than at B or C'],
+          ]), ($) => ($.ask === 'V' ? 'ABhigh' : 'ABmostU')),
     ],
     hints: [String.raw`$\Delta V = -\vec{E}\cdot\Delta\vec{r}$: only motion *along* $\vec{E}$ changes $V$. A move across the field stays on one equipotential.`],
     steps: ($) => [
@@ -955,14 +969,14 @@ export default [
     },
     text: (T) => T.ask,
     parts: [
-      mc('ans', [
-        ['equip', 'an equipotential surface'],
-        ['perp', 'perpendicular to the electric field at every point'],
-        ['bigger', 'larger the change in potential over a given distance, and the stronger the electric field'],
-        ['dielectric', 'a dielectric surface'],
-        ['parallel', 'parallel to the electric field at every point'],
-        ['smaller', 'smaller the change in potential over a given distance, and the weaker the electric field'],
-      ], ($) => ({ name: 'equip', orient: 'perp', spacing: 'bigger' })[$.ask]),
+      mc('ans', ($) => ({
+        name: [['dielectric', 'a dielectric surface'], ['equip', 'an equipotential surface'], ['gauss', 'a Gaussian surface']],
+        orient: [['parallel', 'parallel to the electric field at every point'], ['perp', 'perpendicular to the electric field at every point'], ['flat', 'a flat plane']],
+        spacing: [
+          ['smaller', 'smaller the change in potential over a given distance, and the weaker the electric field'],
+          ['bigger', 'larger the change in potential over a given distance, and the stronger the electric field'],
+        ],
+      })[$.ask], ($) => ({ name: 'equip', orient: 'perp', spacing: 'bigger' })[$.ask]),
     ],
     hints: [String.raw`$\vec{E}$ points straight downhill in $V$, and the steepest descent is always perpendicular to a level surface.`],
     steps: ($) => [
@@ -1296,15 +1310,24 @@ export default [
       ? `Inserting a dielectric raises a capacitor's capacitance by a factor of ${T.factor}. What is the dielectric constant of the material?`
       : T.ask),
     parts: [
-      mc('ans', [
-        ['dielectric', 'Introducing a dielectric between the plates'],
-        ['charge', 'Putting more charge on the plates'],
-        ['voltage', 'Raising the potential between the plates'],
-        ['equal', 'It equals the factor the capacitance went up by'],
-        ['inverse', 'It is the reciprocal of that factor'],
-        ['toneg', 'From the positive plate toward the negative plate'],
-        ['topos', 'From the negative plate toward the positive plate'],
-      ], ($) => ({ increase: 'dielectric', kappa: 'equal', direction: 'toneg' })[$.ask]),
+      mc('ans', ($) => ({
+        increase: [
+          ['charge', 'Putting more charge on the plates'],
+          ['voltage', 'Raising the potential between the plates'],
+          ['dielectric', 'Introducing a dielectric between the plates'],
+          ['apart', 'Moving the plates farther apart'],
+        ],
+        kappa: [
+          ['inverse', 'It is the reciprocal of that factor'],
+          ['equal', 'It equals the factor the capacitance went up by'],
+          ['needV', 'It cannot be found without knowing the voltage'],
+        ],
+        direction: [
+          ['topos', 'From the negative plate toward the positive plate'],
+          ['toneg', 'From the positive plate toward the negative plate'],
+          ['along', 'Parallel to the plates'],
+        ],
+      })[$.ask], ($) => ({ increase: 'dielectric', kappa: 'equal', direction: 'toneg' })[$.ask]),
     ],
     hints: [String.raw`$C = \dfrac{\kappa\varepsilon_0 A}{d}$ — only the geometry and the filling appear. $Q$ and $V$ do not.`],
     steps: ($, f) => [
@@ -1582,19 +1605,15 @@ export default [
     },
     text: (T) => T.ask,
     parts: [
-      mc('ans', [
-        ['x4', 'It increases by a factor of 4'],
-        ['x2', 'It increases by a factor of 2'],
-        ['less', 'less resistance'],
-        ['more', 'more resistance'],
-        ['up', 'increases'],
-        ['down', 'decreases'],
-        ['notconst', 'It does not stay constant as the voltage changes'],
-        ['const', 'It stays constant as the voltage changes'],
-        ['same', 'It does not change'],
-        ['slow', 'Slowly — a drift of well under a millimetre per second'],
-        ['light', 'At nearly the speed of light'],
-      ], ($) => ({ 'half-radius': 'x4', thicker: 'less', heat: 'up', nonohmic: 'notconst', 'both-half': 'x2', 'rho-half': 'same', drift: 'slow' })[$.ask]),
+      mc('ans', ($) => ({
+        'half-radius': [['x2', 'It increases by a factor of 2'], ['x4', 'It increases by a factor of 4'], ['quarter', 'It drops to a quarter'], ['same', 'It does not change']],
+        thicker: [['more', 'more resistance'], ['less', 'less resistance'], ['same', 'the same resistance']],
+        heat: [['down', 'decreases'], ['up', 'increases'], ['same', 'does not change']],
+        nonohmic: [['const', 'It stays constant as the voltage changes'], ['notconst', 'It does not stay constant as the voltage changes']],
+        'both-half': [['half', 'It halves'], ['same', 'It does not change'], ['x2', 'It increases by a factor of 2'], ['x4', 'It increases by a factor of 4']],
+        'rho-half': [['x2', 'It increases by a factor of 2'], ['x4', 'It increases by a factor of 4'], ['same', 'It does not change']],
+        drift: [['light', 'At nearly the speed of light'], ['sound', 'About as fast as sound travels in air'], ['slow', 'Slowly, well under a millimetre per second']],
+      })[$.ask], ($) => ({ 'half-radius': 'x4', thicker: 'less', heat: 'up', nonohmic: 'notconst', 'both-half': 'x2', 'rho-half': 'same', drift: 'slow' })[$.ask]),
     ],
     hints: [String.raw`$R = \dfrac{\rho L}{A}$ with $A = \pi r^2$ — so $R$ goes as $1/r^2$, not $1/r$.`],
     steps: ($) => [
@@ -1633,14 +1652,11 @@ export default [
     },
     text: (T) => T.ask,
     parts: [
-      mc('ans', [
-        ['sameI', 'The current is the same at a and b'],
-        ['moreA', 'There is more current at a — the resistor uses some up'],
-        ['highA', 'a is at the higher potential'],
-        ['highB', 'b is at the higher potential'],
-        ['loseU', 'They lose electric potential energy, which becomes heat'],
-        ['gainU', 'They gain electric potential energy'],
-      ], ($) => ({ current: 'sameI', potential: 'highA', energy: 'loseU' })[$.ask]),
+      mc('ans', ($) => ({
+        current: [['moreA', 'There is more current at a: the resistor uses some up'], ['sameI', 'The current is the same at a and b'], ['moreB', 'There is more current at b']],
+        potential: [['highB', 'b is at the higher potential'], ['highA', 'a is at the higher potential'], ['sameV', 'a and b are at the same potential']],
+        energy: [['gainU', 'They gain electric potential energy'], ['loseU', 'They lose electric potential energy'], ['sameU', 'Their electric potential energy does not change']],
+      })[$.ask], ($) => ({ current: 'sameI', potential: 'highA', energy: 'loseU' })[$.ask]),
     ],
     hints: ['Charge is conserved: whatever enters the resistor each second leaves it. What the resistor takes is energy, not charge.'],
     steps: ($) => [
@@ -1817,12 +1833,14 @@ export default [
     parts: [
       mc(
         'ans',
-        [
-          ['reference', 'It fixes a common zero of potential, so every device is measured against the same reference'],
-          ['path', 'It gives the current a low-resistance path to earth so it does not travel through the person touching the case'],
-          ['limit', 'It opens the circuit when the current exceeds what the wiring can safely carry, before the wire overheats'],
-          ['current', 'The current — the voltage is what drives it, but the current through the body is what does the harm'],
-        ],
+        // The first three questions are about three jobs that are easy to mix up, so each offers all three.
+        ($) => ($.ask === 'what-hurts'
+          ? [['voltage', 'The voltage of the source'], ['current', 'The current through the body'], ['power', 'The power of the source']]
+          : [
+              ['reference', 'It fixes a common zero of potential, so every device is measured against the same reference'],
+              ['path', 'It gives the current a low-resistance path to earth so it does not travel through the person touching the case'],
+              ['limit', 'It opens the circuit when the current exceeds what the wiring can safely carry, before the wire overheats'],
+            ]),
         ($) => ({ why: 'reference', drill: 'path', breaker: 'limit', 'what-hurts': 'current' })[$.ask],
       ),
     ],
@@ -1984,17 +2002,16 @@ export default [
     },
     text: (T) => T.ask,
     parts: [
-      mc('ans', [
-        ['bigR', 'In the larger resistance'],
-        ['smallR', 'In the smaller resistance'],
-        ['same', 'At the same rate in both'],
-        ['less', 'less'],
-        ['greater', 'greater'],
-        ['highV', 'High voltage'],
-        ['highI', 'High current'],
-        ['current', 'The current'],
-        ['voltage', 'The voltage'],
-      ], ($) => ({ series: 'bigR', brighter: 'less', transmission: 'highV', harm: 'current' })[$.ask]),
+      mc('ans', ($) => ({
+        series: [['smallR', 'In the smaller resistance'], ['bigR', 'In the larger resistance'], ['same', 'At the same rate in both']],
+        brighter: [['greater', 'greater than the 25 W lamp’s'], ['less', 'less than the 25 W lamp’s'], ['same', 'the same as the 25 W lamp’s']],
+        transmission: [
+          ['highI', 'At high current and low voltage'],
+          ['highV', 'At high voltage and low current'],
+          ['same', 'It makes no difference, since the same power is sent either way'],
+        ],
+        harm: [['voltage', 'The voltage'], ['current', 'The current'], ['power', 'The power']],
+      })[$.ask], ($) => ({ series: 'bigR', brighter: 'less', transmission: 'highV', harm: 'current' })[$.ask]),
     ],
     hints: [
       String.raw`In series the current is shared, so use the form of the power law that holds $I$ fixed: $P = I^2R$.`,

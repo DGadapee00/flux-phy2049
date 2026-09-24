@@ -13,7 +13,7 @@
  */
 import { PROBLEMS, CHAPTER_ORDER, CHAPTER_TITLES, problemsForExam } from '../src/problems/index.js';
 import { createProgress, memoryStorage, pickSet, INTERVAL_DAYS } from '../src/problems/progress.js';
-import { build, instance, render, expected, withinTol, evalSymbolic, gradeSymbolic, grade, parseNumber, parseExpr, dimensionOf , exprToTex } from '../src/problems/engine.js';
+import { build, instance, render, expected, withinTol, evalSymbolic, gradeSymbolic, grade, parseNumber, parseExpr, dimensionOf , exprToTex, choiceOptions } from '../src/problems/engine.js';
 import { parseUnit, dimEqual, formatDim } from '../src/physics/units.js';
 import { applyProblem, headlessCtx } from '../src/problems/simbridge.js';
 import { mathProse } from '../src/ui/shared.js';
@@ -53,8 +53,14 @@ function checkAnswers(tpl, inst, label) {
     const want = expected(p, inst.$);
     if (p.kind === 'numeric' && !Number.isFinite(want)) err(tpl.id, `${label} part ${p.id} not finite (${JSON.stringify(inst.values)})`);
     if (p.kind === 'choice') {
-      const opts = new Set(p.options.map((o) => o.value));
+      const list = choiceOptions(p, inst.$);
+      const opts = new Set(list.map((o) => o.value));
       for (const w of [].concat(want)) if (!opts.has(w)) err(tpl.id, `${label} part ${p.id} answer ${w} not among options (${JSON.stringify(inst.values)})`);
+      // One list per question: no option offered twice, and at least one wrong answer to rule out.
+      if (opts.size !== list.length) err(tpl.id, `${label} part ${p.id} offers the same option value twice`);
+      const labels = list.map((o) => (typeof o.label === 'function' ? o.label(inst.T, inst.$) : o.label));
+      if (new Set(labels).size !== labels.length) err(tpl.id, `${label} part ${p.id} offers the same option text twice`);
+      if (list.length < 2) err(tpl.id, `${label} part ${p.id} has fewer than two options`);
     }
     if (p.kind === 'symbolic') {
       const a = evalSymbolic(p, inst.$);

@@ -270,9 +270,13 @@ export default [
   }),
   problem({
     ...E6, id: 'e6.57.what-changes', ch: '57', lab: 'refraction', title: 'What changes when light enters glass?', kind: 'conceptual', topics: ['optics', 'index'],
-    vars: { q: choice([1, 'speed'], [2, 'wavelength'], [3, 'frequency'], [4, 'color we perceive']) },
+    vars: { q: choice([1, 'speed'], [2, 'wavelength'], [3, 'frequency'], [4, 'perceived color']) },
     text: (T) => `Light passes from air into glass. What happens to its ${T.q}?`,
-    parts: [mc('ans', [[-1, 'Decreases'], [0, 'Stays the same'], [1, 'Increases']], ($) => ($.q <= 2 ? -1 : 0))],
+    parts: [
+      mc('ans', ($) => ($.q === 4
+        ? [[2, 'It shifts toward red'], [3, 'It shifts toward blue'], [0, 'It stays the same']]
+        : [[-1, 'Decreases'], [0, 'Stays the same'], [1, 'Increases']]), ($) => ($.q <= 2 ? -1 : 0)),
+    ],
     steps: () => [String.raw`$v = c/n$ and $\lambda = \lambda_0/n$ both drop. The frequency — and so the perceived colour — is set by the source and stays the same.`],
     cases: [kase('frequency', { q: 3 }, { ans: 0 })],
   }),

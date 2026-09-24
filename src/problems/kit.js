@@ -37,14 +37,22 @@ export const num = (id, get, unit, o = {}) => ({
 });
 
 /** Multiple choice. `correct` is an option value, an array (multi-select), or a function of $. */
-export const mc = (id, options, correct, o = {}) => ({
-  id,
-  kind: 'choice',
-  options: options.map(([value, label]) => ({ value, label })),
-  correct,
-  multi: !!o.multi,
-  label: o.label ?? null,
-});
+/**
+ * Multiple choice. `options` is a list of [value, label] pairs, or, for a template whose versions
+ * ask different questions, a function of $ giving this version's list, so that no version shows
+ * the answers to another's question. Read it through choiceOptions() (engine.js).
+ */
+export const mc = (id, options, correct, o = {}) => {
+  const norm = (list) => list.map(([value, label]) => ({ value, label }));
+  return {
+    id,
+    kind: 'choice',
+    options: typeof options === 'function' ? ($) => norm(options($)) : norm(options),
+    correct,
+    multi: !!o.multi,
+    label: o.label ?? null,
+  };
+};
 
 export const tf = (id, correct, o = {}) => mc(id, [[1, 'True'], [0, 'False']], correct ? 1 : 0, o);
 

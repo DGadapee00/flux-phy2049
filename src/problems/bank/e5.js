@@ -216,7 +216,13 @@ export default [
     ...E5, id: 'e5.51.applications', ch: '51', lab: 'faraday', title: 'Where induction shows up', kind: 'conceptual', topics: ['applications'],
     vars: { ask: choice([1, 'Which device does NOT depend on electromagnetic induction?'], [2, 'Why does an induction cooktop heat an iron pan but not a glass one?'], [3, 'Why does a magnet fall slowly through a copper pipe?']) },
     text: (T) => T.ask,
-    parts: [mc('ans', [[1, 'An incandescent bulb on a battery'], [2, 'Eddy currents need a conductor in the changing field'], [3, 'Induced eddy currents make a field that opposes the motion'], [4, 'Glass blocks magnetic fields']], ($) => $.ask)],
+    parts: [
+      mc('ans', ($) => ({
+        1: [[5, 'A transformer'], [6, 'An electric guitar pickup'], [1, 'An incandescent bulb on a battery'], [7, 'An induction cooktop']],
+        2: [[4, 'Glass blocks magnetic fields'], [2, 'Eddy currents need a conductor in the changing field'], [8, 'Iron conducts heat better than glass']],
+        3: [[9, 'Copper attracts the magnet, the way iron would'], [10, 'Air trapped in the pipe slows it down'], [3, 'Induced eddy currents make a field that opposes the motion']],
+      })[$.ask], ($) => $.ask),
+    ],
     steps: () => ['Generators, transformers, guitar pickups, cooktops, magnetic braking, and metal detectors all depend on a changing flux inducing currents in a conductor.'],
     cases: [kase('pipe', { ask: 3 }, { ans: 3 })],
   }),

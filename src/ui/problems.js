@@ -13,7 +13,7 @@
  */
 import { PROBLEMS, problemById, problemsForExam, CHAPTER_ORDER, CHAPTER_TITLES } from '../problems/index.js';
 import { sequenceRank, stageOf } from '../problems/sequence.js';
-import { instance, render, grade, expected, sig, withinTol, compile, checkUnits, exprToTex, GLYPH } from '../problems/engine.js';
+import { instance, render, grade, expected, sig, withinTol, compile, checkUnits, exprToTex, GLYPH, choiceOptions } from '../problems/engine.js';
 import { createProgress, pickSet, MASTERED_BOX, INTERVAL_DAYS } from '../problems/progress.js';
 import { examById, LAB_META } from '../data/catalog.js';
 import { mathProse, tex } from './shared.js';
@@ -266,7 +266,7 @@ export function createPractice(api) {
   function gradedInput(cur, part) {
     const raw = cur.inputs[part.id];
     if (part.kind !== 'choice') return raw;
-    const opts = part.options;
+    const opts = choiceOptions(part, cur.inst.$);
     if (part.multi) return (raw || []).map((i) => opts[i]?.value);
     return raw == null ? null : opts[raw]?.value;
   }
