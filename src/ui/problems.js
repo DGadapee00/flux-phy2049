@@ -636,6 +636,17 @@ export function createPractice(api) {
     return `<div class="pb-pal">${vars.join('')}${consts.join('')}<span class="pb-pal-gap"></span>${ops.join('')}</div>`;
   }
 
+  /**
+   * Chips for what a phone's number pad leaves out. The decimal keypad a numeric answer brings up
+   * has digits and a point and nothing else, so without these an answer like 1.6×10⁻¹⁹ or −40
+   * could not be entered on a phone at all. parseNumber reads both as typed. Shown on touch screens
+   * only (see .pb-numpal); a physical keyboard has e and - already.
+   */
+  function numPadHTML(i, held) {
+    const chip = (ins) => `<button type="button" class="pb-key op" data-key-for="${i}" data-ins="${esc(ins)}" data-back="0"${held ? ' disabled' : ''}>${esc(ins)}</button>`;
+    return `<div class="pb-pal pb-numpal">${chip('×10^')}${chip('−')}</div>`;
+  }
+
   function parseMessage(part, value) {
     if (part.kind !== 'symbolic' || !String(value ?? '').trim()) return { cls: '', html: '' };
     try {
@@ -684,7 +695,7 @@ export function createPractice(api) {
       const help = sym
         ? `<div class="pb-symhelp">Tap to insert, or type — <code>λ</code> and <code>lam</code> both work. <code>/</code> makes a fraction.</div>`
         : '';
-      const palette = sym ? paletteHTML(part, i) : '';
+      const palette = sym ? paletteHTML(part, i) : locked ? '' : numPadHTML(i, held);
       const preview = sym ? `<div class="pb-preview" data-preview="${i}">${previewHTML(part, val)}</div>` : '';
       const msg = parseMessage(part, val);
       return `<div class="pb-part${state}${held ? ' held' : ''}" data-part="${esc(part.id)}">
@@ -1188,6 +1199,15 @@ export function createPractice(api) {
       box.dispatchEvent(new Event('input', { bubbles: true }));
       box.setSelectionRange(a - 1, a - 1);
     }
+  });
+
+  /*
+   * A chip must not take the focus from its input: on a phone that drops the keyboard on every tap
+   * and brings it straight back. Holding the mousedown keeps the input focused; the click still
+   * fires and inserts.
+   */
+  panel.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.pb-key')) e.preventDefault();
   });
 
   /** Insert a palette chip at the caret and leave the caret ready to keep typing. */

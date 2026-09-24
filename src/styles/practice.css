@@ -842,6 +842,17 @@ body.problem-blind .veiled .katex {
   flex: 0 0 8px;
 }
 
+/* ×10^ and − for numeric answers: only where the keyboard is a number pad (numPadHTML). */
+.pb-numpal {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .pb-numpal {
+    display: flex;
+  }
+}
+
 .pb-key {
   min-width: 30px;
   padding: 3px 8px;
@@ -853,6 +864,8 @@ body.problem-blind .veiled .katex {
   font-size: 15px;
   line-height: 1.3;
   cursor: pointer;
+  /* Two quick taps (− then ×10^) are two keys, not a double-tap zoom. */
+  touch-action: manipulation;
   transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
 }
 
