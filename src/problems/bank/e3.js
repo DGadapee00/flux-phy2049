@@ -25,7 +25,7 @@ function vGraphSVG(xs, Vs) {
   const H = 210;
   const L = 44;
   const Rt = W - 16;
-  const T = 18;
+  const T = 30; // room above the top tick for the axis title
   const B = H - 34;
   const xMax = xs[xs.length - 1];
   const vLo = Math.min(0, ...Vs) - 1;
@@ -40,7 +40,7 @@ function vGraphSVG(xs, Vs) {
   }
   for (let x = 0; x <= xMax; x++) out.push(`<text x="${X(x)}" y="${B + 15}" text-anchor="middle" font-size="11" fill="#aaa39e">${x}</text>`);
   out.push(`<line x1="${L}" y1="${T}" x2="${L}" y2="${B}" stroke="#aaa39e" />`);
-  out.push(`<text x="${L - 30}" y="${T - 4}" font-size="12" fill="#ece6e2">V (V)</text>`);
+  out.push(`<text x="${L - 30}" y="${T - 14}" font-size="12" fill="#ece6e2">V (V)</text>`);
   out.push(`<text x="${Rt}" y="${B + 29}" text-anchor="end" font-size="12" fill="#ece6e2">x (m)</text>`);
   out.push(`<polyline points="${xs.map((x, i) => `${X(x)},${Y(Vs[i])}`).join(' ')}" fill="none" stroke="#58c4dd" stroke-width="2.5" />`);
   for (let i = 0; i < xs.length - 1; i++) {
@@ -50,6 +50,40 @@ function vGraphSVG(xs, Vs) {
   }
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Graph of V against x">${out.join('')}</svg>`;
 }
+
+/**
+ * The current in an ac circuit against time, as SVG markup: a few cycles of a sine wave, with the
+ * axis ruled at the peaks so the peak (not the rms value) is what a problem reads off it.
+ */
+function acGraphSVG(Ip) {
+  const W = 340;
+  const H = 170;
+  const L = 44;
+  const Rt = W - 16;
+  const T = 18;
+  const B = H - 22;
+  const mid = (T + B) / 2;
+  const amp = (B - T) / 2 - 6;
+  const out = [];
+  for (const [v, y] of [[Ip, mid - amp], [0, mid], [-Ip, mid + amp]]) {
+    out.push(`<line x1="${L}" y1="${y}" x2="${Rt}" y2="${y}" stroke="${v === 0 ? '#77716c' : '#2a2d33'}"${v === 0 ? '' : ' stroke-dasharray="4 4"'} />`);
+    out.push(`<text x="${L - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#aaa39e">${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v)}</text>`);
+  }
+  out.push(`<line x1="${L}" y1="${T - 6}" x2="${L}" y2="${B + 6}" stroke="#aaa39e" />`);
+  out.push(`<text x="${L - 30}" y="${T - 6}" font-size="12" fill="#ece6e2">I (A)</text>`);
+  out.push(`<text x="${Rt}" y="${mid - 6}" text-anchor="end" font-size="12" fill="#ece6e2">t</text>`);
+  const end = Rt - 16; // the wave stops short of the t label
+  const pts = [];
+  for (let i = 0; i <= 280; i++) {
+    const f = i / 280;
+    pts.push(`${(L + (end - L) * f).toFixed(1)},${(mid - amp * Math.sin(2 * Math.PI * 3.5 * f)).toFixed(1)}`);
+  }
+  out.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="#f4d345" stroke-width="2.5" />`);
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Graph of current against time">${out.join('')}</svg>`;
+}
+
+const PIECES = 'ABCDE';
+const E_SIGNS = [[1, 'Positive (points toward +x)'], [0, 'Zero'], [-1, 'Negative (points toward −x)']];
 
 export default [
   // ================================================================= 38
@@ -96,18 +130,25 @@ export default [
     cases: [kase('hand', { Q: 1, sQ: 1, q0: 1, s0: 1, rA: 1, rB: 0.5 }, { W: -8.988e-3, ke: -1 })],
   }),
   problem({
-    ...E3, id: 'e3.38.uniform-dV', ch: '38', lab: 'potential', title: 'ΔV in a uniform field', kind: 'numeric', topics: ['potential'],
-    vars: { E: range(100, 5000, 100, 'N/C'), d: range(1, 50, 1, 'cm', 1e-2), dir: choice([1, 'along'], [-1, 'against']), q: range(1, 10, 1, 'μC', 1e-6), s: SIGN },
+    ...E3, id: 'e3.38.uniform-dV', ch: '38', lab: 'potential', src: 'Class Activity 3 #5', title: 'ΔV in a uniform field', kind: 'numeric', topics: ['potential'],
+    vars: { E: range(100, 5000, 100, 'N/C'), d: range(1, 50, 1, 'cm', 1e-2), dir: choice([1, 'along'], [-1, 'against']), q: range(5, 500, 5, 'μC', 1e-6), s: SIGN },
     derive: ($) => {
       const dV = -$.E * $.dir * $.d;
-      return { dV, W: -$.s * $.q * dV };
+      const dU = $.s * $.q * dV;
+      return { dV, W: -dU, dU };
     },
-    text: (T) => `In a uniform ${T.E} N/C field, a ${T.s} ${T.q} μC charge moves ${T.d} cm ${T.dir} the field direction. Find $\Delta V = V_B - V_A$ and the work done by the field.`,
-    parts: [num('dV', ($) => $.dV, 'V', { label: 'ΔV' }), num('W', ($) => $.W, 'J', { label: String.raw`$W_{\text{field}}$` })],
-    hints: [String.raw`$\Delta V = -\vec{E}\cdot\Delta\vec{r}$ — moving along $\vec{E}$ lowers the potential.`],
+    text: (T) => `In a uniform ${T.E} N/C field, a ${T.s} ${T.q} μC charge moves ${T.d} cm ${T.dir} the field direction. Find $\Delta V = V_B - V_A$, the work done by the field, and the change in the charge's potential energy. Does it gain or lose potential energy?`,
+    parts: [
+      num('dV', ($) => $.dV, 'V', { label: 'ΔV' }),
+      num('W', ($) => $.W, 'J', { label: String.raw`$W_{\text{field}}$` }),
+      num('dU', ($) => $.dU, 'J', { label: String.raw`$\Delta U$` }),
+      mc('pe', [['gain', 'It gains potential energy'], ['lose', 'It loses potential energy']], ($) => ($.dU > 0 ? 'gain' : 'lose'), { label: 'Does it gain or lose potential energy?' }),
+    ],
+    hints: [String.raw`$\Delta V = -\vec{E}\cdot\Delta\vec{r}$ — moving along $\vec{E}$ lowers the potential.`, String.raw`$\Delta U = q\,\Delta V$, and the field's work is its negative: $W = -\Delta U$.`],
     steps: ($, f) => [
       String.raw`$\Delta V = -Ed\cos\theta = ${texNum($.dV)}\ \text{V}$`,
       String.raw`$W = -q\,\Delta V = ${texNum($.W)}\ \text{J}$`,
+      String.raw`$\Delta U = q\,\Delta V = -W = ${texNum($.dU)}\ \text{J}$, so it ${$.dU > 0 ? 'gains' : 'loses'} potential energy.`,
     ],
     sim: {
       scenario: 'v-plates',
@@ -118,9 +159,12 @@ export default [
         s.probe = { x: ($.dir * $.d) / 2, y: 0, z: 0 };
         s.qTest = $.s * $.q;
       },
-      read: (c) => ({ dV: c.V - c.VA, W: c.Wfield }),
+      read: (c) => ({ dV: c.V - c.VA, W: c.Wfield, dU: -c.Wfield }),
     },
-    cases: [kase('hand', { E: 2000, d: 10, dir: 1, q: 1, s: 1 }, { dV: -200, W: 2e-4 })],
+    cases: [
+      kase('Class Activity 3 #5', { E: 800, d: 15, dir: 1, q: 500, s: 1 }, { dV: -120, W: 0.06, dU: -0.06, pe: 'lose' }),
+      kase('hand', { E: 2000, d: 10, dir: 1, q: 1, s: 1 }, { dV: -200, W: 2e-4, dU: -2e-4, pe: 'lose' }),
+    ],
   }),
   problem({
     ...E3, id: 'e3.38.accelerate', ch: '38', lab: 'potential', title: 'Speed after accelerating through ΔV', kind: 'numeric', topics: ['potential', 'energy'],
@@ -634,6 +678,45 @@ export default [
     ],
   }),
   problem({
+    ...E3, id: 'e3.38.V-graph-E', ch: '38', src: 'Class Activity 3 #7', title: 'Sketching E from a graph of V', kind: 'conceptual', level: 2, topics: ['potential', 'gradient', 'graphs'],
+    vars: {
+      V0: range(-4, 4, 1, 'V'), V1: range(-4, 4, 1, 'V'), V2: range(-4, 4, 1, 'V'), V3: range(-4, 4, 1, 'V'), V4: range(-4, 4, 1, 'V'), V5: range(-4, 4, 1, 'V'),
+      w1: range(1, 2, 1, 'm'), w2: range(1, 2, 1, 'm'), w3: range(1, 2, 1, 'm'), w4: range(1, 2, 1, 'm'), w5: range(1, 2, 1, 'm'),
+    },
+    derive: ($) => {
+      const Vs = [$.V0, $.V1, $.V2, $.V3, $.V4, $.V5];
+      const ws = [$.w1, $.w2, $.w3, $.w4, $.w5];
+      const E = ws.map((w, i) => (Vs[i + 1] === Vs[i] ? 0 : -(Vs[i + 1] - Vs[i]) / w));
+      const mags = E.map(Math.abs);
+      const sorted = [...mags].sort((a, b) => b - a);
+      return { Vs, ws, E, sign: E.map(Math.sign), biggest: mags.indexOf(sorted[0]), sorted };
+    },
+    // Like the class sheet's graph: a flat piece, a rising one, a falling one, and one clearly steepest.
+    valid: ($) => $.sign.includes(0) && $.sign.includes(1) && $.sign.includes(-1) && $.sorted[0] - $.sorted[1] >= 1,
+    text: () => 'The graph shows the electric potential V along the x-axis, in five straight pieces A to E. Sketch $E_x$ against $x$: on each piece, is $E_x$ positive, negative or zero, and on which piece is the field strongest?',
+    figure: ($) => vGraphSVG([0, ...$.ws.map((_, i) => $.ws.slice(0, i + 1).reduce((a, b) => a + b, 0))], $.Vs),
+    parts: [
+      ...[...PIECES].map((p, i) => mc(`s${p}`, E_SIGNS, ($) => $.sign[i], { label: `$E_x$ on ${p}` })),
+      mc('big', [...PIECES].map((p, i) => [i, `On ${p}`]), ($) => $.biggest, { label: 'Where is the field strongest?' }),
+    ],
+    hints: [
+      String.raw`$E_x = -\dfrac{dV}{dx}$: read the *slope* of each piece, not its height. Flat means $E_x = 0$, even where $V$ is large or negative.`,
+      'V falling to the right means E points toward +x; V rising means E points toward −x. The E graph is a flat step on each piece, tallest where V is steepest.',
+    ],
+    steps: ($) => [
+      ...$.E.map((e, i) => {
+        const dV = $.Vs[i + 1] - $.Vs[i];
+        if (!dV) return String.raw`${PIECES[i]}: V is flat, so $E_x = 0$.`;
+        return String.raw`${PIECES[i]}: V ${dV > 0 ? 'rises' : 'falls'} ${Math.abs(dV)} V over ${$.ws[i]} m, so $E_x = ${texNum(e)}\ \text{V/m}$ (toward ${e > 0 ? '+' : '−'}x).`;
+      }),
+      `So the E graph is a flat step on each piece, zero on the flat ones, and tallest on ${PIECES[$.biggest]}, the steepest piece of V.`,
+    ],
+    cases: [
+      // The class sheet's shape, on our own numbers: flat, a steep drop, flat, a gentle rise, a steep drop.
+      kase('Class Activity 3 #7', { V0: 3, V1: 3, V2: -2, V3: -2, V4: 1, V5: -3, w1: 2, w2: 1, w3: 1, w4: 2, w5: 1 }, { sA: 0, sB: 1, sC: 0, sD: -1, sE: 1, big: 1 }),
+    ],
+  }),
+  problem({
     ...E3, id: 'e3.38.V-cubic', ch: '38', src: 'Worksheet 3 #13', title: 'Where the field vanishes, from V(x)', kind: 'numeric', level: 3, topics: ['potential', 'gradient'],
     vars: { a: range(1, 4, 1, 'V/m³'), b: range(-24, -3, 1, 'V/m²'), c: range(1, 30, 1, 'V/m'), d: range(0, 5, 1, 'V') },
     derive: ($) => {
@@ -794,6 +877,57 @@ export default [
     ],
   }),
   problem({
+    ...E3, id: 'e3.38.moving-charge-energy', ch: '38', lab: 'potential', src: 'Class Activity 3 #4', title: 'A moving charge: V, U and K together', kind: 'conceptual', level: 2, topics: ['potential', 'energy'],
+    vars: {
+      p: choice(['electron', 'electron'], ['proton', 'proton']),
+      dir: choice([1, 'along'], [-1, 'against']),
+    },
+    derive: ($) => {
+      const q = $.p === 'electron' ? -1 : 1;
+      const dV = -$.dir; // along E the potential falls
+      const dU = q * dV; // U = qV
+      return { q, dV, dU, dK: -dU }; // only the electric force acts, so K + U is fixed
+    },
+    text: (T, $) => `${$.p === 'electron' ? 'An' : 'A'} ${T.p} is already moving, and it travels ${T.dir} the direction of a uniform electric field with only the electric force acting on it. Which statements are true?`,
+    parts: [
+      mc('ans', [
+        ['Vdown', 'It moves toward lower electric potential'],
+        ['Vup', 'It moves toward higher electric potential'],
+        ['Uup', 'Its electric potential energy increases'],
+        ['Udown', 'Its electric potential energy decreases'],
+        ['Kup', 'Its kinetic energy increases'],
+        ['Kdown', 'Its kinetic energy decreases'],
+      ], ($) => [$.dV < 0 ? 'Vdown' : 'Vup', $.dU > 0 ? 'Uup' : 'Udown', $.dK > 0 ? 'Kup' : 'Kdown'], { multi: true }),
+    ],
+    hints: [
+      String.raw`Three separate questions: which way $V$ goes (only the direction of motion relative to $\vec{E}$ matters), which way $U = qV$ goes (the sign of $q$ matters), and which way $K$ goes ($K + U$ stays fixed).`,
+    ],
+    steps: ($) => [
+      $.dV < 0 ? String.raw`Along $\vec{E}$ the potential falls, so it moves toward lower $V$.` : String.raw`Against $\vec{E}$ the potential rises, so it moves toward higher $V$.`,
+      String.raw`$U = qV$ with $q ${$.q < 0 ? '<' : '>'} 0$, so $U$ ${$.dU > 0 ? 'increases' : 'decreases'}${$.q < 0 ? ', the opposite way to $V$' : ', the same way as $V$'}.`,
+      String.raw`Only the electric force acts, so $K + U$ is constant: $K$ ${$.dK > 0 ? 'increases and it speeds up' : 'decreases and it slows down'}. It is moving ${$.dK > 0 ? 'with' : 'against'} the force on it.`,
+    ],
+    sim: {
+      scenario: 'v-plates',
+      setup(s, $) {
+        layout(s, { pathA: { x: -0.15 * $.dir, y: 0 }, probe: { x: 0.15 * $.dir, y: 0 } });
+        s.extraE = { x: 2000, y: 0, z: 0 };
+        s.qTest = $.q * 1e-6;
+        return `A ${$.q < 0 ? '−' : '+'}1 μC test charge stands in for the ${$.p} (only its sign matters). It starts at A and moves to the probe.`;
+      },
+      read(c, s) {
+        const dV = c.V - c.VA;
+        const dU = s.qTest * dV;
+        if (!dV) return {};
+        return { ans: [dV < 0 ? 'Vdown' : 'Vup', dU > 0 ? 'Uup' : 'Udown', dU > 0 ? 'Kdown' : 'Kup'] };
+      },
+    },
+    cases: [
+      kase('Class Activity 3 #4', { p: 'electron', dir: 1 }, { ans: ['Vdown', 'Uup', 'Kdown'] }),
+      kase('proton against E', { p: 'proton', dir: -1 }, { ans: ['Vup', 'Uup', 'Kdown'] }),
+    ],
+  }),
+  problem({
     ...E3, id: 'e3.38.uniform-rank', ch: '38', lab: 'potential', src: 'Class Activity 3 #2–3', title: 'Uniform field: which point is highest?', kind: 'conceptual', topics: ['potential', 'energy'],
     vars: {
       ask: choice(
@@ -929,7 +1063,7 @@ export default [
     ],
   }),
   problem({
-    ...E3, id: 'e3.39.equipotential-map', ch: '39', src: 'Practice 39 #21–25', title: 'Reading an equipotential map', kind: 'numeric', level: 3, topics: ['potential', 'equipotential', 'work'],
+    ...E3, id: 'e3.39.equipotential-map', ch: '39', src: 'Practice 39 #21–25, Class Activity 3 #13', title: 'Reading an equipotential map', kind: 'numeric', level: 3, topics: ['potential', 'equipotential', 'work'],
     vars: {
       VA: range(-200, -40, 20, 'V'),
       step: range(20, 80, 20, 'V'),
@@ -959,12 +1093,13 @@ export default [
     cases: [kase('#21–23', { VA: -160, step: 20, q: 4 }, { dV: -120, Wga: -4.8e-4, Wgh: 0 }, { key: '21) −320 V  22) 1.28×10⁻³ J  23) 0 J', note: 'Values depend on the printed map; the structure (ΔV, W = qΔV, and W = 0 along an equipotential) is what this template drills.' })],
   }),
   problem({
-    ...E3, id: 'e3.39.equipotential-props', ch: '39', src: 'Practice 39 #18–20', title: 'What an equipotential surface is', kind: 'conceptual', topics: ['potential', 'equipotential'],
+    ...E3, id: 'e3.39.equipotential-props', ch: '39', src: 'Practice 39 #18–20, Class Activity 3 #12', title: 'What an equipotential surface is', kind: 'conceptual', topics: ['potential', 'equipotential'],
     vars: {
       ask: choice(
         ['name', 'A surface on which every point is at the same potential is called'],
         ['orient', 'An equipotential surface must be'],
         ['spacing', 'The closer together the equipotential surfaces are drawn, the'],
+        ['work', 'A negative charge is carried from point A to point B along an equipotential surface. What must be true?'],
       ),
     },
     text: (T) => T.ask,
@@ -976,7 +1111,13 @@ export default [
           ['smaller', 'smaller the change in potential over a given distance, and the weaker the electric field'],
           ['bigger', 'larger the change in potential over a given distance, and the stronger the electric field'],
         ],
-      })[$.ask], ($) => ({ name: 'equip', orient: 'perp', spacing: 'bigger' })[$.ask]),
+        work: [
+          ['fieldWork', 'The field does positive work on it, because the charge is negative'],
+          ['needed', 'Some work is required, because the charge is negative'],
+          ['none', 'No work is required'],
+          ['distance', 'The work depends on the distance from A to B'],
+        ],
+      })[$.ask], ($) => ({ name: 'equip', orient: 'perp', spacing: 'bigger', work: 'none' })[$.ask]),
     ],
     hints: [String.raw`$\vec{E}$ points straight downhill in $V$, and the steepest descent is always perpendicular to a level surface.`],
     steps: ($) => [
@@ -984,16 +1125,19 @@ export default [
         ? String.raw`If $\vec{E}$ had a component along the surface, moving along it would change $V$ — and then it would not be an equipotential.`
         : $.ask === 'spacing'
           ? String.raw`$|\vec{E}| = \left|\dfrac{dV}{dx}\right|$: crowded surfaces mean a steep slope, which means a strong field. On a topographic map, closely spaced contours mean a steep hill.`
-          : String.raw`"Equipotential" literally means equal potential — every point on the surface is at the same $V$.`,
+          : $.ask === 'work'
+            ? String.raw`$W = q\,\Delta V$, and along an equipotential $\Delta V = 0$, so no work is needed, whatever the sign of the charge and however far apart A and B are.`
+            : String.raw`"Equipotential" literally means equal potential — every point on the surface is at the same $V$.`,
     ],
     cases: [
       kase('#18', { ask: 'name' }, { ans: 'equip' }, { key: 'E)' }),
       kase('#19', { ask: 'orient' }, { ans: 'perp' }, { key: 'B)' }),
       kase('#20', { ask: 'spacing' }, { ans: 'bigger' }, { key: 'A)' }),
+      kase('Class Activity 3 #12', { ask: 'work' }, { ans: 'none' }),
     ],
   }),
   problem({
-    ...E3, id: 'e3.39.sphere-accelerate', ch: '39', src: 'Worksheet 3 #6, Practice 39 #1–2', title: 'A charged sphere accelerated through ΔV', kind: 'numeric', topics: ['potential', 'energy'],
+    ...E3, id: 'e3.39.sphere-accelerate', ch: '39', src: 'Worksheet 3 #6, Practice 39 #1–2, Class Activity 3 #8', title: 'A charged sphere accelerated through ΔV', kind: 'numeric', topics: ['potential', 'energy'],
     vars: { m: range(0.5, 20, 0.5, 'g', 1e-3), q: range(5, 200, 5, 'μC', 1e-6), V: range(500, 20000, 500, 'V') },
     derive: ($) => {
       const K = $.q * $.V;
@@ -1010,10 +1154,13 @@ export default [
       String.raw`$\Delta K = |q|\,\Delta V = ${texNum($.K)}\ \text{J}$`,
       String.raw`$v = \sqrt{\dfrac{2|q|\,\Delta V}{m}} = ${texNum($.v)}\ \text{m/s}$`,
     ],
-    cases: [kase('Worksheet 3 #6', { m: 2, q: 50, V: 10000 }, { K: 0.5, v: 22.36 })],
+    cases: [
+      kase('Worksheet 3 #6', { m: 2, q: 50, V: 10000 }, { K: 0.5, v: 22.36 }),
+      kase('Class Activity 3 #8', { m: 0.02, q: 100, V: 100 }, { K: 0.01, v: 31.62 }),
+    ],
   }),
   problem({
-    ...E3, id: 'e3.39.rod-axis-V', ch: '39', lab: 'integral', src: 'Practice 39 #26', title: 'Potential past the end of a line charge', kind: 'derivation', level: 3, topics: ['potential', 'continuous-distribution'],
+    ...E3, id: 'e3.39.rod-axis-V', ch: '39', lab: 'integral', src: 'Practice 39 #26, Class Activity 3 #10', title: 'Potential past the end of a line charge', kind: 'derivation', level: 3, topics: ['potential', 'continuous-distribution'],
     vars: { lam: range(-5, 5, 0.1, 'μC/m', 1e-6, { exclude: [0] }), L: range(0.2, 1.2, 0.05, 'm'), a: range(0.05, 0.8, 0.05, 'm') },
     derive: ($) => ({ V: K * $.lam * Math.log(($.L + $.a) / $.a) }),
     text: (T) => `A thin rod of length ${T.L} m carries a uniform λ = ${T.lam} μC/m. Point P lies on the rod's own line, ${T.a} m beyond one end. Find the potential at P.`,
@@ -1068,7 +1215,7 @@ export default [
     cases: [kase('Practice 39 #27, with numbers', { lam: 1, R: 0.3 }, { V: 28235, double: 'same' }, { key: 'V = kλπ' })],
   }),
   problem({
-    ...E3, id: 'e3.39.disk-V', ch: '39', lab: 'integral', src: 'Practice 39 #28', title: 'Potential on the axis of a charged disk', kind: 'derivation', level: 3, topics: ['potential', 'continuous-distribution'],
+    ...E3, id: 'e3.39.disk-V', ch: '39', lab: 'integral', src: 'Practice 39 #28, Class Activity 3 #11', title: 'Potential on the axis of a charged disk', kind: 'derivation', level: 3, topics: ['potential', 'continuous-distribution'],
     vars: { sig: range(0.5, 10, 0.5, 'μC/m²', 1e-6), R: range(0.05, 0.5, 0.01, 'm'), s: range(0.02, 0.8, 0.01, 'm') },
     derive: ($) => ({ V: 2 * Math.PI * K * $.sig * (Math.hypot($.R, $.s) - $.s) }),
     text: (T) => `A thin disk of radius ${T.R} m carries a uniform σ = ${T.sig} μC/m². Find the potential on its axis, ${T.s} m from the centre.`,
@@ -1149,7 +1296,17 @@ export default [
     cases: [kase('hand', { A: 0.04, d: 50, V: 12, m: 'teflon' }, { C: 14.868, Q: 1.784e-10, Efac: 1 })],
   }),
   problem({
-    ...E3, id: 'e3.40.dielectric-isolated', ch: '40', lab: 'capacitor', title: 'Inserting a dielectric after disconnecting', kind: 'numeric', level: 2, topics: ['capacitance', 'dielectrics', 'energy'],
+    ...E3, id: 'e3.40.C-dielectric', ch: '40', lab: 'capacitor', src: 'Class Activity 3 #15', title: 'Capacitance with a dielectric', kind: 'numeric', topics: ['capacitance', 'dielectrics'],
+    vars: { A: range(0.01, 0.5, 0.01, 'm²'), d: range(0.1, 5, 0.1, 'mm', 1e-3), kap: range(1.5, 8, 0.1, '') },
+    derive: ($) => ({ C: ($.kap * EPS0 * $.A) / $.d }),
+    text: (T) => `The plates of a parallel-plate capacitor each have an area of ${T.A} m² and sit ${T.d} mm apart, with a dielectric of constant κ = ${T.kap} filling the gap. What is its capacitance?`,
+    parts: [num('C', ($) => $.C, 'nF', { scale: 1e-9 })],
+    hints: [String.raw`A dielectric multiplies the vacuum capacitance by $\kappa$: $C = \dfrac{\kappa\varepsilon_0 A}{d}$. Put $d$ in metres first.`],
+    steps: ($) => [String.raw`$C = \dfrac{\kappa\varepsilon_0 A}{d} = \dfrac{(${texNum($.kap)})(8.85\times 10^{-12})(${texNum($.A)})}{${texNum($.d)}} = ${texNum($.C)}\ \text{F}$`],
+    cases: [kase('Class Activity 3 #15', { A: 0.06, d: 0.4, kap: 2.4 }, { C: 3.186 })],
+  }),
+  problem({
+    ...E3, id: 'e3.40.dielectric-isolated', ch: '40', lab: 'capacitor', src: 'Class Activity 3 #14', title: 'Inserting a dielectric after disconnecting', kind: 'numeric', level: 2, topics: ['capacitance', 'dielectrics', 'energy'],
     vars: { A: range(0.01, 2, 0.01, 'm²'), d: range(1, 120, 1, 'mm', 1e-3), V0: range(1, 240, 1, 'V'), m: DIEL },
     derive: ($) => {
       const k = kap($.m);
@@ -1157,12 +1314,13 @@ export default [
       const Q = C0 * $.V0;
       return { k, C0, Q, V: $.V0 / k, U0: 0.5 * C0 * $.V0 ** 2, U: (0.5 * C0 * $.V0 ** 2) / k };
     },
-    text: (T) => `A vacuum capacitor (A = ${T.A} m², d = ${T.d} mm) is charged to ${T.V0} V and then disconnected. A slab of ${T.m} is slid in to fill the gap. Find the new voltage and stored energy.`,
-    parts: [num('V', ($) => $.V, 'V'), num('U', ($) => $.U, 'J'), mc('where', [[1, 'The energy went into pulling the slab in (work on the slab)'], [2, 'Charge leaked away'], [3, 'The energy increased']], 1, { label: 'Where did the missing energy go?' })],
+    text: (T) => `A vacuum capacitor (A = ${T.A} m², d = ${T.d} mm) is charged to ${T.V0} V and then disconnected. A slab of ${T.m} is slid in to fill the gap. Find the new voltage and stored energy, and the factor by which the field between the plates changes.`,
+    parts: [num('V', ($) => $.V, 'V'), num('U', ($) => $.U, 'J'), num('Efac', ($) => 1 / $.k, '× E₀', { label: 'E / E₀' }), mc('where', [[1, 'The energy went into pulling the slab in (work on the slab)'], [2, 'Charge leaked away'], [3, 'The energy increased']], 1, { label: 'Where did the missing energy go?' })],
     steps: ($, f) => [
       String.raw`$Q$ stays fixed at ${f($.Q)} C, and $C$ becomes $\kappa C_0$`,
       String.raw`$V = \dfrac{V_0}{\kappa} = ${texNum($.V)}\ \text{V}$`,
       String.raw`$U = \dfrac{U_0}{\kappa} = ${texNum($.U)}\ \text{J}$ (it was ${f($.U0)} J)`,
+      String.raw`$E = V/d$ falls with $V$: $E/E_0 = 1/\kappa = ${texNum(1 / $.k)}$, so the field gets weaker.`,
     ],
     sim: {
       scenario: 'cap-isolated',
@@ -1171,7 +1329,7 @@ export default [
       },
       read: (c) => ({ V: c.cap.V, U: c.cap.U }),
     },
-    cases: [kase('hand', { A: 0.04, d: 50, V0: 12, m: 'teflon' }, { V: 5.714, U: 2.4274e-10, where: 1 })],
+    cases: [kase('hand', { A: 0.04, d: 50, V0: 12, m: 'teflon' }, { V: 5.714, U: 2.4274e-10, Efac: 0.4762, where: 1 })],
   }),
   problem({
     ...E3, id: 'e3.40.combo', ch: '40', lab: 'capacitor', title: 'Capacitors in series and parallel', kind: 'numeric', level: 2, topics: ['capacitance', 'networks'],
@@ -1218,6 +1376,30 @@ export default [
       read: (c) => ({ Q: c.cap.Q, U: c.cap.U }),
     },
     cases: [kase('lab defib', { C: 30, V: 5 }, { Q: 0.15, U: 375 })],
+  }),
+  problem({
+    ...E3, id: 'e3.40.C-for-energy', ch: '40', lab: 'capacitor', src: 'Class Activity 3 #16', title: 'Sizing a capacitor for an energy', kind: 'numeric', topics: ['capacitance', 'energy'],
+    vars: { U: range(0.5, 10, 0.5, 'J'), V: range(20, 600, 10, 'V') },
+    derive: ($) => ({ C: (2 * $.U) / $.V ** 2, Q: (2 * $.U) / $.V }),
+    text: (T) => `A capacitor charged to ${T.V} V has to store ${T.U} J, enough to start a small motor. What capacitance does it need, and what charge will it hold?`,
+    parts: [
+      sym('C_sym', '2*U/V^2', { U: 'J', V: 'V' }, ($) => $.C, { unit: 'F', label: String.raw`$C$ as a formula` }),
+      num('C', ($) => $.C, 'μF', { scale: 1e-6 }),
+      num('Q', ($) => $.Q, 'mC', { scale: 1e-3 }),
+    ],
+    hints: [String.raw`Turn $U = \tfrac12 CV^2$ around for $C$; then $Q = CV$.`],
+    steps: ($) => [
+      String.raw`$U = \tfrac12 CV^2 \;\Rightarrow\; C = \dfrac{2U}{V^2} = ${texNum($.C)}\ \text{F}$`,
+      String.raw`$Q = CV = ${texNum($.Q)}\ \text{C}$`,
+    ],
+    sim: {
+      scenario: 'cap-defib',
+      setup(s, $) {
+        s.cap = { ...s.cap, Cset: $.C, V: $.V, mode: 'battery' };
+      },
+      read: (c, s, $) => ({ Q: c.cap.Q, '@energy the lab stores (J)': [c.cap.U, $.U] }),
+    },
+    cases: [kase('Class Activity 3 #16', { U: 2, V: 120 }, { C: 277.8, Q: 33.33 })],
   }),
   problem({
     ...E3, id: 'e3.40.scaling', ch: '40', lab: 'capacitor', title: 'What changes when you change the capacitor?', kind: 'numeric', level: 2, topics: ['capacitance', 'proportional-reasoning'],
@@ -1936,6 +2118,27 @@ export default [
     ],
   }),
   problem({
+    ...E3, id: 'e3.42.R-from-P-I', ch: '42', lab: 'power', src: 'Class Activity 3 #19', title: 'Resistance from power and current', kind: 'numeric', topics: ['power'],
+    vars: { P: range(1, 100, 1, 'W'), I: range(0.1, 5, 0.1, 'A') },
+    derive: ($) => ({ R: $.P / $.I ** 2, V: $.P / $.I }),
+    valid: ($) => $.R >= 0.5 && $.R <= 5000,
+    text: (T) => `A lamp uses ${T.P} W while ${T.I} A flows through it. What is its resistance, and what voltage is across it?`,
+    parts: [num('R', ($) => $.R, 'Ω'), num('V', ($) => $.V, 'V')],
+    hints: [String.raw`You were given $P$ and $I$, so use the form with those two: $P = I^2R$.`],
+    steps: ($) => [
+      String.raw`$R = \dfrac{P}{I^2} = ${texNum($.R)}\ \Omega$`,
+      String.raw`$V = \dfrac{P}{I} = IR = ${texNum($.V)}\ \text{V}$`,
+    ],
+    sim: {
+      scenario: 'pwr-60',
+      setup(s, $) {
+        s.power = { ...s.power, mode: 'dc', V: $.V, R: $.R, load: 'bulb' };
+      },
+      read: (c, s, $) => ({ '@power the lab dissipates (W)': [c.power.P, $.P], '@current the lab draws (A)': [c.power.I, $.I] }),
+    },
+    cases: [kase('Class Activity 3 #19', { P: 5, I: 0.5 }, { R: 20, V: 10 })],
+  }),
+  problem({
     ...E3, id: 'e3.42.hot-wire', ch: '42', lab: 'ohm', src: 'Class Activity 3 #23', title: 'Power of a wire, cold and glowing', kind: 'numeric', level: 3, topics: ['power', 'resistance', 'temperature'],
     vars: { L: range(1, 10, 0.5, 'm'), r: range(0.1, 0.5, 0.05, 'mm', 1e-3), V: range(12, 240, 12, 'V'), T: range(200, 2000, 100, '°C') },
     derive: ($) => {
@@ -1989,6 +2192,39 @@ export default [
       String.raw`$P_{\text{avg}} = I_{\text{rms}}^2R = ${texNum($.P)}\ \text{W}$`,
     ],
     cases: [kase('#11, #13', { Ip: 0.8, w: 240, R: 50 }, { Irms: 0.5657, f: 38.2, P: 16 }, { key: '0.57 A; 38.2 Hz' })],
+  }),
+  problem({
+    ...E3, id: 'e3.42.ac-graph', ch: '42', lab: 'power', src: 'Class Activity 3 #20', title: 'Reading an ac current graph', kind: 'numeric', level: 2, topics: ['power', 'rms', 'ac'],
+    vars: { Ip: range(2, 15, 1, 'A'), grid: choice(['us', '120 V (rms), 60 Hz'], ['eu', '230 V (rms), 50 Hz']) },
+    derive: ($) => {
+      const Vrms = $.grid === 'eu' ? 230 : 120;
+      const Irms = $.Ip / Math.SQRT2;
+      return { Vrms, Irms, R: Vrms / Irms, P: Irms * Vrms };
+    },
+    text: (T) => `The graph shows the current through a toaster's heating element when it is plugged into a ${T.grid} outlet. Find the rms current, the element's resistance, and the average power it uses.`,
+    figure: ($) => acGraphSVG($.Ip),
+    parts: [
+      num('Irms', ($) => $.Irms, 'A', { label: String.raw`$I_{\text{rms}}$` }),
+      num('R', ($) => $.R, 'Ω'),
+      num('P', ($) => $.P, 'W', { label: String.raw`$P_{\text{avg}}$` }),
+    ],
+    hints: [
+      'The graph gives the peak current. The outlet rating is already an rms value.',
+      String.raw`$I_{\text{rms}} = I_p/\sqrt{2}$, then $R = V_{\text{rms}}/I_{\text{rms}}$ and $P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}}$.`,
+    ],
+    steps: ($) => [
+      String.raw`The peak is ${texNum($.Ip)} A, so $I_{\text{rms}} = \dfrac{${texNum($.Ip)}}{\sqrt{2}} = ${texNum($.Irms)}\ \text{A}$`,
+      String.raw`$R = \dfrac{V_{\text{rms}}}{I_{\text{rms}}} = \dfrac{${$.Vrms}}{${texNum($.Irms)}} = ${texNum($.R)}\ \Omega$`,
+      String.raw`$P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}} = ${texNum($.P)}\ \text{W}$`,
+    ],
+    sim: {
+      scenario: 'pwr-ac',
+      setup(s, $) {
+        s.power = { ...s.power, mode: 'ac', Vrms: $.Vrms, R: $.R, f: $.grid === 'eu' ? 50 : 60, load: 'heater' };
+      },
+      read: (c, s, $) => ({ Irms: c.power.Irms, P: c.power.Pavg, '@peak current in the lab (A)': [c.power.Ip, $.Ip] }),
+    },
+    cases: [kase('Class Activity 3 #20', { Ip: 10, grid: 'us' }, { Irms: 7.071, R: 16.97, P: 848.5 })],
   }),
   problem({
     ...E3, id: 'e3.42.concepts', ch: '42', src: 'Practice 42 #5–6, 14–15', title: 'Power in series, and power transmission', kind: 'conceptual', level: 2, topics: ['power', 'circuits'],

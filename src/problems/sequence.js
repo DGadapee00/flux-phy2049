@@ -14,9 +14,9 @@ export const SEQUENCE = {
   38: [
     ['What V, U and E are', ['e3.38.units-of', 'e3.38.point-V', 'e3.38.pair-energy', 'e3.38.work-and-deltaV']],
     ['The uniform field', ['e3.38.uniform-dV', 'e3.38.uniform-rank', 'e3.38.uniform-path', 'e3.38.uniform-zero-V']],
-    ['Signs and direction', ['e3.38.charge-moves', 'e3.38.pe-rank', 'e3.38.field-potential-traps', 'e3.38.equipotentials']],
+    ['Signs and direction', ['e3.38.charge-moves', 'e3.38.pe-rank', 'e3.38.moving-charge-energy', 'e3.38.field-potential-traps', 'e3.38.equipotentials']],
     ['Energy and motion', ['e3.38.work-radial', 'e3.38.accelerate', 'e3.38.system-energy']],
-    ['E from V, and back', ['e3.38.E-from-V', 'e3.38.V-poly-field', 'e3.38.V-graph', 'e3.38.V-cubic', 'e3.38.work-nonuniform']],
+    ['E from V, and back', ['e3.38.E-from-V', 'e3.38.V-poly-field', 'e3.38.V-graph', 'e3.38.V-graph-E', 'e3.38.V-cubic', 'e3.38.work-nonuniform']],
   ],
   39: [
     ['Point charges add as scalars', ['e3.39.two-charges-V', 'e3.39.deltaV-two-radii', 'e3.39.three-charges-V', 'e3.39.zero-V-point', 'e3.39.compare-configs']],
@@ -27,8 +27,8 @@ export const SEQUENCE = {
   ],
   40: [
     ['What capacitance is', ['e3.40.increase-C', 'e3.40.basics', 'e3.40.parallel-plate']],
-    ['Dielectrics: battery on or off', ['e3.40.dielectric-battery', 'e3.40.dielectric-isolated', 'e3.40.scaling']],
-    ['Stored energy', ['e3.40.energy']],
+    ['Dielectrics: battery on or off', ['e3.40.C-dielectric', 'e3.40.dielectric-battery', 'e3.40.dielectric-isolated', 'e3.40.scaling']],
+    ['Stored energy', ['e3.40.energy', 'e3.40.C-for-energy']],
     ['Combining capacitors', ['e3.40.combo']],
     ['Beyond the sheets: sparks', ['e3.40.spark-energy', 'e3.40.gap-holds', 'e3.40.wider-gap', 'e3.40.paschen-min']],
   ],
@@ -39,9 +39,9 @@ export const SEQUENCE = {
     ['Inside the wire', ['e3.41.drift']],
   ],
   42: [
-    ['Power, four ways', ['e3.42.power-basics', 'e3.42.bulb', 'e3.42.two-bulbs', 'e3.42.concepts']],
+    ['Power, four ways', ['e3.42.power-basics', 'e3.42.R-from-P-I', 'e3.42.bulb', 'e3.42.two-bulbs', 'e3.42.concepts']],
     ['Energy, heat and cost', ['e3.42.heater', 'e3.42.cost', 'e3.42.fuse']],
-    ['AC: rms and peak', ['e3.42.ac-rms', 'e3.42.ac-from-equation']],
+    ['AC: rms and peak', ['e3.42.ac-rms', 'e3.42.ac-from-equation', 'e3.42.ac-graph']],
     ['Safety', ['e3.42.grounding', 'e3.42.body-current']],
     ['Exam-style', ['e3.42.hot-wire']],
   ],

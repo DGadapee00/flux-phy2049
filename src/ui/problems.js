@@ -76,8 +76,9 @@ function prettyId(id) {
 
 function partLabel(part, rendered, count) {
   if (rendered.label) return rendered.label;
-  if (count === 1) return part.kind === 'choice' ? 'Choose one' : 'Answer';
-  return part.kind === 'choice' && part.id === 'ans' ? 'Choose one' : prettyId(part.id);
+  const choose = part.multi ? 'Choose all that apply' : 'Choose one';
+  if (count === 1) return part.kind === 'choice' ? choose : 'Answer';
+  return part.kind === 'choice' && part.id === 'ans' ? choose : prettyId(part.id);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -729,7 +730,7 @@ export function createPractice(api) {
         })
         .join('');
       return `<fieldset class="pb-part choice${state}" data-part="${esc(part.id)}">
-        <legend class="pb-label">${label}${part.multi ? ' <span class="pb-dim">(select all that apply)</span>' : ''} <span class="pb-mark">${mark}</span></legend>
+        <legend class="pb-label">${label}${part.multi && r.label ? ' <span class="pb-dim">(select all that apply)</span>' : ''} <span class="pb-mark">${mark}</span></legend>
         ${opts}
         <div class="pb-fb">${esc(fb)}</div>
         ${labSlot}

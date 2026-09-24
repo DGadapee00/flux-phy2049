@@ -108,7 +108,9 @@ async function checkSim(tpl, inst, label) {
     }
     if (part.kind === 'choice') {
       const want = expected(part, inst.$);
-      if (val !== want) err(tpl.id, `${label} sim ${key}: lab says ${val}, problem says ${want} (${JSON.stringify(inst.values)})`);
+      // A select-all part answers with a list: same members, in any order.
+      const same = (a) => JSON.stringify([].concat(a).sort());
+      if (same(val) !== same(want)) err(tpl.id, `${label} sim ${key}: lab says ${val}, problem says ${want} (${JSON.stringify(inst.values)})`);
     } else {
       const want = part.get(inst.$);
       const p2 = { ...part, abs: (part.abs ?? 0) * (part.scale ?? 1) };

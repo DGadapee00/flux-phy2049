@@ -19,11 +19,11 @@ with the physics.
 
 | | |
 |---|---|
-| Problem templates | **219** |
-| …that cite a practice sheet or worksheet (`src: 'Practice 39 #8–10'`) | **77** |
+| Problem templates | **225** |
+| …that cite a practice sheet or worksheet (`src: 'Practice 39 #8–10'`) | **85** |
 | …that use a printed answer as a ground-truth check | **59** |
-| Individual printed answers stored | **96**, across 295 worked cases |
-| Templates checked only against physics the app computes itself | **160** |
+| Individual printed answers stored | **96**, across 305 worked cases |
+| Templates checked only against physics the app computes itself | **166** |
 
 So roughly **three quarters of the bank owes nothing to the course's answer keys.** Where a printed
 answer is used, it is used as a test fixture — a check that the app's own physics reproduces the
@@ -48,7 +48,7 @@ independent method rather than against a stored value — Biot–Savart sums aga
 Ampère loops, Boris-integrated orbits, image-charge surface potentials, Kirchhoff's rules on every
 circuit layout, −ΔΦ/Δt for Faraday, RK4 integration of each AC circuit against its phasor current,
 and paraxial ray tracing that must land every principal ray on the computed image. A further check
-runs all 219 templates through **9,940 comparisons** against the labs.
+runs all 225 templates through **10,556 comparisons** against the labs.
 
 This is why the app can disagree with an answer key and be worth listening to. See
 [ERRATA.md](ERRATA.md) for the fourteen places it does, seven of which look like genuine slips.
@@ -65,7 +65,7 @@ deliberately rather than by default. Two remedies, either of which can be done t
 1. **Gate it.** Cloudflare Access restricts the site to a named list of email addresses, free for up
    to 50 users. Setup is about fifteen minutes and is documented in [DEPLOY.md](DEPLOY.md).
 2. **Remove the printed answers.** Deleting the 96 `key` values costs nothing functionally — those
-   59 templates would simply be checked against the app's own physics, like the other 160.
+   59 templates would simply be checked against the app's own physics, like the other 166.
 
 ## Student data
 
