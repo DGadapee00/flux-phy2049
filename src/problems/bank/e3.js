@@ -757,8 +757,9 @@ export default [
       setup(s) {
         s.charges = [];
         s.extraE = { x: 1000, y: 0, z: 0 };
-        s.pathA = { x: -0.1, y: 0.08, z: 0 };
-        // A is the gold path marker; B sits straight below it, C further along E. The probe starts on C.
+        s.pathA = { x: -0.1, y: 0, z: -0.08 };
+        // All in the xz work plane: A is the gold path marker, B sits in front of it (across E), C further along E.
+        // The probe starts on C.
         s.marks = [
           { label: 'B', x: -0.1, y: 0, z: 0 },
           { label: 'C', x: 0.1, y: 0, z: 0 },
