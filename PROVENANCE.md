@@ -43,12 +43,12 @@ Git history is available if useful.
 
 ## How the physics is verified
 
-The app does not trust itself. `npm test` runs **354 assertions**, each checking a result against an
+The app does not trust itself. `npm test` runs **413 assertions**, each checking a result against an
 independent method rather than against a stored value — Biot–Savart sums against closed forms,
 Ampère loops, Boris-integrated orbits, image-charge surface potentials, Kirchhoff's rules on every
 circuit layout, −ΔΦ/Δt for Faraday, RK4 integration of each AC circuit against its phasor current,
 and paraxial ray tracing that must land every principal ray on the computed image. A further check
-runs all 258 templates through **10,748 comparisons** against the labs.
+runs all 258 templates through **12,346 comparisons** against the labs.
 
 This is why the app can disagree with an answer key and be worth listening to. See
 [ERRATA.md](ERRATA.md) for the twenty-four places it does or needs a note, fourteen of which look like genuine slips.
@@ -92,5 +92,5 @@ Four things worth settling early rather than late:
 grep -c "src: '" src/problems/bank/*.js        # templates citing a practice sheet
 grep -c "key: "  src/problems/bank/*.js        # printed answers stored as test fixtures
 grep -rn "note: '" src/problems/bank/*.js      # every recorded disagreement
-npm test                                       # the 354 independent physics checks
+npm test                                       # the 413 independent physics checks
 ```

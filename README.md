@@ -95,7 +95,7 @@ The number plane is labeled in real distance and the ticks change with the view,
 
 ### Exam 4 labs
 
-- **Circuits** (`#/e4/circuits`) — series, parallel, R₁ + (R₂∥R₃), and the Ch 44 two-battery circuit. Solved by nodal analysis; wires colored by potential, dots show real current, grey chevrons show the assumed direction. Junction and loop rules are evaluated live.
+- **Circuits** (`#/e4/circuits`) — fifteen layouts: series and parallel with three or four resistors, two in parallel, R₁ + (R₂∥R₃) with and without an R₄, R₁ ∥ (R₂ + R₃), two identical-bulb networks, one loop with two batteries, two- and three-battery Kirchhoff circuits, a battery with internal resistance, and three cells-and-bulb circuits side by side. Every circuit problem in the bank loads its own numbers into one of them. Solved by nodal analysis; wires colored by potential, dots show real current (hidden, with the node markers, while a problem is unsolved), grey chevrons show the assumed direction, and a battery set negative is drawn turned round. Junction and loop rules are evaluated live.
 - **Biot–Savart** (`#/e4/biot`) — wire, loop, solenoid. Σ dB is compared with the exact formula for the *same finite* geometry; the ideal limit (μ₀I/2πρ, μ₀nI) is shown separately.
 - **Ampère** (`#/e4/ampere`) — circular Amperian loop as a Riemann sum, pieces colored by B·dl. Centered, off-center, wire outside, two wires, inside a thick wire.
 - **Mag force** (`#/e4/magforce`) — proton / electron orbits and a helix (Boris integration), velocity selector, F = I L × B, parallel wires.

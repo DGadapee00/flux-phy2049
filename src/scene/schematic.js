@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { M, Arrow, fatLine, disposeTree, makeChargeTexture, rampColorCVD as rampColor } from './manim.js';
+import { M, Arrow, fatLine, disposeTree, makeChargeTexture, markAnswer, rampColorCVD as rampColor } from './manim.js';
 
 /**
  * Flat schematic for an arbitrary fixed netlist (Circuits lab).
  * Wires are colored by node potential, yellow dots show the actual current, and a grey chevron on
  * each element shows the direction the current was *assumed* (a → b) when writing Kirchhoff's rules.
+ * The dots' speed and direction answer "which carries more" and "which way", so they sit on the
+ * answer layer and stay hidden while a problem is unsolved; so do the node markers.
  */
 const RES_LEN = 0.9;
 const BAT_LEN = 0.26;
@@ -97,15 +99,17 @@ export class SchematicView {
           pts.push(mx + ux * h, my + uy * h, 0);
           add(fatLine(pts, { color: M.green, width: 3 }));
         } else {
-          // + terminal on the b side: long thin plate. − terminal: short thick plate.
-          const px = mx + ux * h;
-          const py = my + uy * h;
-          const qx = mx - ux * h;
-          const qy = my - uy * h;
+          // + terminal on the b side: long thin plate. − terminal: short thick plate. A negative
+          // value is the battery turned round, so the plates swap ends.
+          const f = e.value < 0 ? -1 : 1;
+          const px = mx + f * ux * h;
+          const py = my + f * uy * h;
+          const qx = mx - f * ux * h;
+          const qy = my - f * uy * h;
           add(fatLine([px + nx * 0.42, py + ny * 0.42, 0, px - nx * 0.42, py - ny * 0.42, 0], { color: M.blue, width: 3.5 }));
           add(fatLine([qx + nx * 0.22, qy + ny * 0.22, 0, qx - nx * 0.22, qy - ny * 0.22, 0], { color: M.blue, width: 8 }));
           const sgn = e.side || 1;
-          add(makeLabel('circuit-sign', px + ux * 0.2 - nx * sgn * 0.5, py + uy * 0.2 - ny * sgn * 0.5)).element.textContent = '+';
+          add(makeLabel('circuit-sign', px + f * ux * 0.2 - nx * sgn * 0.5, py + f * uy * 0.2 - ny * sgn * 0.5)).element.textContent = '+';
         }
         const t = Math.max(0.4, (len - item.symbol) / 4);
         const cx = ax + ux * t;
@@ -115,8 +119,9 @@ export class SchematicView {
         const side = e.side || 1;
         const vertical = Math.abs(nx) > 0.5;
         const off = vertical ? 0.5 : 0.95;
-        // Battery labels slide toward the − end so they clear resistor labels at the same height.
-        const slide = e.type === 'V' ? -0.75 : 0;
+        // Battery labels slide toward the − end so they clear resistor labels at the same height; a
+        // layout can set its own slide where that would push the label onto a wire.
+        const slide = e.type === 'V' ? (e.slide ?? -0.75) : 0;
         const lx = mx + nx * side * off + ux * slide;
         const ly = my + ny * side * off + uy * slide;
         const anchorX = vertical ? (nx * side > 0 ? 0 : 1) : 0.5;
@@ -125,7 +130,7 @@ export class SchematicView {
 
       const nd = Math.max(2, Math.round(len / 0.42));
       for (let k = 0; k < nd; k++) {
-        const s = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: this.dotTex, transparent: true, depthWrite: false, toneMapped: false })));
+        const s = add(markAnswer(new THREE.Sprite(new THREE.SpriteMaterial({ map: this.dotTex, transparent: true, depthWrite: false, toneMapped: false }))));
         s.scale.setScalar(0.17);
         s.renderOrder = 3;
         item.dots.push(s);
@@ -135,7 +140,8 @@ export class SchematicView {
 
     for (const [id, [x, y]] of Object.entries(P)) {
       if ((degree[id] || 0) < 3) continue;
-      const s = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: this.nodeTex, transparent: true, depthWrite: false, toneMapped: false })));
+      // Node markers count the nodes, which is itself a question the bank asks — so, answer layer.
+      const s = add(markAnswer(new THREE.Sprite(new THREE.SpriteMaterial({ map: this.nodeTex, transparent: true, depthWrite: false, toneMapped: false }))));
       s.position.set(x, y, 0.02);
       s.scale.setScalar(id === layout.junction ? 0.36 : 0.24);
       s.renderOrder = 4;

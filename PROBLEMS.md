@@ -77,6 +77,7 @@ problem({
 - `figure($, T)` (optional) returns SVG markup drawn under the statement, for problems that are about
   reading a graph (`e3.38.V-graph` draws its V(x) this way). The check fails on anything that is not
   a clean `<svg>`.
+- Circuits: layouts are data in `src/data/circuits.js` (nodes, edges, loops). An edge can carry `tag`/`bulb` ("Bulb A"), `sym` (a battery's internal `r` and its load `R`), and `slide` (where a battery's label sits); a layout marked `problemOnly` is left out of the lab's Scenario menu, and `ground` may list one node per circuit when a layout draws several unconnected circuits. Every circuit problem with a `lab: 'circuits'` loads its own layout — the self-test checks each layout by hand and runs both Kirchhoff rules over all of them.
 - A template with `lab` but no `sim` opens its topic's lab without loading its numbers. The lab is
   then left readable (nothing on it is this problem's answer) and the banner says it is not set to
   the problem. Where no lab can show the topic at all (RC and RL time dependence, transformers), the

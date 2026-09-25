@@ -266,7 +266,7 @@ Options A and C are identical ("equal to the battery's terminal voltage") in all
 
 Not by proofreading. Every printed answer in the bank is stored as a test fixture, and
 `npm run test` recomputes each one from the app's own physics — which is itself checked against a
-second independent method in 354 further assertions. A mismatch fails the build. Entries 1–9 are
+second independent method in 413 further assertions. A mismatch fails the build. Entries 1–9 are
 the mismatches that survived investigation; everything else in the bank agrees with the key to within
 rounding. Entries 10–14 were found by working the Exam 3 sheets by hand, and the ones with a
 template (11 and 14) are now checked the same way. Entries 15–24 were found by working the Exam 4

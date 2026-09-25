@@ -193,6 +193,17 @@ export default [
         : String.raw`In parallel every resistor has the full $${texNum($.E)}\ \text{V}$, so $I_${$.k} = \dfrac{\varepsilon}{R_${$.k}} = \dfrac{${qty($.E, 'V')}}{${qty($.Rk, 'Ω')}} = ${texNum($.Ik)}\ \text{A}$`,
       String.raw`$P = \varepsilon I = ${pv($.E, 'V')}${pv($.I, 'A')} = ${texNum($.P)}\ \text{W}$`,
     ],
+    sim: {
+      scenario: 'series4',
+      setup(s, $) {
+        s.scenarioId = $.mode === 1 ? 'series4' : 'parallel4';
+        vals(s, { E1: $.E, R1: $.R1, R2: $.R2, R3: $.R3, R4: $.R4 });
+      },
+      read: (c, s, $) => {
+        const Ik = Math.abs(c.circ.sol.I[`R${$.k}`]);
+        return { Req: c.circ.Req, I: Math.abs(c.circ.sol.I.E1), Ik, Vk: Ik * $.Rk, P: c.circ.Pbat };
+      },
+    },
     cases: [
       kase('#5', { mode: 1, E: 12, R1: 20, R2: 40, R3: 60, R4: 80, k: 3 }, { Req: 200, I: 0.06, Ik: 0.06, Vk: 3.6, P: 0.72 }, { key: 'A) 200 Ω  B) 0.06 A  C) 0.06 A  D) V3 = 3.6 V  E) 0.72 W' }),
       kase('#6', { mode: 2, E: 12, R1: 20, R2: 40, R3: 60, R4: 80, k: 1 }, { Req: 9.6, I: 1.25, Ik: 0.6, Vk: 12, P: 15 }, { key: 'A) 9.6 Ω  B) 1.25 A  C) I1 = 0.6 A  D) 12 V  E) 15 W' }),
@@ -222,6 +233,13 @@ export default [
       String.raw`$V = IR_{\text{eq}} = ${pv($.I, 'A')}${pv($.Req, 'Ω')} = ${texNum($.V)}\ \text{V}$`,
       String.raw`$I_${$.w} = \dfrac{V}{R_${$.w}} = \dfrac{${qty($.V, 'V')}}{${qty($.Rw, 'Ω')}} = ${texNum($.Iw)}\ \text{A}$`,
     ],
+    sim: {
+      scenario: 'pair',
+      // The lab is driven by a battery, so it gets the voltage worked out from the total current;
+      // it then has to reproduce that total current on its own.
+      setup: (s, $) => vals(s, { E1: $.V, R1: $.R1, R2: $.R2 }),
+      read: (c, s, $) => ({ Iw: Math.abs(c.circ.sol.I[`R${$.w}`]), '@battery current = the stated total': [c.circ.sol.I.E1, $.I] }),
+    },
     cases: [kase('#7–8', { R1: 4, R2: 12, I: 2, w: 2 }, { V: 6, Iw: 0.5 }, { key: '7) 6 V  8) 0.5 A' })],
   }),
   problem({
@@ -262,6 +280,23 @@ export default [
         : String.raw`Each branch has the full battery voltage. A's branch has resistance $R$, the B–C branch $2R$, so A carries $\varepsilon/R$ and B and C each carry $\varepsilon/2R$.`,
       ({ nodes: 'The two points where the branches split and rejoin are the nodes: 2.', current: `Most current: bulb ${$.net === 'Cser' ? 'C' : 'A'}.`, bright: String.raw`$P = I^2R$ with equal $R$: the bulb with the most current, ${$.net === 'Cser' ? 'C' : 'A'}, is brightest.` })[$.ask],
     ],
+    sim: {
+      scenario: 'bulbsC',
+      setup(s, $) {
+        s.scenarioId = $.net === 'Cser' ? 'bulbsC' : 'bulbsA';
+        vals(s, { E1: 12, A: 10, B: 10, C: 10 });
+        return 'Identical bulbs, each drawn as a 10 Ω resistor, on a 12 V battery.';
+      },
+      read: (c, s, $) => {
+        if ($.ask === 'nodes') {
+          const deg = {};
+          for (const e of c.circ.edges) for (const n of [e.a, e.b]) deg[n] = (deg[n] || 0) + 1;
+          return { ans: Object.values(deg).filter((d) => d >= 3).length };
+        }
+        const I = ['A', 'B', 'C'].map((L) => [L, Math.abs(c.circ.sol.I[L])]).sort((a, b) => b[1] - a[1]);
+        return { ans: I[0][0] };
+      },
+    },
     cases: [
       kase('#9', { net: 'Cser', ask: 'nodes' }, { ans: 2 }, { key: 'B) 2' }),
       kase('#10', { net: 'Cser', ask: 'current' }, { ans: 'C' }, { key: 'C) Bulb C' }),
@@ -296,6 +331,11 @@ export default [
       String.raw`$I = \dfrac{V}{R_{\text{eq}}} = \dfrac{${qty($.V, 'V')}}{${qty($.Req, 'Ω')}} = ${texNum($.I)}\ \text{A}$, and $V_1 = IR_1 = ${pv($.I, 'A')}${pv($.R1, 'Ω')} = ${texNum($.V1)}\ \text{V}$`,
       String.raw`$V_2 = V_3 = IR_{23} = ${pv($.I, 'A')}${pv($.Rp, 'Ω')} = ${texNum($.Vp)}\ \text{V}$, so $I_3 = \dfrac{V_3}{R_3} = \dfrac{${qty($.Vp, 'V')}}{${qty($.R3, 'Ω')}} = ${texNum($.I3)}\ \text{A}$`,
     ],
+    sim: {
+      scenario: 'ladder',
+      setup: (s, $) => vals(s, { E1: $.V, R1: $.R1, R2: $.R2, R3: $.R3, R4: $.R4 }),
+      read: (c, s, $) => ({ Req: c.circ.Req, I: Math.abs(c.circ.sol.I.R1), V1: Math.abs(c.circ.sol.I.R1) * $.R1, V2: Math.abs(c.circ.sol.I.R2) * $.R2, I3: Math.abs(c.circ.sol.I.R3) }),
+    },
     cases: [kase('#13–17', { V: 40, R1: 10, R2: 20, R3: 20, R4: 30 }, { Req: 50, I: 0.8, V1: 8, V2: 8, I3: 0.4 }, { key: '13) 50 Ω  14) 0.8 A  15) 8 V  16) 8 V  17) 0.4 A' })],
   }),
   problem({
@@ -322,6 +362,11 @@ export default [
       String.raw`$I_2 = I_3 = \dfrac{V}{R_2 + R_3} = \dfrac{${qty($.V, 'V')}}{${qty($.R2 + $.R3, 'Ω')}} = ${texNum($.I23)}\ \text{A}$`,
       String.raw`Junction rule: $I = I_1 + I_2 = ${qty($.I1, 'A')} + ${qty($.I23, 'A')} = ${texNum($.Ib)}\ \text{A}$`,
     ],
+    sim: {
+      scenario: 'split',
+      setup: (s, $) => vals(s, { E1: $.V, R1: $.R1, R2: $.R2, R3: $.R3 }),
+      read: (c) => ({ I1: Math.abs(c.circ.sol.I.R1), I2: Math.abs(c.circ.sol.I.R2), I3: Math.abs(c.circ.sol.I.R3), Ib: Math.abs(c.circ.sol.I.E1) }),
+    },
     cases: [
       kase('#18–19', { V: 12, R1: 50, R2: 100, R3: 50 }, { I1: 0.24, I2: 0.08, I3: 0.08, Ib: 0.32 }, {
         key: 'I1 = 0.32 A, I2 = 0.24 A, I3 = 0.08 A',
@@ -351,6 +396,12 @@ export default [
       String.raw`Net emf: $${texNum($.E1)}\ \text{V} ${$.aid > 0 ? '+' : '-'} ${texNum($.E2)}\ \text{V} = ${texNum($.net)}\ \text{V}$; total resistance $${texNum($.Rt)}\ \Omega$`,
       String.raw`$|I| = \dfrac{|\sum\varepsilon|}{\sum R} = \dfrac{${qty(Math.abs($.net), 'V')}}{${qty($.Rt, 'Ω')}} = ${texNum($.I)}\ \text{A}$, flowing the way ${$.net > 0 ? 'ε₁' : 'ε₂'} pushes`,
     ],
+    sim: {
+      scenario: 'loop2',
+      // The layout's ε₂ aids ε₁ when positive; a negative value is the battery turned round.
+      setup: (s, $) => vals(s, { E1: $.E1, E2: $.aid * $.E2, R1: $.R1, R2: $.R2, R3: $.R3, R4: $.R4 }),
+      read: (c) => ({ I: Math.abs(c.circ.sol.I.R1) }),
+    },
     cases: [kase('#20', { E1: 10, E2: 5, aid: -1, R1: 100, R2: 200, R3: 50, R4: 200 }, { I: 0.009091 }, { key: '0.009 A' })],
   }),
   problem({
@@ -380,6 +431,11 @@ export default [
       String.raw`Right branch: $I_R = \dfrac{\varepsilon_3 - \varepsilon_2}{R_2 + R_3} = \dfrac{${qty($.E3, 'V')} - ${qty($.E2, 'V')}}{${qty($.R2 + $.R3, 'Ω')}} = ${texNum($.IR)}\ \text{A}$`,
       String.raw`Junction rule at the top: $\varepsilon_2$ supplies $-(I_L + I_R) = ${texNum($.IM)}\ \text{A}$, so $|I| = ${texNum(Math.abs($.IM))}\ \text{A}$ through it`,
     ],
+    sim: {
+      scenario: 'threebranch',
+      setup: (s, $) => vals(s, { E1: $.E1, E2: $.E2, E3: $.E3, R1: $.R1, R2: $.R2, R3: $.R3, R4: $.R4 }),
+      read: (c) => ({ IR1: Math.abs(c.circ.sol.I.R1), IR2: Math.abs(c.circ.sol.I.R2), IE2: Math.abs(c.circ.sol.I.E2) }),
+    },
     cases: [
       kase('#21', { E1: 10, E2: 20, E3: 5, R1: 100, R4: 200, R2: 200, R3: 50 }, { IR1: 0.03333, IR2: 0.06, IE2: 0.09333 }, {
         key: 'I1 = 0.02 A, I2 = 0.08 A, I3 = 0.06 A',
@@ -472,6 +528,11 @@ export default [
       String.raw`$V = \varepsilon - Ir = ${qty($.E, 'V')} - ${pv($.I, 'A')}${pv($.r, 'Ω')} = ${texNum($.V)}\ \text{V}$`,
       String.raw`$P_r = I^2 r = ${pv($.I, 'A')}^2${pv($.r, 'Ω')} = ${texNum($.Pr)}\ \text{W}$`,
     ],
+    sim: {
+      scenario: 'internal',
+      setup: (s, $) => vals(s, { E1: $.E, r: $.r, R: $.R }),
+      read: (c) => ({ I: Math.abs(c.circ.sol.I.R), V: c.circ.sol.V.tl - c.circ.sol.V.bl, Pr: c.circ.sol.I.r ** 2 * c.circ.edges.find((e) => e.id === 'r').value }),
+    },
     cases: [kase('hand', { E: 12, r: 0.5, R: 5.5 }, { I: 2, V: 11, Pr: 2 })],
   }),
   problem({
@@ -553,6 +614,19 @@ export default [
       `${$.one}: one emf across the bulb. ${$.aid}: the cells add, 2ε across the bulb. ${$.rev}: the cells cancel, 0 across the bulb.`,
       ({ bright: `Brightest: ${$.aid}.`, dark: `No light: ${$.rev} — the net emf is zero.`, current: `Most current: ${$.aid}, with twice the voltage across the same bulb.` })[$.ask],
     ],
+    sim: {
+      scenario: 'cells-ABC',
+      setup(s, $) {
+        s.scenarioId = `cells-${$.perm}`;
+        vals(s, {});
+        return 'All three arrangements side by side: 1.5 V cells, identical 3 Ω bulbs.';
+      },
+      read: (c, s, $) => {
+        const I = ['A', 'B', 'C'].map((L) => [L, Math.abs(c.circ.sol.I[L])]);
+        if ($.ask === 'dark') return { ans: I.find(([, i]) => i < 1e-6)[0] };
+        return { ans: I.sort((a, b) => b[1] - a[1])[0][0] };
+      },
+    },
     cases: [
       kase('#1', { perm: 'ABC', ask: 'bright' }, { ans: 'C' }, { key: 'C) C' }),
       kase('#2', { perm: 'ABC', ask: 'dark' }, { ans: 'B' }, { key: 'B) B' }),
@@ -594,6 +668,17 @@ export default [
         I: String.raw`$V_{ab} < \varepsilon$, so the battery is discharging: the current leaves its + terminal and flows through the battery from − to +.`,
       })[$.ask],
     ],
+    sim: {
+      scenario: 'internal',
+      // The load is whatever resistance draws the stated current: R = V_ab / I.
+      setup: (s, $) => vals(s, { E1: $.E, r: $.r, R: $.Vt / $.I }),
+      read: (c, s, $) => {
+        const I = Math.abs(c.circ.sol.I.R);
+        const Vab = c.circ.sol.V.tl - c.circ.sol.V.bl;
+        if ($.ask === 'r') return { '@terminal voltage': [Vab, $.Vt] };
+        return { ans: $.ask === 'P' ? Vab * I : I };
+      },
+    },
     cases: [
       kase('#4', { ask: 'r', E: 12, r: 8 / 3, I: 1.5 }, { ans: 2.6667 }, { key: '2.67 Ω' }),
       kase('#5', { ask: 'P', E: 95, r: 5, I: 8.3 }, { ans: 444.05 }, {

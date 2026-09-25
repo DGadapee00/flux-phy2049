@@ -6,18 +6,23 @@
  *   V: ideal source of `value` volts, + terminal at b (V_b − V_a = value)
  *   W: wire — modelled as a tiny resistor so every branch, wires included, gets a current
  * Currents are reported a → b (through a source that is − to +).
+ *
+ * ground: one node id, or a list of them — one per separate circuit when a layout draws several
+ * unconnected circuits side by side. Each list entry is that circuit's own 0 V; no current can flow
+ * between circuits that share no wire, so tying one node of each to the reference changes nothing.
  */
 export const WIRE_R = 1e-6;
 
 export function solveCircuit(nodes, edges, ground) {
+  const grounds = new Set([].concat(ground));
   const idx = new Map();
   let k = 0;
-  for (const n of nodes) if (n !== ground) idx.set(n, k++);
+  for (const n of nodes) if (!grounds.has(n)) idx.set(n, k++);
   const sources = edges.filter((e) => e.type === 'V');
   const N = k + sources.length;
   const A = Array.from({ length: N }, () => new Float64Array(N));
   const z = new Float64Array(N);
-  const at = (n) => (n === ground ? -1 : idx.get(n));
+  const at = (n) => (grounds.has(n) ? -1 : idx.get(n));
 
   for (const e of edges) {
     if (e.type === 'V') continue;
@@ -49,7 +54,7 @@ export function solveCircuit(nodes, edges, ground) {
 
   const x = gaussSolve(A, z);
   const V = {};
-  for (const n of nodes) V[n] = n === ground ? 0 : x[idx.get(n)];
+  for (const n of nodes) V[n] = grounds.has(n) ? 0 : x[idx.get(n)];
   const I = {};
   for (const e of edges) {
     if (e.type === 'V') I[e.id] = x[k + sources.indexOf(e)];

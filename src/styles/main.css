@@ -1150,6 +1150,14 @@ input[type='checkbox'] {
   color: var(--text);
 }
 
+/* "Bulb A": the name a problem uses for that element, set above its R and I lines. */
+.circuit-label .circuit-bulb {
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
 .circuit-label small {
   display: block;
   font-family: var(--font);

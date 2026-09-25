@@ -593,6 +593,54 @@ function solveLayout(id, values) {
   for (const loop of layout.loops) approx(loopTerms(loop.path, edges, sol).sum, 0, 1e-6, `two-loop loop rule: ${loop.name}`);
 }
 
+// The layouts problems load. Each is checked against the answer worked by hand for its defaults.
+{
+  let s = solveLayout('series4').sol;
+  approx(s.I.R4, 12 / 20, 1e-4, 'four in series: I = 12 V / 20 Ω');
+  s = solveLayout('parallel4').sol;
+  approx(s.I.R4, 3, 1e-4, 'four in parallel: I₄ = 12 V / 4 Ω');
+  approx(s.I.E1, 4 + 2 + 1 + 3, 1e-3, 'four in parallel: battery current = ΣI_k');
+  s = solveLayout('pair').sol;
+  approx(s.I.E1, 12 / 3, 1e-4, 'pair: I = 12 V / (4 ∥ 12 = 3 Ω)');
+  s = solveLayout('ladder').sol;
+  approx(s.I.R4, 12 / 8, 1e-4, 'ladder: I = 12 V / (2 + 6∥3 + 4) Ω');
+  approx(s.I.R3, 1, 1e-4, 'ladder: I₃ = V₂₃ / R₃ = 3 V / 3 Ω');
+  s = solveLayout('split').sol;
+  approx(s.I.R1, 2, 1e-4, 'split: I₁ = 12 V / 6 Ω');
+  approx(s.I.R3, 2, 1e-4, 'split: I₂ = I₃ = 12 V / (4 + 2) Ω');
+  s = solveLayout('bulbsC').sol;
+  approx(s.I.C, 12 / 15, 1e-4, 'bulbs: C carries the whole 12 V / 15 Ω');
+  approx(s.I.A, 0.4, 1e-4, 'bulbs: A and B split C’s current');
+  s = solveLayout('bulbsA').sol;
+  approx(s.I.A, 1.2, 1e-4, 'bulbs: A alone on its branch, 12 V / 10 Ω');
+  approx(s.I.C, 0.6, 1e-4, 'bulbs: B and C share 12 V / 20 Ω');
+  s = solveLayout('loop2').sol;
+  approx(s.I.R1, (12 - 6) / 12, 1e-4, 'one loop, opposing batteries: I = (12 − 6) V / 12 Ω');
+  s = solveLayout('threebranch').sol;
+  approx(s.V.mt, 20, 1e-6, 'three branches: the lone middle battery fixes the top node');
+  approx(s.I.R1, (10 - 20) / 300, 1e-6, 'three branches: left branch (ε₁ − ε₂)/(R₁ + R₄)');
+  approx(s.I.R2, (5 - 20) / 250, 1e-6, 'three branches: right branch (ε₃ − ε₂)/(R₂ + R₃)');
+  s = solveLayout('internal').sol;
+  approx(s.I.R, 12 / 6, 1e-4, 'internal resistance: I = ε / (R + r)');
+  approx(s.V.tl - s.V.bl, 12 - 2 * 0.5, 1e-4, 'internal resistance: V_ab = ε − Ir');
+  s = solveLayout('cells-ABC').sol;
+  approx(s.I.A, 1.5 / 3, 1e-6, 'cells: one cell drives 1.5 V / 3 Ω');
+  approx(s.I.B, 0, 1e-6, 'cells: two cells turned against each other drive nothing');
+  approx(s.I.C, 3 / 3, 1e-6, 'cells: two aiding cells drive 3 V / 3 Ω');
+}
+
+// Every layout, drawn or problem-only, satisfies both of Kirchhoff's rules, and where a textbook
+// R_eq applies the battery current is ε / R_eq.
+for (const layout of CIRCUITS) {
+  const { edges, sol } = solveLayout(layout.id);
+  const worst = Math.max(...layout.loops.map((l) => Math.abs(loopTerms(l.path, edges, sol).sum)));
+  approx(worst, 0, 1e-6, `${layout.id}: every loop sums to zero`);
+  if (layout.junction) approx(junctionTerms(layout.junction, edges, sol).sum, 0, 1e-6, `${layout.id}: junction rule`);
+  const Req = equivalentR(layout, edges);
+  const bats = edges.filter((e) => e.type === 'V');
+  if (Req != null && bats.length === 1) approx(sol.I[bats[0].id], bats[0].value / Req, 1e-4, `${layout.id}: battery current = ε / R_eq`);
+}
+
 console.log('\nFaraday / Lenz');
 
 {
