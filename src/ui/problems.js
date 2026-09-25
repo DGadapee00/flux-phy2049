@@ -10,7 +10,8 @@
  *
  * Practice attempts open with the principle step: name the law that decides the problem before
  * the parts appear (src/problems/principle-step.js). A missed attempt ends by asking what went
- * wrong, in the same principle terms.
+ * wrong, in the same principle terms. Early in a chapter an attempt also comes with a worked
+ * example, and then with fewer and fewer of its own steps worked (src/problems/fading.js).
  *
  * The panel takes the left column (where the equation panel lives). Main owns lab switching;
  * this module only calls api.openInLab(inst) and reads api.computed / api.slice().
@@ -21,6 +22,7 @@ import { instance, render, grade, expected, sig, withinTol, compile, checkUnits,
 import { createProgress, pickSet, pickInterleave, MASTERED_BOX, INTERVAL_DAYS } from '../problems/progress.js';
 import { PRINCIPLES } from '../problems/principles.js';
 import { asksPrinciple, principleOptions, gradePrinciple, primaryOf, UNSURE } from '../problems/principle-step.js';
+import { guidanceFor, workedExample } from '../problems/fading.js';
 import { examById, LAB_META } from '../data/catalog.js';
 import { mathProse, tex } from './shared.js';
 
@@ -195,12 +197,17 @@ export function createPractice(api) {
   }
 
   // ------------------------------------------------------------------ attempts
-  function newAttempt(id, seed, mode, { principle = true } = {}) {
+  function newAttempt(id, seed, mode, { principle = true, again = false } = {}) {
     const tpl = problemById(id);
     if (!tpl) return null;
     const inst = instance(tpl, seed);
     inst.seed = seed;
+    const view = render(inst);
+    const guide = mode === 'practice' ? guidanceFor(tpl, progress, { templates: PROBLEMS, seed, steps: view.steps.length, again }) : null;
     return {
+      guide,
+      example: guide?.level === 'example' ? workedExample(tpl, guide.exampleSeed) : null,
+      guideHidden: false,
       // Practice only: an exam stays an exam, and a review of one shows what was sat.
       principle: principle && mode === 'practice' && asksPrinciple(tpl) ? { options: principleOptions(tpl, seed), pick: null, ok: null } : null,
       gap: null,
@@ -209,7 +216,7 @@ export function createPractice(api) {
       tpl,
       inst,
       mode, // 'practice' | 'exam' | 'review'
-      view: render(inst),
+      view,
       note: '',
       inputs: {},
       results: {},
@@ -241,9 +248,9 @@ export function createPractice(api) {
     renderPanel();
   }
 
-  function openProblem(id, { seed, session, pos, push = true, principle = true } = {}) {
+  function openProblem(id, { seed, session, pos, push = true, principle = true, again = false } = {}) {
     const s = seed ?? progress.nextSeed(id);
-    const cur = newAttempt(id, s, 'practice', { principle });
+    const cur = newAttempt(id, s, 'practice', { principle, again });
     if (!cur) return;
     st.session = session || null;
     if (session) session.pos = pos ?? session.ids.indexOf(id);
@@ -368,9 +375,12 @@ export function createPractice(api) {
     cur.correct = correct && !cur.revealed;
     if (cur.mode === 'practice') {
       const principleOk = !cur.principle || cur.principle.ok === true;
-      const clean = cur.correct && cur.firstTry !== false && cur.hints === 0 && !cur.peeked && principleOk;
+      const rightFirst = cur.correct && cur.firstTry !== false && cur.hints === 0 && !cur.peeked && principleOk;
+      // Worked steps on screen make it a guided solve: it counts toward fading them out, not as clean.
+      const guided = !!cur.guide;
+      const clean = rightFirst && !guided;
       const principle = cur.principle?.pick != null ? { ok: cur.principle.ok } : null;
-      cur.recorded = progress.record(cur.id, { correct: cur.correct, clean, hints: cur.hints, peeked: cur.peeked, revealed: cur.revealed, seed: cur.seed, principle });
+      cur.recorded = progress.record(cur.id, { correct: cur.correct, clean, hints: cur.hints, peeked: cur.peeked, revealed: cur.revealed, seed: cur.seed, principle, guided, rightFirst });
       cur.clean = clean;
     }
     syncBlind();
@@ -998,6 +1008,39 @@ export function createPractice(api) {
   }
 
   /**
+   * The worked example, or the worked first steps, for a student new to the chapter. It sits
+   * between the principle step and the parts, and goes away once the attempt is finished (the
+   * full solution takes its place).
+   */
+  function guideHTML(cur) {
+    const g = cur.guide;
+    if (!g || cur.finished || cur.mode !== 'practice') return '';
+    if (cur.guideHidden) {
+      return `<div class="pb-guide hidden"><span class="pb-dim">${g.level === 'example' ? 'Worked example' : 'Worked steps'} hidden.</span> <button type="button" class="linkish" data-act="guide-show">Show ${g.level === 'example' ? 'it' : 'them'}</button></div>`;
+    }
+    const hide = `<button type="button" class="linkish" data-act="guide-hide">${g.level === 'example' ? 'Hide it — I’ll work it cold' : 'Hide them'}</button>`;
+    if (g.level === 'example') {
+      const ex = cur.example;
+      return `<section class="pb-guide" aria-label="Worked example">
+        <div class="pb-guide-h">Worked example <span class="pb-dim">· the same kind of problem, other numbers</span></div>
+        <p class="pb-guide-text">${prose(ex.text)}</p>
+        <ol class="pb-steps">${ex.steps.map((x) => `<li>${prose(x)}</li>`).join('')}</ol>
+        <p class="pb-dim">Before each step, ask why it is allowed. Then solve yours below. These examples fade out as you get this chapter’s problems right.</p>
+        ${hide}
+      </section>`;
+    }
+    const n = g.shown;
+    const steps = cur.view.steps.slice(0, n).map((x) => `<li>${prose(x)}</li>`).join('');
+    const rest = g.of - n === 1 ? `Step ${g.of} is yours.` : `Steps ${n + 1}–${g.of} are yours.`;
+    return `<section class="pb-guide faded" aria-label="Worked steps">
+        <div class="pb-guide-h">Worked for you: ${n === 1 ? 'step 1' : `steps 1–${n}`} of ${g.of}</div>
+        <ol class="pb-steps">${steps}</ol>
+        <p class="pb-guide-yours">${rest} Finish the problem from here.</p>
+        ${hide}
+      </section>`;
+  }
+
+  /**
    * After a missed attempt, ask what went wrong, in the problem's own principles. Naming the gap is
    * the moment the problem gets re-filed under the right idea; the answer is kept with its history.
    */
@@ -1035,6 +1078,10 @@ export function createPractice(api) {
     } else if (cur.correct && cur.clean) {
       const days = INTERVAL_DAYS[cur.recorded?.box ?? 0];
       verdict = `Right on the first try. Next review ${fmtDays(days)}.`;
+    } else if (cur.correct && cur.guide) {
+      verdict = cur.guide.level === 'example'
+        ? 'Solved, with a worked example beside you. It will come back soon to do on your own.'
+        : `Solved, with the first ${cur.guide.shown === 1 ? 'step' : `${cur.guide.shown} steps`} worked for you. Next time, one fewer.`;
     } else if (cur.correct && cur.principle && !cur.principle.ok && cur.firstTry !== false && !cur.hints && !cur.peeked) {
       verdict = 'Solved — but the principle wasn’t named, so it will come back soon to do clean.';
     } else if (cur.correct) {
@@ -1122,14 +1169,16 @@ export function createPractice(api) {
         </div>`;
 
     const mixed = !exam && isInterleaved() ? `<span class="pb-mixed" title="Every few problems, one comes back from an earlier chapter">Review from earlier</span> ` : '';
+    const guided = !exam && cur.guide ? `<span class="pb-mixed" title="New to this chapter: worked steps help, and fade as you get problems right">Guided</span> ` : '';
     return `${head}
-      <div class="pb-kicker">${mixed}Ch ${esc(tpl.ch)} · ${esc(CHAPTER_TITLES[tpl.ch] || '')} · ${levelDots(tpl.level)} ${KIND_LABEL[tpl.kind] || ''}${src}</div>
+      <div class="pb-kicker">${mixed}${guided}Ch ${esc(tpl.ch)} · ${esc(CHAPTER_TITLES[tpl.ch] || '')} · ${levelDots(tpl.level)} ${KIND_LABEL[tpl.kind] || ''}${src}</div>
       <h2 class="pb-h">${esc(tpl.title)}</h2>
       <p class="pb-text">${prose(cur.view.text)}</p>
       ${cur.view.figure ? `<div class="pb-figure">${cur.view.figure}</div>` : ''}
       ${cur.note ? `<p class="pb-note">${esc(cur.note)}</p>` : ''}
       ${bannerHTML(cur)}
       ${principleHTML(cur)}
+      ${gated ? '' : guideHTML(cur)}
       ${gated ? '' : `<form class="pb-parts" onsubmit="return false">${tpl.parts.map((p, i) => partHTML(cur, p, i)).join('')}</form>`}
       ${buttons}
       ${hints ? `<ol class="pb-hints">${hints}</ol>` : ''}
@@ -1314,6 +1363,14 @@ export function createPractice(api) {
       case 'check':
         check();
         break;
+      case 'guide-hide':
+      case 'guide-show':
+        if (cur) {
+          readInputs(cur);
+          cur.guideHidden = t.dataset.act === 'guide-hide';
+          renderPanel();
+        }
+        break;
       case 'scene':
         body.classList.toggle('scene-peek');
         renderPanel();
@@ -1342,7 +1399,7 @@ export function createPractice(api) {
         break;
       case 'again':
         // The principle was settled a moment ago on this same problem; asking again would be a formality.
-        if (cur) openProblem(cur.id, { seed: 1 + Math.floor(Math.random() * 99999), session: st.session?.exam ? null : st.session, pos: sessionPos(), principle: false });
+        if (cur) openProblem(cur.id, { seed: 1 + Math.floor(Math.random() * 99999), session: st.session?.exam ? null : st.session, pos: sessionPos(), principle: false, again: true });
         break;
       case 'next':
         advance();

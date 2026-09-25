@@ -24,6 +24,7 @@ import COACHING from '../src/problems/coaching/index.js';
 import { PRINCIPLES, PRINCIPLE_TAGS } from '../src/problems/principles.js';
 import { asksPrinciple, principleOptions, primaryOf } from '../src/problems/principle-step.js';
 import { PREDICTIONS } from '../src/data/predictions.js';
+import { guidanceFor, chapterSkill, exampleSeed, workedExample } from '../src/problems/fading.js';
 import { run as runPrediction, outcomes as predictionOutcomes, choices as predictionChoices } from '../src/engine/predict.js';
 import { applyScenario } from '../src/data/scenarios.js';
 
@@ -426,6 +427,47 @@ if (stepped < PROBLEMS.length * 0.9) err('principle step', `only ${stepped} of $
   for (let seed = 1; seed <= 20; seed++) {
     const got = pickSet(ch43, fresh, { n: 1, seed, weight: (t) => (t.id === target.id ? 1 : 0) });
     if (got[0]?.id !== target.id) err('pickSet weight', `seed ${seed}: picked ${got[0]?.id}, not the weighted ${target.id}`);
+  }
+}
+
+/*
+ * Fading worked examples: new to a chapter → a full example with other numbers; each problem solved
+ * right in the chapter hides one more of the steps; working problems only; nothing on "again" or
+ * for a template already solved. And every working template can produce an example whose numbers
+ * differ from the student's and whose prose renders.
+ */
+{
+  const p = createProgress(memoryStorage());
+  const ch44 = PROBLEMS.filter((t) => t.ch === '44' && t.kind === 'numeric');
+  const three = ch44.find((t) => render(instance(t, 0)).steps.length >= 3);
+  const steps = render(instance(three, 0)).steps.length;
+  const g0 = guidanceFor(three, p, { templates: PROBLEMS, seed: 0, steps });
+  if (g0?.level !== 'example') err('fading', `new to Ch 44 should get a worked example, got ${JSON.stringify(g0)}`);
+  const others = ch44.filter((t) => t.id !== three.id);
+  p.record(others[0].id, { correct: true, seed: 1, guided: true, rightFirst: true });
+  const g1 = guidanceFor(three, p, { templates: PROBLEMS, seed: 0, steps });
+  if (g1?.level !== 'faded' || g1.shown !== steps - 1) err('fading', `one solved should hide one step, got ${JSON.stringify(g1)}`);
+  p.record(others[1].id, { correct: true, clean: true, seed: 1 });
+  const g2 = guidanceFor(three, p, { templates: PROBLEMS, seed: 0, steps });
+  if (steps >= 3 && (g2?.level !== 'faded' || g2.shown !== steps - 2)) err('fading', `two solved should hide two steps, got ${JSON.stringify(g2)}`);
+  p.record(others[2].id, { correct: false, seed: 1, guided: true, rightFirst: false });
+  if (chapterSkill(PROBLEMS, p, '44') !== 2) err('fading', 'a missed guided attempt should not count as readiness');
+  if (guidanceFor(three, p, { templates: PROBLEMS, seed: 0, steps, again: true })) err('fading', '"again" should not be guided');
+  const concept = PROBLEMS.find((t) => t.kind === 'conceptual' && t.ch === '44');
+  if (guidanceFor(concept, createProgress(memoryStorage()), { templates: PROBLEMS, seed: 0, steps: 1 })) err('fading', 'a concept question should not be guided');
+  p.record(three.id, { correct: true, seed: 1, guided: true, rightFirst: true });
+  if (guidanceFor(three, p, { templates: PROBLEMS, seed: 0, steps })) err('fading', 'a template already solved should not be guided');
+  for (const t of PROBLEMS.filter((x) => x.kind !== 'conceptual')) {
+    for (const seed of [0, 3]) {
+      const ex = exampleSeed(t, seed);
+      if (ex == null) {
+        err(t.id, 'fading: no example with numbers different from the student\'s');
+        continue;
+      }
+      const w = workedExample(t, ex);
+      if (!w.steps.length) err(t.id, 'fading: worked example has no steps');
+      for (const line of [w.text, ...w.steps]) if (/undefined|NaN/.test(mathProse(line))) err(t.id, `fading: example prose broken: ${line.slice(0, 50)}`);
+    }
   }
 }
 

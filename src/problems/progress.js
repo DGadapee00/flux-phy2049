@@ -57,8 +57,11 @@ export function createProgress(storage = browserStorage()) {
    * Record one finished attempt.
    * correct: every part right in the end · clean: right on the first check with no help.
    * principle: { ok } when the attempt opened with the principle step.
+   * guided: a worked example or faded steps were on screen (src/problems/fading.js); rightFirst:
+   * right on the first check with no other help. A guided solve is not clean, but it counts
+   * (gOk) toward the chapter readiness that withdraws the help.
    */
-  function record(id, { correct, clean = false, hints = 0, peeked = false, revealed = false, seed = 0, principle = null, now = Date.now() }) {
+  function record(id, { correct, clean = false, hints = 0, peeked = false, revealed = false, seed = 0, principle = null, guided = false, rightFirst = false, now = Date.now() }) {
     const it = data.items[id] || { attempts: 0, solved: 0, clean: 0, peeks: 0, hints: 0, box: 0, due: 0, last: 0, lastSeed: 0 };
     it.attempts++;
     if (correct) it.solved++;
@@ -72,6 +75,7 @@ export function createProgress(storage = browserStorage()) {
     it.last = now;
     it.lastSeed = seed;
     it.lastOk = !!correct && !revealed;
+    if (guided && rightFirst) it.gOk = (it.gOk || 0) + 1;
     if (principle) {
       it.pAsk = (it.pAsk || 0) + 1;
       if (principle.ok) it.pOk = (it.pOk || 0) + 1;
