@@ -12,7 +12,7 @@
  *      headless, and compare sim.read(...) with the problem's own answers
  */
 import { PROBLEMS, CHAPTER_ORDER, CHAPTER_TITLES, problemsForExam } from '../src/problems/index.js';
-import { createProgress, memoryStorage, pickSet, INTERVAL_DAYS } from '../src/problems/progress.js';
+import { createProgress, memoryStorage, pickSet, pickInterleave, INTERVAL_DAYS } from '../src/problems/progress.js';
 import { build, instance, render, expected, withinTol, evalSymbolic, gradeSymbolic, grade, parseNumber, parseExpr, dimensionOf , exprToTex, choiceOptions } from '../src/problems/engine.js';
 import { parseUnit, dimEqual, formatDim } from '../src/physics/units.js';
 import { applyProblem, headlessCtx } from '../src/problems/simbridge.js';
@@ -22,6 +22,7 @@ import { LAB_META, EXAMS } from '../src/data/catalog.js';
 import { SEQUENCE } from '../src/problems/sequence.js';
 import COACHING from '../src/problems/coaching/index.js';
 import { PRINCIPLES, PRINCIPLE_TAGS } from '../src/problems/principles.js';
+import { asksPrinciple, principleOptions, primaryOf } from '../src/problems/principle-step.js';
 
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
@@ -340,6 +341,57 @@ for (const t of PROBLEMS) {
 }
 for (const id of Object.keys(PRINCIPLE_TAGS)) if (!PROBLEMS.some((t) => t.id === id)) err(id, 'principle tags name a template that does not exist');
 for (const g of Object.keys(PRINCIPLES)) if (!Object.values(PRINCIPLE_TAGS).some((tags) => tags.includes(g))) err(g, 'principle is never used');
+
+/*
+ * The principle step: four distinct defined principles, the primary among them, none of the
+ * template's secondary principles (those are also true, so offering one would mark a half-right
+ * answer wrong), and the same four for the same seed.
+ */
+let stepped = 0;
+for (const t of PROBLEMS) {
+  if (t.principles !== PRINCIPLE_TAGS[t.id]) err(t.id, 'principle tags not folded into the template');
+  if (!asksPrinciple(t)) continue;
+  stepped++;
+  for (const seed of [0, 1, 2, 7, 12345]) {
+    const o = principleOptions(t, seed);
+    if (o.length !== 4 || new Set(o).size !== 4) err(t.id, `principle step: options ${o.join(',')} are not four distinct`);
+    if (!o.includes(primaryOf(t))) err(t.id, 'principle step: primary not offered');
+    if (o.some((id) => id !== primaryOf(t) && t.principles.includes(id))) err(t.id, 'principle step: offers a secondary principle as a distractor');
+    if (o.some((id) => !PRINCIPLES[id])) err(t.id, 'principle step: undefined option');
+    if (o.join() !== principleOptions(t, seed).join()) err(t.id, 'principle step: same seed, different options');
+  }
+}
+if (stepped < PROBLEMS.length * 0.9) err('principle step', `only ${stepped} of ${PROBLEMS.length} templates get it`);
+
+/*
+ * Interleaving: only earlier chapters, only problems already met, the most overdue first, then
+ * the weakest not tried in the last half day; nothing when nothing earlier qualifies.
+ */
+{
+  const DAY = 864e5;
+  const now = 100 * DAY;
+  const p = createProgress(memoryStorage());
+  const tpl = (id) => PROBLEMS.find((t) => t.id === id);
+  const e3 = PROBLEMS.filter((t) => t.ch === '38' && !t.enrichment);
+  const e4 = PROBLEMS.filter((t) => t.ch === '43' && !t.enrichment);
+  const pool = PROBLEMS.filter((t) => !t.enrichment);
+  if (pickInterleave(pool, p, { ch: '43', now })) err('interleave', 'picked something with no history');
+  p.record(e4[0].id, { correct: false, seed: 1, now: now - 3 * DAY });
+  if (pickInterleave(pool, p, { ch: '43', now })) err('interleave', 'picked from the same chapter');
+  p.record(e3[0].id, { correct: true, clean: true, seed: 1, now: now - 2 * DAY }); // box 1, due after 1 day: overdue by 1 day
+  p.record(e3[1].id, { correct: false, seed: 1, now: now - 5 * DAY }); // box 0: overdue by ~5 days
+  let got = pickInterleave(pool, p, { ch: '43', now });
+  if (got?.id !== e3[1].id) err('interleave', `expected the most overdue ${e3[1].id}, got ${got?.id}`);
+  got = pickInterleave(pool, p, { ch: '43', now, exclude: [e3[1].id] });
+  if (got?.id !== e3[0].id) err('interleave', `exclude ignored: got ${got?.id}`);
+  const p2 = createProgress(memoryStorage());
+  p2.record(e3[2].id, { correct: true, clean: true, seed: 1, now: now - 0.9 * DAY }); // box 1, not yet due, 0.9 d ago
+  p2.record(e3[3].id, { correct: true, clean: true, seed: 1, now: now - 0.1 * DAY }); // tried two hours ago
+  got = pickInterleave(pool, p2, { ch: '43', now });
+  if (got?.id !== e3[2].id) err('interleave', `expected the weak one not tried today, got ${got?.id}`);
+  if (pickInterleave(pool, p2, { ch: '36A', now })) err('interleave', 'picked from a later chapter');
+  if (!tpl(e3[0].id)) err('interleave', 'fixture missing');
+}
 
 const noHints = PROBLEMS.filter((t) => !t.hints.length).map((t) => t.id);
 if (args.includes('--list') && noHints.length) console.log(`templates with no hints (${noHints.length}):`, noHints.join(' '));

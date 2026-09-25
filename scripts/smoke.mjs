@@ -476,6 +476,14 @@ const blindBefore = await page.evaluate(() => ({
 }));
 if (!blindBefore.blind || !blindBefore.readoutHidden || blindBefore.veiled === 0 || !blindBefore.answerLayerOff) mismatches.push({ name: 'practice: blind mode on load', got: blindBefore, exp: 'blind, readout hidden, labels veiled' });
 if (blindBefore.e1 !== 12) mismatches.push({ name: 'practice: problem numbers loaded into lab', got: blindBefore.e1, exp: 12 });
+// The principle step comes first: no answer boxes until a principle is named.
+const gated = await page.evaluate(() => ({
+  boxes: document.querySelectorAll('.pb-parts [data-input]').length,
+  options: [...document.querySelectorAll('[data-principle]')].map((el) => el.dataset.principle),
+}));
+if (gated.boxes !== 0 || gated.options.length !== 5 || !gated.options.includes('energy')) mismatches.push({ name: 'practice: principle step gates the parts', got: gated, exp: 'no boxes, 4 principles + not sure, energy among them' });
+await page.click('[data-principle="energy"]');
+await page.waitForSelector('.pb-principle.done.ok', { timeout: 3000 }).catch(() => {});
 await page.fill('[data-input="0"]', '23.08');
 await page.fill('[data-input="1"]', '1.846 A');
 await page.fill('[data-input="2"]', '0.4615');
@@ -494,8 +502,9 @@ const solved = await page.evaluate(() => ({
   finished: window.__gauss.practice.current()?.finished,
   labAgrees: document.querySelectorAll('.pb-labval .agree').length,
   record: window.__gauss.practice.progress.get('e4.44.two-loop'),
+  gapAsked: !!document.querySelector('.pb-gap [data-gap]'),
 }));
-if (solved.blind || !solved.finished || solved.labAgrees !== 3 || solved.record?.box !== 1 || solved.record?.clean !== 0) mismatches.push({ name: 'practice: solved, lab agrees, recorded (not clean)', got: solved, exp: 'unblind, 3 lab checks agree, box 1' });
+if (solved.blind || !solved.finished || solved.labAgrees !== 3 || solved.record?.box !== 1 || solved.record?.clean !== 0 || solved.record?.pOk !== 1 || !solved.gapAsked) mismatches.push({ name: 'practice: solved, lab agrees, recorded (not clean)', got: solved, exp: 'unblind, 3 lab checks agree, box 1, principle named right, asked what went wrong' });
 
 // Practice exam: start, answer nothing, submit; results render and every problem is due again.
 await page.keyboard.press('Escape');

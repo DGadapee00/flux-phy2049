@@ -8,19 +8,28 @@
  *   3. Once solved (or the solution is opened), the veil lifts and the lab checks the answers live.
  *   4. The result feeds spaced review (src/problems/progress.js).
  *
+ * Practice attempts open with the principle step: name the law that decides the problem before
+ * the parts appear (src/problems/principle-step.js). A missed attempt ends by asking what went
+ * wrong, in the same principle terms.
+ *
  * The panel takes the left column (where the equation panel lives). Main owns lab switching;
  * this module only calls api.openInLab(inst) and reads api.computed / api.slice().
  */
 import { PROBLEMS, problemById, problemsForExam, CHAPTER_ORDER, CHAPTER_TITLES } from '../problems/index.js';
 import { sequenceRank, stageOf } from '../problems/sequence.js';
 import { instance, render, grade, expected, sig, withinTol, compile, checkUnits, exprToTex, GLYPH, choiceOptions } from '../problems/engine.js';
-import { createProgress, pickSet, MASTERED_BOX, INTERVAL_DAYS } from '../problems/progress.js';
+import { createProgress, pickSet, pickInterleave, MASTERED_BOX, INTERVAL_DAYS } from '../problems/progress.js';
+import { PRINCIPLES } from '../problems/principles.js';
+import { asksPrinciple, principleOptions, gradePrinciple, primaryOf, UNSURE } from '../problems/principle-step.js';
 import { examById, LAB_META } from '../data/catalog.js';
 import { mathProse, tex } from './shared.js';
 
 const EXAM_MINUTES = 50;
 const EXAM_SIZE = 8;
 const MIXED_SIZE = 5;
+/** Working a chapter's list, every fourth problem is a review from an earlier chapter. */
+const MIX_EVERY = 3;
+const pname = (id) => PRINCIPLES[id]?.name || id;
 
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -129,7 +138,7 @@ export function createPractice(api) {
     open: false,
     view: 'list', // 'list' | 'problem' | 'exam' | 'results'
     listExam: api.examId() || 'e2',
-    filter: { kind: 'all', lab: false },
+    filter: { kind: 'all', lab: false, group: 'chapter' },
     cur: null, // the attempt on screen
     session: null, // { label, ids, i }
     exam: progress.loadExam(), // saved practice exam (may be finished or in progress)
@@ -186,12 +195,15 @@ export function createPractice(api) {
   }
 
   // ------------------------------------------------------------------ attempts
-  function newAttempt(id, seed, mode) {
+  function newAttempt(id, seed, mode, { principle = true } = {}) {
     const tpl = problemById(id);
     if (!tpl) return null;
     const inst = instance(tpl, seed);
     inst.seed = seed;
     return {
+      // Practice only: an exam stays an exam, and a review of one shows what was sat.
+      principle: principle && mode === 'practice' && asksPrinciple(tpl) ? { options: principleOptions(tpl, seed), pick: null, ok: null } : null,
+      gap: null,
       id,
       seed,
       tpl,
@@ -229,11 +241,12 @@ export function createPractice(api) {
     renderPanel();
   }
 
-  function openProblem(id, { seed, session, push = true } = {}) {
+  function openProblem(id, { seed, session, pos, push = true, principle = true } = {}) {
     const s = seed ?? progress.nextSeed(id);
-    const cur = newAttempt(id, s, 'practice');
+    const cur = newAttempt(id, s, 'practice', { principle });
     if (!cur) return;
     st.session = session || null;
+    if (session) session.pos = pos ?? session.ids.indexOf(id);
     st.view = 'problem';
     setOpen(true);
     loadAttempt(cur, { push });
@@ -354,8 +367,10 @@ export function createPractice(api) {
     cur.finished = true;
     cur.correct = correct && !cur.revealed;
     if (cur.mode === 'practice') {
-      const clean = cur.correct && cur.firstTry !== false && cur.hints === 0 && !cur.peeked;
-      cur.recorded = progress.record(cur.id, { correct: cur.correct, clean, hints: cur.hints, peeked: cur.peeked, revealed: cur.revealed, seed: cur.seed });
+      const principleOk = !cur.principle || cur.principle.ok === true;
+      const clean = cur.correct && cur.firstTry !== false && cur.hints === 0 && !cur.peeked && principleOk;
+      const principle = cur.principle?.pick != null ? { ok: cur.principle.ok } : null;
+      cur.recorded = progress.record(cur.id, { correct: cur.correct, clean, hints: cur.hints, peeked: cur.peeked, revealed: cur.revealed, seed: cur.seed, principle });
       cur.clean = clean;
     }
     syncBlind();
@@ -381,14 +396,49 @@ export function createPractice(api) {
   // ------------------------------------------------------------------ sessions
   function listIds() {
     const tpls = filteredTemplates(st.listExam);
-    return orderByChapter(tpls).map((t) => t.id);
+    return (st.filter.group === 'principle' ? orderByPrinciple(tpls) : orderByChapter(tpls)).map((t) => t.id);
+  }
+
+  function sessionPos() {
+    const s = st.session;
+    if (!s) return -1;
+    return s.pos ?? s.ids.indexOf(st.cur?.id);
   }
 
   function nextInSession() {
     const s = st.session;
     if (!s) return null;
-    const i = s.ids.indexOf(st.cur?.id);
-    return s.ids[i + 1] || null;
+    return s.ids[sessionPos() + 1] || null;
+  }
+
+  /** Whether the problem on screen was dropped into the path from an earlier chapter. */
+  const isInterleaved = () => !!st.session?.mixedAt?.includes(sessionPos());
+
+  /**
+   * Move on in the session. Working a chapter list, every MIX_EVERY problems along the path is
+   * followed by one from an earlier chapter (pickInterleave): retrieval spread out and mixed
+   * rather than massed one chapter at a time.
+   */
+  function advance() {
+    const s = st.session;
+    const cur = st.cur;
+    if (!s || !cur) return;
+    const i = sessionPos();
+    if (s.mix && !isInterleaved()) {
+      s.since = (s.since || 0) + 1;
+      if (s.since >= MIX_EVERY) {
+        const ahead = s.ids.slice(i);
+        const pick = pickInterleave(PROBLEMS.filter((t) => !t.enrichment), progress, { ch: cur.tpl.ch, exclude: [...ahead, ...(s.mixed || [])] });
+        if (pick) {
+          s.ids.splice(i + 1, 0, pick.id);
+          s.mixed = [...(s.mixed || []), pick.id];
+          s.mixedAt = [...(s.mixedAt || []), i + 1];
+          s.since = 0;
+        }
+      }
+    }
+    const id = s.ids[i + 1];
+    if (id) openProblem(id, { session: s, pos: i + 1 });
   }
 
   // Enrichment problems (beyond the course's practice sheets) are for browsing, not for drilling.
@@ -512,6 +562,13 @@ export function createPractice(api) {
     );
   }
 
+  /** Grouped by governing principle (in the order principles.js lists them), chapter order inside. */
+  function orderByPrinciple(tpls) {
+    const rank = Object.fromEntries(Object.keys(PRINCIPLES).map((id, i) => [id, i]));
+    const byCh = new Map(orderByChapter(tpls).map((t, i) => [t.id, i]));
+    return [...tpls].sort((a, b) => (rank[primaryOf(a)] ?? 99) - (rank[primaryOf(b)] ?? 99) || byCh.get(a.id) - byCh.get(b.id));
+  }
+
   // ------------------------------------------------------------------ rendering
   function renderPanel(opts = {}) {
     if (!st.open) return;
@@ -557,8 +614,47 @@ export function createPractice(api) {
     const chip = (key, value, label) =>
       `<button type="button" class="pb-chip${st.filter[key] === value ? ' on' : ''}" data-filter="${key}:${value}">${label}</button>`;
 
+    const itemHTML = (t, { chTag = false } = {}) => {
+      const s = progress.status(t.id);
+      const labTitle = t.lab ? LAB_META[t.lab]?.title : '';
+      const here = t.lab && t.lab === labId;
+      return `<button type="button" class="pb-item" data-open="${esc(t.id)}">
+              <span class="pb-dot s-${s}" title="${STATUS_LABEL[s]}"></span>
+              <span class="pb-item-title">${chTag ? `<span class="pb-chtag">${t.ch === 'V' ? 'Vec' : `Ch ${esc(t.ch)}`}</span>` : ''}${esc(t.title)}${t.enrichment ? ' <span class="pb-extra" title="Beyond the practice sheets and worksheets: left out of mixed sets and practice exams">extra</span>' : ''}</span>
+              <span class="pb-item-meta">${levelDots(t.level)}${labTitle ? `<span class="pb-lab-badge${here ? ' here' : ''}">${esc(labTitle)}</span>` : ''}</span>
+            </button>`;
+    };
+
     const groups = [];
-    for (const ch of CHAPTER_ORDER) {
+    if (st.filter.group === 'principle') {
+      // One law, many chapters: the same principle's problems side by side, with the ones from
+      // earlier exams folded underneath, and how often it has been named right in the principle step.
+      const firstCh = Math.min(...all.map((t) => CHAPTER_ORDER.indexOf(t.ch)));
+      const earlierPool = PROBLEMS.filter((t) => CHAPTER_ORDER.indexOf(t.ch) < firstCh && (st.filter.kind === 'all' || t.kind === st.filter.kind));
+      const ordered = orderByPrinciple(tpls);
+      for (const pid of Object.keys(PRINCIPLES)) {
+        const inP = ordered.filter((t) => primaryOf(t) === pid);
+        if (!inP.length) continue;
+        const P = PRINCIPLES[pid];
+        const pIds = PROBLEMS.filter((t) => primaryOf(t) === pid).map((t) => t.id);
+        const tally = progress.principleTally(pIds);
+        const mIds = all.filter((t) => primaryOf(t) === pid).map((t) => t.id);
+        const cm = Math.round(progress.mastery(mIds) * 100);
+        const cc = progress.counts(mIds);
+        const earlier = orderByChapter(earlierPool.filter((t) => primaryOf(t) === pid));
+        groups.push(`<section class="pb-ch pb-pgroup">
+          <div class="pb-ch-head">
+            <span class="pb-ch-name">${esc(P.name)}</span>
+            <span class="pb-ch-meter" title="${cm}% mastery"><i style="width:${cm}%"></i></span>
+            <span class="pb-ch-count">${cc.mastered}/${cc.total}</span>
+          </div>
+          <p class="pb-pstate">${esc(P.statement)}${tally.asked ? ` <span class="pb-ptally" title="Principle step, every exam">Named right ${tally.ok} of ${tally.asked}</span>` : ''}</p>
+          ${inP.map((t) => itemHTML(t, { chTag: true })).join('')}
+          ${earlier.length ? `<details class="pb-earlier"><summary>From earlier exams · ${earlier.length}</summary>${earlier.map((t) => itemHTML(t, { chTag: true })).join('')}</details>` : ''}
+        </section>`);
+      }
+    }
+    for (const ch of st.filter.group === 'principle' ? [] : CHAPTER_ORDER) {
       const inCh = tpls.filter((t) => t.ch === ch);
       if (!inCh.length) continue;
       const chIds = all.filter((t) => t.ch === ch).map((t) => t.id);
@@ -577,14 +673,7 @@ export function createPractice(api) {
             const heading = stage && stage.name !== prev?.name
               ? `<div class="pb-stage"><span class="pb-stage-n">${stage.index + 1}</span>${esc(stage.name)}</div>`
               : '';
-            const s = progress.status(t.id);
-            const labTitle = t.lab ? LAB_META[t.lab]?.title : '';
-            const here = t.lab && t.lab === labId;
-            return `${heading}<button type="button" class="pb-item" data-open="${esc(t.id)}">
-              <span class="pb-dot s-${s}" title="${STATUS_LABEL[s]}"></span>
-              <span class="pb-item-title">${esc(t.title)}${t.enrichment ? ' <span class="pb-extra" title="Beyond the practice sheets and worksheets: left out of mixed sets and practice exams">extra</span>' : ''}</span>
-              <span class="pb-item-meta">${levelDots(t.level)}${labTitle ? `<span class="pb-lab-badge${here ? ' here' : ''}">${esc(labTitle)}</span>` : ''}</span>
-            </button>`;
+            return `${heading}${itemHTML(t)}`;
           })
           .join('')}
       </section>`);
@@ -613,8 +702,11 @@ export function createPractice(api) {
         ${chip('kind', 'all', 'All')}${chip('kind', 'numeric', 'Numeric')}${chip('kind', 'conceptual', 'Concept')}${chip('kind', 'derivation', 'Derivation')}
         ${labHere ? `<button type="button" class="pb-chip${st.filter.lab ? ' on' : ''}" data-filter="lab:toggle">${esc(LAB_META[labId].title)} lab only</button>` : ''}
       </div>
+      <div class="pb-filters pb-group" role="group" aria-label="Group problems by">
+        <span class="pb-dim">Group by</span>${chip('group', 'chapter', 'Chapter')}${chip('group', 'principle', 'Principle')}
+      </div>
       <div class="pb-list">${groups.join('') || '<p class="pb-empty">No problems match these filters.</p>'}</div>
-      <p class="pb-foot">Your first try uses the worksheet's numbers when there is one; after that the numbers change every time. Progress stays in this browser. <button type="button" class="linkish" data-act="reset-progress">Reset progress</button></p>`;
+      <p class="pb-foot">Your first try uses the worksheet's numbers when there is one; after that the numbers change every time. Working down a chapter, every fourth problem is one you've met from an earlier chapter, due for review. Progress stays in this browser. <button type="button" class="linkish" data-act="reset-progress">Reset progress</button></p>`;
   }
 
   /**
@@ -825,6 +917,69 @@ export function createPractice(api) {
     return `<div class="pb-banner quiet"><span>The lab is live. Change the setup to explore what-ifs.</span></div>`;
   }
 
+  /**
+   * The principle step. Before a pick: four principles and "not sure", with the parts held back.
+   * After: one line saying which principle decides the problem, and — when the pick was wrong —
+   * the cue that should have pointed to it and what the chosen one is for.
+   */
+  function principleHTML(cur) {
+    const ps = cur.principle;
+    if (!ps) return '';
+    const want = primaryOf(cur.tpl);
+    const P = PRINCIPLES[want];
+    if (ps.pick == null) {
+      const opts = ps.options
+        .map((id) => `<button type="button" class="pb-popt" data-principle="${esc(id)}">${esc(pname(id))}</button>`)
+        .join('');
+      return `<fieldset class="pb-principle">
+        <legend class="pb-label">First: which principle decides this problem?</legend>
+        <div class="pb-popts">${opts}</div>
+        <button type="button" class="linkish pb-punsure" data-principle="${UNSURE}">Not sure — show me</button>
+        <p class="pb-dim">Name it before you solve. The parts open once you choose, and a wrong or unsure pick means this attempt won't count as a clean solve.</p>
+      </fieldset>`;
+    }
+    if (ps.ok) {
+      return `<div class="pb-principle done ok"><div><span class="pb-mark">✓</span> <b>${esc(P.name)}</b></div><div class="pb-pstate">${esc(P.statement)}</div></div>`;
+    }
+    const picked = ps.pick !== UNSURE && PRINCIPLES[ps.pick]
+      ? `<div class="pb-dim">You chose ${esc(pname(ps.pick))}. That one is for: ${esc(PRINCIPLES[ps.pick].cue.replace(/\.$/, '').toLowerCase())}.</div>`
+      : '';
+    return `<div class="pb-principle done bad">
+      <div><span class="pb-mark">✗</span> The deciding principle is <b>${esc(P.name)}</b></div>
+      <div class="pb-pstate">${esc(P.statement)}</div>
+      <div class="pb-pcue">The cue: ${esc(P.cue)}</div>
+      ${picked}
+    </div>`;
+  }
+
+  /**
+   * After a missed attempt, ask what went wrong, in the problem's own principles. Naming the gap is
+   * the moment the problem gets re-filed under the right idea; the answer is kept with its history.
+   */
+  function gapHTML(cur) {
+    if (cur.mode !== 'practice' || cur.clean || !(cur.firstTry === false || cur.revealed)) return '';
+    const tags = cur.tpl.principles || [];
+    const want = primaryOf(cur.tpl);
+    if (cur.gap) {
+      let reply;
+      if (PRINCIPLES[cur.gap]) reply = `Re-read it: ${PRINCIPLES[cur.gap].statement} Then find the step above where it comes in.`;
+      else if (cur.gap === 'which') reply = want ? `The cue for ${pname(want)}: ${PRINCIPLES[want].cue}` : 'Look at what is given and what is asked: that usually names the idea.';
+      else if (cur.gap === 'slip') reply = 'Slips show up in a units check and a rough size estimate before you press Check. It will be back soon with new numbers.';
+      else reply = 'Next time, mark what is asked and what is given before choosing a method.';
+      return `<div class="pb-gap done"><div class="pb-dim">What went wrong</div><p>${esc(reply)}</p></div>`;
+    }
+    const opt = (v, label) => `<button type="button" class="pb-chip" data-gap="${esc(v)}">${esc(label)}</button>`;
+    return `<div class="pb-gap">
+      <div class="pb-label">What went wrong?</div>
+      <div class="pb-filters">
+        ${tags.filter((t) => PRINCIPLES[t]?.family !== 'Tools' || tags.length === 1).map((t) => opt(t, `Applying ${pname(t).replace(/^./, (c) => c.toLowerCase())}`)).join('')}
+        ${want && PRINCIPLES[want].family !== 'Tools' ? opt('which', 'Seeing which idea to use') : ''}
+        ${opt('slip', 'A slip: sign, units, powers of ten, algebra')}
+        ${opt('read', 'Misreading the question')}
+      </div>
+    </div>`;
+  }
+
   function solutionHTML(cur) {
     if (!(cur.finished || cur.revealed) || cur.mode === 'exam') return '';
     const tpl = cur.tpl;
@@ -835,6 +990,8 @@ export function createPractice(api) {
     } else if (cur.correct && cur.clean) {
       const days = INTERVAL_DAYS[cur.recorded?.box ?? 0];
       verdict = `Right on the first try. Next review ${fmtDays(days)}.`;
+    } else if (cur.correct && cur.principle && !cur.principle.ok && cur.firstTry !== false && !cur.hints && !cur.peeked) {
+      verdict = 'Solved — but the principle wasn’t named, so it will come back soon to do clean.';
     } else if (cur.correct) {
       verdict = 'Solved. It will come back for review soon, so you can do it clean.';
     } else {
@@ -849,9 +1006,15 @@ export function createPractice(api) {
       : nextId
         ? `<button type="button" class="btn accent" data-act="next">Next in ${esc(st.session.label.toLowerCase())} →</button>`
         : `<button type="button" class="btn accent" data-act="list">More problems</button>`;
+    const [lead, ...also] = tpl.principles || [];
+    const pline = lead
+      ? `<p class="pb-pline">Deciding principle: <b>${esc(pname(lead))}</b>${also.length ? ` · also uses ${also.map((t) => esc(pname(t))).join(', ')}` : ''}${PRINCIPLES[lead]?.conserved ? ` · conserved: ${esc(PRINCIPLES[lead].conserved)}` : ''}</p>`
+      : '';
     return `<section class="pb-solution">
       <div class="pb-verdict ${cur.correct ? 'good' : ''}">${esc(verdict)}</div>
+      ${gapHTML(cur)}
       <h3>Solution</h3>
+      ${pline}
       <ol class="pb-steps">${steps}</ol>
       ${key}
       <div class="pb-labchecks" id="pb-labchecks"></div>
@@ -886,7 +1049,7 @@ export function createPractice(api) {
         <nav class="pb-examnav" aria-label="Exam problems">${nav}</nav>`;
     } else {
       const s = st.session;
-      const pos = s && s.ids.includes(cur.id) ? ` · ${s.ids.indexOf(cur.id) + 1} of ${s.ids.length}` : '';
+      const pos = s && sessionPos() >= 0 ? ` · ${sessionPos() + 1} of ${s.ids.length}` : '';
       // On a phone the sheet covers the lab; this lowers it so the scene shows above the problem.
       const peek = body.classList.contains('scene-peek');
       const sceneBtn = cur.tpl.lab ? `<button type="button" class="pb-scene" data-act="scene" aria-pressed="${peek}">${peek ? 'Full problem' : 'Show lab'}</button>` : '';
@@ -897,7 +1060,9 @@ export function createPractice(api) {
         </div>`;
     }
 
-    const buttons = exam
+    // Until the principle is named, the parts (and Check, hints, solution) wait.
+    const gated = !exam && cur.principle && cur.principle.pick == null && !cur.finished;
+    const buttons = gated ? '' : exam
       ? `<div class="pb-row">
           <button type="button" class="btn" data-act="exam-prev" ${st.exam.i === 0 ? 'disabled' : ''}>← Previous</button>
           ${st.exam.i < st.exam.items.length - 1 ? `<button type="button" class="btn accent" data-act="exam-next">Next →</button>` : `<button type="button" class="btn accent" data-act="exam-submit">Submit exam</button>`}
@@ -911,14 +1076,16 @@ export function createPractice(api) {
           <button type="button" class="btn ghost" data-act="reveal">Show solution</button>
         </div>`;
 
+    const mixed = !exam && isInterleaved() ? `<span class="pb-mixed" title="Every few problems, one comes back from an earlier chapter">Review from earlier</span> ` : '';
     return `${head}
-      <div class="pb-kicker">Ch ${esc(tpl.ch)} · ${esc(CHAPTER_TITLES[tpl.ch] || '')} · ${levelDots(tpl.level)} ${KIND_LABEL[tpl.kind] || ''}${src}</div>
+      <div class="pb-kicker">${mixed}Ch ${esc(tpl.ch)} · ${esc(CHAPTER_TITLES[tpl.ch] || '')} · ${levelDots(tpl.level)} ${KIND_LABEL[tpl.kind] || ''}${src}</div>
       <h2 class="pb-h">${esc(tpl.title)}</h2>
       <p class="pb-text">${prose(cur.view.text)}</p>
       ${cur.view.figure ? `<div class="pb-figure">${cur.view.figure}</div>` : ''}
       ${cur.note ? `<p class="pb-note">${esc(cur.note)}</p>` : ''}
       ${bannerHTML(cur)}
-      <form class="pb-parts" onsubmit="return false">${tpl.parts.map((p, i) => partHTML(cur, p, i)).join('')}</form>
+      ${principleHTML(cur)}
+      ${gated ? '' : `<form class="pb-parts" onsubmit="return false">${tpl.parts.map((p, i) => partHTML(cur, p, i)).join('')}</form>`}
       ${buttons}
       ${hints ? `<ol class="pb-hints">${hints}</ol>` : ''}
       ${solutionHTML(cur)}`;
@@ -1031,8 +1198,28 @@ export function createPractice(api) {
     if (!t || t.disabled) return;
     const cur = st.cur;
     if (t.dataset.open) {
+      const id = t.dataset.open;
       const ids = listIds();
-      openProblem(t.dataset.open, { session: { label: 'Problems', ids } });
+      const byPrinciple = st.filter.group === 'principle';
+      // A problem from an earlier exam, listed under its principle, is worked on its own.
+      const session = ids.includes(id) ? { label: byPrinciple ? 'By principle' : 'Problems', ids, mix: !byPrinciple } : { label: 'Problems', ids: [id] };
+      openProblem(id, { session });
+      return;
+    }
+    if (t.dataset.principle && cur?.principle && cur.principle.pick == null) {
+      const pick = t.dataset.principle;
+      cur.principle.pick = pick;
+      cur.principle.ok = gradePrinciple(cur.tpl, pick);
+      renderPanel();
+      panel.querySelector('.pb-parts .pb-input, .pb-parts input')?.focus({ preventScroll: true });
+      const el = $('sr-announce');
+      if (el) el.textContent = cur.principle.ok ? `Right: ${pname(pick)}.` : `The deciding principle is ${pname(primaryOf(cur.tpl))}.`;
+      return;
+    }
+    if (t.dataset.gap && cur && !cur.gap) {
+      cur.gap = t.dataset.gap;
+      progress.noteGap(cur.id, cur.gap);
+      renderPanel();
       return;
     }
     if (t.dataset.filter) {
@@ -1105,13 +1292,12 @@ export function createPractice(api) {
         restoreSetup();
         break;
       case 'again':
-        if (cur) openProblem(cur.id, { seed: 1 + Math.floor(Math.random() * 99999), session: st.session?.exam ? null : st.session });
+        // The principle was settled a moment ago on this same problem; asking again would be a formality.
+        if (cur) openProblem(cur.id, { seed: 1 + Math.floor(Math.random() * 99999), session: st.session?.exam ? null : st.session, pos: sessionPos(), principle: false });
         break;
-      case 'next': {
-        const id = nextInSession();
-        if (id) openProblem(id, { session: st.session });
+      case 'next':
+        advance();
         break;
-      }
       case 'mixed':
         startMixed();
         break;

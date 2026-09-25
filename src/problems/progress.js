@@ -56,8 +56,9 @@ export function createProgress(storage = browserStorage()) {
   /**
    * Record one finished attempt.
    * correct: every part right in the end · clean: right on the first check with no help.
+   * principle: { ok } when the attempt opened with the principle step.
    */
-  function record(id, { correct, clean = false, hints = 0, peeked = false, revealed = false, seed = 0, now = Date.now() }) {
+  function record(id, { correct, clean = false, hints = 0, peeked = false, revealed = false, seed = 0, principle = null, now = Date.now() }) {
     const it = data.items[id] || { attempts: 0, solved: 0, clean: 0, peeks: 0, hints: 0, box: 0, due: 0, last: 0, lastSeed: 0 };
     it.attempts++;
     if (correct) it.solved++;
@@ -71,9 +72,36 @@ export function createProgress(storage = browserStorage()) {
     it.last = now;
     it.lastSeed = seed;
     it.lastOk = !!correct && !revealed;
+    if (principle) {
+      it.pAsk = (it.pAsk || 0) + 1;
+      if (principle.ok) it.pOk = (it.pOk || 0) + 1;
+    }
     data.items[id] = it;
     writeJSON(storage, STORE_KEY, data);
     return it;
+  }
+
+  /**
+   * What the student said went wrong after a missed attempt: a principle id they misapplied, or
+   * 'which' (didn't see which idea to use), 'slip' (sign, units, algebra) or 'read' (misread it).
+   */
+  function noteGap(id, gap) {
+    const it = data.items[id];
+    if (!it || !gap) return;
+    it.gaps = it.gaps || {};
+    it.gaps[gap] = (it.gaps[gap] || 0) + 1;
+    writeJSON(storage, STORE_KEY, data);
+  }
+
+  /** Principle step tallies over the given ids: how often the principle was named, and named right. */
+  function principleTally(ids) {
+    let asked = 0;
+    let ok = 0;
+    for (const id of ids) {
+      asked += get(id)?.pAsk || 0;
+      ok += get(id)?.pOk || 0;
+    }
+    return { asked, ok };
   }
 
   /** 'new' | 'mastered' | 'learning' | 'missed' — for the list icons. */
@@ -123,6 +151,8 @@ export function createProgress(storage = browserStorage()) {
   return {
     get,
     record,
+    noteGap,
+    principleTally,
     status,
     mastery,
     counts,
@@ -180,4 +210,24 @@ export function pickSet(templates, progress, { n = 8, seed = Date.now(), maxConc
   }
   // Present in syllabus order, like a printed exam.
   return out.sort((a, b) => CHAPTER_ORDER.indexOf(a.ch) - CHAPTER_ORDER.indexOf(b.ch));
+}
+
+/**
+ * One problem from an earlier chapter to drop into a chapter's practice path, so working forward
+ * through the syllabus keeps retrieving what came before instead of massing one chapter at a time.
+ * Only problems the student has already met: the most overdue review first, otherwise the weakest
+ * one not tried in the last half day. Null when nothing earlier qualifies — a new student just
+ * works the path.
+ */
+export function pickInterleave(templates, progress, { ch, exclude = [], now = Date.now() } = {}) {
+  const before = CHAPTER_ORDER.indexOf(ch);
+  const skip = new Set(exclude);
+  const pool = templates.filter((t) => CHAPTER_ORDER.indexOf(t.ch) < before && !skip.has(t.id) && progress.get(t.id));
+  const it = (t) => progress.get(t.id);
+  const due = pool.filter((t) => it(t).due <= now).sort((a, b) => it(a).due - it(b).due);
+  if (due.length) return due[0];
+  const weak = pool
+    .filter((t) => it(t).box < MASTERED_BOX && now - it(t).last > DAY / 2)
+    .sort((a, b) => it(a).box - it(b).box || it(a).last - it(b).last);
+  return weak[0] || null;
 }

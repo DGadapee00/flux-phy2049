@@ -1,5 +1,5 @@
 /**
- * The principle that governs each problem — a DRAFT for the instructor to review.
+ * The principle that governs each problem.
  *
  * Why this exists: novices file problems by what they look like ("the capacitor one"), experts by
  * the law that decides them (Chi, Feltovich & Glaser). Topic tags index the bank the novice way.
@@ -9,8 +9,12 @@
  *
  * Each template gets one primary principle (what a grader would accept as "the idea") and up to
  * two secondary ones that it also leans on. `conserved` names the conserved quantity, for the
- * "what's conserved here, and what's the system?" question. Nothing in the app uses these yet;
- * problems-check only confirms every template is tagged with principles that exist.
+ * "what's conserved here, and what's the system?" question. The primary drives the principle step
+ * that opens each practice problem (principle-step.js) and the list's group-by-principle view.
+ *
+ * Status: drafted from the bank and accepted for FLUX as it stands. If the course adopts FLUX
+ * class-wide, the instructor's review (the calls listed in the review page) comes first.
+ * problems-check confirms every template is tagged with principles that exist.
  */
 export const PRINCIPLES = {
   // --- Conservation laws: the ones that cross every chapter

@@ -12,6 +12,7 @@ import e7 from './bank/e7.js';
 import wave from './bank/wave.js';
 
 import coaching from './coaching/index.js';
+import { PRINCIPLE_TAGS } from './principles.js';
 
 export const PROBLEMS = [...e1, ...e2, ...e3, ...e4, ...e5, ...e6, ...e7, ...wave];
 
@@ -34,6 +35,9 @@ for (const tpl of PROBLEMS) {
     } else part.options = add(part.options);
   }
 }
+
+// The governing principle first, then the ones the problem also leans on (src/problems/principles.js).
+for (const tpl of PROBLEMS) tpl.principles = PRINCIPLE_TAGS[tpl.id] || [];
 
 const byIdMap = new Map(PROBLEMS.map((p) => [p.id, p]));
 
