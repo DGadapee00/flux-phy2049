@@ -96,7 +96,7 @@ function partLabel(part, rendered, count) {
 // Veil: hide numbers the lab prints (in-scene labels) while a problem is unsolved.
 // Givens drawn as colored V / R / B spans and charge labels stay; values and verdicts are masked.
 const KEEP = '.charge-label, .axis-label, .circuit-sign, .probe-name, .lbl-name';
-const GIVEN = '.qV, .qR, .qB';
+const GIVEN = '.qV, .qR, .qB, .qC';
 const TELLS = /\d|real image|virtual image|attract|repel|against the grey|final \(|intermediate \(|rays leave parallel|total internal/i;
 const MARKS = /^[\s2FCVO′']*$/; // focal-point / center-of-curvature marks like "2F"
 // A bare name — P1, q₂, R3, A — is how the problem points at something. It is never an answer.

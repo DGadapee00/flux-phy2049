@@ -507,6 +507,72 @@ export const PREDICTIONS = [
     why: 'The pair’s resistance rises, so less current flows through C: C dims and takes a smaller share of the voltage. That leaves more voltage across the pair, so A — whose resistance did not change — gets brighter.',
   },
   {
+    id: 'rc-double-R',
+    lab: 'rc',
+    scenario: 'charge',
+    fits: (s) => s.mode === 'charge' && s.net === 'one',
+    ask: 'Before closing the switch, double the resistance $R$.',
+    prep(s) {
+      s.t = 0;
+      s.closed = false;
+    },
+    apply(s) {
+      s.R *= 2;
+    },
+    watch: [
+      { id: 'tau', label: 'the time constant $\\tau$', get: (c) => c.rc.tau, fmt: (v) => `${plain(v)} s` },
+      { id: 'Q', label: 'the charge it ends up with', get: (c) => c.rc.Qmax, fmt: fmtCharge },
+      { id: 'I0', label: 'the current the instant the switch closes', get: (c) => c.rc.Imax, fmt: fmtI },
+    ],
+    mode: 'factor',
+    expect: { tau: 2, Q: 1, I0: 0.5 },
+    why: 'The final charge is $C\\varepsilon$ — the resistor has no say in it. What $R$ controls is how fast charge can get there: half the starting current $\\varepsilon/R$, so twice the time constant $RC$.',
+  },
+  {
+    id: 'rc-one-more-tau',
+    lab: 'rc',
+    scenario: 'charge',
+    fits: (s) => s.mode === 'charge',
+    ask: 'The capacitor has been charging for one time constant. Let it run one more ($t = \\tau \\to 2\\tau$).',
+    prep(s) {
+      s.closed = true;
+      s.t = s.R * (s.net === 'parallel' ? s.C1 + s.C2 : s.net === 'series' ? (s.C1 * s.C2) / (s.C1 + s.C2) : s.C1);
+    },
+    apply(s) {
+      s.t *= 2;
+    },
+    watch: [
+      { id: 'I', label: 'the current', get: (c) => c.rc.I, fmt: fmtI },
+      { id: 'left', label: 'the charge still to come, $q_{\\max} - q$', get: (c) => c.rc.Qmax - c.rc.q, fmt: fmtCharge },
+    ],
+    mode: 'factor',
+    factors: [1, 0.5, 0.37, 0.25, 0],
+    tol: 0.01,
+    expect: { I: 0.37, left: 0.37 },
+    why: 'An exponential shrinks by the same factor, $e^{-1} \\approx 0.37$, every time constant — whatever is left of the gap, not a fixed amount. So a capacitor is 63% full at $\\tau$, 86% at $2\\tau$, and never quite 100%.',
+  },
+  {
+    id: 'rc-series-to-parallel',
+    lab: 'rc',
+    scenario: 'series',
+    fits: (s) => s.mode === 'charge' && s.net === 'series',
+    ask: 'Rewire the two capacitors from one-after-the-other (series) to side-by-side (parallel).',
+    prep(s) {
+      s.t = 0;
+      s.closed = false;
+    },
+    apply(s) {
+      s.net = 'parallel';
+    },
+    watch: [
+      { id: 'tau', label: 'the time constant', get: (c) => c.rc.tau, fmt: (v) => `${plain(v * 1000)} ms` },
+      { id: 'Q', label: 'the total charge stored at the end', get: (c) => c.rc.Qmax, fmt: fmtCharge },
+    ],
+    mode: 'dir',
+    expect: { tau: 'bigger', Q: 'bigger' },
+    why: 'In parallel the capacitances add, $C_{\\text{eq}} = C_1 + C_2$; in series $C_{\\text{eq}}$ is smaller than either. More capacitance holds more charge at the same $\\varepsilon$ and takes longer to fill through the same $R$.',
+  },
+  {
     id: 'biot-wire-double-r',
     lab: 'biot',
     scenario: 'wire',

@@ -1,5 +1,6 @@
 /** Exam 4 · Ch 43–44 (DC circuits, Kirchhoff, RC), 45 (magnetism), 46 (magnetic force), 47 (B from currents). */
 import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, sym, self, MU0, QE, ME, MP, DEG, AXES6, axisCode, texNum, texDeg, qty, pq as pv } from '../kit.js';
+import { rcState } from '../../physics/rc.js';
 
 const E4 = { exam: 'e4' };
 const PART = choice(['proton', 'a proton'], ['electron', 'an electron']);
@@ -105,6 +106,8 @@ export default [
       String.raw`A resistor in series adds resistance; one in parallel adds another path, so $R_{\text{eq}}$ drops.`,
       String.raw`$I = \varepsilon/R_{\text{eq}}$ moves the opposite way.`,
     ],
+    // The circuit after the third resistor goes in: three in series, or three side by side.
+    sim: { scenario: 'series', setup: (s, $) => void Object.assign(s, { scenarioId: $.how === 1 ? 'series' : 'parallel', values: {} }) },
     cases: [kase('parallel, current', { how: 2, qty: 2 }, { ans: 1 })],
   }),
   problem({
@@ -149,6 +152,7 @@ export default [
         req: String.raw`$\dfrac{1}{R_{\text{eq}}} = \dfrac{1}{R_1} + \dfrac{1}{R_2} + \dots > \dfrac{1}{R_{\min}}$, so $R_{\text{eq}} < R_{\min}$ every time.`,
       })[$.ask],
     ],
+    sim: { scenario: 'parallel', setup: (s, $) => void Object.assign(s, { scenarioId: $.ask === 'current' ? 'pair' : 'parallel', values: {} }) },
     cases: [
       kase('#1', { ask: 'out' }, { ans: 'parallel' }, { key: 'B) parallel' }),
       kase('#2', { ask: 'current' }, { ans: 'more' }, { key: 'C) more' }),
@@ -536,7 +540,7 @@ export default [
     cases: [kase('hand', { E: 12, r: 0.5, R: 5.5 }, { I: 2, V: 11, Pr: 2 })],
   }),
   problem({
-    ...E4, id: 'e4.44.rc-charge', ch: '44', src: 'Practice 44 #14A–D', title: 'Charging an RC circuit', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
+    ...E4, id: 'e4.44.rc-charge', ch: '44', lab: 'rc', src: 'Practice 44 #14A–D', title: 'Charging an RC circuit', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
     vars: { R: range(1, 1000, 1, 'kΩ', 1e3), C: range(10, 1000, 10, 'μF', 1e-6), E: range(3, 24, 1, 'V'), n: range(0.2, 4, 0.1, 'τ') },
     derive: ($) => {
       const tau = $.R * $.C;
@@ -556,13 +560,18 @@ export default [
       String.raw`$I = \dfrac{\varepsilon}{R}e^{-t/\tau} = \dfrac{${qty($.E, 'V')}}{${qty($.R, 'Ω')}}e^{-${texNum($.n)}} = ${texNum($.I)}\ \text{A}$`,
       String.raw`$V_C = \dfrac{q}{C} = ${texNum($.VC)}\ \text{V}$ and $V_R = IR = ${texNum($.VR)}\ \text{V}$ — together they make up the battery's $${texNum($.E)}\ \text{V}$`,
     ],
+    sim: {
+      scenario: 'charge',
+      setup: (s, $) => void Object.assign(s, { mode: 'charge', net: 'one', E: $.E, R: $.R, C1: $.C, t: $.t, closed: true }),
+      read: (c) => ({ tau: c.rc.tau, q: c.rc.q, I: c.rc.I, VC: c.rc.VC, VR: c.rc.VR }),
+    },
     cases: [
       kase('#14A–D', { R: 400, C: 50, E: 24, n: 1.5 }, { tau: 20, q: 9.3225e-4, I: 1.3388e-5, VC: 18.645, VR: 5.3551 }, { key: 'A) 9.32 x 10-4 C  B) 18.6 V  C) 1.34 x 10-5 A  D) 5.4 V' }),
       kase('hand', { R: 10, C: 100, E: 12, n: 1 }, { tau: 1, q: 7.585e-4, I: 4.415e-4 }),
     ],
   }),
   problem({
-    ...E4, id: 'e4.44.rc-discharge', ch: '44', title: 'Discharging a capacitor', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
+    ...E4, id: 'e4.44.rc-discharge', ch: '44', lab: 'rc', title: 'Discharging a capacitor', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
     vars: { R: range(0.5, 50, 0.5, 'kΩ', 1e3), C: range(5, 500, 5, 'μF', 1e-6), f: range(0.05, 0.9, 0.05) },
     derive: ($) => ({ tau: $.R * $.C, t: -$.R * $.C * Math.log($.f) }),
     text: (T) => `A charged ${T.C} μF capacitor discharges through ${T.R} kΩ. How long until its charge falls to ${T.f} of the starting value?`,
@@ -570,6 +579,15 @@ export default [
     steps: ($, f) => [
       String.raw`$q = q_0 e^{-t/RC} \;\Longrightarrow\; t = -RC\ln(${texNum($.f)}) = ${texNum($.t)}\ \text{s}$`,
     ],
+    sim: {
+      scenario: 'discharge',
+      // The question gives no starting voltage because the answer does not depend on one.
+      setup: (s, $) => {
+        Object.assign(s, { mode: 'discharge', net: 'one', V0: 12, R: $.R, C1: $.C, t: $.t, closed: true });
+        return 'The lab charges the capacitor to 12 V to start; the time to fall to a fraction of the charge is the same from any starting voltage.';
+      },
+      read: (c, s, $) => ({ t: c.rc.t, '@q / q₀': [c.rc.q / c.rc.Qmax, $.f] }),
+    },
     cases: [kase('hand', { R: 2, C: 50, f: 0.25 }, { t: 0.1386 })],
   }),
   problem({
@@ -689,7 +707,7 @@ export default [
     ],
   }),
   problem({
-    ...E4, id: 'e4.44.capacitor-pair', ch: '44', src: 'Practice 44 #7–8', title: 'Two capacitors in parallel or in series', kind: 'numeric', topics: ['capacitance', 'networks'],
+    ...E4, id: 'e4.44.capacitor-pair', ch: '44', lab: 'rc', src: 'Practice 44 #7–8', title: 'Two capacitors in parallel or in series', kind: 'numeric', topics: ['capacitance', 'networks'],
     vars: { mode: choice([1, 'in parallel'], [2, 'in series']), V: range(3, 48, 1, 'V'), C1: range(0.5, 20, 0.5, 'μF', 1e-6), C2: range(0.5, 20, 0.5, 'μF', 1e-6) },
     derive: ($) => {
       const Ceq = $.mode === 1 ? $.C1 + $.C2 : ($.C1 * $.C2) / ($.C1 + $.C2);
@@ -717,13 +735,23 @@ export default [
           String.raw`Both carry the same charge: $Q_1 = C_{\text{eq}}V = ${pv($.Ceq, 'F')}${pv($.V, 'V')} = ${texNum($.Q1)}\ \text{C}$`,
           String.raw`$V_1 = \dfrac{Q_1}{C_1} = \dfrac{${qty($.Q1, 'C')}}{${qty($.C1, 'F')}} = ${texNum($.V1)}\ \text{V}$ — the smaller capacitor takes the larger share of the voltage`,
         ]),
+    sim: {
+      scenario: 'parallel',
+      // Charged fully: twenty time constants through a nominal 1 kΩ.
+      setup: (s, $) => {
+        Object.assign(s, { mode: 'charge', net: $.mode === 1 ? 'parallel' : 'series', E: $.V, R: 1e3, C1: $.C1, C2: $.C2, closed: true });
+        s.t = 20 * s.R * ($.mode === 1 ? $.C1 + $.C2 : ($.C1 * $.C2) / ($.C1 + $.C2));
+        return 'The lab charges them through a 1 kΩ resistor and waits twenty time constants: fully charged.';
+      },
+      read: (c) => ({ Ceq: c.rc.Ceq, Q1: c.rc.Q1, V1: c.rc.V1 }),
+    },
     cases: [
       kase('#7', { mode: 1, V: 12, C1: 2, C2: 4 }, { Ceq: 6, Q1: 2.4e-5, V1: 12 }, { key: 'A) 6 μF  B) 2.4 x 10-5 C' }),
       kase('#8', { mode: 2, V: 12, C1: 2, C2: 4 }, { Ceq: 1.3333, Q1: 1.6e-5, V1: 8 }, { key: 'A) 1.33 μF  B) 1.6 x 10-5 C  C) 8 V' }),
     ],
   }),
   problem({
-    ...E4, id: 'e4.44.rc-limits', ch: '44', src: 'Practice 44 #10–13', title: 'An RC circuit at the start and at the end', kind: 'conceptual', topics: ['circuits', 'rc'],
+    ...E4, id: 'e4.44.rc-limits', ch: '44', lab: 'rc', src: 'Practice 44 #10–13', title: 'An RC circuit at the start and at the end', kind: 'conceptual', topics: ['circuits', 'rc'],
     vars: {
       ask: choice(
         ['C0', 'At the instant the switch closes, the voltage across the capacitor is…'],
@@ -762,6 +790,17 @@ export default [
         bulb: String.raw`$I = \dfrac{\varepsilon}{R}e^{-t/RC}$: largest at the start and decaying to zero, so the bulb starts bright and fades out.`,
       })[$.ask],
     ],
+    sim: {
+      scenario: 'charge',
+      // At the instant of closing, or twelve time constants on; a bulb is read by its current fading.
+      setup: (s, $) => void Object.assign(s, { mode: 'charge', net: 'one', closed: true, t: $.ask === 'Rinf' || $.ask === 'Cinf' ? 12 * s.R * s.C1 : 0 }),
+      read: (c, s, $) => {
+        const r = c.rc;
+        const level = (v) => (v < 0.01 * r.src ? 'zero' : v > 0.99 * r.src ? 'full' : 'between');
+        if ($.ask === 'bulb') return { ans: rcState({ ...s, t: 5 * r.tau }).I < 0.01 * r.I && r.I > 0 ? 'dim' : 'steady' };
+        return { ans: level($.ask === 'C0' || $.ask === 'Cinf' ? r.VC : r.VR) };
+      },
+    },
     cases: [
       kase('#10', { ask: 'C0' }, { ans: 'zero' }, { key: 'D) zero' }),
       kase('#11', { ask: 'R0' }, { ans: 'full' }, { key: "A) equal to the battery's terminal voltage", note: 'The sheet offers "equal to the battery\'s terminal voltage" twice, as A and as C, in #10–12; either letter is the same answer.' }),
@@ -770,7 +809,7 @@ export default [
     ],
   }),
   problem({
-    ...E4, id: 'e4.44.rc-from-tau', ch: '44', src: 'Practice 44 #15', title: 'From the time constant to R and the charge', kind: 'numeric', topics: ['circuits', 'rc'],
+    ...E4, id: 'e4.44.rc-from-tau', ch: '44', lab: 'rc', src: 'Practice 44 #15', title: 'From the time constant to R and the charge', kind: 'numeric', topics: ['circuits', 'rc'],
     vars: { C: range(0.5, 100, 0.5, 'μF', 1e-6), V: range(3, 48, 1, 'V'), tau: range(0.5, 20, 0.5, 's'), n: choice([1, 'one time constant'], [2, 'two time constants'], [3, 'three time constants']) },
     derive: ($) => {
       const Q = $.C * $.V;
@@ -791,10 +830,15 @@ export default [
       String.raw`$Q = C\varepsilon = ${pv($.C, 'F')}${pv($.V, 'V')} = ${texNum($.Q)}\ \text{C}$`,
       String.raw`$q = Q\left(1 - e^{-${$.n}}\right) = ${pv($.Q, 'C')}(${texNum(1 - Math.exp(-$.n))}) = ${texNum($.q)}\ \text{C}$`,
     ],
+    sim: {
+      scenario: 'charge',
+      setup: (s, $) => void Object.assign(s, { mode: 'charge', net: 'one', E: $.V, R: $.R, C1: $.C, t: $.n * $.tau, closed: true }),
+      read: (c, s, $) => ({ Q: c.rc.Qmax, q: c.rc.q, '@τ = RC': [c.rc.tau, $.tau] }),
+    },
     cases: [kase('#15', { C: 5, V: 12, tau: 4, n: 1 }, { R: 8e5, Q: 6e-5, q: 3.793e-5 }, { key: 'A) 8 x 10^5 Ω  B) 6 x 10-5 C  C) 3.79 x 10-5 C' })],
   }),
   problem({
-    ...E4, id: 'e4.44.rc-time-to-V', ch: '44', src: 'Practice 44 #14E, #16D', title: 'How long until the capacitor reaches a voltage?', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
+    ...E4, id: 'e4.44.rc-time-to-V', ch: '44', lab: 'rc', src: 'Practice 44 #14E, #16D', title: 'How long until the capacitor reaches a voltage?', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
     vars: { mode: choice([1, 'charge'], [2, 'discharge']), R: range(1, 1000, 1, 'kΩ', 1e3), C: range(1, 500, 1, 'μF', 1e-6), V0: range(3, 48, 1, 'V'), f: range(0.05, 0.95, 0.05) },
     derive: ($) => {
       const tau = $.R * $.C;
@@ -815,13 +859,18 @@ export default [
         ? String.raw`$e^{-t/\tau} = 1 - \dfrac{V_C}{\varepsilon} = 1 - \dfrac{${texNum($.Vt)}}{${texNum($.V0)}} \;\Longrightarrow\; t = -\tau\ln\!\left(${texNum(1 - $.f)}\right) = ${texNum($.t)}\ \text{s}$`
         : String.raw`$e^{-t/\tau} = \dfrac{V_C}{V_0} = \dfrac{${texNum($.Vt)}}{${texNum($.V0)}} \;\Longrightarrow\; t = -\tau\ln\!\left(${texNum($.f)}\right) = ${texNum($.t)}\ \text{s}$`,
     ],
+    sim: {
+      scenario: 'charge',
+      setup: (s, $) => void Object.assign(s, { mode: $.mode === 1 ? 'charge' : 'discharge', net: 'one', E: $.V0, V0: $.V0, R: $.R, C1: $.C, t: $.t, closed: true }),
+      read: (c, s, $) => ({ t: c.rc.t, '@V_C': [c.rc.VC, $.Vt] }),
+    },
     cases: [
       kase('#14E', { mode: 1, R: 400, C: 50, V0: 24, f: 20 / 24 }, { t: 35.835 }, { key: '35.8 s' }),
       kase('#16D', { mode: 2, R: 400, C: 50, V0: 24, f: 2 / 24 }, { t: 49.698 }, { key: '50 s' }),
     ],
   }),
   problem({
-    ...E4, id: 'e4.44.rc-discharge-state', ch: '44', src: 'Practice 44 #16A–C', title: 'A discharging capacitor partway through', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
+    ...E4, id: 'e4.44.rc-discharge-state', ch: '44', lab: 'rc', src: 'Practice 44 #16A–C', title: 'A discharging capacitor partway through', kind: 'numeric', level: 2, topics: ['circuits', 'rc'],
     vars: { R: range(1, 1000, 1, 'kΩ', 1e3), C: range(1, 500, 1, 'μF', 1e-6), V0: range(3, 48, 1, 'V'), n: range(0.2, 4, 0.1, 'τ') },
     derive: ($) => {
       const tau = $.R * $.C;
@@ -843,6 +892,11 @@ export default [
       String.raw`$q = CV_0e^{-t/\tau} = ${pv($.C, 'F')}${pv($.V0, 'V')}(${texNum($.k)}) = ${texNum($.q)}\ \text{C}$, and $V_C = V_0e^{-t/\tau} = ${texNum($.VC)}\ \text{V}$`,
       String.raw`No battery in the loop: $V_R = V_C = ${texNum($.VC)}\ \text{V}$`,
     ],
+    sim: {
+      scenario: 'discharge',
+      setup: (s, $) => void Object.assign(s, { mode: 'discharge', net: 'one', V0: $.V0, R: $.R, C1: $.C, t: $.t, closed: true }),
+      read: (c) => ({ q: c.rc.q, VC: c.rc.VC, VR: c.rc.VR }),
+    },
     cases: [
       kase('#16A–C', { R: 400, C: 50, V0: 24, n: 1.5 }, { q: 2.6776e-4, VC: 5.3551, VR: 5.3551 }, {
         key: 'A) 2.7 x 10-4 C  B) 5.4 V  C) 18.6 V',

@@ -12,6 +12,7 @@ const loaders = {
   conductors: () => import('./conductors.js'),
   biot: () => import('./biot.js'),
   circuits: () => import('./circuits.js'),
+  rc: () => import('./rc.js'),
   ampere: () => import('./ampere.js'),
   magforce: () => import('./magforce.js'),
   faraday: () => import('./faraday.js'),

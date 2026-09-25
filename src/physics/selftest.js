@@ -65,6 +65,7 @@ import {
 } from './magforce.js';
 import { solveCircuit, loopTerms, junctionTerms } from './mna.js';
 import { CIRCUITS, netlist, equivalentR } from '../data/circuits.js';
+import { rcState, equivalentC } from './rc.js';
 import { expandingLoop, slidingBar, generator, dipoleLoop, fluxDipoleLoop, inducedCurrent, lenz } from './faraday.js';
 import { acState } from './ac.js';
 import { planeWave, intensityAvg, spectrumBand } from './emwave.js';
@@ -639,6 +640,55 @@ for (const layout of CIRCUITS) {
   const Req = equivalentR(layout, edges);
   const bats = edges.filter((e) => e.type === 'V');
   if (Req != null && bats.length === 1) approx(sol.I[bats[0].id], bats[0].value / Req, 1e-4, `${layout.id}: battery current = ε / R_eq`);
+}
+
+console.log('\nRC circuits: closed forms against a time-stepped loop rule');
+
+{
+  // Step dq/dt = (ε − q/C)/R (charging) and dq/dt = −q/(RC) (discharging) with RK4 and compare.
+  const R = 4e5;
+  const C = 5e-5;
+  const E = 24;
+  const tau = R * C;
+  const rk4 = (f, q, dt) => {
+    const k1 = f(q);
+    const k2 = f(q + (dt / 2) * k1);
+    const k3 = f(q + (dt / 2) * k2);
+    const k4 = f(q + dt * k3);
+    return q + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+  };
+  let q = 0;
+  const steps = 3000;
+  const T = 1.5 * tau;
+  for (let i = 0; i < steps; i++) q = rk4((x) => (E - x / C) / R, q, T / steps);
+  const s = rcState({ mode: 'charge', net: 'one', E, V0: E, R, C1: C, C2: C, t: T, closed: true });
+  approx(s.q, q, 1e-6, 'charging: q(1.5τ) = Cε(1 − e^{−1.5}) matches the stepped loop rule');
+  approx(s.q, 9.3225e-4, 1e-4, 'charging: 400 kΩ, 50 μF, 24 V at 30 s holds 9.32×10⁻⁴ C');
+  approx(s.I, 1.3388e-5, 1e-4, 'charging: I(30 s) = (ε/R)e^{−1.5} = 1.34×10⁻⁵ A');
+  approx(s.loop, 0, 1e-12, 'charging: ε − V_R − V_C = 0 at every instant');
+  let qd = C * E;
+  for (let i = 0; i < steps; i++) qd = rk4((x) => -x / (R * C), qd, T / steps);
+  const d = rcState({ mode: 'discharge', net: 'one', E, V0: E, R, C1: C, C2: C, t: T, closed: true });
+  approx(d.q, qd, 1e-6, 'discharging: q(1.5τ) = CV₀e^{−1.5} matches the stepped loop rule');
+  approx(d.VR, d.VC, 1e-12, 'discharging: no battery, so V_R = V_C');
+  const open = rcState({ mode: 'charge', net: 'one', E, V0: E, R, C1: C, C2: C, t: 0, closed: false });
+  ok(open.I === 0 && open.q === 0, 'switch open: no current, no charge');
+  const t0 = rcState({ mode: 'charge', net: 'one', E, V0: E, R, C1: C, C2: C, t: 0, closed: true });
+  approx(t0.VR, E, 1e-12, 'the instant the switch closes: V_R = ε, V_C = 0');
+  const late = rcState({ mode: 'charge', net: 'one', E, V0: E, R, C1: C, C2: C, t: 12 * tau, closed: true });
+  approx(late.VC, E, 1e-5, 'long after: V_C → ε and the current stops');
+}
+
+{
+  approx(equivalentC('parallel', 2e-6, 4e-6), 6e-6, 1e-12, 'capacitors in parallel: C₁ + C₂ = 6 μF');
+  approx(equivalentC('series', 2e-6, 4e-6), 1.3333e-6, 1e-4, 'capacitors in series: C₁C₂/(C₁ + C₂) = 1.33 μF');
+  const ser = rcState({ mode: 'charge', net: 'series', E: 12, V0: 12, R: 1e3, C1: 2e-6, C2: 4e-6, t: 1, closed: true });
+  approx(ser.Q1, 1.6e-5, 1e-6, 'series, fully charged: each carries C_eq·V = 1.6×10⁻⁵ C');
+  approx(ser.V1, 8, 1e-6, 'series: the smaller capacitor takes the larger voltage, 8 V of 12');
+  approx(ser.V1 + ser.V2, 12, 1e-9, 'series: V₁ + V₂ = ε');
+  const par = rcState({ mode: 'charge', net: 'parallel', E: 12, V0: 12, R: 1e3, C1: 2e-6, C2: 4e-6, t: 1, closed: true });
+  approx(par.Q1, 2.4e-5, 1e-6, 'parallel, fully charged: Q₁ = C₁V = 2.4×10⁻⁵ C');
+  approx(par.Q1 + par.Q2, par.q, 1e-9, 'parallel: the charges add up to C_eq·V');
 }
 
 console.log('\nFaraday / Lenz');

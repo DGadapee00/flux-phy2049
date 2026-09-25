@@ -267,3 +267,47 @@ export function drawPaschen(canvas, { curve, pd, V, min, sparks }) {
   ctx.fillText('pd', w - 22, h - 3);
   ctx.globalAlpha = 1;
 }
+
+/**
+ * RC: V_C (gold) and I (yellow) as fractions of their full values against t/τ, one gridline per
+ * time constant, with the present moment marked on both curves.
+ */
+export function drawRC(canvas, { curves, n, charging }) {
+  if (!canvas || !curves?.length) return;
+  const { ctx, w, h } = setup(canvas);
+  const span = curves[curves.length - 1].x;
+  const y0 = h - 14;
+  const top = 12;
+  axes(ctx, w, h, y0, span);
+  const X = (x) => 12 + (x / span) * (w - 24);
+  const Y = (f) => y0 - f * (y0 - top);
+  const curve = (color, key) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    curves.forEach((p, i) => (i ? ctx.lineTo(X(p.x), Y(p[key])) : ctx.moveTo(X(p.x), Y(p[key]))));
+    ctx.stroke();
+  };
+  curve(GOLD, 'vc');
+  curve(YELLOW, 'i');
+  ctx.font = SERIF;
+  ctx.fillStyle = GOLD;
+  ctx.fillText(charging ? 'V_C → ε' : 'V_C', w - 70, charging ? top + 10 : y0 - 22);
+  ctx.fillStyle = YELLOW;
+  ctx.fillText('I', 22, top + 12);
+  ctx.fillStyle = WHITE;
+  ctx.globalAlpha = 0.7;
+  ctx.font = "10px 'Inter', system-ui, sans-serif";
+  for (let k = 1; k < span; k++) ctx.fillText(`${k}τ`, X(k) - 6, h - 2);
+  ctx.globalAlpha = 1;
+  if (n == null) return;
+  const k = Math.exp(-n);
+  ctx.strokeStyle = 'rgba(236,230,226,0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(X(n), top - 4);
+  ctx.lineTo(X(n), y0);
+  ctx.stroke();
+  dot(ctx, X(n), Y(charging ? 1 - k : k), GOLD);
+  dot(ctx, X(n), Y(k), YELLOW);
+}

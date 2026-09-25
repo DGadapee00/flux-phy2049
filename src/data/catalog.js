@@ -38,7 +38,7 @@ export const EXAMS = [
     title: 'Circuits & magnetism',
     chapters: '43–47',
     date: 'Fri 10/9',
-    labs: ['circuits', 'biot', 'ampere', 'magforce'],
+    labs: ['circuits', 'rc', 'biot', 'ampere', 'magforce'],
     coming: [],
   },
   {
@@ -87,6 +87,7 @@ export const LAB_META = {
   gauss: { id: 'gauss', exam: 'e2', title: 'Gauss' },
   conductors: { id: 'conductors', exam: 'e2', title: 'Conductors' },
   circuits: { id: 'circuits', exam: 'e4', title: 'Circuits' },
+  rc: { id: 'rc', exam: 'e4', title: 'RC' },
   biot: { id: 'biot', exam: 'e4', title: 'Biot–Savart' },
   ampere: { id: 'ampere', exam: 'e4', title: 'Ampère' },
   magforce: { id: 'magforce', exam: 'e4', title: 'Mag force' },

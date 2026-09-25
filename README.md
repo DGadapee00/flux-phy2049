@@ -68,7 +68,7 @@ Every panel is typeset — including the practice panel, where the statement, hi
 
 ## Predict first
 
-Every lab has a **Predict first** card at the foot of its Setup panel: 50 short experiments across the 25 labs. Each one names a change ("the battery stays connected; pull the plates to twice the separation") and asks what it does to one to three quantities. You answer bigger / smaller / same, or by what factor, or yes / no. You answer while the lab still shows the setup before the change. **Make the change** then does it in the lab, and the card grades each prediction against the lab's own before-and-after values and gives the reasoning. **Undo** puts the setup back. **Try it** first loads the preset the experiment is written for, unless the lab is already on it. Several experiments aim at the classic wrong answers: a narrower slit gives a *wider* pattern, a period that doesn't depend on speed, a third polarizer that lets light *through*, a bigger Gaussian sphere with the same flux. The card hides while a practice problem is open, and a tally of right predictions stays in this browser.
+Every lab has a **Predict first** card at the foot of its Setup panel: 53 short experiments across the 26 labs. Each one names a change ("the battery stays connected; pull the plates to twice the separation") and asks what it does to one to three quantities. You answer bigger / smaller / same, or by what factor, or yes / no. You answer while the lab still shows the setup before the change. **Make the change** then does it in the lab, and the card grades each prediction against the lab's own before-and-after values and gives the reasoning. **Undo** puts the setup back. **Try it** first loads the preset the experiment is written for, unless the lab is already on it. Several experiments aim at the classic wrong answers: a narrower slit gives a *wider* pattern, a period that doesn't depend on speed, a third polarizer that lets light *through*, a bigger Gaussian sphere with the same flux. The card hides while a practice problem is open, and a tally of right predictions stays in this browser.
 
 ## Setting up by hand
 
@@ -83,7 +83,7 @@ The number plane is labeled in real distance and the ticks change with the view,
 | Exam 1 · Ch V, 34–35 | `#/e1/vectors` | Vectors, Force |
 | Exam 2 · Ch 36–37 | `#/e2/gauss` | Field, Integrals, Gauss, Conductors |
 | Exam 3 · Ch 38–42 | `#/e3/potential` | Potential, Integrals, Capacitor, Ohm, Power, Breakdown |
-| Exam 4 · Ch 43–47 | `#/e4/circuits` | Circuits, Biot–Savart, Ampère, Mag force |
+| Exam 4 · Ch 43–47 | `#/e4/circuits` | Circuits, RC, Biot–Savart, Ampère, Mag force |
 | Exam 5 · Ch 48–52 | `#/e5/faraday` | Faraday, AC |
 | Exam 6 · Ch 53–57 | `#/e6/emwave` | EM wave, Polarization |
 | Exam 7 · Ch 58–62 | `#/e7/refraction` | Refraction, Mirrors, Lenses |
@@ -101,6 +101,7 @@ The number plane is labeled in real distance and the ticks change with the view,
 ### Exam 4 labs
 
 - **Circuits** (`#/e4/circuits`) — fifteen layouts: series and parallel with three or four resistors, two in parallel, R₁ + (R₂∥R₃) with and without an R₄, R₁ ∥ (R₂ + R₃), two identical-bulb networks, one loop with two batteries, two- and three-battery Kirchhoff circuits, a battery with internal resistance, and three cells-and-bulb circuits side by side. Every circuit problem in the bank loads its own numbers into one of them. Solved by nodal analysis; wires colored by potential, dots show real current (hidden, with the node markers, while a problem is unsolved), grey chevrons show the assumed direction, and a battery set negative is drawn turned round. Junction and loop rules are evaluated live.
+- **RC** (`#/e4/rc`) — a battery, switch, resistor and capacitor in one loop, or two capacitors in parallel or in series. Close the switch and the capacitor charges on a clock that fits five time constants into about six seconds; take the battery out and it discharges. You can scrub time in units of τ. The yellow dots are the current and slow to a stop as the capacitor fills. The plates brighten with their share of the charge. The plot draws V_C and I against t/τ with the present moment marked. Every RC and capacitor-pair problem in Ch 44 loads its own numbers into it.
 - **Biot–Savart** (`#/e4/biot`) — wire, loop, solenoid. Σ dB is compared with the exact formula for the *same finite* geometry; the ideal limit (μ₀I/2πρ, μ₀nI) is shown separately.
 - **Ampère** (`#/e4/ampere`) — circular Amperian loop as a Riemann sum, pieces colored by B·dl. Centered, off-center, wire outside, two wires, inside a thick wire.
 - **Mag force** (`#/e4/magforce`) — proton / electron orbits and a helix (Boris integration), velocity selector, F = I L × B, parallel wires.

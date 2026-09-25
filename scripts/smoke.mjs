@@ -27,6 +27,7 @@ const LAB = {
   conductors: 'e2',
   biot: 'e4',
   circuits: 'e4',
+  rc: 'e4',
   ampere: 'e4',
   magforce: 'e4',
   faraday: 'e5',
@@ -241,6 +242,19 @@ const circuits = await page.evaluate(() => ({
 await page.screenshot({ path: path.join(outDir, 'circuits.png') });
 check('circuits.series I = 12 V / 12 Ω', circuits.I1, 1, 0.001);
 check('circuits.loop rule', circuits.loopMax, 0, 1e-6);
+
+// RC: close the switch, let the clock run, and check the lab against the closed form at that moment.
+await go('rc');
+await page.click('#rc-play-close');
+await page.waitForTimeout(900);
+const rc = await page.evaluate(() => {
+  const s = window.__gauss.state;
+  const r = window.__gauss.computed.rc;
+  return { t: s.t, q: r.q, want: r.Ceq * s.E * (1 - Math.exp(-s.t / r.tau)), loop: r.loop, custom: !!s.custom };
+});
+check('rc: q(t) = Cε(1 − e^{−t/τ}) on the running clock', rc.q, rc.want, 1e-6);
+check('rc: loop rule at that instant', rc.loop, 0, 1e-9);
+if (!(rc.t > 0) || rc.custom) mismatches.push({ name: 'rc: the clock runs and the preset keeps its name', got: rc, exp: 't > 0, not custom' });
 
 await go('ampere');
 const ampere = await page.evaluate(() => ({

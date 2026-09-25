@@ -1102,6 +1102,10 @@ input[type='checkbox'] {
   color: var(--red);
 }
 
+.qC {
+  color: var(--gold);
+}
+
 .readout .value.qV {
   color: var(--blue);
 }

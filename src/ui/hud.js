@@ -1,6 +1,6 @@
 import { EXAMS, examById, LAB_META } from '../data/catalog.js';
 import { setLawEl, prose, mathText, escapeHTML } from './shared.js';
-import { drawVx, drawAC, drawVI, drawPaschen } from './plot.js';
+import { drawVx, drawAC, drawVI, drawPaschen, drawRC } from './plot.js';
 import { resetChargeListSig } from '../labs/charges-ui.js';
 import { sceneScale, workPlane, lenLabel, PLANE_AXES } from '../engine/frame.js';
 
@@ -390,6 +390,7 @@ export function createHUD(api) {
       if (plot.type === 'ac') drawAC(canvas, plot.power, plot.t);
       if (plot.type === 'vi') drawVI(canvas, plot);
       if (plot.type === 'paschen') drawPaschen(canvas, plot);
+      if (plot.type === 'rc') drawRC(canvas, plot);
     }
   }
 

@@ -38,6 +38,7 @@ export const QUANTITIES = {
   I: { sym: 'I', name: 'Current', unit: 'A', unitName: 'ampere', equals: 'C/s', from: 'I = \\dfrac{dq}{dt}' },
   R: { sym: 'R', name: 'Resistance', unit: 'ohm', unitName: 'ohm', equals: 'V/A', from: 'R = \\dfrac{\\Delta V}{I}' },
   rhoR: { sym: '\\rho', name: 'Resistivity', unit: 'ohm*m', unitName: '', equals: 'Ω·m', from: 'R = \\dfrac{\\rho L}{A}' },
+  tau: { sym: '\\tau', name: 'Time constant', unit: 's', unitName: 'second', equals: 'Ω·F', from: '\\tau = RC' },
   P: { sym: 'P', name: 'Power', unit: 'W', unitName: 'watt', equals: 'J/s', from: 'P = I\\,\\Delta V = I^2R' },
   emf: { sym: '\\varepsilon', name: 'emf', unit: 'V', unitName: 'volt', equals: 'J/C', from: '\\varepsilon = I(R + r)' },
 
@@ -77,6 +78,7 @@ export const LAB_UNITS = {
   ohm: ['I', 'V', 'R', 'rhoR', 'P'],
   power: ['P', 'I', 'V', 'R', 'U'],
   circuits: ['I', 'V', 'R', 'emf', 'P', 'C'],
+  rc: ['tau', 'C', 'q', 'I', 'V', 'R', 'Ucap', 'P'],
   biot: ['B', 'I', 'r', 'mu0'],
   ampere: ['B', 'I', 'r', 'mu0'],
   magforce: ['F', 'B', 'q', 'I', 'r'],
