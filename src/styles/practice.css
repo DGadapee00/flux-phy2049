@@ -779,6 +779,11 @@ body.problem-blind #readout {
   visibility: hidden;
 }
 
+/* Help text that states a result (the direction of travel, say) waits until the problem is solved. */
+body.problem-blind .tell {
+  display: none;
+}
+
 body.problem-blind .veiled,
 body.problem-blind .veiled * {
   color: transparent !important;
@@ -913,4 +918,9 @@ body.problem-blind .veiled .katex {
   border: 1px solid var(--border);
   font-size: 9.5px;
   color: var(--text-dim);
+}
+
+/* "Show lab" only matters where the sheet covers the scene: phones. */
+.pb-scene {
+  display: none;
 }

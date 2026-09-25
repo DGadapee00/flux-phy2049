@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { Arrow, M, fatLine, disposeTree } from './manim.js';
+import { Arrow, M, fatLine, disposeTree, markAnswer } from './manim.js';
 
 /**
  * Shared drawing for the Mirrors and Lenses labs: an optical axis in centimeters, scaled by U scene
@@ -50,14 +50,24 @@ export function tick(group, x, text, color = M.white) {
 /**
  * Draw a principal-ray bundle from optics.principalRays: solid real rays (incoming and outgoing),
  * dashed backward extensions to a virtual image.
+ *
+ * What happens after the mirror or lens is the answer to "where is the image and what is it like",
+ * so the outgoing rays and extensions go on the answer layer: while a problem is unsolved the
+ * student sees the rays arrive and draws the rest.
  */
 export function drawBundle(group, bundle) {
   bundle.rays.forEach((r, i) => {
     const color = RAY_COLORS[i % RAY_COLORS.length];
     group.add(line(r.incoming, { color, width: 2.4 }));
-    group.add(line(r.outgoing, { color, width: 2.4 }));
-    if (r.extension) group.add(line(r.extension, { color, width: 1.6, opacity: 0.75, dashed: true }));
+    group.add(markAnswer(line(r.outgoing, { color, width: 2.4 })));
+    if (r.extension) group.add(markAnswer(line(r.extension, { color, width: 1.6, opacity: 0.75, dashed: true })));
   });
+}
+
+/** An image and its caption: answers, so they wait for the problem to be solved. */
+export function imageMark(group, x, h, color, caption, captionY) {
+  group.add(markAnswer(arrowAt(x, h, color)));
+  group.add(markAnswer(label(caption, x, captionY)));
 }
 
 /**

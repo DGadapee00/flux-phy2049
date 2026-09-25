@@ -43,7 +43,8 @@ export const num = (id, get, unit, o = {}) => ({
  * the answers to another's question. Read it through choiceOptions() (engine.js).
  */
 export const mc = (id, options, correct, o = {}) => {
-  const norm = (list) => list.map(([value, label]) => ({ value, label }));
+  // An option may carry a third entry: why that answer is wrong, shown when a student picks it.
+  const norm = (list) => list.map(([value, label, why]) => (why ? { value, label, why } : { value, label }));
   return {
     id,
     kind: 'choice',
@@ -153,13 +154,17 @@ export const charge = (q, x, y, z = 0, extra = {}) => ({ id: ++uid, q, x, y, z, 
  * Now the geometry is the question's, and the *view* adapts — so a value read off the lab is the
  * value being solved for, and the setup can be rebuilt by hand from the problem text.
  */
-export function layout(s, { charges = [], probe = null, pathA = null, marks = null, plane = 'xy', select = 0 } = {}) {
+export function layout(s, { charges = [], probe = null, pathA = null, marks = null, plane = 'xy', select = 0, probeTag = null } = {}) {
   const pt = (p) => ({ x: p.x || 0, y: p.y || 0, z: p.z || 0 });
   const all = [...charges, probe, pathA, ...(marks || [])].filter(Boolean).map(pt);
   const extent = Math.max(1e-9, ...all.map((p) => Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z))));
   s.charges = charges;
   if (probe) s.probe = pt(probe);
   if (pathA) s.pathA = pt(pathA);
+  // Point A is the Potential lab's path marker. A problem that never mentions A must not show one.
+  s.hideA = !pathA;
+  // Paths run A → B; a lone point in a problem is P.
+  s.probeTag = probeTag ?? (pathA ? 'B' : 'P');
   if (marks) s.marks = marks.map((m) => ({ ...m, ...pt(m) }));
   s.extraE = { x: 0, y: 0, z: 0 };
   s.selectedId = charges[select]?.id ?? charges[0]?.id ?? null;
@@ -180,6 +185,21 @@ export function texNum(x, n = 3) {
   if (a >= 0.01 && a < 1e5) return String(Number(x.toPrecision(n))).replace('-', '-');
   const [m, e] = x.toExponential(n - 1).split('e');
   return `${Number(m)}\\times 10^{${Number(e)}}`;
+}
+
+/**
+ * A sum written the way a person writes it: terms([[3, 'x̂'], [-4, 'ŷ']]) → "3 x̂ − 4 ŷ", never
+ * "3 x̂ + -4 ŷ". Numbers are printed as given (they are already the problem's display values).
+ */
+export function terms(list) {
+  return list
+    .map(([c, sym], i) => {
+      const n = Number(c);
+      const abs = String(Math.abs(n));
+      if (i === 0) return `${n < 0 ? '−' : ''}${abs}${sym ? ` ${sym}` : ''}`;
+      return `${n < 0 ? '−' : '+'} ${abs}${sym ? ` ${sym}` : ''}`;
+    })
+    .join(' ');
 }
 
 export const mag = (v) => Math.hypot(v.x, v.y, v.z || 0);

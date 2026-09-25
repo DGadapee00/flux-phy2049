@@ -28,7 +28,7 @@ export class EquipotentialView {
     const { lines, vmin, vmax } = contourLines(charges, extraE, opts);
     const span = Math.max(1e-9, vmax - vmin);
     for (const band of lines) {
-      const t = (band.level - vmin) / span;
+      const t = band.t ?? (band.level - vmin) / span;
       const color = rampColor(t, new THREE.Color());
       const positions = [];
       for (const [a, b] of band.segs) {

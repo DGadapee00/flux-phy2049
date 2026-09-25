@@ -103,15 +103,62 @@ export function choiceOptions(part, $) {
   return typeof part.options === 'function' ? part.options($) : part.options;
 }
 
+/** A numeric part's unit for this instance: fixed, or chosen by the version (`unit: ($) => …`). */
+export function unitOf(part, $) {
+  return (typeof part.unit === 'function' ? part.unit($) : part.unit) ?? null;
+}
+
+// ---------- prose tidying ----------
+// Generated numbers land in fixed sentences, so the sentence has to adapt to the number.
+const SUP_DIGIT = { '⁻': '-', '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9' };
+
+/** "a 8 cm object" → "an 8 cm object": eight, eleven, eighteen and eighty start with a vowel sound. */
+function articles(text) {
+  return text.replace(/\b([Aa]) (\d[\d,]*)(?=[.\s-])/g, (m, a, num) => {
+    const ip = num.replace(/,/g, '');
+    const vowel = ip[0] === '8' || ((ip.length === 2 || ip.length === 5 || ip.length === 8) && /^1[18]/.test(ip));
+    return vowel ? `${a}n ${num}` : m;
+  });
+}
+
+/** "10 × 10⁶" → "1 × 10⁷", "20 × 10⁵" → "2 × 10⁶": the mantissa goes between 1 and 10. */
+function sciNotation(text) {
+  return text.replace(/(^|[^\d.])(\d+(?:\.\d+)?) × 10([⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g, (m, pre, mant, sup) => {
+    let v = Number(mant);
+    let e = Number([...sup].map((c) => SUP_DIGIT[c]).join(''));
+    if (!(v > 0) || !Number.isFinite(e) || (v >= 1 && v < 10)) return m;
+    while (v >= 10) {
+      v /= 10;
+      e++;
+    }
+    while (v < 1) {
+      v *= 10;
+      e--;
+    }
+    const exp = String(e).replace(/./g, (c) => SUP[c]);
+    return `${pre}${Number(v.toPrecision(12))} × 10${exp}`;
+  });
+}
+
+/** A sentence that opens with an article starts with a capital, whatever the template put first. */
+function capitalize(text) {
+  return /^(a|an|the) [a-z]/.test(text) ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
+export function tidyProse(text) {
+  if (typeof text !== 'string') return text;
+  return capitalize(sciNotation(articles(text)));
+}
+
 export function render(inst) {
   const { tpl, $, T } = inst;
   return {
-    text: tpl.text(T, $, sig),
+    text: tidyProse(tpl.text(T, $, sig)),
     parts: tpl.parts.map((p) => ({
       id: p.id,
       kind: p.kind,
       label: typeof p.label === 'function' ? p.label(T, $, sig) : p.label,
-      unit: p.unit ?? null,
+      unit: unitOf(p, $),
       options: p.options ? choiceOptions(p, $).map((o) => ({ value: o.value, label: typeof o.label === 'function' ? o.label(T, $) : o.label })) : undefined,
       multi: p.multi ?? false,
       rubric: p.rubric ?? null,
@@ -135,17 +182,22 @@ export function answers(inst) {
   return Object.fromEntries(inst.tpl.parts.map((p) => [p.id, expected(p, inst.$)]));
 }
 
-/** Accepts 2.52e7, 2.52x10^7, 2.52×10^7, 2.52*10^7, 2.52 E7, 1/2, −3, and a trailing unit ("2.5 A", "$20.25"). */
-export function parseNumber(input) {
-  if (typeof input === 'number') return input;
-  const s = String(input)
+/** The number and exponent written out the way the grader reads them, with any unit still on the end. */
+function normalizeNumber(input) {
+  return String(input)
     .trim()
     .replace(/[−–]/g, '-')
     .replace(/,/g, '')
     .replace(/^\$/, '')
     .replace(/10([⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g, (_, m) => '10^' + [...m].map((c) => Object.keys(SUP).find((k) => SUP[k] === c)).join(''))
-    .replace(/\s*[x×*·]\s*10\s*\^?\s*\(?\s*(-?\d+)\s*\)?/i, 'e$1')
-    .replace(/(\d|\.)\s*(?![eE][-+]?\d)[A-Za-zμΩ°%$/·²³⁻\s()][^\d]*$/, '$1')
+    .replace(/\s*[x×*·]\s*10\s*\^?\s*\(?\s*(-?\d+)\s*\)?/i, 'e$1');
+}
+
+/** Accepts 2.52e7, 2.52x10^7, 2.52×10^7, 2.52*10^7, 2.52 E7, 1/2, −3, and a trailing unit ("2.5 A", "$20.25"). */
+export function parseNumber(input) {
+  if (typeof input === 'number') return input;
+  const s = normalizeNumber(input)
+    .replace(/(\d|\.)\s*(?![eE][-+]?\d)[A-Za-zμµΩ°%$/·²³⁻\s()][^\d]*$/, '$1')
     .replace(/\s+/g, '');
   if (/^-?[\d.]+\/[\d.]+$/.test(s)) {
     const [a, b] = s.split('/').map(Number);
@@ -153,6 +205,81 @@ export function parseNumber(input) {
   }
   const v = Number(s);
   return Number.isFinite(v) ? v : NaN;
+}
+
+/** The unit typed after the number, if any ("85 pC" → "pC"). */
+export function typedUnit(input) {
+  if (typeof input === 'number') return '';
+  const m = /^\s*[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?\s*(.*?)\s*$/.exec(normalizeNumber(input));
+  return m ? m[1] : '';
+}
+
+// Units with their SI factor, for reading what a student types after a number. The dimension half
+// comes from src/physics/units.js; this half knows that a μC is 10⁻⁶ C.
+const DEG = Math.PI / 180;
+const UNIT_BASES = {
+  m: ['m', 1], g: ['kg', 1e-3], s: ['s', 1], A: ['A', 1], C: ['C', 1], N: ['N', 1], J: ['J', 1], W: ['W', 1],
+  V: ['V', 1], F: ['F', 1], 'Ω': ['Ω', 1], ohm: ['Ω', 1], T: ['T', 1], Wb: ['Wb', 1], H: ['H', 1], Hz: ['Hz', 1],
+  Pa: ['Pa', 1], eV: ['J', 1.602176634e-19], Wh: ['J', 3600], D: ['D', 1], rad: ['rad', 1], deg: ['rad', DEG], '°': ['rad', DEG],
+  min: ['s', 60], h: ['s', 3600],
+};
+const PREFIX = { p: 1e-12, n: 1e-9, 'μ': 1e-6, 'µ': 1e-6, u: 1e-6, m: 1e-3, c: 1e-2, k: 1e3, M: 1e6, G: 1e9 };
+
+function unitSymbol(sym) {
+  if (sym === 'kg') return { dim: parseUnit('kg'), f: 1 };
+  const exact = UNIT_BASES[sym];
+  if (exact) return { dim: parseUnit(exact[0]), f: exact[1] };
+  const pre = PREFIX[sym[0]];
+  const base = UNIT_BASES[sym.slice(1)];
+  if (pre && base && !['°', 'deg', 'rad', 'min', 'h', 'D'].includes(sym.slice(1))) return { dim: parseUnit(base[0]), f: pre * base[1] };
+  throw new Error(`unknown unit ${sym}`);
+}
+
+/** "mN" → { dim: N, f: 1e-3 }; "N·m²/C" → its dimension with f = 1. Throws on anything else. */
+export function unitFactor(src) {
+  const s = String(src ?? '')
+    .replace(/[⁰¹²³⁻]/g, (ch) => (ch === '⁻' ? '^-' : `^${{ '⁰': 0, '¹': 1, '²': 2, '³': 3 }[ch]}`))
+    .replace(/·|\*/g, ' ')
+    .trim();
+  if (!s) return { dim: ZERO, f: 1 };
+  const toks = [...s.matchAll(/\s*([A-Za-zΩμµ°]+(?:\^-?\d+)?|\(|\)|\/)/g)].map((m) => m[1]);
+  if (toks.join('').replace(/\s/g, '') !== s.replace(/\s/g, '')) throw new Error(`cannot read ${src}`);
+  let dim = ZERO;
+  let f = 1;
+  let sign = 1;
+  for (const t of toks) {
+    if (t === '/') {
+      sign = -1;
+      continue;
+    }
+    if (t === '(' || t === ')') continue;
+    const [, sym, p] = /^([^\^]+)(?:\^(-?\d+))?$/.exec(t);
+    const u = unitSymbol(sym);
+    const e = sign * (p ? Number(p) : 1);
+    dim = dimMul(dim, dimScale(u.dim, e));
+    f *= u.f ** e;
+  }
+  return { dim, f };
+}
+
+/**
+ * What a typed unit means for this part: the factor that turns the typed number into the part's
+ * own unit, a mismatch to report, or nothing (no unit typed, or one this reader doesn't know —
+ * then the number is taken as written, as it always was).
+ */
+export function convertTyped(unit, want) {
+  // A part with no declared unit is a pure number (a ratio, a count, m): whatever follows is a word.
+  if (!unit || !want) return null;
+  let a;
+  let b;
+  try {
+    a = unitFactor(unit);
+    b = unitFactor(want || '');
+  } catch {
+    return null;
+  }
+  if (!dimEqual(a.dim, b.dim)) return { mismatch: true };
+  return { factor: a.f / b.f };
 }
 
 export function withinTol(got, want, part) {
@@ -168,8 +295,15 @@ export function withinTol(got, want, part) {
 export function grade(part, $, input) {
   if (part.kind === 'numeric') {
     const want = expected(part, $);
-    const got = parseNumber(input);
+    let got = parseNumber(input);
     if (!Number.isFinite(got)) return { correct: false, feedback: 'Enter a number, e.g. 2.5e-6 or 2.5×10^-6.' };
+    const pu = unitOf(part, $);
+    const unit = typedUnit(input);
+    const conv = convertTyped(unit, pu);
+    if (conv?.mismatch) {
+      return { correct: false, feedback: `${unit} doesn't measure the same thing as ${pu}. Check which quantity this part asks for.` };
+    }
+    if (conv) got *= conv.factor;
     if (withinTol(got, want, part)) return { correct: true, feedback: '' };
     if (part.wrap) {
       const near = withinTol(got, want, { ...part, tol: 0, abs: 10 });
@@ -180,7 +314,7 @@ export function grade(part, $, input) {
       const r = Math.log10(Math.abs(got / want));
       const k = Math.round(r);
       if (k !== 0 && Math.abs(r - k) < 0.01) {
-        return { correct: false, feedback: part.unit ? `Off by 10^${k} — check unit prefixes (${part.unit}).` : `Off by a factor of 10^${k}.` };
+        return { correct: false, feedback: pu ? `Off by 10^${k} — check unit prefixes (${pu}).` : `Off by a factor of 10^${k}.` };
       }
       const r2 = Math.abs(got / want);
       if (Math.abs(r2 - 2) < 0.02 || Math.abs(r2 - 0.5) < 0.01) return { correct: false, feedback: 'Off by a factor of 2.' };

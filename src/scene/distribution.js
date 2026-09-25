@@ -30,6 +30,13 @@ export class DistributionView {
     this.labelEl.className = 'probe-label';
     this.label = new CSS2DObject(this.labelEl);
     this.group.add(this.label);
+    // The field point's name, apart from its value (which hides while a problem is unsolved).
+    this.nameEl = document.createElement('div');
+    this.nameEl.className = 'probe-name';
+    this.nameEl.textContent = 'P';
+    this.name = new CSS2DObject(this.nameEl);
+    this.name.center.set(-0.35, 1.1);
+    this.group.add(this.name);
   }
 
   setVisible(v) {

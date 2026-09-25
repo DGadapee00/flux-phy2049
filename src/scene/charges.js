@@ -16,6 +16,7 @@ export class ChargeView {
 
   sync(charges, selectedId) {
     const seen = new Set();
+    let n = 0;
     for (const c of charges) {
       seen.add(c.id);
       let rec = this.map.get(c.id);
@@ -23,7 +24,10 @@ export class ChargeView {
         rec = this.spawn(c);
         this.map.set(c.id, rec);
       }
-      this.update(rec, c, c.id === selectedId);
+      // Numbered the way the Setup rows number them (q₁, q₂, … over the full-size charges), so the
+      // scene, the coordinate boxes and a problem that says "q₂" all name the same charge.
+      const index = c.small ? 0 : ++n;
+      this.update(rec, c, c.id === selectedId, index);
     }
     for (const [id, rec] of this.map) {
       if (!seen.has(id)) {
@@ -76,7 +80,7 @@ export class ChargeView {
     return { root, mesh, disc, ring, stem, label, el, mat, discMat, sign: pos };
   }
 
-  update(rec, c, selected) {
+  update(rec, c, selected, index = 0) {
     const pos = c.q >= 0;
     if (pos !== rec.sign) {
       rec.sign = pos;
@@ -94,7 +98,13 @@ export class ChargeView {
     rec.stem.visible = !c.small && Math.abs(h) > 0.05;
     rec.stem.scale.set(1, h, 1);
     rec.label.position.set(0, r * 2.6, 0);
-    rec.el.textContent = c.name ? `${c.name} = ${fmtCharge(c.q)}` : fmtCharge(c.q);
+    const name = c.name || (index && this.numbered !== false ? `q${String(index).replace(/\d/g, (d) => '₀₁₂₃₄₅₆₇₈₉'[d])}` : '');
+    // Name over value, stacked: two charges a square apart would otherwise run their labels together.
+    const html = name ? `<span class="cl-name">${name}</span><span class="cl-val">${fmtCharge(c.q)}</span>` : fmtCharge(c.q);
+    if (rec.html !== html) {
+      rec.html = html;
+      rec.el.innerHTML = html;
+    }
     rec.el.className = `charge-label ${pos ? 'pos' : 'neg'}${selected ? ' selected' : ''}${c.small ? ' small' : ''}`;
     rec.mesh.userData.chargeId = c.id;
   }

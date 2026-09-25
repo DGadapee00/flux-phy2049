@@ -97,7 +97,7 @@ export default [
     steps: ($, f) => [String.raw`$V = \dfrac{kq}{r} = ${texNum($.V)}\ \text{V}$`],
     sim: {
       scenario: 'v-plus',
-      setup: potSetup(($) => [charge($.s * $.q, 0, 0)], ($) => ({ x: $.r, y: 0 }), ($) => ({ x: 2 * $.r, y: 0 })),
+      setup: potSetup(($) => [charge($.s * $.q, 0, 0)], ($) => ({ x: $.r, y: 0 })),
       read: (c) => ({ V: c.V }),
     },
     cases: [kase('hand', { q: 1, s: 1, r: 0.5 }, { V: 17975 })],
@@ -137,7 +137,7 @@ export default [
       const dU = $.s * $.q * dV;
       return { dV, W: -dU, dU };
     },
-    text: (T) => `In a uniform ${T.E} N/C field, a ${T.s} ${T.q} μC charge moves ${T.d} cm ${T.dir} the field direction. Find $\Delta V = V_B - V_A$, the work done by the field, and the change in the charge's potential energy. Does it gain or lose potential energy?`,
+    text: (T) => String.raw`In a uniform ${T.E} N/C field, a ${T.s} ${T.q} μC charge moves ${T.d} cm ${T.dir} the field direction. Find $\Delta V = V_B - V_A$, the work done by the field, and the change in the charge's potential energy. Does it gain or lose potential energy?`,
     parts: [
       num('dV', ($) => $.dV, 'V', { label: 'ΔV' }),
       num('W', ($) => $.W, 'J', { label: String.raw`$W_{\text{field}}$` }),
@@ -280,7 +280,7 @@ export default [
     ...E3, id: 'e3.38.E-from-V', ch: '38', lab: 'potential', title: 'E from V(x)', kind: 'derivation', level: 2, topics: ['potential', 'gradient'],
     vars: { a: range(-10, 10, 1, 'V/m²', 1, { exclude: [0] }), b: range(-20, 20, 1, 'V/m'), x0: range(-3, 3, 0.5, 'm') },
     derive: ($) => ({ Ex: -(2 * $.a * $.x0 + $.b) }),
-    text: (T) => `The potential along the x-axis is V(x) = ${T.a}x² + ${T.b}x + 5 (V, with x in m). Find Eₓ at x = ${T.x0} m.`,
+    text: (T) => `The potential along the x-axis is V(x) = ax² + bx + 5 V, with a = ${T.a} V/m², b = ${T.b} V/m and x in m. Find Eₓ at x = ${T.x0} m.`,
     parts: [
       sym('Ex_sym', '-(2*a*x0 + b)', { a: 'V/m²', b: 'V/m', x0: 'm' }, ($) => $.Ex, { unit: 'V/m', label: String.raw`$E_x$ as a formula (use a, b, x0)` }),
       num('Ex', ($) => $.Ex, 'V/m', { abs: 0.01 }),
@@ -304,7 +304,7 @@ export default [
     steps: ($, f) => [String.raw`$V = k\left(\dfrac{q_1}{a} + \dfrac{q_2}{b}\right) = ${texNum($.V)}\ \text{V}$`],
     sim: {
       scenario: 'v-ch39a',
-      setup: potSetup(($) => [charge($.s1 * $.q1, -$.a, 0), charge($.s2 * $.q2, 0, $.b)], () => ({ x: 0, y: 0 }), ($) => ({ x: $.a / 2, y: 0 })),
+      setup: potSetup(($) => [charge($.s1 * $.q1, -$.a, 0), charge($.s2 * $.q2, 0, $.b)], () => ({ x: 0, y: 0 })),
       read: (c) => ({ V: c.V }),
     },
     cases: [kase('Ch 39 example (a)', { q1: 2, s1: 1, a: 0.8, q2: 1, s2: -1, b: 0.4 }, { V: 0 }), kase('Ch 39 example (b)', { q1: 2, s1: 1, a: 0.4, q2: 1, s2: -1, b: 0.8 }, { V: 33705 })],
@@ -334,7 +334,6 @@ export default [
       setup: potSetup(
         ($) => [charge($.s1 * $.q1, 0, 0), charge($.s2 * $.q2, $.r1, 0), charge($.s3 * $.q3, 0, -$.r2)],
         ($) => ({ x: $.r1, y: -$.r2 }),
-        ($) => ({ x: -$.r1, y: $.r2 }),
       ),
       read: (c) => ({ V: c.V }),
     },
@@ -356,7 +355,7 @@ export default [
     ],
     sim: {
       scenario: 'v-dipole',
-      setup: potSetup(($) => [charge($.q1, 0, 0), charge(-$.q2, $.d, 0)], ($) => ({ x: $.x, y: 0 }), ($) => ({ x: -$.d / 2, y: 0 })),
+      setup: potSetup(($) => [charge($.q1, 0, 0), charge(-$.q2, $.d, 0)], ($) => ({ x: $.x, y: 0 })),
       read: (c, s, $) => ({ '@V at the point, as a fraction of kq₁/d': [c.V / ((K * $.q1) / $.d), 0] }),
     },
     cases: [kase('hand', { q1: 2, q2: 1, d: 0.9 }, { x: 0.6, E0: 0 })],
@@ -462,7 +461,6 @@ export default [
       setup: potSetup(
         ($) => [charge(2 * $.q, $.na * $.r0, 0), charge(-$.q, -$.nb * $.r0, 0)],
         () => ({ x: 0, y: 0 }),
-        ($) => ({ x: 0, y: 3 * $.r0 }),
       ),
       read: (c) => ({ V: c.V }),
     },
@@ -784,6 +782,7 @@ export default [
           { label: 'C', x: $.r2, y: 0, z: 0 },
         ];
         s.probe = { x: $.r2, y: 0, z: 0 };
+        s.hideProbeTag = true; // the probe sits on the C mark
         s.qTest = $.s * $.q;
       },
       read: (c) => ({ dV: c.V - c.VA }),
@@ -971,6 +970,7 @@ export default [
           { label: 'C', x: 0.1, y: 0, z: 0 },
         ];
         s.probe = { x: 0.1, y: 0, z: 0 };
+        s.hideProbeTag = true; // the probe sits on the C mark
         s.qTest = 1e-6;
       },
     },
@@ -1006,11 +1006,11 @@ export default [
       setup(s, $) {
         s.charges = [];
         s.extraE = { x: -$.E, y: 0, z: 0 };
-        s.probe = { x: $.VA / $.E, y: 0, z: 0 };
-        s.pathA = { x: $.VB / $.E, y: 0, z: 0 };
+        s.pathA = { x: $.VA / $.E, y: 0, z: 0 };
+        s.probe = { x: $.VB / $.E, y: 0, z: 0 };
         s.qTest = 1e-6;
       },
-      read: (c, s, $) => ({ VB: c.VA, '@V at A': [c.V, $.VA] }),
+      read: (c, s, $) => ({ VB: c.V, '@V at A': [c.VA, $.VA] }),
     },
     cases: [kase('Class Activity 3 #6', { dV: 120, d: 0.5, VA: 200 }, { E: 240, VB: 80, zB: 0.3333 })],
   }),
@@ -1315,7 +1315,7 @@ export default [
       return { k, C0, Q, V: $.V0 / k, U0: 0.5 * C0 * $.V0 ** 2, U: (0.5 * C0 * $.V0 ** 2) / k };
     },
     text: (T) => `A vacuum capacitor (A = ${T.A} m², d = ${T.d} mm) is charged to ${T.V0} V and then disconnected. A slab of ${T.m} is slid in to fill the gap. Find the new voltage and stored energy, and the factor by which the field between the plates changes.`,
-    parts: [num('V', ($) => $.V, 'V'), num('U', ($) => $.U, 'J'), num('Efac', ($) => 1 / $.k, '× E₀', { label: 'E / E₀' }), mc('where', [[1, 'The energy went into pulling the slab in (work on the slab)'], [2, 'Charge leaked away'], [3, 'The energy increased']], 1, { label: 'Where did the missing energy go?' })],
+    parts: [num('V', ($) => $.V, 'V'), num('U', ($) => $.U, 'J'), num('Efac', ($) => 1 / $.k, '× E₀', { label: 'E / E₀' }), mc('where', [[1, 'The energy went into pulling the slab in (work on the slab)'], [2, 'Charge leaked away'], [3, 'It flowed back into the battery']], 1, { label: 'Where did the missing energy go?' })],
     steps: ($, f) => [
       String.raw`$Q$ stays fixed at ${f($.Q)} C, and $C$ becomes $\kappa C_0$`,
       String.raw`$V = \dfrac{V_0}{\kappa} = ${texNum($.V)}\ \text{V}$`,
@@ -1454,7 +1454,7 @@ export default [
     })[$.ask],
     parts: [
       num('ans', ($) => ({ C: $.Cval, Q: $.Qval, V: $.Vval, Efield: $.Ed, Esigma: $.Esig })[$.ask],
-        '', { label: 'Answer (SI units)' }),
+        ($) => ({ C: 'F', Q: 'C', V: 'V', Efield: 'V/m', Esigma: 'V/m' })[$.ask], { label: (T, $) => ({ C: 'C', Q: 'Q', V: String.raw`$\Delta V$`, Efield: 'E', Esigma: 'E' })[$.ask] }),
     ],
     hints: [
       String.raw`$C = \dfrac{Q}{V}$ — capacitance is set by geometry, not by how much charge you put on.`,
@@ -1755,7 +1755,7 @@ export default [
       I: `A ${T.Rr} Ω resistor is connected across a ${T.Vs} V source. What current flows through it?`,
       R: `A ${T.Vs} V battery drives ${T.Ir} A through a light bulb. What is the bulb's resistance?`,
     })[$.ask],
-    parts: [num('ans', ($) => ({ 'I-from-Q': $.Iq, V: $.Vr, I: $.Ir2, R: $.Rv })[$.ask], '', { label: 'Answer (SI units)' })],
+    parts: [num('ans', ($) => ({ 'I-from-Q': $.Iq, V: $.Vr, I: $.Ir2, R: $.Rv })[$.ask], ($) => ({ 'I-from-Q': 'A', V: 'V', I: 'A', R: 'Ω' })[$.ask], { label: (T, $) => ({ 'I-from-Q': 'I', V: 'V', I: 'I', R: 'R' })[$.ask] })],
     hints: [String.raw`$I = \dfrac{\Delta Q}{\Delta t}$ defines current; $V = IR$ relates the three circuit quantities.`],
     steps: ($, f) => [
       ({
@@ -2098,7 +2098,7 @@ export default [
       both: `A ${T.P} W motor runs from a ${T.V} V supply. Find its resistance and the current it draws.`,
     })[$.ask],
     parts: [
-      num('ans', ($) => ({ P: $.Pv, R: $.Rp, I: $.Ip, both: $.Rp })[$.ask], '', { label: 'Answer (SI units)' }),
+      num('ans', ($) => ({ P: $.Pv, R: $.Rp, I: $.Ip, both: $.Rp })[$.ask], ($) => ({ P: 'W', R: 'Ω', I: 'A', both: 'Ω' })[$.ask], { label: (T, $) => ({ P: 'P', R: 'R', I: 'I', both: 'R' })[$.ask] }),
       num('I2', ($) => $.Ip, 'A', { label: 'Current drawn' }),
     ],
     hints: [String.raw`$P = IV = I^2R = \dfrac{V^2}{R}$ — pick the form that uses what you were given.`],

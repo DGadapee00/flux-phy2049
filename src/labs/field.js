@@ -13,6 +13,8 @@ export default defineLab({
   exam: 'e2',
   title: 'Field',
   hint: 'Click empty space to place the probe',
+  // The field lines are coloured by |E| on the same ramp as a potential map; say so.
+  legend: { id: 'E', title: 'Field-line colour: |E|', low: 'weak', high: 'strong', barClass: 'legend-v' },
   orbit: true,
   probe: true,
   camera: { pos: new THREE.Vector3(5.8, 4.4, 9.6), target: new THREE.Vector3(0, 0, 0) },
@@ -56,7 +58,7 @@ export default defineLab({
     charges.setVisible(true);
     probe.setVisible(true);
     charges.sync(state.charges, state.selectedId);
-    probe.sync(state.probe, computed.probeE, '');
+    probe.sync(state.probe, computed.probeE, '', state.hideProbeTag ? '' : state.probeTag || 'P');
     lines.setVisible(!!state.show.lines);
     const soft = softenFor(state.view);
     if (state.show.lines) lines.rebuild(state.charges, state.extraE, soft);

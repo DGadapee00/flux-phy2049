@@ -283,7 +283,7 @@ export default defineLab({
     }
     const probe = ctx.pool.probe();
     probe.setVisible(true);
-    probe.sync(state.probe, { x: 0, y: 0, z: 0 }, `|B| = ${fmtB(mag).replace(/<[^>]+>/g, '')}`);
+    probe.sync(state.probe, { x: 0, y: 0, z: 0 }, `|B| = ${fmtB(mag).replace(/<[^>]+>/g, '')}`, 'P');
     ctx.grid.visible = true;
   },
   tick(dt, state, computed) {

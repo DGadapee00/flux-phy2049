@@ -13,7 +13,7 @@ export default defineLab({
   id: 'potential',
   exam: 'e3',
   title: 'Potential',
-  hint: 'Click probe (B) · Shift-click sets A',
+  hint: 'Click to move the probe · Shift-click sets A',
   orbit: true,
   probe: true,
   camera: { pos: new THREE.Vector3(5.6, 5.2, 9.8), target: new THREE.Vector3(0, 0, 0) },
@@ -58,7 +58,7 @@ export default defineLab({
               <span class="mono val" id="q-test-val">+1.00 μC</span>
             </div>
           </label>
-          <p class="tiny">Click empty space to move the probe (point B). Path A is the gold marker — ΔV and W use A → probe.</p>
+          <p class="tiny">Click empty space to move the probe (the white point, B unless a problem names it). Path A is the gold marker — ΔV and W use A → probe.</p>
           <p class="tiny">Charge spread along a rod, a ring, an arc or a disk: the <a href="#/e3/integral">Integrals</a> tab adds up V = ∫ k dq/r piece by piece.</p>
         </div>`;
   },
@@ -116,7 +116,7 @@ export default defineLab({
     probe.setVisible(true);
     pathA.visible = !state.hideA;
     charges.sync(state.charges, state.selectedId);
-    probe.sync(state.probe, computed.probeE, `V = ${fmtV(computed.V)}`);
+    probe.sync(state.probe, computed.probeE, `V = ${fmtV(computed.V)}`, state.hideProbeTag ? '' : state.probeTag || 'B');
     if (state.probeName) {
       probe.setAsCharge(true);
       const tc = pool.testCharge();
@@ -125,7 +125,8 @@ export default defineLab({
     }
     lines.setVisible(!!state.show.lines);
     const soft = softenFor(state.view);
-    if (state.show.lines) lines.rebuild(state.charges, state.extraE, soft);
+    // Colour here means V (the equipotentials and the legend), so the field lines stay plain.
+    if (state.show.lines) lines.rebuild(state.charges, state.extraE, soft, { mono: 0xd9e4ea });
     const eqOn = !!state.show.equipot;
     equipot.setVisible(eqOn);
     if (eqOn) {

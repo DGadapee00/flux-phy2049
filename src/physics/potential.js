@@ -60,7 +60,7 @@ export function gradientCheck(p, charges, extraE = null, h = 0.012, soften = SOF
  * the contours follow the view's scale instead of a fixed 1 m box. Returns segments in 3D.
  */
 export function contourLines(charges, extraE, opts = {}) {
-  const { plane = 'xz', half = 1.05, at = 0, n = 42, nLevels = 9, soften = SOFTEN } = opts;
+  const { plane = 'xz', half = 1.05, at = 0, n = 84, nLevels = 9, soften = SOFTEN } = opts;
   const [a1, a2] = plane === 'xy' ? ['x', 'y'] : ['x', 'z'];
   const off = plane === 'xy' ? 'z' : 'y';
   const min = -half;
@@ -83,9 +83,26 @@ export function contourLines(charges, extraE, opts = {}) {
     }
   }
   if (!Number.isFinite(vmin) || vmax - vmin < 1e-9) return { lines: [], vmin: 0, vmax: 0 };
-  const span = vmax - vmin;
+  /*
+   * Levels at evenly spaced fractions of the view's area rather than of the V range. V ~ 1/r runs off
+   * to huge values at a charge, so even steps in V put almost every ring in the few grid cells round
+   * it (drawn as jagged octagons) and leave the rest of the view empty. Quantiles spread the rings
+   * over what is on screen. V = 0 is kept as a level whenever it is in range: the dipole's
+   * midplane, and every "where is V zero" problem, depend on seeing exactly that line.
+   */
+  const sorted = Array.from(grid).filter(Number.isFinite).sort((x, y) => x - y);
   const levels = [];
-  for (let k = 1; k <= nLevels; k++) levels.push(vmin + (span * k) / (nLevels + 1));
+  for (let k = 1; k <= nLevels; k++) {
+    const v = sorted[Math.min(sorted.length - 1, Math.floor((sorted.length * k) / (nLevels + 1)))];
+    if (!levels.length || v - levels[levels.length - 1] > 1e-12 * (vmax - vmin)) levels.push(v);
+  }
+  if (vmin < 0 && vmax > 0 && levels.length) {
+    let best = 0;
+    levels.forEach((v, i) => {
+      if (Math.abs(v) < Math.abs(levels[best])) best = i;
+    });
+    levels[best] = 0;
+  }
   const point = (u, v) => {
     const q = { x: 0, y: 0, z: 0 };
     q[a1] = u;
@@ -110,9 +127,12 @@ export function contourLines(charges, extraE, opts = {}) {
         lerpEdge(pts, u0, v0 + d, u0 + d, v0 + d, v01, v11, level);
         lerpEdge(pts, u0, v0, u0, v0 + d, v00, v01, level);
         if (pts.length >= 4) segs.push([point(pts[0], pts[1]), point(pts[2], pts[3])]);
+        // A saddle cell crosses the level four times: that is two segments, not one.
+        if (pts.length >= 8) segs.push([point(pts[4], pts[5]), point(pts[6], pts[7])]);
       }
     }
-    if (segs.length) lines.push({ level, segs });
+    // Colour by rank (low → high), matching the legend, since the levels are no longer evenly spaced in V.
+    if (segs.length) lines.push({ level, segs, t: (levels.indexOf(level) + 1) / (levels.length + 1) });
   }
   return { lines, vmin, vmax };
 }

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { defineLab } from './define.js';
 import { M } from '../scene/manim.js';
 import { imageOf, principalRays, fmtCm } from '../physics/optics.js';
-import { wipe, label, line, arrowAt, tick, drawBundle, frameCamera } from '../scene/opticsBench.js';
+import { wipe, label, line, arrowAt, tick, drawBundle, frameCamera, imageMark } from '../scene/opticsBench.js';
 import { kv, cells, eq } from '../ui/shared.js';
 
 const SCENARIOS = [
@@ -156,8 +156,7 @@ export default defineLab({
     h.draw.add(arrowAt(-state.do, state.ho, M.gold));
     h.draw.add(label('object', -state.do, state.ho + 3));
     if (!m.infinite && Number.isFinite(m.imageX)) {
-      h.draw.add(arrowAt(m.imageX, m.hi, m.real ? M.red : M.blue));
-      h.draw.add(label(m.real ? 'real image' : 'virtual image', m.imageX, m.hi + (m.hi >= 0 ? 3 : -3.5)));
+      imageMark(h.draw, m.imageX, m.hi, m.real ? M.red : M.blue, m.real ? 'real image' : 'virtual image', m.hi + (m.hi >= 0 ? 3 : -3.5));
     }
     tick(h.draw, -f, 'F', M.gold);
     tick(h.draw, -2 * f, 'C');

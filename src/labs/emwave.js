@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, updateFatLine } from '../scene/manim.js';
+import { Arrow, M, fatLine, updateFatLine, markAnswer } from '../scene/manim.js';
 import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, C_SHEET } from '../physics/constants.js';
 import { planeWave, spectrumBand, wavelengthRGB, BANDS } from '../physics/emwave.js';
@@ -117,7 +117,7 @@ export default defineLab({
               <span class="mono val" id="em-logL-val">532 nm</span>
             </div>
           </label>
-          <p class="tiny">The picture is stretched and slowed — two wavelengths on screen, one cycle every 2 s, E and B drawn the same height — but every number in the panel is the real wave. E along ŷ (colored by λ when visible), B along ẑ in teal, travel along +x̂ because ŷ × ẑ = x̂.</p>
+          <p class="tiny">The picture is stretched and slowed — two wavelengths on screen, one cycle every 2 s, E and B drawn the same height — but every number in the panel is the real wave. E along ŷ (colored by λ when visible), B along ẑ in teal<span class="tell">, travel along +x̂ because ŷ × ẑ = x̂</span>.</p>
         </div>`;
   },
   bind(api) {
@@ -153,11 +153,12 @@ export default defineLab({
     const bCurve = fatLine(zeros, { color: TEAL, width: 3 });
     group.add(eCurve, bCurve);
     const Sarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3((X1 + 0.12) * u, 0, 0), 1.6, M.gold, 0.34, 0.26, 0.05);
-    group.add(Sarr);
+    // The direction of travel is what "E points +y, B points +z — which way does it go?" asks.
+    group.add(markAnswer(Sarr));
     const eLab = label('<i>E</i>', X0 * u - 0.2, (AMP + 0.06) * u, 0);
     const bLab = label('<span class="qB"><i>B</i></span>', X0 * u - 0.2, 0.2, (AMP + 0.06) * u);
     const sLab = label('<span style="color:#F0AC5F"><i>S</i>, direction of travel</span>', (X1 + 0.2) * u, 0.5, 0);
-    group.add(eLab, bLab, sLab);
+    group.add(eLab, bLab, markAnswer(sLab));
     group.visible = false;
     const ruler = document.createElement('div');
     ruler.className = 'hud panel spectrum-ruler';

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { defineLab } from './define.js';
 import { conductorField, imageGrounded, imageIsolatedNeutral, sigmaUniform, sigmaSphere, EoutsideSphere } from '../physics/conductors.js';
-import { fmtE, fmtCharge } from '../ui/format.js';
+import { fmtE, fmtCharge, sciText } from '../ui/format.js';
 import { kv, cells, eq } from '../ui/shared.js';
 import { sceneScale } from '../engine/frame.js';
 import { POS_COLOR, NEG_COLOR } from '../scene/manim.js';
@@ -206,7 +206,7 @@ export default defineLab({
     if (state.kind === 'cage') paintSigma(h.inner, () => sigmaInner, sMax);
     const probe = ctx.pool.probe();
     probe.setVisible(true);
-    probe.sync(state.probe, computed.cond, computed.cond.region === 'metal' ? 'E = 0' : '');
+    probe.sync(state.probe, computed.cond, computed.cond.region === 'metal' ? 'E = 0' : '', 'P');
     ctx.grid.visible = true;
   },
   law(state) {
@@ -227,10 +227,10 @@ export default defineLab({
       kv(String.raw`$E_x$`, fmtE(E.x)),
       kv(String.raw`Probe $P$`, `(${state.probe.x.toFixed(2)}, ${state.probe.y.toFixed(2)}, ${state.probe.z.toFixed(2)}) m`),
     ];
-    if (computed.sigma != null) rows.push(kv(String.raw`$\sigma = Q/4\pi R^2$`, `${computed.sigma.toExponential(2)} C/m²`));
+    if (computed.sigma != null) rows.push(kv(String.raw`$\sigma = Q/4\pi R^2$`, `${sciText(computed.sigma)} C/m²`));
     if (state.kind === 'grounded' || state.kind === 'neutral') {
-      rows.push(kv(String.raw`$\sigma$ facing $q$ ($\theta = 0$)`, `${sigmaSphere(state, { x: 1, y: 0, z: 0 }).toExponential(2)} C/m²`));
-      rows.push(kv(String.raw`$\sigma$ far side ($\theta = \pi$)`, `${sigmaSphere(state, { x: -1, y: 0, z: 0 }).toExponential(2)} C/m²`));
+      rows.push(kv(String.raw`$\sigma$ facing $q$ ($\theta = 0$)`, `${sciText(sigmaSphere(state, { x: 1, y: 0, z: 0 }))} C/m²`));
+      rows.push(kv(String.raw`$\sigma$ far side ($\theta = \pi$)`, `${sciText(sigmaSphere(state, { x: -1, y: 0, z: 0 }))} C/m²`));
     }
     if (state.kind === 'grounded' && computed.image) {
       rows.push(kv(String.raw`$q' = -(R/d)\,q$`, fmtCharge(computed.image.q)));

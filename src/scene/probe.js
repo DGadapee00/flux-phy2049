@@ -25,6 +25,14 @@ export class ProbeView {
     this.label.position.set(0, 0.35, 0);
     this.group.add(this.label);
 
+    // The point's name (P, B, C…), apart from its value: the value hides while a problem is
+    // unsolved, the name never does — a problem that asks about P has to be able to point at it.
+    this.tagEl = document.createElement('div');
+    this.tagEl.className = 'probe-name';
+    this.tag = new CSS2DObject(this.tagEl);
+    this.tag.center.set(-0.35, 1.1);
+    this.group.add(this.tag);
+
     this._dir = new THREE.Vector3();
   }
 
@@ -40,13 +48,16 @@ export class ProbeView {
     if (this._asCharge === on) return;
     this._asCharge = on;
     this.core.visible = !on;
+    this.tag.visible = !on;
     this.label.center.set(0.5, on ? 0 : 0.5);
     this.label.position.set(0, on ? -0.5 : 0.35, 0);
   }
 
-  sync(probe, E, extra = '') {
+  sync(probe, E, extra = '', tag = 'P') {
     const u = sceneScale();
     this.group.position.set(probe.x * u, probe.y * u, probe.z * u);
+    this.tagEl.textContent = tag || '';
+    this.tagEl.hidden = !tag || this._asCharge;
     const mag = Math.hypot(E.x, E.y, E.z);
     if (mag < 1e-8) {
       this.arrow.visible = false;

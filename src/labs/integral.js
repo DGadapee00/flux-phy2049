@@ -321,6 +321,7 @@ export default defineLab({
       : `|E| = ${fmtFrom(computed.integral.partial.mag)}  vs  ${fmtFrom(analytic.mag)}`;
     const u = sceneScale();
     distView.label.position.set(P.x * u, P.y * u + 0.4, P.z * u);
+    distView.name?.position.set(P.x * u, P.y * u, P.z * u);
   },
   syncViews(state, computed, ctx) {
     ctx.pool.dist().setVisible(true);

@@ -51,6 +51,21 @@ function trace(start, charges, extraE, sign, u, soften, maxSteps = 140) {
 }
 
 const _c = new THREE.Color();
+// One cone for every arrowhead on every line: the lines show where the field goes, the heads which way.
+const HEAD = new THREE.ConeGeometry(0.075, 0.2, 10);
+const _up = new THREE.Vector3(0, 1, 0);
+const _d = new THREE.Vector3();
+
+function arrowhead(pos, i, sign, color) {
+  const a = new THREE.Vector3(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]);
+  const b = new THREE.Vector3(pos[i * 3 + 3], pos[i * 3 + 4], pos[i * 3 + 5]);
+  _d.subVectors(b, a).multiplyScalar(sign);
+  if (_d.lengthSq() < 1e-12) return null;
+  const head = new THREE.Mesh(HEAD, new THREE.MeshBasicMaterial({ color, toneMapped: false, transparent: true, opacity: 0.95 }));
+  head.position.copy(a).add(b).multiplyScalar(0.5);
+  head.quaternion.setFromUnitVectors(_up, _d.normalize());
+  return head;
+}
 
 export class FieldLineView {
   constructor(scene) {
@@ -71,7 +86,8 @@ export class FieldLineView {
     this.lines.length = 0;
   }
 
-  rebuild(charges, extraE, soften) {
+  /** `mono`: one plain colour, for a lab where colour already means something else (V). */
+  rebuild(charges, extraE, soften, { mono = null } = {}) {
     this.clear();
     if (!charges.length) return;
     const u = sceneScale();
@@ -99,12 +115,23 @@ export class FieldLineView {
       const pos = pts.map((v) => v * u);
       const colors = [];
       for (const m of mags) {
-        rampColor((Math.log10(Math.max(m, 1e-12)) - (top - 3.2)) / 3.2, _c);
+        if (mono != null) _c.set(mono);
+        else rampColor((Math.log10(Math.max(m, 1e-12)) - (top - 3.2)) / 3.2, _c);
         colors.push(_c.r, _c.g, _c.b);
       }
-      const line = fatLine(pos, { colors, width: 2.2, opacity: 0.92 });
+      const line = fatLine(pos, { colors, width: 2.2, opacity: mono != null ? 0.55 : 0.92 });
       this.group.add(line);
       this.lines.push(line);
+      // Heads a third and two thirds of the way along; traces from negative charges run against E.
+      const n = mags.length;
+      for (const f of n > 40 ? [0.3, 0.7] : [0.45]) {
+        const i = Math.min(n - 2, Math.max(0, Math.floor(n * f)));
+        const col = new THREE.Color(colors[i * 3], colors[i * 3 + 1], colors[i * 3 + 2]);
+        const head = arrowhead(pos, i, sign, col);
+        if (!head) continue;
+        this.group.add(head);
+        this.lines.push(head);
+      }
     }
   }
 }

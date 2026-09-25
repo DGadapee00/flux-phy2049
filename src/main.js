@@ -54,9 +54,18 @@ function slice() {
 
 let loadingProblem = false;
 
+/** The student changed the setup by hand: it no longer matches a preset or a problem. */
+function markCustom() {
+  const s = app.slices[app.labId];
+  if (s && !loadingProblem) s.custom = true;
+}
+
 function bump(physics = true) {
   app.dirty = true;
-  if (physics && !loadingProblem) practice?.noteEdit();
+  if (physics && !loadingProblem) {
+    practice?.noteEdit();
+    markCustom();
+  }
   const s = app.slices[app.labId];
   if (s) {
     s.dirty = true;
@@ -81,6 +90,10 @@ const hud = createHUD({
   toggleShow,
   toggleSweep,
   handleKey,
+  userEdit: () => {
+    practice?.noteEdit();
+    markCustom();
+  },
   togglePractice: () => {
     units?.close(); // they share the left column
     practice.toggle();
@@ -127,6 +140,7 @@ const pointer = createChargePointer({
   bump: () => {
     app.dirty = true;
     practice?.noteEdit();
+    markCustom();
   },
 });
 
@@ -135,10 +149,26 @@ controls.addEventListener('start', () => {
   camTween = null;
 });
 
+/**
+ * The flat labs (circuits, AC, the wave benches…) were framed for a wide screen. On a phone held
+ * upright the canvas is taller than it is wide, and the same camera cut the battery off one side and
+ * the phasors off the other. Back the camera off in proportion, so the whole drawing fits the width.
+ * Labs that frame themselves (cameraFor: mirrors, lenses, charge planes) already allow for aspect.
+ */
+function fitNarrow(lab, cam) {
+  if (lab.orbit !== false || lab.cameraFor) return cam;
+  const aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight);
+  const k = Math.min(2.4, Math.max(1, 1.05 / aspect));
+  if (k === 1) return cam;
+  const pos = cam.target.clone().add(cam.pos.clone().sub(cam.target).multiplyScalar(k));
+  return { pos, target: cam.target };
+}
+
 function goCamera(lab) {
   // cameraFor(state) lets one lab frame different scenarios differently (particle orbit vs a wire).
-  const cam = lab?.cameraFor?.(slice()) || lab?.camera;
+  let cam = lab?.cameraFor?.(slice()) || lab?.camera;
   if (!cam) return;
+  cam = fitNarrow(lab, cam);
   camTween = {
     t: 0,
     fromPos: camera.position.clone(),
@@ -212,6 +242,10 @@ function apiAdd(sign) {
 function applyLabScenario(lab, id, s) {
   if (lab.applyScenario) lab.applyScenario(id, s);
   else applyScenario(lab.id, id, s);
+  // A preset replaces whatever was there: it is neither a hand-edited setup nor a problem's.
+  s.custom = false;
+  s.answerScreen = false;
+  delete s.problemId;
   // Scenarios are authored in the floor plane; a problem sets its own view in its setup().
   if (lab.frame) s.view = defaultView();
 }
@@ -242,6 +276,7 @@ function setScenario(id) {
   applyFrame({ force: true });
   goCamera(lab);
   bump();
+  slice().custom = false;
 }
 
 function setLabIndex(i) {
@@ -296,12 +331,7 @@ async function setLab(labId, { examId = app.examId } = {}) {
   app.lab = lab;
   units?.onLab(labId);
   if (!app.handles[labId]) app.handles[labId] = lab.init(ctx);
-  if (!app.slices[labId]) {
-    const s = lab.defaultState();
-    const list = typeof lab.scenarios === 'function' ? lab.scenarios() : lab.scenarios || [];
-    if (list[0]) applyLabScenario(lab, list[0].id, s);
-    app.slices[labId] = s;
-  }
+  if (!app.slices[labId]) app.slices[labId] = freshSlice(lab);
   const s = app.slices[labId];
   s.lab = labId;
   // A lab shared between exams starts in the mode this exam wants (Integrals in ∫ dV for Exam 3),
@@ -322,6 +352,14 @@ async function setLab(labId, { examId = app.examId } = {}) {
 
 let booting = true;
 
+/** A lab's state as it first opens: its defaults with its first scenario applied. */
+function freshSlice(lab) {
+  const s = lab.defaultState();
+  const list = typeof lab.scenarios === 'function' ? lab.scenarios() : lab.scenarios || [];
+  if (list[0]) applyLabScenario(lab, list[0].id, s);
+  return s;
+}
+
 /**
  * Put the app into a problem's setup: switch to its lab (or its exam when it has no lab yet),
  * load the numbers into the lab, and frame the camera. Returns the template's note, if any.
@@ -337,9 +375,26 @@ async function openProblemInApp(inst, { push = true, query = true } = {}) {
       if (app.lab?.id !== tpl.lab) await setLab(tpl.lab, { examId: tpl.exam });
     } else if (app.examId !== tpl.exam) await setExam(tpl.exam);
     let note = '';
-    if (tpl.lab && app.lab?.id === tpl.lab) {
+    if (tpl.lab && app.lab?.id === tpl.lab && tpl.sim) {
       note = applyProblem(app.lab, slice(), inst);
+      slice().custom = false;
       applyFrame();
+      goCamera(app.lab);
+      bump();
+    } else if (tpl.lab && app.lab?.id === tpl.lab && slice().problemId) {
+      /*
+       * This problem only opens its topic's lab, and the lab is still holding the last problem's
+       * setup. That setup is readable here (nothing in it is this problem's answer), so leaving it
+       * would print the previous problem's answer on screen. Start the lab over from its defaults.
+       */
+      const fresh = freshSlice(app.lab);
+      const exam = examById(app.examId);
+      exam.labDefaults?.[app.lab.id]?.(fresh);
+      fresh.openedUnder = exam.id;
+      fresh.lab = app.lab.id;
+      app.slices[app.lab.id] = fresh;
+      hud.mount(app.lab, exam, fresh);
+      applyFrame({ force: true });
       goCamera(app.lab);
       bump();
     }
@@ -366,6 +421,7 @@ practice = createPractice({
   setSceneBlind(on) {
     if (on) camera.layers.disable(ANSWER_LAYER);
     else camera.layers.enable(ANSWER_LAYER);
+    hud.setBlind(on);
   },
   labId: () => app.labId,
   examId: () => app.examId,
@@ -411,24 +467,34 @@ function syncViews() {
  * The practice panel is wider than the equation panel, so while it is open the picture slides
  * right to stay centered in the free space (a projection offset: orbit, picking, and labels all follow).
  */
-const view = { shift: 0, w: 0, h: 0 };
+const view = { shift: 0, lift: 0, w: 0, h: 0 };
 function stepViewShift() {
   const w = canvas.clientWidth;
   const h = canvas.clientHeight;
   let target = 0;
+  let lift = 0;
   if (document.body.classList.contains('practice-open') && w > 720) {
     const left = document.getElementById('problems').getBoundingClientRect().right;
     const controlsEl = document.getElementById('controls');
     const right = controlsEl.offsetParent ? controlsEl.getBoundingClientRect().left : w;
     target = Math.max(0, Math.round((left + right) / 2 - w / 2));
   }
-  const next = Math.abs(target - view.shift) < 0.5 ? target : view.shift + (target - view.shift) * 0.2;
-  if (next === view.shift && w === view.w && h === view.h) return;
+  // Phone, problem sheet lowered to show the lab: centre the picture in the strip above the sheet.
+  if (document.body.classList.contains('practice-open') && document.body.classList.contains('scene-peek') && w <= 720) {
+    const top = document.getElementById('problems').getBoundingClientRect().top;
+    const above = document.getElementById('lab-tabs')?.getBoundingClientRect().bottom || 0;
+    lift = Math.max(0, Math.round(h / 2 - (above + top) / 2));
+  }
+  const ease = (from, to) => (Math.abs(to - from) < 0.5 ? to : from + (to - from) * 0.2);
+  const next = ease(view.shift, target);
+  const nextLift = ease(view.lift, lift);
+  if (next === view.shift && nextLift === view.lift && w === view.w && h === view.h) return;
   view.shift = next;
+  view.lift = nextLift;
   view.w = w;
   view.h = h;
-  if (Math.abs(next) < 0.5) camera.clearViewOffset();
-  else camera.setViewOffset(w, h, -next, 0, w, h);
+  if (Math.abs(next) < 0.5 && Math.abs(nextLift) < 0.5) camera.clearViewOffset();
+  else camera.setViewOffset(w, h, -next, nextLift, w, h);
 }
 
 function frame() {

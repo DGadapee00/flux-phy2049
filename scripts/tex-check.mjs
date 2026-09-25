@@ -12,7 +12,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve('src');
-const EATEN = /\\+[tnvfrb0xu]/g;
+// Any backslash before a letter: \t, \v, \f … become control characters, and one that is no JS
+// escape at all (\Delta, \Sigma, \Phi) quietly loses its backslash — "Delta V" in italics.
+const EATEN = /\\+[A-Za-z]/g;
 
 function walk(dir) {
   const out = [];
@@ -56,7 +58,7 @@ for (const file of walk(ROOT)) {
       if ((m[0].length - 1) % 2 === 0) continue;
       const line = src.slice(0, lit.start).split('\n').length;
       const near = lit.text.slice(Math.max(0, m.index - 40), m.index + 30);
-      problems.push(`${file}:${line}: \\${m[0].slice(-1)} is a JS escape here, so the TeX is eaten — …${near}…`);
+      problems.push(`${file}:${line}: \\${m[0].slice(-1)} is read as a JS escape here, so the TeX is broken — …${near}…`);
     }
   }
 }

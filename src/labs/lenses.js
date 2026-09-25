@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { defineLab } from './define.js';
 import { M } from '../scene/manim.js';
 import { imageOf, principalRays, twoLenses, traceRay, fmtCm } from '../physics/optics.js';
-import { RAY_COLORS, wipe, label, line, arrowAt, tick, drawBundle, frameCamera } from '../scene/opticsBench.js';
+import { RAY_COLORS, wipe, label, line, arrowAt, tick, drawBundle, frameCamera, imageMark } from '../scene/opticsBench.js';
 import { kv, cells, eq } from '../ui/shared.js';
 
 /** Microscope: final virtual image at the 25 cm near point. Telescope: final image at infinity. */
@@ -238,8 +238,7 @@ export default defineLab({
       h.draw.add(arrowAt(-state.do, state.ho, M.gold));
       h.draw.add(label('object', -state.do, state.ho + 3));
       if (!L.infinite && Number.isFinite(L.imageX)) {
-        h.draw.add(arrowAt(L.imageX, L.hi, L.real ? M.red : M.blue));
-        h.draw.add(label(L.real ? 'real image' : 'virtual image', L.imageX, L.hi + (L.hi >= 0 ? 3 : -3.5)));
+        imageMark(h.draw, L.imageX, L.hi, L.real ? M.red : M.blue, L.real ? 'real image' : 'virtual image', L.hi + (L.hi >= 0 ? 3 : -3.5));
       }
       tick(h.draw, L.f, 'F', M.gold);
       tick(h.draw, -L.f, 'F', M.gold);
@@ -272,13 +271,11 @@ export default defineLab({
       h.draw.add(label('object', -state.do, state.ho + 2.5));
     }
     if (L.i1 && !L.i1.infinite) {
-      h.draw.add(arrowAt(L.i1.imageX, L.i1.hi, M.yellow));
-      h.draw.add(label('intermediate (real)', L.i1.imageX, L.i1.hi + (L.i1.hi >= 0 ? 2.5 : tele ? -7 : -3)));
+      imageMark(h.draw, L.i1.imageX, L.i1.hi, M.yellow, 'intermediate (real)', L.i1.hi + (L.i1.hi >= 0 ? 2.5 : tele ? -7 : -3));
     }
     if (L.i2 && !L.i2.infinite && Number.isFinite(L.i2.di) && Math.abs(L.i2.di) < 400) {
       const x2 = state.sep + L.i2.di;
-      h.draw.add(arrowAt(x2, L.i2.hi, L.i2.real ? M.red : M.blue));
-      h.draw.add(label(L.i2.real ? 'final (real)' : 'final (virtual)', x2, L.i2.hi + (L.i2.hi >= 0 ? 2.5 : -3)));
+      imageMark(h.draw, x2, L.i2.hi, L.i2.real ? M.red : M.blue, L.i2.real ? 'final (real)' : 'final (virtual)', L.i2.hi + (L.i2.hi >= 0 ? 2.5 : -3));
     } else if (L.i2) {
       h.draw.add(label('final image at ∞ — rays leave parallel', state.sep + 30, -11));
     }

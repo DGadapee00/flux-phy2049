@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { M, fatLine, fatSegments, markAnswer, setFatSegments, segmentCapacity } from '../scene/manim.js';
+import { M, fatLine, fatSegments, markAnswer, setAnswer, setFatSegments, segmentCapacity } from '../scene/manim.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import {
   singleSlit,
@@ -17,6 +17,7 @@ import {
   paintScreen,
 } from '../scene/wavebench.js';
 import { kv, cells, qv, eq } from '../ui/shared.js';
+import { sciText } from '../ui/format.js';
 
 /**
  * Ch 64 · one slit, a grating, and the resolution limit.
@@ -336,6 +337,10 @@ export default defineLab({
     const h = ctx.handle;
     const c = computed.diff;
     if (!h || !c) return;
+    // A problem that asks how many orders appear sets answerScreen: then the pattern itself is the
+    // answer, and the screen, the beams and the ripples wait until it is solved.
+    const hide = !!state.answerScreen;
+    for (const o of [h.card, h.rays, h.tank, h.envelope]) setAnswer(o?.group || o?.mesh || o, hide);
     const u = UNITS_PER_METER;
     const rgb = wavelengthRGB(state.lam);
     const beam = new THREE.Color(`rgb(${rgb.r},${rgb.g},${rgb.b})`);
@@ -529,7 +534,7 @@ export default defineLab({
     } else {
       rows.push(kv('$D$', `${(state.D * 1e3).toFixed(2)} mm`));
       rows.push(kv('distance', `${(state.Lobj / 1e3).toFixed(2)} km`));
-      rows.push(kv(String.raw`$\theta_{\min} = 1.22\lambda/D$`, qv('qV', `${c.thetaMin.toExponential(3)} rad`)));
+      rows.push(kv(String.raw`$\theta_{\min} = 1.22\lambda/D$`, qv('qV', `${sciText(c.thetaMin, 3)} rad`)));
       rows.push(kv(String.raw`$s = \theta_{\min}L$`, qv('qV', `${c.separation.toFixed(3)} m`)));
       rows.push(kv('sources apart by', `${state.sepFactor.toFixed(2)} θ_min`));
     }
@@ -548,7 +553,7 @@ export default defineLab({
     }
     if (state.mode === 'rayleigh') {
       return cells([
-        [String.raw`$\theta_{\min}$`, `${c.thetaMin.toExponential(3)} rad`, 'ok'],
+        [String.raw`$\theta_{\min}$`, `${sciText(c.thetaMin, 3)} rad`, 'ok'],
         ['$s$ at that range', `${c.separation.toFixed(3)} m`, ''],
         ['sources apart', `${state.sepFactor.toFixed(2)} θ_min`, ''],
         ['verdict', c.resolved ? 'resolved' : 'not resolved', c.resolved ? 'ok' : 'bad'],

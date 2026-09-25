@@ -15,13 +15,49 @@ export function createHUD(api) {
     const key = (lines || []).join('\n');
     if (key === lawKey) return;
     lawKey = key;
-    setLawEl($('law-line'), lines);
+    const el = $('law-line');
+    el.style.fontSize = '';
+    setLawEl(el, lines);
+    // A long law ("f > 0 concave, f < 0 convex") used to run off the panel behind a hidden scrollbar.
+    // Shrink it until it fits, down to 70%, rather than cut it off.
+    for (let fs = 94; el.scrollWidth > el.clientWidth + 1 && fs >= 70; fs -= 6) el.style.fontSize = `${fs}%`;
+  }
+
+  let scenarioList = [];
+  let blind = false;
+
+  /**
+   * A preset's name often states its result ("Convex — always virtual, reduced", "Charge outside
+   * (Φ → 0)"). That is a fine caption while exploring, and a give-away while a problem is unsolved,
+   * so blind mode keeps only the setup half of the name.
+   */
+  function neutralName(name) {
+    return String(name)
+      .split(' — ')[0]
+      .replace(/\s*\([^)]*[→=][^)]*\)/g, '')
+      .trim();
   }
 
   function fillScenarios(lab) {
-    const list = !lab ? [] : typeof lab.scenarios === 'function' ? lab.scenarios() : lab.scenarios || [];
-    $('scenario').innerHTML = list.map((s) => `<option value="${s.id}">${s.name}</option>`).join('');
-    $('scenario').closest('label').hidden = list.length === 0;
+    scenarioList = !lab ? [] : typeof lab.scenarios === 'function' ? lab.scenarios() : lab.scenarios || [];
+    const opts = scenarioList.map((s) => `<option value="${s.id}">${blind ? neutralName(s.name) : s.name}</option>`);
+    // Not presets, so not pickable: they only name what is on screen when no preset matches it.
+    opts.push('<option value="__problem" disabled>This problem’s setup</option>');
+    opts.push('<option value="__custom" disabled>Custom setup</option>');
+    $('scenario').innerHTML = opts.join('');
+    $('scenario').closest('label').hidden = scenarioList.length === 0;
+  }
+
+  /** What the Scenario box should say: the preset, or that the setup is a problem's or your own. */
+  function scenarioValue(state) {
+    if (state?.custom) return '__custom';
+    if (state?.problemId) return '__problem';
+    return state?.scenarioId || null;
+  }
+
+  function syncScenario(state) {
+    const want = scenarioValue(state);
+    if (want && $('scenario').value !== want) $('scenario').value = want;
   }
 
   /**
@@ -123,9 +159,30 @@ export function createHUD(api) {
    * by `data-box-scale` to read in the unit the label uses (1e-3 for mm, 1e3 for kPa).
    */
   function enhanceSliders(host) {
+    const valueProp = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
     for (const row of host.querySelectorAll('.slider-row')) {
       const range = row.querySelector("input[type='range']");
-      if (!range || row.querySelector('.slider-num')) continue;
+      // Some labs build their own box beside the slider; a second one would only disagree with it.
+      if (!range || row.querySelector(".slider-num, input[type='number']")) continue;
+      /*
+       * A lab writes a problem's value straight into range.value. Past the slider's end the browser
+       * clamps it, and the readout (+200 μC) and the box (5) then disagree. Widening the range on
+       * the way in keeps the slider, its label and its box on the same number.
+       */
+      Object.defineProperty(range, 'value', {
+        configurable: true,
+        get() {
+          return valueProp.get.call(this);
+        },
+        set(v) {
+          const n = Number(v);
+          if (Number.isFinite(n)) {
+            if (n < Number(this.min)) this.min = String(n);
+            if (n > Number(this.max)) this.max = String(n);
+          }
+          valueProp.set.call(this, v);
+        },
+      });
       const step = Number(range.step);
       const base = Number(range.dataset.log) || 0;
       const k = Number(range.dataset.boxScale) || 1;
@@ -195,7 +252,9 @@ export function createHUD(api) {
     mountedId = lab.id;
     renderToggles(lab, state);
     renderLegend(lab);
-    if (state?.scenarioId) $('scenario').value = state.scenarioId;
+    syncScenario(state);
+    // The scene is a canvas; give it a name, and point to where its numbers are written out.
+    $('c')?.setAttribute('aria-label', `${lab.title} lab scene. Its values are listed in the equation panel and the readout below it.`);
   }
 
   $('exam-select')?.addEventListener('change', (e) => {
@@ -211,7 +270,23 @@ export function createHUD(api) {
     const btn = e.target.closest('[data-lab]');
     if (btn) api.setLab(btn.dataset.lab);
   });
-  $('scenario').addEventListener('change', () => api.setScenario($('scenario').value));
+  /*
+   * Anything the student does to a lab's controls changes its setup — except the buttons that only
+   * animate or reframe. Labs report slider moves in different ways (some as a quiet redraw), so the
+   * edit is caught here, where every control lives, rather than trusted to each lab.
+   */
+  const labHost = $('lab-controls');
+  labHost.addEventListener('input', () => api.userEdit?.());
+  labHost.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b || b.disabled || /sweep|fit|play|focus/i.test(b.id)) return;
+    api.userEdit?.();
+  });
+
+  $('scenario').addEventListener('change', () => {
+    const v = $('scenario').value;
+    if (!v.startsWith('__')) api.setScenario(v);
+  });
   $('btn-reset-cam').addEventListener('click', () => api.resetCamera());
 
   /*
@@ -287,9 +362,7 @@ export function createHUD(api) {
       $('mini-plot').hidden = true;
       return;
     }
-    if (state.scenarioId && $('scenario').value !== state.scenarioId) {
-      $('scenario').value = state.scenarioId;
-    }
+    syncScenario(state);
     lab.syncControls(state);
     for (const show of sliderBoxes) show();
     updatePlaneHint(lab);
@@ -320,7 +393,20 @@ export function createHUD(api) {
     }
   }
 
-  return { mount, update };
+  /** Problem blind mode: scenario names lose the half that states the answer. */
+  function setBlind(on) {
+    if (on === blind) return;
+    blind = on;
+    const sel = $('scenario');
+    const keep = sel.value;
+    for (const o of sel.options) {
+      const sc = scenarioList.find((x) => x.id === o.value);
+      if (sc) o.textContent = on ? neutralName(sc.name) : sc.name;
+    }
+    sel.value = keep;
+  }
+
+  return { mount, update, setBlind };
 }
 
 export { sciHTML } from './format.js';

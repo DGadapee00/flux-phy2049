@@ -1,5 +1,5 @@
 /** Exam 1 · Ch V (vectors), 34 (charge), 35 (Coulomb force). */
-import { problem, kase, range, choice, SIGN, num, mc, sym, K, QE, ME, MP, G, DEG, DIR_X, charge, layout, angleDeg, texNum } from '../kit.js';
+import { problem, kase, range, choice, SIGN, num, mc, sym, K, QE, ME, MP, G, DEG, DIR_X, charge, layout, angleDeg, texNum, terms } from '../kit.js';
 
 const E1 = { exam: 'e1' };
 
@@ -9,7 +9,7 @@ export default [
     ...E1, id: 'e1.v.mag-dir', ch: 'V', lab: 'vectors', title: 'Magnitude and direction from components', kind: 'numeric', topics: ['vectors'],
     vars: { ax: range(-9, 9, 1, '', 1, { exclude: [0] }), ay: range(-9, 9, 1, '', 1, { exclude: [0] }) },
     derive: ($) => ({ A: Math.hypot($.ax, $.ay), th: angleDeg($.ax, $.ay) }),
-    text: (T) => `A vector is a = ${T.ax} x̂ + ${T.ay} ŷ. Find its magnitude and its direction, measured counterclockwise from the +x axis.`,
+    text: (T, $) => `A vector is a = ${terms([[$.ax, 'x̂'], [$.ay, 'ŷ']])}. Find its magnitude and its direction, measured counterclockwise from the +x axis.`,
     parts: [num('A', ($) => $.A, '', { label: '|a|' }), num('th', ($) => $.th, '°', { label: 'θ from +x', abs: 0.6, tol: 0.005, wrap: 360 })],
     hints: [String.raw`$|\vec{a}| = \sqrt{a_x^2 + a_y^2}$`, String.raw`$\tan^{-1}(a_y/a_x)$ only gives the right angle in quadrants I and IV. Check which quadrant the vector is in.`],
     steps: ($, f) => [
@@ -59,7 +59,7 @@ export default [
       const phi = (Math.acos(dot / (Math.hypot($.ax, $.ay) * Math.hypot($.bx, $.by))) * 180) / Math.PI;
       return { dot, phi };
     },
-    text: (T) => `a = ${T.ax} x̂ + ${T.ay} ŷ and b = ${T.bx} x̂ + ${T.by} ŷ. Find a·b and the angle φ between the vectors.`,
+    text: (T, $) => `a = ${terms([[$.ax, 'x̂'], [$.ay, 'ŷ']])} and b = ${terms([[$.bx, 'x̂'], [$.by, 'ŷ']])}. Find a·b and the angle φ between the vectors.`,
     parts: [num('dot', ($) => $.dot, '', { label: 'a·b', abs: 0.01 }), num('phi', ($) => $.phi, '°', { label: 'φ', abs: 0.6, tol: 0.005 })],
     hints: [String.raw`$\vec{a}\cdot\vec{b} = a_xb_x + a_yb_y = |\vec{a}||\vec{b}|\cos\varphi$`],
     steps: ($, f) => [
@@ -103,8 +103,8 @@ export default [
     vars: { ax: range(-5, 5, 1), ay: range(-5, 5, 1), bx: range(-5, 5, 1), by: range(-5, 5, 1) },
     derive: ($) => ({ cz: $.ax * $.by - $.ay * $.bx }),
     valid: ($) => $.cz !== 0,
-    text: (T) => `a = ${T.ax} x̂ + ${T.ay} ŷ and b = ${T.bx} x̂ + ${T.by} ŷ. Find a × b (its z component) and its direction.`,
-    parts: [num('cz', ($) => Math.abs($.cz), '', { label: '|a × b|' }), mc('dir', [[1, '+ẑ (out of the page)'], [-1, '−ẑ (into the page)']], ($) => Math.sign($.cz), { label: 'Direction' })],
+    text: (T, $) => `a = ${terms([[$.ax, 'x̂'], [$.ay, 'ŷ']])} and b = ${terms([[$.bx, 'x̂'], [$.by, 'ŷ']])}. Find the z component of a × b, and the direction of a × b.`,
+    parts: [num('cz', ($) => $.cz, '', { label: String.raw`$(\vec{a}\times\vec{b})_z$ (signed)` }), mc('dir', [[1, '+ẑ (out of the page)'], [-1, '−ẑ (into the page)']], ($) => Math.sign($.cz), { label: 'Direction' })],
     hints: [String.raw`$(\vec{a}\times\vec{b})_z = a_xb_y - a_yb_x$`, String.raw`Right-hand rule: $\hat{x}\times\hat{y} = +\hat{z}$`],
     steps: ($, f) => [
       String.raw`$(\vec{a}\times\vec{b})_z = (${texNum($.ax)})(${texNum($.by)}) - (${texNum($.ay)})(${texNum($.bx)}) = ${texNum($.cz)}$`,
@@ -174,7 +174,7 @@ export default [
     ...E1, id: 'e1.34.polarization', ch: '34', lab: 'force', title: 'Charged rod and neutral paper', kind: 'conceptual', topics: ['charge', 'polarization'],
     vars: { rod: SIGN },
     text: (T) => `A ${T.rod}ly charged comb is held near small neutral bits of paper. What happens?`,
-    parts: [mc('ans', [[1, 'The paper is attracted'], [2, 'The paper is repelled'], [3, 'Nothing, because the paper is neutral'], [4, 'Attracted only if the comb is negative']], 1)],
+    parts: [mc('ans', [[1, 'The paper is attracted'], [2, 'The paper is repelled'], [3, 'Nothing, because the paper is neutral'], [4, 'Attracted only if the paper carries a net charge']], 1)],
     steps: () => [String.raw`The paper polarizes: charge opposite to the comb shifts to the near side, so the attraction beats the repulsion (the force goes as $1/r^2$). This happens for either sign.`],
     cases: [kase('negative comb', { rod: -1 }, { ans: 1 })],
   }),

@@ -26,6 +26,7 @@ export function applyProblem(lab, slice, inst) {
     if (lab.applyScenario) lab.applyScenario(id, slice);
     else applyDataScenario(lab.id, id, slice);
   }
+  slice.answerScreen = false;
   const note = sim.setup ? sim.setup(slice, inst.$) : '';
   slice.problemId = inst.tpl.id;
   slice.dirty = true;

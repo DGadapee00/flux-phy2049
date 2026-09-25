@@ -3,7 +3,7 @@ import { defineLab } from './define.js';
 import { SCENARIOS } from '../data/scenarios.js';
 import { ohmState, MATERIALS } from '../physics/circuit.js';
 import { coachOhm } from '../physics/coach.js';
-import { fmtR, fmtI, fmtP, fmtV, fmtE, sciHTML } from '../ui/format.js';
+import { fmtR, fmtI, fmtP, fmtV, fmtE, sciHTML, fmtSpeed } from '../ui/format.js';
 import { kv, cells } from '../ui/shared.js';
 
 function circuitConfig(state, computed) {
@@ -12,7 +12,7 @@ function circuitConfig(state, computed) {
     eq: 'ohm',
     source: 'dc',
     load: 'resistor',
-    loadName: `${o.mat.name} wire · ${state.ohm.L.toFixed(1)} m`,
+    loadName: `${o.mat.name} ${state.ohm.A < 1e-8 ? 'filament' : 'wire'} · ${state.ohm.L.toFixed(1)} m`,
     V: state.ohm.V,
     I: o.I,
     R: o.R,
@@ -121,7 +121,7 @@ export default defineLab({
     fit('ohm-L', state.ohm.L);
     $('ohm-L-val').textContent = `${state.ohm.L.toFixed(1)} m`;
     fit('ohm-A', state.ohm.A * 1e6);
-    $('ohm-A-val').textContent = `${(state.ohm.A * 1e6).toFixed(2)} mm²`;
+    $('ohm-A-val').textContent = `${Number((state.ohm.A * 1e6).toPrecision(3))} mm²`;
     fit('ohm-V', state.ohm.V);
     $('ohm-V-val').textContent = fmtV(state.ohm.V);
     fit('ohm-T', state.ohm.T);
@@ -146,10 +146,11 @@ export default defineLab({
       kv('Material', o.mat.name),
       kv(String.raw`$\rho(T)$`, `${sciHTML(o.rho)} Ω·m`),
       kv(String.raw`$R = \rho L/A$`, fmtR(o.Rgeo)),
-      kv(String.raw`$R$ used`, fmtR(o.R)),
+      // Only a problem that states R outright pins it; then the wire's own ρL/A is not the R in use.
+      o.R !== o.Rgeo ? kv(String.raw`$R$ given by the problem`, fmtR(o.R)) : '',
       kv(String.raw`$I = V/R$`, fmtI(o.I)),
       kv(String.raw`$J = I/A$`, `${sciHTML(o.J)} A/m²`),
-      kv(String.raw`$v_d = J/(nq)$`, `${o.vd.toExponential(2)} m/s`),
+      kv(String.raw`$v_d = J/(nq)$`, fmtSpeed(o.vd)),
       kv(String.raw`$E$ in the wire`, fmtE(o.E)),
       kv(String.raw`$P = IV$`, fmtP(o.P)),
       kv(String.raw`electrons per second`, sciHTML(o.Ne_per_s, 2)),
@@ -161,7 +162,7 @@ export default defineLab({
     return cells([
       [String.raw`$R$`, fmtR(o.R), ''],
       [String.raw`$I$`, fmtI(o.I), ''],
-      [String.raw`$v_d$`, `${o.vd.toExponential(1)} m/s`, ''],
+      [String.raw`$v_d$`, fmtSpeed(o.vd), ''],
       [String.raw`$P$`, fmtP(o.P), ''],
     ]);
   },

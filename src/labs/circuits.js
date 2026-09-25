@@ -74,7 +74,7 @@ export default defineLab({
   orbit: false,
   camera: { pos: new THREE.Vector3(0, 0.25, 12.5), target: new THREE.Vector3(0, 0.25, 0) },
   keys: { r: 'reset', R: 'reset' },
-  legend: { id: 'Vwire', title: 'Wire color = potential V', low: '0 V (ground)', high: 'highest', barClass: 'legend-v' },
+  legend: { id: 'Vwire', title: 'Wire color = potential V', low: '0 V (ground)', high: 'highest', barClass: 'legend-cvd' },
   scenarios: CIRCUITS.map(({ id, name }) => ({ id, name })),
   defaultState() {
     return { scenarioId: 'series', values: {}, show: {}, anim: { playing: false, i: 0 } };
@@ -158,7 +158,8 @@ export default defineLab({
       const against = I < -1e-4 ? '<small>flows against the grey arrow</small>' : '';
       labels[e.id] =
         qv('qR', `<i>R</i><sub>${e.n}</sub> = ${fmtOhm(e.value)}`) +
-        qv('qI', `<i>I</i><sub>${e.n}</sub> = ${fmtI(I)}`) +
+        // Name and value in separate spans, so a problem can hide the value and still say which is I₂.
+        qv('qI', `<span class="lbl-name"><i>I</i><sub>${e.n}</sub></span> = <span class="lbl-val">${fmtI(I)}</span>`) +
         `<small>ΔV = ${fmtV(Math.abs(I * e.value))}</small>${against}`;
     }
     computed.circ = {

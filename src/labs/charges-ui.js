@@ -209,7 +209,8 @@ function renderCoords(state, fit) {
   const rows = (state.charges || [])
     .filter((c) => !c.small)
     .map((c, i) => ({ key: `charge:${c.id}`, name: `q<sub>${i + 1}</sub>`, p: c, id: c.id }));
-  if (state.probe) rows.push({ key: 'probe', name: state.probeName ? subHTML(state.probeName) : 'P', p: state.probe });
+  const tag = state.probeTag || (state.lab === 'potential' ? 'B' : 'P');
+  if (state.probe) rows.push({ key: 'probe', name: state.probeName ? subHTML(state.probeName) : subHTML(tag), p: state.probe });
   if (state.pathA && !state.hideA) rows.push({ key: 'pathA', name: 'A', p: state.pathA });
 
   const fitBtn = document.getElementById('btn-fit');

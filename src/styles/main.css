@@ -7,7 +7,7 @@
   --border-hover: rgba(236, 230, 226, 0.24);
   --text: #ece6e2;
   --text-muted: #aaa39e;
-  --text-dim: #77716c;
+  --text-dim: #8f8983; /* 5.6:1 on the panel ground (was 4:1, under AA for small text) */
 
   --blue: #58c4dd;
   --blue-d: #29abca;
@@ -846,6 +846,10 @@ select {
   background: linear-gradient(90deg, #1c758a, #58c4dd 20%, #5cd0b3 40%, #83c167 60%, #f4d345 80%, #fc6255);
 }
 
+.legend-cvd {
+  background: linear-gradient(90deg, #1d4f8c, #3f8fd6 20%, #8fd0ee 40%, #ece6b8 60%, #f4b942 80%, #e07b39);
+}
+
 .legend-sigma {
   background: linear-gradient(90deg, #58c4dd, #3a3d44 50%, #fc6255);
 }
@@ -1018,6 +1022,21 @@ input[type='checkbox'] {
   color: #b4e6f2;
 }
 
+.charge-label .cl-name,
+.charge-label .cl-val {
+  display: block;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.charge-label .cl-name {
+  font-style: italic;
+}
+
+.charge-label .cl-val {
+  font-size: 13px;
+}
+
 .charge-label.small {
   display: none;
 }
@@ -1028,6 +1047,21 @@ input[type='checkbox'] {
 
 .probe-label {
   color: var(--text);
+}
+
+/* The probe's name (P, B …) beside the white dot. */
+.probe-name {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--text);
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow:
+    0 0 3px #000,
+    0 0 3px #000,
+    1px 1px 0 #000,
+    -1px -1px 0 #000;
 }
 
 /* Problem-named points (B, C, P₁ …): the name, with any value lines stacked under it. */
@@ -1473,4 +1507,17 @@ body.units-open .legend {
   .spectrum-ruler {
     display: none;
   }
+}
+
+/* Read by screen readers, not shown. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }

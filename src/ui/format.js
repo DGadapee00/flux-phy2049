@@ -17,22 +17,24 @@ export function sciTex(x, digits = 2) {
   return `${Number(m)}\\times 10^{${Number(e)}}`;
 }
 
+const SUPS = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+
+/** Plain-text scientific notation as a person writes it: 3.14 × 10⁻⁷, not 3.14e-7. */
 export function sciText(x, digits = 2) {
   if (!Number.isFinite(x)) return '—';
   if (Math.abs(x) < 1e-18) return '0';
-  return Number(x).toExponential(digits);
+  const [m, e] = Number(x).toExponential(digits).split('e');
+  return `${m} × 10${String(Number(e)).replace(/./g, (c) => SUPS[c])}`;
 }
 
+/** Charge to three significant figures in μC, nC or pC — 85 pC reads "+85.0 pC", never "+0.1 nC". */
 export function fmtCharge(q) {
   if (!Number.isFinite(q) || Math.abs(q) < 1e-18) return '0';
-  const uC = q * 1e6;
-  if (Math.abs(uC) >= 0.095) {
-    const s = uC >= 0 ? '+' : '';
-    return `${s}${uC.toFixed(2)} μC`;
-  }
-  const nC = q * 1e9;
-  const s = nC >= 0 ? '+' : '';
-  return `${s}${nC.toFixed(1)} nC`;
+  const s = q >= 0 ? '+' : '';
+  const a = Math.abs(q);
+  if (a >= 0.995e-6) return `${s}${(q * 1e6).toFixed(2)} μC`;
+  if (a >= 0.995e-9) return `${s}${Number((q * 1e9).toPrecision(3))} nC`;
+  return `${s}${Number((q * 1e12).toPrecision(3))} pC`;
 }
 
 export function fmtLambda(lambda) {
@@ -177,6 +179,17 @@ export function fmtWb(x) {
   return `${s}${sciText(a)} Wb`;
 }
 
+/** Speeds from drift (mm/s) up to light (×10⁸ m/s). */
+export function fmtSpeed(v) {
+  if (!Number.isFinite(v)) return '—';
+  const a = Math.abs(v);
+  if (a >= 1e5) return `${sciText(v)} m/s`;
+  if (a >= 1) return `${Number(v.toPrecision(3))} m/s`;
+  if (a >= 1e-3) return `${Number((v * 1e3).toPrecision(3))} mm/s`;
+  if (a >= 1e-6) return `${Number((v * 1e6).toPrecision(3))} μm/s`;
+  return `${sciText(v)} m/s`;
+}
+
 export function fmtR(r) {
   if (!Number.isFinite(r)) return '—';
   if (r >= 1e6) return `${(r / 1e6).toFixed(2)} MΩ`;
@@ -193,6 +206,8 @@ export function fmtI(i) {
   if (a >= 1) return `${s}${a.toFixed(3)} A`;
   if (a >= 1e-3) return `${s}${(a * 1e3).toFixed(2)} mA`;
   if (a >= 1e-6) return `${s}${(a * 1e6).toFixed(2)} μA`;
+  if (a >= 1e-9) return `${s}${(a * 1e9).toFixed(2)} nA`;
+  if (a >= 1e-12) return `${s}${(a * 1e12).toFixed(2)} pA`;
   return `${s}${sciText(a)} A`;
 }
 

@@ -112,9 +112,9 @@ export default [
     text: (T) => `The current in a ${T.L} mH inductor changes steadily by ${T.dI} A in ${T.dt} ms. What is the magnitude of the self-induced emf?`,
     parts: [
       sym('emf_sym', 'L*dI/dt', { L: 'H', dI: 'A', dt: 's' }, ($) => $.emf, { unit: 'V', label: String.raw`$|\varepsilon|$ as a formula` }),
-      num('emf', ($) => $.emf, 'V'), mc('dir', [[1, 'It opposes the change in current'], [2, 'It helps the change along'], [3, 'It is zero once the current is steady'], [4, 'Both the first and third statements are true']], 4, { label: 'Which is correct?' })],
+      num('emf', ($) => $.emf, 'V'), mc('dir', [[1, 'It opposes the change in current'], [2, 'It helps the change along'], [3, 'It is zero once the current is steady'], [4, 'It is proportional to the current itself, not to how fast it changes']], [1, 3], { multi: true, label: 'Which statements about the self-induced emf are true?' })],
     steps: ($, f) => [String.raw`$|\mathcal{E}| = L\dfrac{\Delta I}{\Delta t} = ${texNum($.emf)}\ \text{V}$`],
-    cases: [kase('hand', { L: 50, dI: 2, dt: 10 }, { emf: 10, dir: 4 })],
+    cases: [kase('hand', { L: 50, dI: 2, dt: 10 }, { emf: 10, dir: [1, 3] })],
   }),
   problem({
     ...E5, id: 'e5.49.rl', ch: '49', title: 'RL circuit growth and stored energy', kind: 'numeric', level: 2, topics: ['inductance', 'rl'],

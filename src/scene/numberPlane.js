@@ -64,6 +64,10 @@ export class NumberPlane {
 
     this.nameA = this.makeName('x', half + 0.4, 0, 0);
     this.nameB = this.makeName('z', 0, half + 0.35, 0);
+    // The far-end names are usually off screen, and a problem about +x or −z needs its axes named
+    // where the student is looking: a second pair sits five squares out, between tick labels.
+    this.nearA = this.makeName('+x', 5, 0.42, 0);
+    this.nearB = this.makeName('+z', 0.5, 5, 0);
     this.nameOff = this.makeName('y', 0, 0, 0);
     this.nameOff.position.set(0, 5.2, 0);
     this.group.add(this.nameOff);
@@ -108,6 +112,7 @@ export class NumberPlane {
     // The out-of-plane axis is world y on the floor, world z when the plane stands up.
     this.off.rotation.x = floor ? 0 : Math.PI / 2;
     this.nameB.element.textContent = floor ? 'z' : 'y';
+    this.nearB.element.textContent = floor ? '+z' : '+y';
     this.nameOff.element.textContent = floor ? 'y' : 'z';
     this.nameOff.position.set(0, floor ? 5.2 : 0, floor ? 0 : 5.2);
   }

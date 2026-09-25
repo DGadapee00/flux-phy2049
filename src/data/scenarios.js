@@ -308,7 +308,9 @@ export const SCENARIOS = {
     {
       id: 'ohm-headlight',
       name: 'Car headlight 12 V / 8 Ω',
-      ohm: { material: 'tungsten', L: 0.4, A: 2.8e-7, V: 12, T: 20, Rlock: 8 },
+      // A filament 0.4 m long (coiled) and 60 μm across: ρL/A really is 8 Ω, so the wire's own
+      // numbers — E = V/L = ρJ, the drift speed — all describe the headlight on screen.
+      ohm: { material: 'tungsten', L: 0.4, A: 2.8e-9, V: 12, T: 20 },
     },
     {
       id: 'ohm-cu100',
@@ -373,6 +375,8 @@ export function applyScenario(lab, id, state) {
   if (sc.ohm) state.ohm = { ...sc.ohm };
   if (sc.power) state.power = { ...sc.power };
   if (sc.pathA) state.pathA = { ...sc.pathA };
+  state.probeTag = sc.probeTag || '';
+  state.hideProbeTag = false;
   if (lab === 'potential') {
     state.marks = (sc.marks || []).map((m) => ({ ...m }));
     state.markShow = sc.markShow || '';

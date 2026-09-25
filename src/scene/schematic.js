@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { M, Arrow, fatLine, disposeTree, makeChargeTexture, rampColor } from './manim.js';
+import { M, Arrow, fatLine, disposeTree, makeChargeTexture, rampColorCVD as rampColor } from './manim.js';
 
 /**
  * Flat schematic for an arbitrary fixed netlist (Circuits lab).

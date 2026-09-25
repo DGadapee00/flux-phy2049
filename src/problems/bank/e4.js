@@ -377,7 +377,7 @@ export default [
     ...E4, id: 'e4.47.loop', ch: '47', lab: 'biot', title: 'B on the axis of a current loop', kind: 'numeric', level: 2, topics: ['biot-savart'],
     vars: { N: range(1, 50, 1, 'turns'), I: range(0.5, 8, 0.1, 'A'), R: range(5, 40, 1, 'cm', 1e-2), y: range(0, 40, 1, 'cm', 1e-2) },
     derive: ($) => ({ B: (MU0 * $.N * $.I * $.R ** 2) / (2 * ($.R ** 2 + $.y ** 2) ** 1.5) }),
-    text: (T) => `A flat circular coil of ${T.N} turns and radius ${T.R} cm carries ${T.I} A. Find B on its axis ${T.y} cm from the center.`,
+    text: (T, $) => `A flat circular coil of ${T.N} turn${$.N === 1 ? '' : 's'} and radius ${T.R} cm carries ${T.I} A. Find B on its axis ${T.y} cm from the center.`,
     parts: [
       sym('B_sym', 'mu0*N*I*R^2/(2*(R^2 + y^2)^(3/2))', { N: '1', I: 'A', R: 'm', y: 'm' }, ($) => $.B, { unit: 'T', label: String.raw`$B$ as a formula` }),
       num('B', ($) => $.B, 'T'),

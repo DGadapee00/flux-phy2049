@@ -53,7 +53,7 @@ function fmtDays(days) {
 
 /** What a numeric/choice value looks like to the student (display units, option labels). */
 function showValue(part, rendered, si) {
-  if (part.kind === 'numeric') return `${sig(si / part.scale)}${part.unit ? ` ${part.unit}` : ''}`;
+  if (part.kind === 'numeric') return `${sig(si / part.scale)}${rendered.unit ? ` ${rendered.unit}` : ''}`;
   if (part.kind === 'choice') {
     const vals = [].concat(si);
     return vals.map((v) => rendered.options.find((o) => o.value === v)?.label ?? String(v)).join('; ');
@@ -84,10 +84,13 @@ function partLabel(part, rendered, count) {
 // ---------------------------------------------------------------------------------------------
 // Veil: hide numbers the lab prints (in-scene labels) while a problem is unsolved.
 // Givens drawn as colored V / R / B spans and charge labels stay; values and verdicts are masked.
-const KEEP = '.charge-label, .axis-label, .circuit-sign';
+const KEEP = '.charge-label, .axis-label, .circuit-sign, .probe-name, .lbl-name';
 const GIVEN = '.qV, .qR, .qB';
 const TELLS = /\d|real image|virtual image|attract|repel|against the grey|final \(|intermediate \(|rays leave parallel|total internal/i;
-const HARMLESS = /^[\s2FCVO′']*$/; // focal-point / center-of-curvature marks like "2F"
+const MARKS = /^[\s2FCVO′']*$/; // focal-point / center-of-curvature marks like "2F"
+// A bare name — P1, q₂, R3, A — is how the problem points at something. It is never an answer.
+const NAME = /^\s*[A-Za-zα-ωΑ-Ω][A-Za-z]?\s?[0-9₀-₉]{0,2}\s*$/;
+const HARMLESS = { test: (s) => MARKS.test(s) || NAME.test(s) };
 const INLINE = /^(I|SUB|SUP|BR|B|EM|SPAN)$/;
 
 function veilNode(el) {
@@ -235,6 +238,7 @@ export function createPractice(api) {
   }
 
   function leaveProblem({ push = true } = {}) {
+    body.classList.remove('scene-peek');
     st.cur = null;
     st.view = 'list';
     st.token++;
@@ -281,19 +285,21 @@ export function createPractice(api) {
     let answered = 0;
     let right = 0;
     let scored = 0;
-    for (const part of cur.tpl.parts) {
-      if (part.kind === 'self') continue;
+    // Boxes still waiting on their formula can't have been answered, so they aren't "unanswered".
+    const held = new Set(cur.tpl.parts.map((p, i) => (pendingSymbol(cur, i) ? p.id : null)).filter(Boolean));
+    cur.tpl.parts.forEach((part) => {
+      if (part.kind === 'self') return;
       scored++;
       const raw = cur.inputs[part.id];
       if (isEmpty(part, raw)) {
-        cur.results[part.id] = { empty: true, correct: false, feedback: '' };
-        continue;
+        cur.results[part.id] = { empty: true, held: held.has(part.id), correct: false, feedback: '' };
+        return;
       }
       answered++;
       const r = grade(part, cur.inst.$, gradedInput(cur, part));
       cur.results[part.id] = r;
       if (r.correct) right++;
-    }
+    });
     return { answered, right, scored };
   }
 
@@ -311,7 +317,22 @@ export function createPractice(api) {
     else if (cur.firstTry === null && right < answered) cur.firstTry = false;
     maybeFinish();
     renderPanel({ focusWrong: !cur.finished });
+    announce(cur, right, scored);
     if (cur.finished) panel.querySelector('.pb-solution')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+
+  /** Say the result of a check to a screen reader: the panel re-renders, which it would not notice. */
+  function announce(cur, right, scored) {
+    const el = $('sr-announce');
+    if (!el) return;
+    const notes = cur.tpl.parts
+      .map((p, i) => {
+        const r = cur.results[p.id];
+        if (!r || r.correct || r.empty) return '';
+        return `${partLabel(p, cur.view.parts[i], cur.tpl.parts.length).replace(/\$/g, '')}: ${r.feedback || 'not right yet'}.`;
+      })
+      .filter(Boolean);
+    el.textContent = cur.finished ? `Solved. ${right} of ${scored} parts right.` : `${right} of ${scored} parts right. ${notes.join(' ')}`;
   }
 
   function selfParts(cur) {
@@ -503,7 +524,10 @@ export function createPractice(api) {
     panel.scrollTop = sameView ? scroll : 0;
     refreshLabChecks(true);
     if (opts.focusWrong) {
-      const bad = panel.querySelector('.pb-part.bad .pb-input, .pb-part.empty .pb-input');
+      const bad =
+        panel.querySelector('.pb-part.bad .pb-input, .pb-part.empty .pb-input') ||
+        // Otherwise the box a correct formula just unlocked.
+        [...panel.querySelectorAll('.pb-input:not([disabled]):not([readonly])')].find((el) => !el.value);
       bad?.focus();
     }
   }
@@ -669,19 +693,40 @@ export function createPractice(api) {
    */
   function pendingSymbol(cur, i) {
     if (cur.mode === 'exam' || cur.finished || cur.revealed) return null;
-    for (let j = 0; j < i; j++) {
-      const p = cur.tpl.parts[j];
-      if (p.kind !== 'symbolic') continue;
-      if (!cur.results[p.id]?.correct) return p;
+    return lockersOf(cur, i).find((p) => !cur.results[p.id]?.correct) || null;
+  }
+
+  /**
+   * The formulas a numeric part waits for: the ones that compute the same quantity. A problem that
+   * asks for C, Q, E and U with a formula for U locks only the U box — the others were never
+   * waiting on that formula, and holding them made the first three parts unanswerable.
+   */
+  function lockersOf(cur, i) {
+    const part = cur.tpl.parts[i];
+    if (part.kind !== 'numeric') return [];
+    cur.lockers ??= {};
+    if (!cur.lockers[i]) {
+      const $ = cur.inst.$;
+      const same = (a, b) => Math.abs(Math.abs(a) - Math.abs(b)) <= 1e-9 * Math.max(1e-30, Math.abs(a), Math.abs(b));
+      cur.lockers[i] = cur.tpl.parts.slice(0, i).filter((p) => {
+        if (p.kind !== 'symbolic') return false;
+        try {
+          return same(p.get($), part.get($));
+        } catch {
+          return false;
+        }
+      });
     }
-    return null;
+    return cur.lockers[i];
   }
 
   function partHTML(cur, part, i) {
     const r = cur.view.parts[i];
     const exam = cur.mode === 'exam';
     const locked = cur.finished;
-    const res = exam ? null : cur.results[part.id];
+    const raw = exam ? null : cur.results[part.id];
+    // A box that was locked when Check ran has nothing to report: it has only just opened.
+    const res = raw?.held ? null : raw;
     const state = !res ? '' : res.empty ? ' empty' : res.correct ? ' ok' : ' bad';
     const label = prose(partLabel(part, r, cur.tpl.parts.length));
     const review = cur.mode === 'review';
@@ -704,7 +749,7 @@ export function createPractice(api) {
         <div class="pb-field">
           <input id="pb-in-${i}" class="pb-input${sym ? ' sym' : ''}" data-input="${i}" type="text" spellcheck="false" autocomplete="off"
             ${sym ? '' : 'inputmode="decimal"'} value="${esc(val)}" ${locked ? 'readonly' : ''} ${held ? 'disabled' : ''} placeholder="${sym ? 'formula' : 'e.g. 2.5e-6'}" />
-          ${part.unit ? `<span class="pb-unit">${esc(part.unit)}</span>` : ''}
+          ${r.unit ? `<span class="pb-unit">${esc(r.unit)}</span>` : ''}
           <span class="pb-mark">${mark}</span>
         </div>
         ${preview}
@@ -840,8 +885,12 @@ export function createPractice(api) {
     } else {
       const s = st.session;
       const pos = s && s.ids.includes(cur.id) ? ` · ${s.ids.indexOf(cur.id) + 1} of ${s.ids.length}` : '';
+      // On a phone the sheet covers the lab; this lowers it so the scene shows above the problem.
+      const peek = body.classList.contains('scene-peek');
+      const sceneBtn = cur.tpl.lab ? `<button type="button" class="pb-scene" data-act="scene" aria-pressed="${peek}">${peek ? 'Full problem' : 'Show lab'}</button>` : '';
       head = `<div class="pb-head">
           <button type="button" class="pb-back" data-act="list">← ${s ? esc(s.label) + pos : 'Problems'}</button>
+          ${sceneBtn}
           <button type="button" class="pb-x" data-act="close" title="Back to the lab (P)" aria-label="Close practice">×</button>
         </div>`;
     }
@@ -1026,6 +1075,10 @@ export function createPractice(api) {
         break;
       case 'check':
         check();
+        break;
+      case 'scene':
+        body.classList.toggle('scene-peek');
+        renderPanel();
         break;
       case 'hint':
         if (cur) {

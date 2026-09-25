@@ -131,7 +131,7 @@ export default [
     ],
     sim: {
       scenario: 'grating',
-      setup: (st, $) => void Object.assign(st, { mode: 'grating', lam: $.lam, linesPerMM: $.N / 1e3, m: $.m, L: 2 }),
+      setup: (st, $) => void Object.assign(st, { mode: 'grating', lam: $.lam, linesPerMM: $.N / 1e3, m: $.m, L: 2, answerScreen: true }),
       read: (c) => ({ d: c.diff.d, th: c.diff.thetaOrderDeg, mmax: c.diff.maxOrder }),
     },
     cases: [kase('hand', { N: 600, lam: 500, m: 2 }, { d: 1.6667, th: 36.87, mmax: 3 })],
