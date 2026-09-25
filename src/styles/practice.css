@@ -692,6 +692,13 @@ body.problem-blind .problems {
   line-height: 1.7;
 }
 
+/* A substitution line (a fraction with units on every factor) can outgrow a phone; scroll it, don't spill. */
+.pb-steps li {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 2px;
+}
+
 .pb-key {
   font-size: 11.5px;
   color: var(--text-muted);

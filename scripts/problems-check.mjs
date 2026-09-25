@@ -20,6 +20,7 @@ import { mathProse } from '../src/ui/shared.js';
 import { loadLab } from '../src/labs/load.js';
 import { LAB_META, EXAMS } from '../src/data/catalog.js';
 import { SEQUENCE } from '../src/problems/sequence.js';
+import COACHING from '../src/problems/coaching/index.js';
 
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
@@ -38,7 +39,7 @@ const err = (id, msg) => errors.push(`${id}: ${msg}`);
 function checkRender(tpl, inst) {
   const r = render(inst);
   if (r.figure != null && (!/^<svg[\s>]/.test(r.figure) || /undefined|NaN/.test(r.figure))) err(tpl.id, 'figure is not clean SVG markup');
-  const strings = [r.text, ...r.parts.map((p) => `${p.label ?? ''} ${(p.options || []).map((o) => o.label).join(' ')} ${p.rubric ?? ''}`), ...r.steps, ...r.hints];
+  const strings = [r.text, ...r.parts.map((p) => `${p.label ?? ''} ${(p.options || []).map((o) => o.label).join(' ')} ${p.rubric ?? ''}`), ...r.parts.flatMap((p) => (p.options || []).map((o) => o.why || '')), ...r.steps, ...r.hints];
   const blob = strings.join('\n');
   if (/undefined|NaN|\[object/.test(blob)) err(tpl.id, `rendered text contains undefined/NaN:\n${blob.slice(0, 300)}`);
   // The panel typesets `$…$` (src/ui/shared.js); KaTeX marks what it cannot parse instead of throwing.
@@ -272,6 +273,49 @@ for (const tpl of PROBLEMS) {
     else if (/undefined|NaN/.test(t)) err(tpl.id, `symbolic ${part.id}: TeX came out as "${t}"`);
   }
 }
+
+/*
+ * Coaching (src/problems/coaching/) is keyed by id, part and option value, so a typo would simply
+ * never show. Every key must name something real, and a "why" must belong to an option that is
+ * wrong in at least one version — an explanation of why the right answer is wrong helps no one.
+ */
+for (const [id, c] of Object.entries(COACHING)) {
+  const tpl = PROBLEMS.find((t) => t.id === id);
+  if (!tpl) {
+    err(id, 'coaching names a template that does not exist');
+    continue;
+  }
+  if (c.hints && !Array.isArray(c.hints)) err(id, 'coaching hints must be a list');
+  for (const [pid, whys] of Object.entries(c.why || {})) {
+    const part = tpl.parts.find((p) => p.id === pid);
+    if (!part || part.kind !== 'choice') {
+      err(id, `coaching why: no choice part "${pid}"`);
+      continue;
+    }
+    const seenVals = new Set();
+    const wrongSomewhere = new Set();
+    for (let sd = 0; sd < 40; sd++) {
+      let inst;
+      try {
+        inst = instance(tpl, sd);
+      } catch {
+        continue;
+      }
+      const want = [].concat(expected(part, inst.$));
+      for (const o of choiceOptions(part, inst.$)) {
+        seenVals.add(String(o.value));
+        if (!want.includes(o.value)) wrongSomewhere.add(String(o.value));
+      }
+    }
+    for (const v of Object.keys(whys)) {
+      if (!seenVals.has(v)) err(id, `coaching why ${pid}: no option with value ${v}`);
+      else if (!wrongSomewhere.has(v)) err(id, `coaching why ${pid}: option ${v} is right in every version`);
+    }
+  }
+}
+
+const noHints = PROBLEMS.filter((t) => !t.hints.length).map((t) => t.id);
+if (args.includes('--list') && noHints.length) console.log(`templates with no hints (${noHints.length}):`, noHints.join(' '));
 
 const byExam = {};
 const byCh = {};

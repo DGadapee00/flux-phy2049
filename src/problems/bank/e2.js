@@ -3,7 +3,7 @@
  * and Ch 37 (conductors). Cases tagged "#n" come from Montgomery's practice sheets and reproduce
  * the printed key; the notes flag the two key errors found.
  */
-import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, tf, sym, self, K, EPS0, QE, ME, MP, G, DEG, DIR_X, RADIAL, POSNEG, charge, layout, angleDeg, texNum } from '../kit.js';
+import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, tf, sym, self, K, EPS0, QE, ME, MP, G, DEG, DIR_X, RADIAL, POSNEG, charge, layout, angleDeg, texNum, texDeg, qty, pq } from '../kit.js';
 
 const E2 = { exam: 'e2' };
 const A = { ...E2, ch: '36A' };
@@ -95,7 +95,7 @@ export default [
     derive: ($) => ({ E: $.F / $.q }),
     text: (T) => `A ${T.F} N force acts on a ${T.q} μC charge in a uniform electric field. What is the field's magnitude?`,
     parts: [num('E', ($) => $.E, 'N/C')],
-    steps: ($, f) => [String.raw`$E = \dfrac{F}{q} = ${texNum($.E)}\ \text{N/C}$`],
+    steps: ($, f) => [String.raw`$E = \dfrac{F}{q} = \dfrac{${qty($.F, 'N')}}{${qty($.q, 'C')}} = ${texNum($.E)}\ \text{N/C}$`],
     cases: [kase('#8', { F: 6, q: 3 }, { E: 2e6 }, { key: '2 x 10^6 N/C' })],
   }),
   problem({
@@ -105,7 +105,7 @@ export default [
     text: (T) => `${/^[aeiou]/i.test(T.p) ? 'An' : 'A'} ${T.p} is placed in a ${T.E} N/C electric field that points in the +x direction. Find the magnitude and direction of its acceleration.`,
     parts: [num('a', ($) => $.a, 'm/s²'), mc('dir', [[1, '+x'], [-1, '−x']], ($) => $.p, { label: 'Direction' })],
     steps: ($, f) => [
-      String.raw`$a = \dfrac{eE}{m} = ${texNum($.a)}\ \text{m/s}^2$`,
+      String.raw`$a = \dfrac{eE}{m} = \dfrac{${pq(QE, 'C')}${pq($.E, 'N/C')}}{${qty($.p > 0 ? MP : ME, 'kg')}} = ${texNum($.a)}\ \text{m/s}^2$`,
       String.raw`A proton accelerates along $\vec{E}$; an electron accelerates opposite to it.`,
     ],
     cases: [kase('#9', { p: 1, E: 700 }, { a: 6.707e10, dir: 1 }, { key: '6.7 x 10^10 m/s^2' })],
@@ -119,7 +119,7 @@ export default [
       sym('E_sym', 'm*a/q', { m: 'kg', a: 'm/s²', q: 'C' }, ($) => $.E, { unit: 'N/C', label: String.raw`$E$ as a formula` }),
       num('E', ($) => $.E, 'N/C'),
     ],
-    steps: ($, f) => [String.raw`$E = \dfrac{ma}{q} = ${texNum($.E)}\ \text{N/C}$ (convert grams to kilograms and μC to C first)`],
+    steps: ($, f) => [String.raw`$E = \dfrac{ma}{q} = \dfrac{${pq($.m, 'kg')}${pq($.a, 'm/s²')}}{${qty($.q, 'C')}} = ${texNum($.E)}\ \text{N/C}$ (grams to kilograms and μC to C first)`],
     cases: [kase('#10', { q: 5, a: 0.005, m: 2 }, { E: 2 }, { key: '2 N/C' })],
   }),
   problem({
@@ -134,9 +134,9 @@ export default [
     parts: [num('T', ($) => $.T, 'N')],
     hints: [String.raw`Take up as positive. The electric force on the sphere is $qE_y$, signs included.`],
     steps: ($, f) => [
-      String.raw`$mg = ${texNum($.m * G)}\ \text{N}$`,
-      String.raw`$F_E$ (up) $= ${texNum($.Fup)}\ \text{N}$`,
-      String.raw`$T = mg - F_E = ${texNum($.T)}\ \text{N}$`,
+      String.raw`$mg = ${pq($.m, 'kg')}${pq(G, 'm/s²')} = ${texNum($.m * G)}\ \text{N}$`,
+      String.raw`$F_{E,\text{up}} = qE_y = ${pq($.s * $.q, 'C')}${pq($.Ed * $.E, 'N/C')} = ${texNum($.Fup)}\ \text{N}$ (up is positive)`,
+      String.raw`$T = mg - F_{E,\text{up}} = ${qty($.m * G, 'N')} - (${qty($.Fup, 'N')}) = ${texNum($.T)}\ \text{N}$`,
     ],
     cases: [kase('#11', { m: 0.05, q: 60, s: -1, E: 3000, Ed: -1 }, { T: 0.31 }, { key: '0.31 N' })],
   }),
@@ -150,7 +150,7 @@ export default [
       num('E', ($) => $.E, 'N/C'),
       mc('dir', [[1, 'Upward'], [-1, 'Downward']], ($) => $.s, { label: 'Direction' }),
     ],
-    steps: ($, f) => [String.raw`$|q|E = mg \;\Longrightarrow\; E = ${texNum($.E)}\ \text{N/C}$, pointing so that $q\vec{E}$ is upward`],
+    steps: ($, f) => [String.raw`$|q|E = mg \;\Longrightarrow\; E = \dfrac{mg}{|q|} = \dfrac{${pq($.m, 'kg')}${pq(G, 'm/s²')}}{${qty($.q, 'C')}} = ${texNum($.E)}\ \text{N/C}$, pointing so that $q\vec{E}$ is upward`],
     cases: [kase('#12', { q: 4, s: 1, m: 5 }, { E: 12250, dir: 1 }, { key: '12,250 N/C' })],
   }),
   problem({
@@ -160,7 +160,7 @@ export default [
     text: (T) => `A ${T.m} g Styrofoam ball is in a ${T.E} N/C field pointing ${T.Ed}. What charge (magnitude and sign) must it carry to stay suspended?`,
     parts: [num('q', ($) => $.q, 'C', { label: '|q|' }), mc('sign', POSNEG, ($) => $.Ed, { label: 'Sign' })],
     steps: ($, f) => [
-      String.raw`$|q| = \dfrac{mg}{E} = ${texNum($.q)}\ \text{C}$`,
+      String.raw`$|q| = \dfrac{mg}{E} = \dfrac{${pq($.m, 'kg')}${pq(G, 'm/s²')}}{${qty($.E, 'N/C')}} = ${texNum($.q)}\ \text{C}$`,
       String.raw`$q\vec{E}$ must point up, so $q$ is positive if $\vec{E}$ points up and negative if it points down.`,
     ],
     cases: [kase('#13', { m: 0.12, E: 6000, Ed: -1 }, { q: 1.96e-7, sign: -1 }, { key: '1.96 x 10^-7 C' })],
@@ -176,7 +176,7 @@ export default [
       mc('dir', [[1, 'Away from the sphere'], [-1, 'Toward the sphere']], ($) => $.s, { label: 'Direction' }),
     ],
     steps: ($, f) => [
-      String.raw`$E = \dfrac{kq}{r^2} = ${texNum($.E)}\ \text{N/C}$`,
+      String.raw`$E = \dfrac{k|q|}{r^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.q, 'C')}}{${pq($.r, 'm')}^2} = ${texNum($.E)}\ \text{N/C}$`,
       String.raw`It points away from a positive charge and toward a negative one.`,
     ],
     sim: {
@@ -200,7 +200,7 @@ export default [
       mc('sign', POSNEG, ($) => $.dir, { label: 'Sign' }),
     ],
     steps: ($, f) => [
-      String.raw`$|q| = \dfrac{Er^2}{k} = ${texNum($.q)}\ \text{C}$`,
+      String.raw`$|q| = \dfrac{Er^2}{k} = \dfrac{${pq($.E, 'N/C')}${pq($.r, 'm')}^2}{${qty(K, 'N·m²/C²')}} = ${texNum($.q)}\ \text{C}$`,
       String.raw`A field pointing toward the object means its charge is negative.`,
     ],
     sim: {
@@ -268,7 +268,7 @@ export default [
     ],
     hints: [String.raw`$P$ is outside both charges, so the fields can cancel only if the charges have opposite signs.`],
     steps: ($, f) => [
-      String.raw`$\dfrac{kq_1}{D^2} = \dfrac{k|q_2|}{(D+d)^2} \;\Longrightarrow\; |q_2| = ${texNum($.q2 * 1e6)}\ \mu\text{C}$, negative`,
+      String.raw`$\dfrac{kq_1}{D^2} = \dfrac{k|q_2|}{(D+d)^2} \;\Longrightarrow\; |q_2| = q_1\left(\dfrac{D+d}{D}\right)^2 = ${pq($.q1, 'C')}\left(\dfrac{${qty($.D + $.d, 'm')}}{${qty($.D, 'm')}}\right)^2 = ${texNum($.q2 * 1e6)}\ \mu\text{C}$, negative`,
     ],
     sim: {
       scenario: 'dipole',
@@ -288,9 +288,9 @@ export default [
     text: (T) => `q₁ = ${T.q1} μC (${T.s1}) is at x = −${T.a} cm, q₂ = ${T.q2} μC (${T.s2}) is at y = +${T.b} cm, and q₃ = ${T.q3} μC (${T.s3}) is at x = +${T.a} cm. Find the field at the origin.`,
     parts: [num('E', ($) => $.E, 'N/C', { label: '|E|' }), num('al', ($) => $.al, '°', { label: 'α (from +x)', abs: 1, tol: 0.005, wrap: 360 })],
     steps: ($, f) => [
-      String.raw`$E_x = \dfrac{k(q_1 - q_3)}{a^2} = ${texNum($.Ex)}\ \text{N/C}$`,
-      String.raw`$E_y = -\dfrac{kq_2}{b^2} = ${texNum($.Ey)}\ \text{N/C}$`,
-      String.raw`$|\vec{E}|$ = ${f($.E)} N/C at $\alpha$ = ${f($.al)}°`,
+      String.raw`$E_x = \dfrac{k(q_1 - q_3)}{a^2} = \dfrac{${pq(K, 'N·m²/C²')}\left[(${qty($.s1 * $.q1, 'C')}) - (${qty($.s3 * $.q3, 'C')})\right]}{${pq($.a, 'm')}^2} = ${texNum($.Ex)}\ \text{N/C}$`,
+      String.raw`$E_y = -\dfrac{kq_2}{b^2} = -\dfrac{${pq(K, 'N·m²/C²')}${pq($.s2 * $.q2, 'C')}}{${pq($.b, 'm')}^2} = ${texNum($.Ey)}\ \text{N/C}$`,
+      String.raw`$|\vec{E}| = \sqrt{E_x^2 + E_y^2} = ${texNum($.E)}\ \text{N/C}$ at $\alpha = ${texDeg($.al)}$ from $+x$`,
     ],
     sim: {
       scenario: 'quad',
@@ -315,8 +315,9 @@ export default [
     ],
     hints: [String.raw`The vertical components cancel. Each horizontal component is $\dfrac{kq}{r_2^2}\cdot\dfrac{r_1/2}{r_2}$.`],
     steps: ($, f) => [
-      String.raw`Each charge gives $\dfrac{kq}{r_2^2} = ${texNum((K * $.q) / $.r2 ** 2)}\ \text{N/C}$`,
-      String.raw`Adding the horizontal parts gives ${f($.E)} N/C, pointing from $+$ toward $-$`,
+      String.raw`Each charge gives $\dfrac{kq}{r_2^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.q, 'C')}}{${pq($.r2, 'm')}^2} = ${texNum((K * $.q) / $.r2 ** 2)}\ \text{N/C}$`,
+      String.raw`The vertical parts cancel; the horizontal parts add, each a fraction $\dfrac{r_1/2}{r_2} = \dfrac{${texNum($.r1 / 2)}}{${texNum($.r2)}}$ of the whole:`,
+      String.raw`$E = 2\,\dfrac{kq}{r_2^2}\cdot\dfrac{r_1/2}{r_2} = 2${pq((K * $.q) / $.r2 ** 2, 'N/C')}\left(${texNum($.r1 / 2 / $.r2)}\right) = ${texNum($.E)}\ \text{N/C}$, pointing from $+$ toward $-$`,
     ],
     sim: {
       scenario: 'dipole',
@@ -333,7 +334,7 @@ export default [
     derive: ($) => ({ Q: $.lam * $.L }),
     text: (T) => `A uniform wire has λ = ${T.lam} μC/m. What is the total charge on ${T.L} m of it?`,
     parts: [num('Q', ($) => $.Q, 'C')],
-    steps: ($, f) => [String.raw`$Q = \lambda L = ${texNum($.Q)}\ \text{C}$`],
+    steps: ($, f) => [String.raw`$Q = \lambda L = ${pq($.lam, 'C/m')}${pq($.L, 'm')} = ${texNum($.Q)}\ \text{C}$`],
     cases: [kase('#1', { lam: 10, L: 0.25 }, { Q: 2.5e-6 }, { key: '2.5 x 10^-6 C' })],
   }),
   problem({
@@ -342,7 +343,7 @@ export default [
     derive: ($) => ({ L: $.Q / $.lam }),
     text: (T) => `A uniform wire carries ${T.Q} C in total with λ = ${T.lam} μC/m. How long is it?`,
     parts: [num('L', ($) => $.L, 'm')],
-    steps: ($, f) => [String.raw`$L = \dfrac{Q}{\lambda} = ${texNum($.L)}\ \text{m}$`],
+    steps: ($, f) => [String.raw`$L = \dfrac{Q}{\lambda} = \dfrac{${qty($.Q, 'C')}}{${qty($.lam, 'C/m')}} = ${texNum($.L)}\ \text{m}$`],
     cases: [kase('#2', { Q: 0.02, lam: 10 }, { L: 2000 }, { key: '0.2 m', note: 'ANSWER KEY ERROR: 0.02 C ÷ 1×10⁻⁵ C/m = 2000 m, not 0.2 m.' })],
   }),
   problem({
@@ -354,7 +355,7 @@ export default [
       sym('R_sym', 'sqrt(Q/(pi*sig))', { Q: 'C', sig: 'C/m²' }, ($) => $.R, { unit: 'm', label: String.raw`$R$ as a formula` }),
       num('R', ($) => $.R, 'm'),
     ],
-    steps: ($, f) => [String.raw`$R = \sqrt{\dfrac{Q}{\pi\sigma}} = ${texNum($.R)}\ \text{m}$`],
+    steps: ($, f) => [String.raw`$R = \sqrt{\dfrac{Q}{\pi\sigma}} = \sqrt{\dfrac{${qty($.Q, 'C')}}{\pi${pq($.sig, 'C/m²')}}} = ${texNum($.R)}\ \text{m}$`],
     cases: [kase('#3', { Q: 2, sig: 5 }, { R: 0.357 }, { key: '0.36 m' })],
   }),
   problem({
@@ -365,7 +366,7 @@ export default [
     text: (T) => `A conducting spherical shell (outer radius ${T.Ro} m, inner radius ${T.Ri} m) has ${T.Q} μC on its outer surface. What is the surface charge density there?`,
     parts: [num('sigma', ($) => $.sigma, 'C/m²')],
     hints: ['Only the outer radius matters for the outer surface.'],
-    steps: ($, f) => [String.raw`$\sigma = \dfrac{Q}{4\pi R_{\text{out}}^2} = ${texNum($.sigma)}\ \text{C/m}^2$`],
+    steps: ($, f) => [String.raw`$\sigma = \dfrac{Q}{4\pi R_{\text{out}}^2} = \dfrac{${qty($.Q, 'C')}}{4\pi${pq($.Ro, 'm')}^2} = ${texNum($.sigma)}\ \text{C/m}^2$ — only the outer radius matters`],
     sim: {
       scenario: 'uniform',
       setup(s, $) {
@@ -385,7 +386,7 @@ export default [
       sym('Q_sym', 'rho*4*pi*R^3/3', { rho: 'C/m³', R: 'm' }, ($) => $.Q, { unit: 'C', label: String.raw`$Q$ as a formula` }),
       num('Q', ($) => $.Q, 'C'),
     ],
-    steps: ($, f) => [String.raw`$Q = \rho\cdot\tfrac{4}{3}\pi R^3 = ${texNum($.Q)}\ \text{C}$`],
+    steps: ($, f) => [String.raw`$Q = \rho\cdot\tfrac{4}{3}\pi R^3 = ${pq($.rho, 'C/m³')}\cdot\tfrac43\pi${pq($.R, 'm')}^3 = ${texNum($.Q)}\ \text{C}$`],
     cases: [kase('#5', { rho: 7, R: 5 }, { Q: 3.665e-8 }, { key: '3.66 x 10^-8 C' })],
   }),
   problem({
@@ -407,7 +408,7 @@ export default [
       String.raw`$dq = \lambda\,dx$ and $r^2 = x^2 + d^2$`,
       String.raw`The $dE_x$ contributions cancel in $\pm$ pairs, so $E_x = 0$.`,
       String.raw`$E_y = \displaystyle\int_{-L/2}^{L/2} \frac{k\lambda d\,dx}{(x^2+d^2)^{3/2}} = \frac{k\lambda L}{d\sqrt{d^2 + L^2/4}}$`,
-      String.raw`$E_y = ${texNum($.Ey)}\ \text{N/C}$`,
+      String.raw`$E_y = \dfrac{${pq(K, 'N·m²/C²')}${pq($.lam, 'C/m')}${pq($.L, 'm')}}{${pq($.d, 'm')}\sqrt{${pq($.d, 'm')}^2 + ${pq($.L / 2, 'm')}^2}} = ${texNum($.Ey)}\ \text{N/C}$`,
     ],
     sim: {
       scenario: 'rod',
@@ -434,7 +435,7 @@ export default [
     ],
     steps: ($, f) => [
       String.raw`$dE_y = \dfrac{k\,dq\,y}{(y^2+a^2)^{3/2}}$, and summing over the ring gives $\dfrac{kQy}{(y^2+a^2)^{3/2}}$`,
-      String.raw`$E_y = ${texNum($.Ey)}\ \text{N/C}$`,
+      String.raw`$E_y = \dfrac{${pq(K, 'N·m²/C²')}${pq($.Q, 'C')}${pq($.y, 'm')}}{\left[${pq($.y, 'm')}^2 + ${pq($.a, 'm')}^2\right]^{3/2}} = ${texNum($.Ey)}\ \text{N/C}$`,
       String.raw`$\dfrac{d|\vec{E}|}{dy} = 0$ at $y = a/\sqrt{2}$`,
     ],
     sim: {
@@ -462,7 +463,7 @@ export default [
     ],
     steps: ($, f) => [
       String.raw`$E = k\lambda\left[\dfrac{1}{d} - \dfrac{1}{L+d}\right] = \dfrac{k\lambda L}{d(L+d)}$`,
-      String.raw`$E = ${texNum($.Ex)}\ \text{N/C}$ along $+x$`,
+      String.raw`$E = \dfrac{${pq(K, 'N·m²/C²')}${pq($.lam, 'C/m')}${pq($.L, 'm')}}{${pq($.d, 'm')}${pq($.L + $.d, 'm')}} = ${texNum($.Ex)}\ \text{N/C}$ along $+x$`,
     ],
     cases: [kase('hand', { lam: 10, L: 1, d: 0.5 }, { Ex: 119.8 })],
   }),
@@ -575,7 +576,7 @@ export default [
     parts: [num('Phi', ($) => $.Phi, 'N·m²/C', { label: 'Φ' })],
     hints: [String.raw`The given angle is measured from the plane, not from the area vector $\hat{n}$.`],
     steps: ($, f) => [
-      String.raw`The angle between $\vec{E}$ and $\hat{n}$ is $90^\circ - \theta$, so $\Phi_E = EA\sin\theta = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
+      String.raw`The angle between $\vec{E}$ and $\hat{n}$ is $90^\circ - \theta$, so $\Phi_E = EA\sin\theta = ${pq($.E, 'N/C')}\,\pi${pq($.r, 'm')}^2\sin ${texDeg($.th)} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
     ],
     sim: {
       scenario: 'uniform-square',
@@ -598,7 +599,7 @@ export default [
     ],
     hints: [String.raw`Use strips of constant $x$: $dA = a\,dx$.`],
     steps: ($, f) => [
-      String.raw`$\Phi_E = \displaystyle\int_0^b m x^2 a\,dx = \frac{mab^3}{3} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
+      String.raw`$\Phi_E = \displaystyle\int_0^b m x^2 a\,dx = \frac{mab^3}{3} = \dfrac{${pq($.m, 'N/(C·m²)')}${pq($.a, 'm')}${pq($.b, 'm')}^3}{3} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
     ],
     cases: [kase('hand', { m: 100, a: 1, b: 0.5 }, { Phi: 4.1667 })],
   }),
@@ -613,7 +614,8 @@ export default [
     ],
     hints: [String.raw`Use rings: $dA = 2\pi r\,dr$.`, String.raw`$\displaystyle\int r^{3/2}\,dr = \tfrac{2}{5}r^{5/2}$`],
     steps: ($, f) => [
-      String.raw`$\Phi_E = \displaystyle\int_0^R (a + b\sqrt{r})\,2\pi r\,dr = \pi a R^2 + \frac{4\pi}{5}bR^{5/2} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
+      String.raw`$\Phi_E = \displaystyle\int_0^R (a + b\sqrt{r})\,2\pi r\,dr = \pi a R^2 + \frac{4\pi}{5}bR^{5/2}$`,
+      String.raw`$\Phi_E = \pi${pq($.a, 'N/C')}${pq($.R, 'm')}^2 + \dfrac{4\pi}{5}${pq($.b, 'N/(C·m^½)')}${pq($.R, 'm')}^{5/2} = ${texNum($.Phi)}\ \text{N}\cdot\text{m}^2\text{/C}$`,
     ],
     cases: [kase('hand', { a: 100, b: 50, R: 1 }, { Phi: 439.82 })],
   }),
@@ -644,8 +646,8 @@ export default [
     ],
     steps: ($, f) => [
       String.raw`inner surface $= -q_1 = ${texNum(-$.Q1 * 1e6)}\ \mu\text{C}$, outer surface $= q_1 + q_2 = ${texNum($.Qout * 1e6)}\ \mu\text{C}$`,
-      String.raw`$R_1 < r < R_2$: $E = \dfrac{kq_1}{r^2} = ${texNum($.Eb)}\ \text{N/C}$`,
-      String.raw`$r > R_3$: $E = \dfrac{k(q_1+q_2)}{r^2} = ${texNum($.Ed)}\ \text{N/C}$`,
+      String.raw`$R_1 < r < R_2$: $E = \dfrac{kq_1}{r^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.Q1, 'C')}}{${pq($.rb, 'm')}^2} = ${texNum($.Eb)}\ \text{N/C}$`,
+      String.raw`$r > R_3$: $E = \dfrac{k(q_1+q_2)}{r^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.Qout, 'C')}}{${pq($.rd, 'm')}^2} = ${texNum($.Ed)}\ \text{N/C}$`,
     ],
     cases: [kase('#7', { q1: 5, s1: 1, q2: 8, s2: -1, R1: 10, R2: 20, R3: 30, fb: 0.5, fd: 35 / 30 }, { Qin: -5, Qout: -3, Eb: 1.998e6, Eb_dir: 1, Emetal: 0, Ed: 2.201e5, Ed_dir: -1 }, { key: 'A) −5 μC, −3 μC  C) 2×10⁶  E) 2.2×10⁵ N/C' })],
   }),
@@ -662,7 +664,9 @@ export default [
     hints: [String.raw`Inside, the enclosed charge is $Q(r/R)^3$.`],
     steps: ($, f) => [
       String.raw`Inside: $E = \dfrac{kQr}{R^3}$. Outside: $E = \dfrac{kQ}{r^2}$.`,
-      String.raw`$E = ${texNum($.E)}\ \text{N/C}$`,
+      $.r < $.R
+        ? String.raw`Here $r < R$: $E = \dfrac{kQr}{R^3} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.Q, 'C')}${pq($.r, 'm')}}{${pq($.R, 'm')}^3} = ${texNum($.E)}\ \text{N/C}$`
+        : String.raw`Here $r > R$: $E = \dfrac{kQ}{r^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.Q, 'C')}}{${pq($.r, 'm')}^2} = ${texNum($.E)}\ \text{N/C}$`,
     ],
     cases: [kase('#8', { Q: 15, R: 20, f: 0.6 }, { E: 2.022e6 }, { key: '2.0 x 10^6 N/C' })],
   }),
@@ -677,7 +681,8 @@ export default [
     ],
     steps: ($, f) => [
       String.raw`$\lambda = Q/L$, and a cylindrical Gaussian surface gives $E\,(2\pi r\ell) = \dfrac{\lambda\ell}{\varepsilon_0}$`,
-      String.raw`$E = \dfrac{2k\lambda}{r} = ${texNum($.E)}\ \text{N/C}$`,
+      String.raw`$\lambda = \dfrac{Q}{L} = \dfrac{${qty($.Q, 'C')}}{${qty($.Lw, 'm')}} = ${texNum($.Q / $.Lw)}\ \text{C/m}$`,
+      String.raw`$E = \dfrac{2k\lambda}{r} = \dfrac{2${pq(K, 'N·m²/C²')}${pq($.Q / $.Lw, 'C/m')}}{${qty($.r, 'm')}} = ${texNum($.E)}\ \text{N/C}$`,
     ],
     cases: [kase('#9', { Q: 4, Lw: 50, r: 20 }, { E: 7190 }, { key: '7.2 x 10^3 N/C' })],
   }),
@@ -690,7 +695,7 @@ export default [
     hints: ['With a pillbox, both caps carry flux for a single sheet.'],
     steps: ($, f) => [
       String.raw`One sheet gives $E = \dfrac{\sigma}{2\varepsilon_0}$; between the plates the two fields add to $E = \dfrac{\sigma}{\varepsilon_0}$.`,
-      String.raw`$E = ${texNum($.E)}\ \text{N/C}$, independent of the distance`,
+      String.raw`$E = \dfrac{${$.n === 1 ? String.raw`\sigma}{2\varepsilon_0` : String.raw`\sigma}{\varepsilon_0`}} = \dfrac{${qty($.sig, 'C/m²')}}{${$.n === 1 ? '2' : ''}${pq(EPS0, 'C²/N·m²')}} = ${texNum($.E)}\ \text{N/C}$, independent of the distance`,
     ],
     sim: { scenario: 'sheet-pill' },
     cases: [kase('hand', { sig: 10, n: 2 }, { E: 1130, dep: 3 })],

@@ -26,6 +26,8 @@ const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 /** Bank prose: escaped, with `$…$` typeset — the same markup the lab panels use. */
 const prose = (s) => mathProse(s);
+/** Panel markup read aloud: the TeX commands and braces dropped, the symbols kept ("$\\vec{F}$" → "F"). */
+const spoken = (s) => String(s ?? '').replace(/\$([^$]*)\$/g, (_, m) => m.replace(/\\[a-zA-Z]+/g, ' ').replace(/[{}^_]/g, '').replace(/\s+/g, ' ').trim());
 
 const KIND_LABEL = { numeric: 'Numeric', conceptual: 'Concept', derivation: 'Derivation' };
 const STATUS_LABEL = {
@@ -329,7 +331,7 @@ export function createPractice(api) {
       .map((p, i) => {
         const r = cur.results[p.id];
         if (!r || r.correct || r.empty) return '';
-        return `${partLabel(p, cur.view.parts[i], cur.tpl.parts.length).replace(/\$/g, '')}: ${r.feedback || 'not right yet'}.`;
+        return `${spoken(partLabel(p, cur.view.parts[i], cur.tpl.parts.length))}: ${spoken(r.feedback) || 'not right yet'}.`;
       })
       .filter(Boolean);
     el.textContent = cur.finished ? `Solved. ${right} of ${scored} parts right.` : `${right} of ${scored} parts right. ${notes.join(' ')}`;
@@ -757,7 +759,7 @@ export function createPractice(api) {
         ${help}
         ${held ? '<div class="pb-held">Write the formula above first — then put the numbers in.</div>' : ''}
         <div class="pb-parse ${msg.cls}" data-parse="${i}">${msg.html}</div>
-        <div class="pb-fb">${esc(fb)}</div>
+        <div class="pb-fb">${prose(fb)}</div>
         ${cur.revealed || (cur.finished && !res?.correct) ? `<div class="pb-want">Answer: ${esc(sym ? part.expr : showValue(part, r, part.get(cur.inst.$)))}</div>` : ''}
         ${labSlot}
       </div>`;
@@ -777,7 +779,7 @@ export function createPractice(api) {
       return `<fieldset class="pb-part choice${state}" data-part="${esc(part.id)}">
         <legend class="pb-label">${label}${part.multi && r.label ? ' <span class="pb-dim">(select all that apply)</span>' : ''} <span class="pb-mark">${mark}</span></legend>
         ${opts}
-        <div class="pb-fb">${esc(fb)}</div>
+        <div class="pb-fb">${prose(fb)}</div>
         ${labSlot}
       </fieldset>`;
     }

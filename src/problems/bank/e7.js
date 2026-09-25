@@ -1,5 +1,5 @@
 /** Exam 7 · Ch 58 (refraction), 59 (mirrors), 60 (lenses), 62 (optical instruments). Distances in cm. */
-import { problem, kase, range, choice, num, mc, sym, DEG , texNum } from '../kit.js';
+import { problem, kase, range, choice, num, mc, sym, DEG, texNum, texDeg, qty, pq } from '../kit.js';
 import { MEDIA } from '../../physics/optics.js';
 
 const E7 = { exam: 'e7' };
@@ -40,8 +40,8 @@ export default [
     text: (T) => `Light in ${T.m1} strikes a flat boundary with ${T.m2} at ${T.th}° from the normal. Find the angle of refraction and the angle of reflection.`,
     parts: [num('th2', ($) => $.th2, '°', { label: 'θ₂', abs: 0.2, tol: 0.005 }), num('thr', ($) => $.th, '°', { label: String.raw`$\theta$ reflected`, abs: 0.1, tol: 0 }), mc('bend', [[1, 'Toward the normal'], [-1, 'Away from the normal']], ($) => (nOf($.m2) > nOf($.m1) ? 1 : -1), { label: 'The ray bends…' })],
     steps: ($, f) => [
-      String.raw`$n_1\sin\theta_1 = n_2\sin\theta_2 \;\Longrightarrow\; \theta_2$ = ${f($.th2)}°`,
-      String.raw`$\theta_r = \theta_1$. Going into a higher $n$ bends the ray toward the normal.`,
+      String.raw`$\sin\theta_2 = \dfrac{n_1\sin\theta_1}{n_2} = \dfrac{(${nOf($.m1)})\sin ${texDeg($.th)}}{${nOf($.m2)}} = ${texNum($.s)} \;\Longrightarrow\; \theta_2 = ${texDeg($.th2)}$`,
+      String.raw`$\theta_r = \theta_1 = ${texDeg($.th)}$. Going into a ${nOf($.m2) > nOf($.m1) ? 'higher $n$ bends the ray toward' : 'lower $n$ bends the ray away from'} the normal.`,
     ],
     sim: {
       scenario: 'air-glass',
@@ -58,7 +58,7 @@ export default [
     text: (T) => `Find the critical angle for light going from ${T.m1} into ${T.m2}.`,
     parts: [num('tc', ($) => $.tc, '°', { label: String.raw`$\theta_c$`, abs: 0.2, tol: 0.005 })],
     hints: [String.raw`Total internal reflection can only happen going from higher $n$ to lower $n$.`],
-    steps: ($, f) => [String.raw`$\sin\theta_c = \dfrac{n_2}{n_1} \;\Longrightarrow\; \theta_c$ = ${f($.tc)}°`],
+    steps: ($, f) => [String.raw`$\sin\theta_c = \dfrac{n_2}{n_1} = \dfrac{${nOf($.m2)}}{${nOf($.m1)}} \;\Longrightarrow\; \theta_c = ${texDeg($.tc)}$`],
     sim: {
       scenario: 'tir',
       setup: (s, $) => void Object.assign(s, { n1: $.m1, n2: $.m2, theta: 30 }),
@@ -76,7 +76,7 @@ export default [
     valid: ($) => $.m1 !== $.m2 && Math.abs($.s - 1) > 0.01,
     text: (T) => `Light travels from ${T.m1} toward ${T.m2} at ${T.th}° from the normal. Is it totally internally reflected?`,
     parts: [mc('tir', [[1, 'Yes, total internal reflection'], [0, 'No, some light is transmitted']], ($) => $.tir)],
-    steps: ($, f) => [String.raw`$\dfrac{n_1\sin\theta_1}{n_2} = ${texNum($.s)}$ — total internal reflection happens when this exceeds 1`],
+    steps: ($, f) => [String.raw`$\dfrac{n_1\sin\theta_1}{n_2} = \dfrac{(${nOf($.m1)})\sin ${texDeg($.th)}}{${nOf($.m2)}} = ${texNum($.s)}$ — total internal reflection happens when this exceeds 1, so ${$.tir ? 'yes' : 'no'}`],
     sim: {
       scenario: 'tir',
       setup: (s, $) => void Object.assign(s, { n1: $.m1, n2: $.m2, theta: $.th }),
@@ -93,7 +93,7 @@ export default [
       sym('dp_sym', 'd/n', { d: 'm', n: '1' }, ($) => $.dp, { unit: 'm', label: String.raw`$d'$ as a formula (use n for the index)` }),
       num('dp', ($) => $.dp, 'm'),
     ],
-    steps: ($, f) => [String.raw`$d' = d\dfrac{n_{\text{air}}}{n} = ${texNum($.dp)}\ \text{m}$ — it looks shallower`],
+    steps: ($, f) => [String.raw`$d' = d\dfrac{n_{\text{air}}}{n} = ${pq($.d, 'm')}\dfrac{1}{${$.n}} = ${texNum($.dp)}\ \text{m}$ — it looks shallower`],
     cases: [kase('pool', { m: 'water', d: 2 }, { dp: 1.504 })],
   }),
   problem({
@@ -119,7 +119,7 @@ export default [
     ],
     steps: ($, f) => [
       String.raw`$\dfrac{1}{d_i} = \dfrac{1}{${texNum($.f)}} - \dfrac{1}{${texNum($.d)}} \;\Longrightarrow\; d_i = ${texNum($.di)}\ \text{cm}$`,
-      String.raw`$m = ${texNum($.m)}$, $h_i = ${texNum($.hi)}\ \text{cm}$`,
+      String.raw`$m = -\dfrac{d_i}{d_o} = -\dfrac{${texNum($.di)}}{${texNum($.d)}} = ${texNum($.m)}$, $h_i = mh_o = (${texNum($.m)})${pq($.ho, 'cm')} = ${texNum($.hi)}\ \text{cm}$`,
     ],
     sim: {
       scenario: 'concave-out',
@@ -144,9 +144,9 @@ export default [
     parts: [num('f', ($) => $.f, 'cm', { label: 'f' }), num('d', ($) => $.d, 'cm', { label: String.raw`$d_o$` }), num('di', ($) => $.di, 'cm', { label: String.raw`$d_i$ (signed)` })],
     hints: [String.raw`$f = R/2$. Substituting $d_i = -m\,d_o$ into the mirror equation gives $d_o = f\left(1 - \dfrac{1}{m}\right)$.`],
     steps: ($, f) => [
-      String.raw`$f = ${texNum($.f)}\ \text{cm}$`,
-      String.raw`$d_o = f\left(1 - \dfrac{1}{m}\right) = ${texNum($.d)}\ \text{cm}$`,
-      String.raw`$d_i = -m\,d_o = ${texNum($.di)}\ \text{cm}$`,
+      String.raw`$f = \dfrac{R}{2} = \dfrac{${qty($.R, 'cm')}}{2} = ${texNum($.f)}\ \text{cm}$`,
+      String.raw`$d_o = f\left(1 - \dfrac{1}{m}\right) = ${pq($.f, 'cm')}\left(1 - \dfrac{1}{${texNum($.m)}}\right) = ${texNum($.d)}\ \text{cm}$`,
+      String.raw`$d_i = -m\,d_o = -(${texNum($.m)})${pq($.d, 'cm')} = ${texNum($.di)}\ \text{cm}$`,
     ],
     sim: {
       scenario: 'concave-f',
@@ -165,7 +165,10 @@ export default [
     text: (T) => `A ${T.ho} cm object is ${T.d} cm from a ${T.type} lens with |f| = ${T.fA} cm. Find $d_i$, $m$ and $h_i$, and describe the image.`,
     parts: [num('di', ($) => $.di, 'cm', { label: String.raw`$d_i$ (signed)` }), num('m', ($) => $.m, ''), num('hi', ($) => $.hi, 'cm', { label: String.raw`$h_i$` }), mc('type', TYPES, ($) => $.code, { label: 'Image' })],
     hints: [String.raw`$f > 0$ for converging, $f < 0$ for diverging. A real image forms on the far side, $d_i > 0$.`],
-    steps: ($, f) => [String.raw`$d_i = ${texNum($.di)}\ \text{cm}$, $m = ${texNum($.m)}$, $h_i = ${texNum($.hi)}\ \text{cm}$`],
+    steps: ($) => [
+      String.raw`$\dfrac{1}{d_i} = \dfrac{1}{f} - \dfrac{1}{d_o} = \dfrac{1}{${texNum($.f)}} - \dfrac{1}{${texNum($.d)}} \;\Longrightarrow\; d_i = ${texNum($.di)}\ \text{cm}$`,
+      String.raw`$m = -\dfrac{d_i}{d_o} = -\dfrac{${texNum($.di)}}{${texNum($.d)}} = ${texNum($.m)}$, $h_i = mh_o = (${texNum($.m)})${pq($.ho, 'cm')} = ${texNum($.hi)}\ \text{cm}$`,
+    ],
     sim: {
       scenario: 'conv-far',
       setup: (s, $) => void Object.assign(s, { mode: 'single', type: $.type, fAbs: $.fA, do: $.d, ho: $.ho }),
@@ -189,9 +192,9 @@ export default [
     parts: [num('P1', ($) => $.P1, 'D', { label: 'P₁' }), num('P', ($) => $.P, 'D', { label: String.raw`$P_{\text{total}}$` }), num('f', ($) => $.f, 'cm', { scale: 1e-2, label: String.raw`$f_{\text{total}}$` })],
     hints: [String.raw`$P = 1/f$ with $f$ in metres. Powers of lenses in contact add.`],
     steps: ($, f) => [
-      String.raw`$P_1 = ${texNum($.P1)}\ \text{D}$`,
-      String.raw`$P = P_1 + P_2 = ${texNum($.P)}\ \text{D}$`,
-      String.raw`$f = \dfrac{1}{P} = ${texNum($.f * 100)}\ \text{cm}$`,
+      String.raw`$P_1 = \dfrac{1}{f_1} = \dfrac{1}{${qty($.f1, 'm')}} = ${texNum($.P1)}\ \text{D}$`,
+      String.raw`$P = P_1 + P_2 = ${qty($.P1, 'D')} + \dfrac{1}{${qty($.f2, 'm')}} = ${texNum($.P)}\ \text{D}$`,
+      String.raw`$f = \dfrac{1}{P} = \dfrac{1}{${qty($.P, 'D')}} = ${texNum($.f)}\ \text{m} = ${texNum($.f * 100)}\ \text{cm}$`,
     ],
     cases: [kase('hand', { f1: 20, f2: -50 }, { P1: 5, P: 3, f: 33.33 })],
   }),
@@ -212,9 +215,10 @@ export default [
       'The magnifications multiply.',
     ],
     steps: ($, f) => [
-      String.raw`$d_{i1} = ${texNum($.di1)}\ \text{cm}$, $m_1 = ${texNum($.m1)}$`,
-      String.raw`$d_{o2} = ${texNum($.d2)}\ \text{cm} \;\Longrightarrow\; d_{i2} = ${texNum($.di2)}\ \text{cm}$, $m_2 = ${texNum($.m2)}$`,
-      String.raw`$M = m_1 m_2 = ${texNum($.M)}$`,
+      String.raw`Lens 1: $\dfrac{1}{d_{i1}} = \dfrac{1}{${texNum($.f1)}} - \dfrac{1}{${texNum($.d)}} \;\Longrightarrow\; d_{i1} = ${texNum($.di1)}\ \text{cm}$, $m_1 = -\dfrac{${texNum($.di1)}}{${texNum($.d)}} = ${texNum($.m1)}$`,
+      String.raw`$d_{o2} = s - d_{i1} = ${qty($.sep, 'cm')} - ${qty($.di1, 'cm')} = ${texNum($.d2)}\ \text{cm}$`,
+      String.raw`Lens 2: $\dfrac{1}{d_{i2}} = \dfrac{1}{${texNum($.f2)}} - \dfrac{1}{${texNum($.d2)}} \;\Longrightarrow\; d_{i2} = ${texNum($.di2)}\ \text{cm}$, $m_2 = -\dfrac{${texNum($.di2)}}{${texNum($.d2)}} = ${texNum($.m2)}$`,
+      String.raw`$M = m_1 m_2 = (${texNum($.m1)})(${texNum($.m2)}) = ${texNum($.M)}$`,
     ],
     sim: {
       scenario: 'micro',
@@ -233,7 +237,7 @@ export default [
     parts: [num('M', ($) => $.M, '×')],
     steps: ($, f) => [
       String.raw`Relaxed eye: $M = \dfrac{25}{f}$. Image at the near point: $M = 1 + \dfrac{25}{f}$.`,
-      String.raw`$M = ${texNum($.M)}\times$`,
+      String.raw`$M = ${$.where === 1 ? '' : '1 + '}\dfrac{25\ \text{cm}}{${qty($.f, 'cm')}} = ${texNum($.M)}\times$`,
     ],
     sim: { scenario: 'conv-in', setup: (s, $) => void Object.assign(s, { mode: 'single', type: 'conv', fAbs: Math.max(6, $.f), do: 0.8 * Math.max(6, $.f) }) },
     cases: [kase('relaxed', { f: 5, where: 1 }, { M: 5 }), kase('near point', { f: 5, where: 2 }, { M: 6 })],
@@ -249,8 +253,8 @@ export default [
       num('L', ($) => $.L, 'cm', { label: 'Tube length' }),
     ],
     steps: ($, f) => [
-      String.raw`$M = -\dfrac{f_o}{f_e} = ${texNum($.M)}$`,
-      String.raw`$L = f_o + f_e = ${texNum($.L)}\ \text{cm}$`,
+      String.raw`$M = -\dfrac{f_o}{f_e} = -\dfrac{${qty($.fo, 'cm')}}{${qty($.fe, 'cm')}} = ${texNum($.M)}$`,
+      String.raw`$L = f_o + f_e = ${qty($.fo, 'cm')} + ${qty($.fe, 'cm')} = ${texNum($.L)}\ \text{cm}$`,
     ],
     sim: {
       scenario: 'tele',
@@ -265,7 +269,7 @@ export default [
     derive: ($) => ({ M: -($.L / $.fo) * (25 / $.fe) }),
     text: (T) => `A microscope has tube length ${T.L} cm, an objective with f = ${T.fo} cm, and an eyepiece with f = ${T.fe} cm. Estimate its overall magnification.`,
     parts: [num('M', ($) => $.M, '×', { label: 'M (signed)' })],
-    steps: ($, f) => [String.raw`$M \approx -\dfrac{L}{f_o}\cdot\dfrac{25\ \text{cm}}{f_e} = ${texNum($.M)}$`],
+    steps: ($, f) => [String.raw`$M \approx -\dfrac{L}{f_o}\cdot\dfrac{25\ \text{cm}}{f_e} = -\dfrac{${qty($.L, 'cm')}}{${qty($.fo, 'cm')}}\cdot\dfrac{25\ \text{cm}}{${qty($.fe, 'cm')}} = ${texNum($.M)}$`],
     sim: { scenario: 'micro' },
     cases: [kase('hand', { L: 16, fo: 0.4, fe: 2.5 }, { M: -400 })],
   }),

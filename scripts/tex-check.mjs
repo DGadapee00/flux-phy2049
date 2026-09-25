@@ -52,7 +52,16 @@ for (const file of walk(ROOT)) {
   for (const lit of literals(src)) {
     // A `$` that does not open an interpolation is an inline-math delimiter; math needs a pair.
     const delims = (lit.text.match(/\$(?!\{)/g) || []).length;
-    if (lit.raw || delims < 2) continue;
+    if (delims < 2) continue;
+    if (lit.raw) {
+      // The opposite slip: inside String.raw a doubled backslash stays doubled, and KaTeX reads \\
+      // as a line break followed by the letters ("R_{\\text{eq}}" prints "text eq").
+      for (const m of lit.text.matchAll(/(?<!\\)\\\\[A-Za-z]/g)) {
+        const line = src.slice(0, lit.start).split('\n').length;
+        problems.push(`${file}:${line}: doubled backslash inside String.raw — …${lit.text.slice(Math.max(0, m.index - 30), m.index + 30)}…`);
+      }
+      continue;
+    }
     for (const m of lit.text.matchAll(EATEN)) {
       // An even run of backslashes is a literal backslash: `\\text` is fine, `\text` is not.
       if ((m[0].length - 1) % 2 === 0) continue;

@@ -11,7 +11,29 @@ import e6 from './bank/e6.js';
 import e7 from './bank/e7.js';
 import wave from './bank/wave.js';
 
+import coaching from './coaching/index.js';
+
 export const PROBLEMS = [...e1, ...e2, ...e3, ...e4, ...e5, ...e6, ...e7, ...wave];
+
+/*
+ * Hint ladders and wrong-option explanations live beside the bank (src/problems/coaching/), one file
+ * per exam, and are folded into the templates here so the app and the checker see the same thing.
+ * A template's own hints come first; coaching hints continue the ladder after them.
+ */
+for (const tpl of PROBLEMS) {
+  const c = coaching[tpl.id];
+  if (!c) continue;
+  if (c.hints) tpl.hints = [...(tpl.hints || []), ...c.hints];
+  for (const [partId, whys] of Object.entries(c.why || {})) {
+    const part = tpl.parts.find((p) => p.id === partId);
+    if (!part || part.kind !== 'choice') continue;
+    const add = (list) => list.map((o) => (whys[o.value] !== undefined && !o.why ? { ...o, why: whys[o.value] } : o));
+    if (typeof part.options === 'function') {
+      const base = part.options;
+      part.options = ($) => add(base($));
+    } else part.options = add(part.options);
+  }
+}
 
 const byIdMap = new Map(PROBLEMS.map((p) => [p.id, p]));
 

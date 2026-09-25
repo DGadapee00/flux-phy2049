@@ -187,6 +187,36 @@ export function texNum(x, n = 3) {
   return `${Number(m)}\\times 10^{${Number(e)}}`;
 }
 
+const SUP = { '⁻': '-', '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9' };
+
+/** A unit for the inside of `$…$`: "N·m²/C²" → \text{N}\cdot\text{m}^2\text{/C}^2 (KaTeX has no metrics for ² or μ in text). */
+export function unitTex(u) {
+  const out = `\\text{${u}}`
+    .replace(/μ/g, '}\\mu\\text{')
+    .replace(/Ω/g, '}\\Omega\\text{')
+    .replace(/°/g, '}^\\circ\\text{')
+    .replace(/·/g, '}\\cdot\\text{')
+    .replace(/\^?½/g, '}^{1/2}\\text{')
+    .replace(/[⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, (m) => `}^{${[...m].map((c) => SUP[c]).join('')}}\\text{`);
+  return out.replace(/\\text\{\}/g, '');
+}
+
+/**
+ * A quantity for a substitution line: the SI value and its unit, for the inside of `$…$` —
+ * qty(2e-6, 'C') → "2\times 10^{-6}\ \text{C}". Worked steps put the numbers in, units and all,
+ * before the result, so a reader can check every factor (and every conversion) on the way.
+ */
+export function qty(x, unit = '', n = 3) {
+  const v = texNum(x, n);
+  return unit ? `${v}\\ ${unitTex(unit)}` : v;
+}
+
+/** An angle for the inside of `$…$`: texDeg(36.87) → "{36.9}^\\circ"; round-off below 0.0005° reads as 0. */
+export const texDeg = (x, n = 3) => `{${texNum(Math.abs(x) < 5e-4 ? 0 : x, n)}}^\\circ`;
+
+/** qty() in parentheses, for a factor in a product: pq(-2e-6, 'C') → "(-2\times 10^{-6}\ \text{C})". */
+export const pq = (x, unit = '', n = 3) => `(${qty(x, unit, n)})`;
+
 /**
  * A sum written the way a person writes it: terms([[3, 'x̂'], [-4, 'ŷ']]) → "3 x̂ − 4 ŷ", never
  * "3 x̂ + -4 ŷ". Numbers are printed as given (they are already the problem's display values).

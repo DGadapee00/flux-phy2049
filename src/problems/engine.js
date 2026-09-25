@@ -159,7 +159,13 @@ export function render(inst) {
       kind: p.kind,
       label: typeof p.label === 'function' ? p.label(T, $, sig) : p.label,
       unit: unitOf(p, $),
-      options: p.options ? choiceOptions(p, $).map((o) => ({ value: o.value, label: typeof o.label === 'function' ? o.label(T, $) : o.label })) : undefined,
+      options: p.options
+        ? choiceOptions(p, $).map((o) => ({
+            value: o.value,
+            label: typeof o.label === 'function' ? o.label(T, $) : o.label,
+            why: typeof o.why === 'function' ? o.why($) : o.why,
+          }))
+        : undefined,
       multi: p.multi ?? false,
       rubric: p.rubric ?? null,
     })),
@@ -323,12 +329,26 @@ export function grade(part, $, input) {
   }
   if (part.kind === 'choice') {
     const want = expected(part, $);
+    const opts = choiceOptions(part, $);
+    // Why a picked option is wrong, when the bank says: the misconception behind it, not just "no".
+    const why = (v) => {
+      const w = opts.find((o) => o.value === v)?.why;
+      return typeof w === 'function' ? w($) : w || '';
+    };
     if (part.multi) {
       const a = [...(Array.isArray(input) ? input : [input])].sort();
       const b = [...(Array.isArray(want) ? want : [want])].sort();
-      return { correct: a.length === b.length && a.every((x, i) => x === b[i]), feedback: '' };
+      const correct = a.length === b.length && a.every((x, i) => x === b[i]);
+      if (correct) return { correct, feedback: '' };
+      const wrong = a.filter((x) => !b.includes(x));
+      const notes = wrong.map(why).filter(Boolean);
+      const missing = b.some((x) => !a.includes(x));
+      if (missing && !wrong.length) notes.push('Everything you ticked is true, but at least one more is too.');
+      else if (missing) notes.push(notes.length ? 'And at least one true statement is not ticked.' : 'At least one tick is not true, and at least one true statement is not ticked.');
+      return { correct, feedback: notes.join(' ') };
     }
-    return { correct: input === want, feedback: '' };
+    const correct = input === want;
+    return { correct, feedback: correct ? '' : why(input) };
   }
   if (part.kind === 'symbolic') return gradeSymbolic(part, input);
   return { correct: !!input, feedback: '' };

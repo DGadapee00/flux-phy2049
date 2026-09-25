@@ -1,5 +1,5 @@
 /** Exam 4 · Ch 43–44 (DC circuits, Kirchhoff, RC), 45 (magnetism), 46 (magnetic force), 47 (B from currents). */
-import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, sym, MU0, QE, ME, MP, DEG, AXES6, axisCode , texNum } from '../kit.js';
+import { problem, kase, range, choice, SIGN, UPDOWN, num, mc, sym, MU0, QE, ME, MP, DEG, AXES6, axisCode, texNum, texDeg, qty, pq as pv } from '../kit.js';
 
 const E4 = { exam: 'e4' };
 const PART = choice(['proton', 'a proton'], ['electron', 'an electron']);
@@ -28,10 +28,10 @@ export default [
       num('P', ($) => $.P, 'W'),
     ],
     steps: ($, f) => [
-      String.raw`$R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
-      String.raw`$I = \dfrac{\varepsilon}{R_{\text{eq}}} = ${texNum($.I)}\ \text{A}$ — the same through every resistor`,
-      String.raw`$V_2 = IR_2 = ${texNum($.V2)}\ \text{V}$`,
-      String.raw`$P = \varepsilon I = ${texNum($.P)}\ \text{W}$`,
+      String.raw`$R_{\text{eq}} = R_1 + R_2 + R_3 = (${texNum($.R1)} + ${texNum($.R2)} + ${texNum($.R3)})\ \Omega = ${texNum($.Req)}\ \Omega$`,
+      String.raw`$I = \dfrac{\varepsilon}{R_{\text{eq}}} = \dfrac{${qty($.E, 'V')}}{${qty($.Req, 'Ω')}} = ${texNum($.I)}\ \text{A}$ — the same through every resistor`,
+      String.raw`$V_2 = IR_2 = ${pv($.I, 'A')}${pv($.R2, 'Ω')} = ${texNum($.V2)}\ \text{V}$`,
+      String.raw`$P = \varepsilon I = ${pv($.E, 'V')}${pv($.I, 'A')} = ${texNum($.P)}\ \text{W}$`,
     ],
     sim: {
       scenario: 'series',
@@ -55,9 +55,9 @@ export default [
       num('I2', ($) => $.I2, 'A'),
     ],
     steps: ($, f) => [
-      String.raw`$\dfrac{1}{R_{\text{eq}}} = \sum \dfrac{1}{R_i} \;\Longrightarrow\; R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
-      String.raw`$I = ${texNum($.I)}\ \text{A}$`,
-      String.raw`Each branch has the full ${f($.E)} V, so $I_2 = ${texNum($.I2)}\ \text{A}$`,
+      String.raw`$\dfrac{1}{R_{\text{eq}}} = \dfrac{1}{${qty($.R1, 'Ω')}} + \dfrac{1}{${qty($.R2, 'Ω')}} + \dfrac{1}{${qty($.R3, 'Ω')}} \;\Longrightarrow\; R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
+      String.raw`$I = \dfrac{\varepsilon}{R_{\text{eq}}} = \dfrac{${qty($.E, 'V')}}{${qty($.Req, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`Each branch has the full battery voltage, so $I_2 = \dfrac{\varepsilon}{R_2} = \dfrac{${qty($.E, 'V')}}{${qty($.R2, 'Ω')}} = ${texNum($.I2)}\ \text{A}$`,
     ],
     sim: {
       scenario: 'parallel',
@@ -83,9 +83,9 @@ export default [
       num('I3', ($) => $.I3, 'A'),
     ],
     steps: ($, f) => [
-      String.raw`$R_2 \parallel R_3 = ${texNum($.Rp)}\ \Omega \;\Longrightarrow\; R_{\text{eq}} = ${texNum($.Req)}\ \Omega$`,
-      String.raw`$I_1 = ${texNum($.I1)}\ \text{A}$`,
-      String.raw`$V$ across the pair $= ${texNum($.Vp)}\ \text{V} \;\Longrightarrow\; I_3 = ${texNum($.I3)}\ \text{A}$`,
+      String.raw`$R_{23} = \dfrac{R_2R_3}{R_2 + R_3} = \dfrac{(${texNum($.R2)})(${texNum($.R3)})}{${texNum($.R2)} + ${texNum($.R3)}}\ \Omega = ${texNum($.Rp)}\ \Omega$, so $R_{\text{eq}} = R_1 + R_{23} = ${texNum($.Req)}\ \Omega$`,
+      String.raw`$I_1 = \dfrac{\varepsilon}{R_{\text{eq}}} = \dfrac{${qty($.E, 'V')}}{${qty($.Req, 'Ω')}} = ${texNum($.I1)}\ \text{A}$`,
+      String.raw`$V_{23} = I_1R_{23} = ${pv($.I1, 'A')}${pv($.Rp, 'Ω')} = ${texNum($.Vp)}\ \text{V} \;\Longrightarrow\; I_3 = \dfrac{V_{23}}{R_3} = \dfrac{${qty($.Vp, 'V')}}{${qty($.R3, 'Ω')}} = ${texNum($.I3)}\ \text{A}$`,
     ],
     sim: {
       scenario: 'combo',
@@ -100,7 +100,7 @@ export default [
     text: (T) => `A third resistor is added ${T.how} two resistors already connected across a battery. What happens to ${T.qty}?`,
     parts: [mc('ans', [[1, 'It increases'], [-1, 'It decreases'], [0, 'It stays the same']], ($) => ($.how === 1 ? 1 : -1) * ($.qty === 1 ? 1 : -1))],
     steps: () => [
-      String.raw`A resistor in series adds resistance; one in parallel adds another path, so $R_{\\text{eq}}$ drops.`,
+      String.raw`A resistor in series adds resistance; one in parallel adds another path, so $R_{\text{eq}}$ drops.`,
       String.raw`$I = \varepsilon/R_{\text{eq}}$ moves the opposite way.`,
     ],
     cases: [kase('parallel, current', { how: 2, qty: 2 }, { ans: 1 })],
@@ -122,8 +122,9 @@ export default [
       'A negative answer just means the current flows opposite to the direction you assumed.',
     ],
     steps: ($, f) => [
-      String.raw`Potential at the top junction $= ${texNum($.Vm)}\ \text{V}$`,
-      String.raw`$I_1 = ${texNum($.I1)}\ \text{A}$, $I_2 = ${texNum($.I2)}\ \text{A}$, $I_3 = ${texNum($.I3)}\ \text{A}$`,
+      String.raw`Call the top junction's potential $V$ (bottom = 0). Then $I_1 = \dfrac{\varepsilon_1 - V}{R_1}$, $I_2 = \dfrac{V}{R_2}$, $I_3 = \dfrac{\varepsilon_2 - V}{R_3}$, and the junction rule gives`,
+      String.raw`$V = \dfrac{\varepsilon_1/R_1 + \varepsilon_2/R_3}{1/R_1 + 1/R_2 + 1/R_3} = \dfrac{${texNum($.E1)}/${texNum($.R1)} + ${texNum($.E2)}/${texNum($.R3)}}{1/${texNum($.R1)} + 1/${texNum($.R2)} + 1/${texNum($.R3)}}\ \text{V} = ${texNum($.Vm)}\ \text{V}$`,
+      String.raw`$I_1 = \dfrac{${qty($.E1, 'V')} - ${qty($.Vm, 'V')}}{${qty($.R1, 'Ω')}} = ${texNum($.I1)}\ \text{A}$, $I_2 = \dfrac{${qty($.Vm, 'V')}}{${qty($.R2, 'Ω')}} = ${texNum($.I2)}\ \text{A}$, $I_3 = \dfrac{${qty($.E2, 'V')} - ${qty($.Vm, 'V')}}{${qty($.R3, 'Ω')}} = ${texNum($.I3)}\ \text{A}$`,
     ],
     sim: {
       scenario: 'twoloop',
@@ -147,9 +148,9 @@ export default [
       num('Pr', ($) => $.Pr, 'W'),
     ],
     steps: ($, f) => [
-      String.raw`$I = \dfrac{\varepsilon}{R + r} = ${texNum($.I)}\ \text{A}$`,
-      String.raw`$V = \varepsilon - Ir = ${texNum($.V)}\ \text{V}$`,
-      String.raw`$P_r = I^2 r = ${texNum($.Pr)}\ \text{W}$`,
+      String.raw`$I = \dfrac{\varepsilon}{R + r} = \dfrac{${qty($.E, 'V')}}{${qty($.R, 'Ω')} + ${qty($.r, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$V = \varepsilon - Ir = ${qty($.E, 'V')} - ${pv($.I, 'A')}${pv($.r, 'Ω')} = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$P_r = I^2 r = ${pv($.I, 'A')}^2${pv($.r, 'Ω')} = ${texNum($.Pr)}\ \text{W}$`,
     ],
     cases: [kase('hand', { E: 12, r: 0.5, R: 5.5 }, { I: 2, V: 11, Pr: 2 })],
   }),
@@ -167,9 +168,9 @@ export default [
       num('tau', ($) => $.tau, 's', { label: 'τ' }), num('q', ($) => $.q, 'C'), num('I', ($) => $.I, 'A')],
     hints: [String.raw`$q(t) = C\varepsilon\left(1 - e^{-t/\tau}\right)$ and $I(t) = \dfrac{\varepsilon}{R}e^{-t/\tau}$`],
     steps: ($, f) => [
-      String.raw`$\tau = RC = ${texNum($.tau)}\ \text{s}$`,
-      String.raw`$q = ${texNum($.q)}\ \text{C}$`,
-      String.raw`$I = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$\tau = RC = ${pv($.R, 'Ω')}${pv($.C, 'F')} = ${texNum($.tau)}\ \text{s}$, so $t/\tau = ${texNum($.n)}$`,
+      String.raw`$q = C\varepsilon\left(1 - e^{-t/\tau}\right) = ${pv($.C, 'F')}${pv($.E, 'V')}\left(1 - e^{-${texNum($.n)}}\right) = ${texNum($.q)}\ \text{C}$`,
+      String.raw`$I = \dfrac{\varepsilon}{R}e^{-t/\tau} = \dfrac{${qty($.E, 'V')}}{${qty($.R, 'Ω')}}e^{-${texNum($.n)}} = ${texNum($.I)}\ \text{A}$`,
     ],
     cases: [kase('hand', { R: 10, C: 100, E: 12, n: 1 }, { tau: 1, q: 7.585e-4, I: 4.415e-4 })],
   }),
@@ -218,7 +219,7 @@ export default [
     derive: ($) => ({ F: QE * $.v * $.B * Math.sin($.th * DEG) }),
     text: (T) => `${T.p} moves at ${T.v} × 10⁶ m/s at ${T.th}° to a ${T.B} T magnetic field. What is the magnitude of the magnetic force on it?`,
     parts: [num('F', ($) => $.F, 'N')],
-    steps: ($, f) => [String.raw`$F = |q|vB\sin\theta = ${texNum($.F)}\ \text{N}$`],
+    steps: ($, f) => [String.raw`$F = |q|vB\sin\theta = ${pv(QE, 'C')}${pv($.v, 'm/s')}${pv($.B, 'T')}\sin ${texDeg($.th)} = ${texNum($.F)}\ \text{N}$`],
     sim: {
       scenario: 'helix',
       setup(s, $) {
@@ -255,8 +256,8 @@ export default [
     text: (T) => `${T.p} moves at ${T.v} × 10⁶ m/s perpendicular to a uniform ${T.B} T field. Find the radius of its path and its period.`,
     parts: [num('r', ($) => $.r, 'm'), num('T', ($) => $.T, 's'), mc('dep', [[1, 'The period does not depend on speed'], [2, 'Faster particles take longer to go around'], [3, 'Faster particles go around sooner']], 1, { label: 'How does T depend on v?' })],
     steps: ($, f) => [
-      String.raw`$qvB = \dfrac{mv^2}{r} \;\Longrightarrow\; r = \dfrac{mv}{|q|B} = ${texNum($.r)}\ \text{m}$`,
-      String.raw`$T = \dfrac{2\pi r}{v} = \dfrac{2\pi m}{|q|B} = ${texNum($.T)}\ \text{s}$ — no $v$ in it`,
+      String.raw`$qvB = \dfrac{mv^2}{r} \;\Longrightarrow\; r = \dfrac{mv}{|q|B} = \dfrac{${pv(pm($.p), 'kg')}${pv($.v, 'm/s')}}{${pv(QE, 'C')}${pv($.B, 'T')}} = ${texNum($.r)}\ \text{m}$`,
+      String.raw`$T = \dfrac{2\pi r}{v} = \dfrac{2\pi m}{|q|B} = \dfrac{2\pi${pv(pm($.p), 'kg')}}{${pv(QE, 'C')}${pv($.B, 'T')}} = ${texNum($.T)}\ \text{s}$ — no $v$ in it`,
     ],
     sim: {
       scenario: 'proton',
@@ -275,7 +276,7 @@ export default [
     parts: [
       sym('v_sym', 'E/B', { E: 'V/m', B: 'T' }, ($) => $.v, { unit: 'm/s', label: String.raw`$v$ as a formula` }),
       num('v', ($) => $.v, 'm/s'), mc('dep', [[0, 'No, it is the same for any charge and mass'], [1, 'Yes, it depends on q'], [2, 'Yes, it depends on m']], 0, { label: 'Depends on q or m?' })],
-    steps: ($, f) => [String.raw`$qE = qvB \;\Longrightarrow\; v = \dfrac{E}{B} = ${texNum($.v)}\ \text{m/s}$`],
+    steps: ($, f) => [String.raw`$qE = qvB \;\Longrightarrow\; v = \dfrac{E}{B} = \dfrac{${qty($.E, 'V/m')}}{${qty($.B, 'T')}} = ${texNum($.v)}\ \text{m/s}$`],
     sim: {
       scenario: 'selector',
       setup(s, $) {
@@ -291,7 +292,7 @@ export default [
     derive: ($) => ({ F: $.I * $.L * $.B * Math.sin($.th * DEG) }),
     text: (T) => `A ${T.L} m wire carrying ${T.I} A makes ${T.th}° with a ${T.B} T field. Find the force on it.`,
     parts: [num('F', ($) => $.F, 'N')],
-    steps: ($, f) => [String.raw`$F = ILB\sin\theta = ${texNum($.F)}\ \text{N}$`],
+    steps: ($, f) => [String.raw`$F = ILB\sin\theta = ${pv($.I, 'A')}${pv($.L, 'm')}${pv($.B, 'T')}\sin ${texDeg($.th)} = ${texNum($.F)}\ \text{N}$`],
     sim: {
       scenario: 'wire',
       setup(s, $) {
@@ -311,8 +312,8 @@ export default [
     text: (T) => `${T.p} is accelerated from rest through ${T.V} V and then enters a ${T.B} T field at right angles. Find its speed and the radius of its path.`,
     parts: [num('v', ($) => $.v, 'm/s'), num('r', ($) => $.r, 'm')],
     steps: ($, f) => [
-      String.raw`$\tfrac{1}{2}mv^2 = |q|V \;\Longrightarrow\; v = ${texNum($.v)}\ \text{m/s}$`,
-      String.raw`$r = \dfrac{mv}{|q|B} = ${texNum($.r)}\ \text{m}$`,
+      String.raw`$\tfrac{1}{2}mv^2 = |q|V \;\Longrightarrow\; v = \sqrt{\dfrac{2|q|V}{m}} = \sqrt{\dfrac{2${pv(QE, 'C')}${pv($.V, 'V')}}{${qty(pm($.p), 'kg')}}} = ${texNum($.v)}\ \text{m/s}$`,
+      String.raw`$r = \dfrac{mv}{|q|B} = \dfrac{${pv(pm($.p), 'kg')}${pv($.v, 'm/s')}}{${pv(QE, 'C')}${pv($.B, 'T')}} = ${texNum($.r)}\ \text{m}$`,
     ],
     cases: [kase('hand', { p: 'proton', V: 1000, B: 0.1 }, { v: 4.377e5, r: 0.04569 })],
   }),
@@ -326,8 +327,8 @@ export default [
     text: (T) => `A square coil ${T.a} cm on a side has ${T.N} turns and carries ${T.I} A. Its normal makes ${T.th}° with a ${T.B} T field. Find its magnetic moment and the torque on it.`,
     parts: [num('mu', ($) => $.mu, 'A·m²', { label: 'μ' }), num('tau', ($) => $.tau, 'N·m', { label: 'τ', abs: 1e-6 })],
     steps: ($, f) => [
-      String.raw`$\mu = NIA = ${texNum($.mu)}\ \text{A}\cdot\text{m}^2$`,
-      String.raw`$\tau = \mu B\sin\theta = ${texNum($.tau)}\ \text{N}\cdot\text{m}$`,
+      String.raw`$\mu = NIA = (${texNum($.N)})${pv($.I, 'A')}${pv($.a, 'm')}^2 = ${texNum($.mu)}\ \text{A}\cdot\text{m}^2$`,
+      String.raw`$\tau = \mu B\sin\theta = ${pv($.mu, 'A·m²')}${pv($.B, 'T')}\sin ${texDeg($.th)} = ${texNum($.tau)}\ \text{N}\cdot\text{m}$`,
     ],
     cases: [kase('hand', { N: 50, I: 2, a: 10, B: 0.3, th: 90 }, { mu: 1, tau: 0.3 })],
   }),
@@ -341,7 +342,7 @@ export default [
     parts: [
       sym('B_sym', 'mu0*I/(2*pi*rho)', { I: 'A', rho: 'm' }, ($) => $.B, { unit: 'T', label: String.raw`$B$ as a formula ($\rho$ is the distance)` }),
       num('B', ($) => $.B, 'T')],
-    steps: ($, f) => [String.raw`$B = \dfrac{\mu_0 I}{2\pi\rho} = ${texNum($.B)}\ \text{T}$`],
+    steps: ($, f) => [String.raw`$B = \dfrac{\mu_0 I}{2\pi\rho} = \dfrac{${pv(MU0, 'T·m/A')}${pv($.I, 'A')}}{2\pi${pv($.rho, 'm')}} = ${texNum($.B)}\ \text{T}$`],
     sim: {
       scenario: 'wire',
       setup(s, $) {
@@ -384,7 +385,7 @@ export default [
     ],
     hints: [String.raw`At the center, $y = 0$, this reduces to $\dfrac{\mu_0 NI}{2R}$.`],
     steps: ($, f) => [
-      String.raw`$B = \dfrac{\mu_0 N I R^2}{2(R^2+y^2)^{3/2}} = ${texNum($.B)}\ \text{T}$`,
+      String.raw`$B = \dfrac{\mu_0 N I R^2}{2(R^2+y^2)^{3/2}} = \dfrac{${pv(MU0, 'T·m/A')}(${texNum($.N)})${pv($.I, 'A')}${pv($.R, 'm')}^2}{2\left[${pv($.R, 'm')}^2 + ${pv($.y, 'm')}^2\right]^{3/2}} = ${texNum($.B)}\ \text{T}$`,
     ],
     sim: {
       scenario: 'loop',
@@ -406,8 +407,8 @@ export default [
       sym('B_sym', 'mu0*N*I/L', { N: '1', I: 'A', L: 'm' }, ($) => $.B, { unit: 'T', label: String.raw`$B$ as a formula` }),
       num('n', ($) => $.n, 'turns/m'), num('B', ($) => $.B, 'T')],
     steps: ($, f) => [
-      String.raw`$n = \dfrac{N}{L} = ${texNum($.n)}\ \text{m}^{-1}$`,
-      String.raw`$B = \mu_0 n I = ${texNum($.B)}\ \text{T}$`,
+      String.raw`$n = \dfrac{N}{L} = \dfrac{${texNum($.N)}}{${qty($.L, 'm')}} = ${texNum($.n)}\ \text{m}^{-1}$`,
+      String.raw`$B = \mu_0 n I = ${pv(MU0, 'T·m/A')}${pv($.n, 'm⁻¹')}${pv($.I, 'A')} = ${texNum($.B)}\ \text{T}$`,
     ],
     sim: {
       scenario: 'solenoid',
@@ -431,7 +432,7 @@ export default [
       mc('type', [[1, 'Attract'], [-1, 'Repel']], ($) => $.same, { label: 'Attract or repel?' }),
     ],
     steps: ($, f) => [
-      String.raw`$\dfrac{F}{L} = \dfrac{\mu_0 I_1 I_2}{2\pi d} = ${texNum($.FL)}\ \text{N/m}$`,
+      String.raw`$\dfrac{F}{L} = \dfrac{\mu_0 I_1 I_2}{2\pi d} = \dfrac{${pv(MU0, 'T·m/A')}${pv($.I1, 'A')}${pv($.I2, 'A')}}{2\pi${pv($.d, 'm')}} = ${texNum($.FL)}\ \text{N/m}$`,
       'Parallel currents attract; antiparallel currents repel.',
     ],
     sim: {
@@ -456,7 +457,9 @@ export default [
     hints: [String.raw`Inside the wire, $I_{\text{enc}} = I\dfrac{r^2}{a^2}$.`],
     steps: ($, f) => [
       String.raw`$r < a$: $B = \dfrac{\mu_0 I r}{2\pi a^2}$.  $r > a$: $B = \dfrac{\mu_0 I}{2\pi r}$.`,
-      String.raw`$B = ${texNum($.B)}\ \text{T}$`,
+      $.r < $.a
+        ? String.raw`Here $r < a$: $B = \dfrac{\mu_0 I r}{2\pi a^2} = \dfrac{${pv(MU0, 'T·m/A')}${pv($.I, 'A')}${pv($.r, 'm')}}{2\pi${pv($.a, 'm')}^2} = ${texNum($.B)}\ \text{T}$`
+        : String.raw`Here $r > a$: $B = \dfrac{\mu_0 I}{2\pi r} = \dfrac{${pv(MU0, 'T·m/A')}${pv($.I, 'A')}}{2\pi${pv($.r, 'm')}} = ${texNum($.B)}\ \text{T}$`,
     ],
     sim: {
       scenario: 'thick',
@@ -483,8 +486,9 @@ export default [
     parts: [num('B', ($) => $.B, 'T', { abs: 1e-9 })],
     hints: ['Between the wires, parallel currents make opposite fields and antiparallel currents make fields in the same direction.'],
     steps: ($, f) => [
-      String.raw`$B_1 = \dfrac{\mu_0 I_1}{2\pi r_1}$, $B_2 = \dfrac{\mu_0 I_2}{2\pi r_2}$`,
-      String.raw`Combining them gives $B = ${texNum($.B)}\ \text{T}$`,
+      String.raw`$B_1 = \dfrac{\mu_0 I_1}{2\pi r_1} = \dfrac{${pv(MU0, 'T·m/A')}${pv($.I1, 'A')}}{2\pi${pv($.r1, 'm')}} = ${texNum((MU0 * $.I1) / (2 * Math.PI * $.r1))}\ \text{T}$`,
+      String.raw`$B_2 = \dfrac{\mu_0 I_2}{2\pi r_2} = \dfrac{${pv(MU0, 'T·m/A')}${pv($.I2, 'A')}}{2\pi${pv($.r2, 'm')}} = ${texNum((MU0 * $.I2) / (2 * Math.PI * $.r2))}\ \text{T}$`,
+      String.raw`Between the wires the fields ${$.same > 0 ? 'point opposite ways, so they subtract' : 'point the same way, so they add'}: $B = ${texNum($.B)}\ \text{T}$`,
     ],
     cases: [kase('opposite, midpoint', { I1: 10, I2: 10, same: -1, d: 20, f: 0.5 }, { B: 4e-5 })],
   }),

@@ -1,5 +1,5 @@
 /** Exam 3 · Ch 38–39 (potential), 40 (capacitors), 41 (current, resistance), 42 (power). */
-import { problem, kase, range, choice, SIGN, num, mc, sym, K, EPS0, QE, ME, MP, POSNEG, charge, layout, texNum } from '../kit.js';
+import { problem, kase, range, choice, SIGN, num, mc, sym, K, EPS0, QE, ME, MP, POSNEG, charge, layout, texNum, qty, pq } from '../kit.js';
 import { DIELECTRICS } from '../../physics/capacitor.js';
 import { applyScenario } from '../../data/scenarios.js';
 import { MATERIALS } from '../../physics/circuit.js';
@@ -94,7 +94,7 @@ export default [
     text: (T) => `Find the electric potential ${T.r} m from a ${T.s} ${T.q} μC point charge (V = 0 at infinity).`,
     parts: [num('V', ($) => $.V, 'V')],
     hints: [String.raw`$V$ is a scalar and keeps the sign of $q$.`],
-    steps: ($, f) => [String.raw`$V = \dfrac{kq}{r} = ${texNum($.V)}\ \text{V}$`],
+    steps: ($, f) => [String.raw`$V = \dfrac{kq}{r} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.s * $.q, 'C')}}{${qty($.r, 'm')}} = ${texNum($.V)}\ \text{V}$`],
     sim: {
       scenario: 'v-plus',
       setup: potSetup(($) => [charge($.s * $.q, 0, 0)], ($) => ({ x: $.r, y: 0 })),
@@ -115,8 +115,9 @@ export default [
     parts: [num('W', ($) => $.W, 'J', { label: String.raw`$W_{\text{field}}$ (signed)` }), mc('ke', [[1, 'Its kinetic energy increases'], [-1, 'Its kinetic energy decreases']], ($) => Math.sign($.W), { label: 'If only the field acts…' })],
     hints: [String.raw`$W_{\text{field}} = -q\,\Delta V = -q(V_B - V_A)$`],
     steps: ($, f) => [
-      String.raw`$V_A = ${texNum($.VA)}\ \text{V}$, $V_B = ${texNum($.VB)}\ \text{V}$`,
-      String.raw`$W = -q(V_B - V_A) = ${texNum($.W)}\ \text{J}$`,
+      String.raw`$V_A = \dfrac{kQ}{r_A} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.sQ * $.Q, 'C')}}{${qty($.rA, 'm')}} = ${texNum($.VA)}\ \text{V}$`,
+      String.raw`$V_B = \dfrac{kQ}{r_B} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.sQ * $.Q, 'C')}}{${qty($.rB, 'm')}} = ${texNum($.VB)}\ \text{V}$`,
+      String.raw`$W = -q(V_B - V_A) = -${pq($.s0 * $.q0, 'C')}\left[${pq($.VB, 'V')} - ${pq($.VA, 'V')}\right] = ${texNum($.W)}\ \text{J}$`,
     ],
     sim: {
       scenario: 'v-plus',
@@ -146,8 +147,8 @@ export default [
     ],
     hints: [String.raw`$\Delta V = -\vec{E}\cdot\Delta\vec{r}$ — moving along $\vec{E}$ lowers the potential.`, String.raw`$\Delta U = q\,\Delta V$, and the field's work is its negative: $W = -\Delta U$.`],
     steps: ($, f) => [
-      String.raw`$\Delta V = -Ed\cos\theta = ${texNum($.dV)}\ \text{V}$`,
-      String.raw`$W = -q\,\Delta V = ${texNum($.W)}\ \text{J}$`,
+      String.raw`$\Delta V = -Ed\cos\theta = -${pq($.E, 'N/C')}${pq($.d, 'm')}\cos ${$.dir > 0 ? 0 : 180}^\circ = ${texNum($.dV)}\ \text{V}$`,
+      String.raw`$W = -q\,\Delta V = -${pq($.s * $.q, 'C')}${pq($.dV, 'V')} = ${texNum($.W)}\ \text{J}$`,
       String.raw`$\Delta U = q\,\Delta V = -W = ${texNum($.dU)}\ \text{J}$, so it ${$.dU > 0 ? 'gains' : 'loses'} potential energy.`,
     ],
     sim: {
@@ -173,8 +174,8 @@ export default [
     text: (T) => `${T.p} starts from rest and is accelerated through a potential difference of ${T.V} V. Find its kinetic energy (J and eV) and its final speed.`,
     parts: [num('KJ', ($) => $.K, 'J', { label: 'K (J)' }), num('KeV', ($) => $.V, 'eV', { label: 'K (eV)' }), num('v', ($) => $.v, 'm/s')],
     steps: ($, f) => [
-      String.raw`$K = |q|\,\Delta V = ${texNum($.K)}\ \text{J} = ${texNum($.V)}\ \text{eV}$`,
-      String.raw`$v = \sqrt{\dfrac{2K}{m}} = ${texNum($.v)}\ \text{m/s}$`,
+      String.raw`$K = |q|\,\Delta V = ${pq(QE, 'C')}${pq($.V, 'V')} = ${texNum($.K)}\ \text{J} = ${texNum($.V)}\ \text{eV}$`,
+      String.raw`$v = \sqrt{\dfrac{2K}{m}} = \sqrt{\dfrac{2${pq($.K, 'J')}}{${qty($.m, 'kg')}}} = ${texNum($.v)}\ \text{m/s}$`,
     ],
     cases: [kase('hand', { p: -1, V: 100 }, { KJ: 1.6e-17, KeV: 100, v: 5.927e6 })],
   }),
@@ -184,7 +185,7 @@ export default [
     derive: ($) => ({ U: (K * $.s1 * $.q1 * $.s2 * $.q2) / $.r }),
     text: (T) => `A ${T.s1} ${T.q1} μC charge and a ${T.s2} ${T.q2} μC charge are ${T.r} m apart. What is their electric potential energy? How much work did an external agent do to bring them together from far away, at rest?`,
     parts: [num('U', ($) => $.U, 'J', { label: 'U' }), num('W', ($) => $.U, 'J', { label: String.raw`$W_{\text{ext}}$` })],
-    steps: ($, f) => [String.raw`$U = \dfrac{kq_1q_2}{r} = ${texNum($.U)}\ \text{J}$, and $W_{\text{ext}} = \Delta U = U$`],
+    steps: ($, f) => [String.raw`$U = \dfrac{kq_1q_2}{r} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.s1 * $.q1, 'C')}${pq($.s2 * $.q2, 'C')}}{${qty($.r, 'm')}} = ${texNum($.U)}\ \text{J}$, and $W_{\text{ext}} = \Delta U = U$`],
     sim: {
       scenario: 'v-plus',
       setup(s, $) {
@@ -233,9 +234,9 @@ export default [
     ],
     steps: ($, f) => [
       String.raw`$U_{1} = 0$ — no work to place the first charge.`,
-      String.raw`$U_{2} = \dfrac{kq_1q_2}{r_{12}} = ${texNum($.U12)}\ \text{J}$`,
-      String.raw`$U_{3} = \dfrac{kq_1q_3}{r_{13}} + \dfrac{kq_2q_3}{r_{23}} = ${texNum($.U13)} + ${texNum($.U23)} = ${texNum($.U3)}\ \text{J}$`,
-      String.raw`$U_{\text{system}} = ${texNum($.U)}\ \text{J}$ — three pairs, each counted once.`,
+      String.raw`$U_{2} = \dfrac{kq_1q_2}{r_{12}} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.q1, 'C')}${pq($.q2, 'C')}}{${qty($.r12, 'm')}} = ${texNum($.U12)}\ \text{J}$`,
+      String.raw`$U_{3} = \dfrac{kq_1q_3}{r_{13}} + \dfrac{kq_2q_3}{r_{23}} = ${qty($.U13, 'J')} + ${qty($.U23, 'J')} = ${texNum($.U3)}\ \text{J}$`,
+      String.raw`$U_{\text{system}} = U_2 + U_3 = ${qty($.U12, 'J')} + ${qty($.U3, 'J')} = ${texNum($.U)}\ \text{J}$ — three pairs, each counted once.`,
     ],
     sim: {
       scenario: 'v-plus',
@@ -288,7 +289,7 @@ export default [
     hints: [String.raw`$E_x = -\dfrac{dV}{dx}$`],
     steps: ($, f) => [
       String.raw`$E_x = -\dfrac{dV}{dx} = -(2ax + b)$`,
-      String.raw`At $x = x_0$: $E_x = ${texNum($.Ex)}\ \text{V/m}$`,
+      String.raw`At $x = x_0$: $E_x = -\left[2${pq($.a, 'V/m²')}${pq($.x0, 'm')} + ${pq($.b, 'V/m')}\right] = ${texNum($.Ex)}\ \text{V/m}$`,
     ],
     cases: [kase('hand', { a: 3, b: -4, x0: 2 }, { Ex: -8 })],
   }),
@@ -301,7 +302,7 @@ export default [
     text: (T) => `q₁ = ${T.q1} μC (${T.s1}) is at (−${T.a} m, 0) and q₂ = ${T.q2} μC (${T.s2}) is at (0, ${T.b} m). Find the potential at the origin.`,
     parts: [num('V', ($) => $.V, 'V', { abs: 1 })],
     hints: ['Potentials add as scalars — no components needed.'],
-    steps: ($, f) => [String.raw`$V = k\left(\dfrac{q_1}{a} + \dfrac{q_2}{b}\right) = ${texNum($.V)}\ \text{V}$`],
+    steps: ($, f) => [String.raw`$V = k\left(\dfrac{q_1}{a} + \dfrac{q_2}{b}\right) = ${pq(K, 'N·m²/C²')}\left(\dfrac{${qty($.s1 * $.q1, 'C')}}{${qty($.a, 'm')}} + \dfrac{${qty($.s2 * $.q2, 'C')}}{${qty($.b, 'm')}}\right) = ${texNum($.V)}\ \text{V}$`],
     sim: {
       scenario: 'v-ch39a',
       setup: potSetup(($) => [charge($.s1 * $.q1, -$.a, 0), charge($.s2 * $.q2, 0, $.b)], () => ({ x: 0, y: 0 })),
@@ -327,7 +328,7 @@ export default [
     ],
     steps: ($) => [
       String.raw`$r_{1P} = \sqrt{${texNum($.r1)}^2 + ${texNum($.r2)}^2} = ${texNum($.d1)}\ \text{m}$, $r_{2P} = ${texNum($.r2)}\ \text{m}$, $r_{3P} = ${texNum($.r1)}\ \text{m}$`,
-      String.raw`$V_P = k\left(\dfrac{q_1}{r_{1P}} + \dfrac{q_2}{r_{2P}} + \dfrac{q_3}{r_{3P}}\right) = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$V_P = k\left(\dfrac{q_1}{r_{1P}} + \dfrac{q_2}{r_{2P}} + \dfrac{q_3}{r_{3P}}\right) = ${pq(K, 'N·m²/C²')}\left(\dfrac{${qty($.s1 * $.q1, 'C')}}{${qty($.d1, 'm')}} + \dfrac{${qty($.s2 * $.q2, 'C')}}{${qty($.r2, 'm')}} + \dfrac{${qty($.s3 * $.q3, 'C')}}{${qty($.r1, 'm')}}\right) = ${texNum($.V)}\ \text{V}$`,
     ],
     sim: {
       scenario: 'v-ch39a',
@@ -350,7 +351,7 @@ export default [
       mc('E0', [[1, 'Yes, E = 0 there too'], [0, 'No, E is not zero there']], 0, { label: String.raw`Is $\vec{E}$ zero at that point?` }),
     ],
     steps: ($, f) => [
-      String.raw`$\dfrac{kq_1}{x} = \dfrac{k|q_2|}{d-x} \;\Longrightarrow\; x = \dfrac{dq_1}{q_1 + |q_2|} = ${texNum($.x)}\ \text{m}$`,
+      String.raw`$\dfrac{kq_1}{x} = \dfrac{k|q_2|}{d-x} \;\Longrightarrow\; x = \dfrac{dq_1}{q_1 + |q_2|} = \dfrac{${pq($.d, 'm')}(${texNum($.q1 * 1e6)}\ \mu\text{C})}{(${texNum($.q1 * 1e6)} + ${texNum($.q2 * 1e6)})\ \mu\text{C}} = ${texNum($.x)}\ \text{m}$`,
       String.raw`Between opposite charges both fields point toward the negative one, so $\vec{E} \neq 0$ there.`,
     ],
     sim: {
@@ -371,7 +372,8 @@ export default [
     ],
     hints: [String.raw`Every $dq$ is the same distance from $P$, and $V$ is a scalar, so nothing cancels.`],
     steps: ($, f) => [
-      String.raw`$V = \displaystyle\int \frac{k\,dq}{r} = \frac{kQ}{\sqrt{a^2+y^2}} = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$V = \displaystyle\int \frac{k\,dq}{r} = \frac{kQ}{\sqrt{a^2+y^2}}$`,
+      String.raw`$V = \dfrac{${pq(K, 'N·m²/C²')}${pq($.Q, 'C')}}{\sqrt{${pq($.a, 'm')}^2 + ${pq($.y, 'm')}^2}} = ${texNum($.V)}\ \text{V}$`,
     ],
     sim: {
       scenario: 'ring',
@@ -397,7 +399,8 @@ export default [
     hints: [String.raw`$\displaystyle\int \frac{dx}{\sqrt{x^2+d^2}} = \ln\!\left(x + \sqrt{x^2+d^2}\right)$`],
     steps: ($, f) => [
       String.raw`$V = k\lambda\displaystyle\int_{-L/2}^{L/2} \frac{dx}{\sqrt{x^2+d^2}} = k\lambda\ln\!\left[\frac{\sqrt{L^2/4 + d^2} + L/2}{\sqrt{L^2/4 + d^2} - L/2}\right]$`,
-      String.raw`$V = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$\sqrt{L^2/4 + d^2} = \sqrt{${pq($.L / 2, 'm')}^2 + ${pq($.d, 'm')}^2} = ${qty(Math.hypot($.L / 2, $.d), 'm')}$`,
+      String.raw`$V = ${pq(K, 'N·m²/C²')}${pq($.lam, 'C/m')}\ln\!\left[\dfrac{${texNum(Math.hypot($.L / 2, $.d))} + ${texNum($.L / 2)}}{${texNum(Math.hypot($.L / 2, $.d))} - ${texNum($.L / 2)}}\right] = ${texNum($.V)}\ \text{V}$`,
     ],
     sim: {
       scenario: 'rod',
@@ -420,7 +423,7 @@ export default [
     hints: [String.raw`$\vec{E} = 0$ inside, so $V$ does not change there.`],
     steps: ($, f) => [
       String.raw`$r \ge R$: $V = \dfrac{kQ}{r}$.  $r \le R$: $V = \dfrac{kQ}{R}$.`,
-      String.raw`$V = ${texNum($.V)}\ \text{V}$`,
+      String.raw`Here $r = ${qty($.r, 'm')}$ ${$.r >= $.R ? '≥' : '<'} $R$, so $V = \dfrac{${pq(K, 'N·m²/C²')}${pq($.Q, 'C')}}{${qty(Math.max($.r, $.R), 'm')}} = ${texNum($.V)}\ \text{V}$`,
     ],
     sim: { scenario: 'uniform', setup: (s, $) => void Object.assign(s, { Q: $.Q, R: Math.min(0.55, $.R) }) },
     cases: [kase('hand', { Q: 2, R: 0.35, f: 0.6 }, { V: 51360, inside: 1 })],
@@ -626,8 +629,9 @@ export default [
       String.raw`Keep every sign: $q$ carries its own, $E_x$ is negative if $\vec{E}$ points along $-\hat{x}$, and $V_A - V_B = -\displaystyle\int_B^A E_x\,dx = -W/q$.`,
     ],
     steps: ($) => [
-      String.raw`$W = q\displaystyle\int_{x_B}^{x_A} E_x\,dx = q\,c\left[\frac{x^3}{3}\right]_{${texNum($.xB)}}^{${texNum($.xA)}} = ${texNum($.W)}\ \text{J}$`,
-      String.raw`$V_A - V_B = -\displaystyle\int_{x_B}^{x_A} E_x\,dx = -\dfrac{W}{q} = ${texNum($.dV)}\ \text{V}$`,
+      String.raw`$W = q\displaystyle\int_{x_B}^{x_A} E_x\,dx = q\,c\left[\frac{x^3}{3}\right]_{x_B}^{x_A}$, with $c = ${qty($.cs, 'N/(C·m²)')}$ (signed by the direction of $\vec{E}$)`,
+      String.raw`$W = ${pq($.s * $.q, 'C')}${pq($.cs, 'N/(C·m²)')}\,\dfrac{${pq($.xA, 'm')}^3 - ${pq($.xB, 'm')}^3}{3} = ${texNum($.W)}\ \text{J}$`,
+      String.raw`$V_A - V_B = -\displaystyle\int_{x_B}^{x_A} E_x\,dx = -\dfrac{W}{q} = -\dfrac{${qty($.W, 'J')}}{${qty($.s * $.q, 'C')}} = ${texNum($.dV)}\ \text{V}$`,
       $.W > 0
         ? 'The field does positive work: left to itself the charge would speed up along this path.'
         : 'The field does negative work: something else has to push the charge along this path.',
@@ -740,7 +744,7 @@ export default [
     steps: ($) => [
       String.raw`$\dfrac{dV}{dx} = ${texNum(3 * $.a)}x^2 ${$.b < 0 ? '-' : '+'} ${texNum(Math.abs(2 * $.b))}x + ${texNum($.c)} = 0$`,
       String.raw`$x = \dfrac{${texNum(-2 * $.b)} \pm \sqrt{${texNum(4 * $.b * $.b)} - ${texNum(12 * $.a * $.c)}}}{${texNum(6 * $.a)}} \;\Rightarrow\; x_1 = ${texNum($.x1)}\ \text{m},\ x_2 = ${texNum($.x2)}\ \text{m}$`,
-      String.raw`$V(x_2) - V(x_1) = ${texNum($.dV)}\ \text{V}$`,
+      String.raw`$V(x_2) - V(x_1) = ${texNum($.a)}(x_2^3 - x_1^3) ${$.b < 0 ? '-' : '+'} ${texNum(Math.abs($.b))}(x_2^2 - x_1^2) + ${texNum($.c)}(x_2 - x_1) = ${texNum($.dV)}\ \text{V}$ (the constant ${texNum($.d)} V cancels)`,
     ],
     cases: [kase('Worksheet 3 #13', { a: 3, b: -18, c: 20, d: 2 }, { x1: 0.6667, x2: 3.333, dV: -28.44 })],
   }),
@@ -767,8 +771,8 @@ export default [
     ],
     steps: ($) => [
       String.raw`A and B lie on the same equipotential (the move between them is across the field): $V_B - V_A = 0$.`,
-      String.raw`$V_C - V_A = V_C - V_B = -E\,r_2 = ${texNum($.dV)}\ \text{V}$`,
-      String.raw`$W_{\text{ext}} = q\,(V_C - V_A) = ${texNum($.Wext)}\ \text{J}$ — the mass and the ${texNum($.r3)} m diagonal were never needed.`,
+      String.raw`$V_C - V_A = V_C - V_B = -E\,r_2 = -${pq($.E, 'N/C')}${pq($.r2, 'm')} = ${texNum($.dV)}\ \text{V}$`,
+      String.raw`$W_{\text{ext}} = q\,(V_C - V_A) = ${pq($.s * $.q, 'C')}${pq($.dV, 'V')} = ${texNum($.Wext)}\ \text{J}$ — the mass and the ${texNum($.r3)} m diagonal were never needed.`,
     ],
     sim: {
       scenario: 'v-plates',
@@ -996,9 +1000,9 @@ export default [
       String.raw`Keep going along $\vec{E}$ from B: $V$ keeps falling at $E$ volts per metre until it reaches zero.`,
     ],
     steps: ($) => [
-      String.raw`$E = \dfrac{\Delta V}{d} = ${texNum($.E)}\ \text{V/m}$`,
-      String.raw`$V_B = V_A - \Delta V = ${texNum($.VB)}\ \text{V}$ — lower, because B is downstream along $\vec{E}$.`,
-      String.raw`$V = 0$ a further $\dfrac{V_B}{E} = ${texNum($.zB)}\ \text{m}$ past B, on the side away from A.`,
+      String.raw`$E = \dfrac{\Delta V}{d} = \dfrac{${qty($.dV, 'V')}}{${qty($.d, 'm')}} = ${texNum($.E)}\ \text{V/m}$`,
+      String.raw`$V_B = V_A - \Delta V = ${qty($.VA, 'V')} - ${qty($.dV, 'V')} = ${texNum($.VB)}\ \text{V}$ — lower, because B is downstream along $\vec{E}$.`,
+      String.raw`$V = 0$ a further $\dfrac{V_B}{E} = \dfrac{${qty($.VB, 'V')}}{${qty($.E, 'V/m')}} = ${texNum($.zB)}\ \text{m}$ past B, on the side away from A.`,
     ],
     sim: {
       scenario: 'v-plates',
@@ -1030,7 +1034,7 @@ export default [
     ],
     steps: ($, f) => [
       String.raw`$\tfrac12 mv_f^2 = \tfrac12 mv_0^2 + q\Delta V$`,
-      String.raw`$v_f = \sqrt{v_0^2 + \dfrac{2q\Delta V}{m}} = ${texNum($.vf)}\ \text{m/s}$`,
+      String.raw`$v_f = \sqrt{v_0^2 + \dfrac{2q\Delta V}{m}} = \sqrt{${pq($.v0, 'm/s')}^2 + \dfrac{2${pq(QE, 'C')}${pq($.V, 'V')}}{${qty(MP, 'kg')}}} = ${texNum($.vf)}\ \text{m/s}$`,
     ],
     cases: [kase('#4', { v0: 1.5, V: 100 }, { vf: 2.046e5 }, { key: '2.05 × 10⁵ m/s' })],
   }),
@@ -1086,8 +1090,8 @@ export default [
       String.raw`H is on the same equipotential as G, so $\Delta V = 0$ — and the path between them does not matter.`,
     ],
     steps: ($, f) => [
-      String.raw`$V_A - V_G = ${texNum($.VA)} - ${texNum($.VG)} = ${texNum($.dV)}\ \text{V}$`,
-      String.raw`$W_{G\to A} = q(V_A - V_G) = ${texNum($.Wga)}\ \text{J}$`,
+      String.raw`$V_G = V_A + 6\times${qty($.step, 'V')} = ${qty($.VG, 'V')}$, so $V_A - V_G = ${qty($.VA, 'V')} - ${qty($.VG, 'V')} = ${texNum($.dV)}\ \text{V}$`,
+      String.raw`$W_{G\to A} = q(V_A - V_G) = ${pq($.q, 'C')}${pq($.dV, 'V')} = ${texNum($.Wga)}\ \text{J}$`,
       String.raw`$W_{G\to H} = q(V_H - V_G) = 0$ — H and G are on the same equipotential.`,
     ],
     cases: [kase('#21–23', { VA: -160, step: 20, q: 4 }, { dV: -120, Wga: -4.8e-4, Wgh: 0 }, { key: '21) −320 V  22) 1.28×10⁻³ J  23) 0 J', note: 'Values depend on the printed map; the structure (ΔV, W = qΔV, and W = 0 along an equipotential) is what this template drills.' })],
@@ -1151,8 +1155,8 @@ export default [
     ],
     hints: [String.raw`Energy is conserved: the field's work $|q|\Delta V$ all becomes kinetic energy, $\tfrac12 mv^2 = |q|\,\Delta V$. Convert grams to kilograms first.`],
     steps: ($) => [
-      String.raw`$\Delta K = |q|\,\Delta V = ${texNum($.K)}\ \text{J}$`,
-      String.raw`$v = \sqrt{\dfrac{2|q|\,\Delta V}{m}} = ${texNum($.v)}\ \text{m/s}$`,
+      String.raw`$\Delta K = |q|\,\Delta V = ${pq($.q, 'C')}${pq($.V, 'V')} = ${texNum($.K)}\ \text{J}$`,
+      String.raw`$v = \sqrt{\dfrac{2\,\Delta K}{m}} = \sqrt{\dfrac{2${pq($.K, 'J')}}{${qty($.m, 'kg')}}} = ${texNum($.v)}\ \text{m/s}$`,
     ],
     cases: [
       kase('Worksheet 3 #6', { m: 2, q: 50, V: 10000 }, { K: 0.5, v: 22.36 }),
@@ -1174,7 +1178,7 @@ export default [
     ],
     steps: ($) => [
       String.raw`$V = \displaystyle\int \frac{k\,dq}{r} = k\lambda\int_{a}^{L+a} \frac{dx}{x} = k\lambda\ln\!\left(\frac{L+a}{a}\right)$`,
-      String.raw`$V = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$V = ${pq(K, 'N·m²/C²')}${pq($.lam, 'C/m')}\ln\!\left(\dfrac{${qty($.L + $.a, 'm')}}{${qty($.a, 'm')}}\right) = ${texNum($.V)}\ \text{V}$`,
     ],
     sim: {
       scenario: 'rod-off',
@@ -1202,7 +1206,7 @@ export default [
       String.raw`Every piece of the arc is the same distance $R$ from the centre, and $V$ is a scalar, so nothing cancels: $V = kQ/R$ with $Q = \lambda\cdot\pi R$.`,
     ],
     steps: ($) => [
-      String.raw`$dq = \lambda R\,d\theta$, all at $r = R$: $V = \displaystyle\int_0^{\pi} \frac{k\lambda R\,d\theta}{R} = k\lambda\pi = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$dq = \lambda R\,d\theta$, all at $r = R$: $V = \displaystyle\int_0^{\pi} \frac{k\lambda R\,d\theta}{R} = k\lambda\pi = ${pq(K, 'N·m²/C²')}${pq($.lam, 'C/m')}\pi = ${texNum($.V)}\ \text{V}$`,
       String.raw`$R$ cancels: a bigger arc holds more charge ($\propto R$) but holds it farther away ($\propto 1/R$), so $V$ does not change.`,
     ],
     sim: {
@@ -1229,7 +1233,7 @@ export default [
     ],
     steps: ($) => [
       String.raw`$V = \displaystyle\int_0^R \frac{k\,\sigma\,2\pi r'\,dr'}{\sqrt{r'^2+s^2}} = 2\pi k\sigma\left(\sqrt{R^2+s^2} - s\right)$`,
-      String.raw`$V = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$V = 2\pi${pq(K, 'N·m²/C²')}${pq($.sig, 'C/m²')}\left(\sqrt{${pq($.R, 'm')}^2 + ${pq($.s, 'm')}^2} - ${qty($.s, 'm')}\right) = ${texNum($.V)}\ \text{V}$`,
     ],
     sim: {
       scenario: 'disk',
@@ -1257,10 +1261,10 @@ export default [
       num('U', ($) => $.U, 'J'),
     ],
     steps: ($, f) => [
-      String.raw`$C = \dfrac{\varepsilon_0 A}{d} = ${texNum($.C)}\ \text{F}$`,
-      String.raw`$Q = CV = ${texNum($.Q)}\ \text{C}$`,
-      String.raw`$E = \dfrac{V}{d} = ${texNum($.E)}\ \text{V/m}$`,
-      String.raw`$U = \tfrac{1}{2}CV^2 = ${texNum($.U)}\ \text{J}$`,
+      String.raw`$C = \dfrac{\varepsilon_0 A}{d} = \dfrac{${pq(EPS0, 'C²/N·m²')}${pq($.A, 'm²')}}{${qty($.d, 'm')}} = ${texNum($.C)}\ \text{F}$`,
+      String.raw`$Q = CV = ${pq($.C, 'F')}${pq($.V, 'V')} = ${texNum($.Q)}\ \text{C}$`,
+      String.raw`$E = \dfrac{V}{d} = \dfrac{${qty($.V, 'V')}}{${qty($.d, 'm')}} = ${texNum($.E)}\ \text{V/m}$`,
+      String.raw`$U = \tfrac{1}{2}CV^2 = \tfrac12${pq($.C, 'F')}${pq($.V, 'V')}^2 = ${texNum($.U)}\ \text{J}$`,
     ],
     sim: {
       scenario: 'cap-12v',
@@ -1282,8 +1286,9 @@ export default [
     text: (T) => `A vacuum capacitor (A = ${T.A} m², d = ${T.d} mm) stays connected to a ${T.V} V battery while a slab of ${T.m} fills the gap. Find the new C and Q, and the factor by which E between the plates changes.`,
     parts: [num('C', ($) => $.C, 'pF', { scale: 1e-12 }), num('Q', ($) => $.Q, 'C'), num('Efac', () => 1, '× E₀', { tol: 0.001, label: 'E / E₀' })],
     steps: ($, f) => [
-      String.raw`$C = \kappa C_0 = ${texNum($.C)}\ \text{F}$`,
-      String.raw`$V$ stays fixed, so $Q = \kappa C_0 V = ${texNum($.Q)}\ \text{C}$`,
+      String.raw`$C_0 = \dfrac{\varepsilon_0 A}{d} = \dfrac{${pq(EPS0, 'C²/N·m²')}${pq($.A, 'm²')}}{${qty($.d, 'm')}} = ${texNum($.C0)}\ \text{F}$`,
+      String.raw`$C = \kappa C_0 = (${texNum($.k)})${pq($.C0, 'F')} = ${texNum($.C)}\ \text{F}$`,
+      String.raw`$V$ stays fixed, so $Q = CV = ${pq($.C, 'F')}${pq($.V, 'V')} = ${texNum($.Q)}\ \text{C}$`,
       String.raw`$E = V/d$ is unchanged — a factor of 1`,
     ],
     sim: {
@@ -1317,10 +1322,10 @@ export default [
     text: (T) => `A vacuum capacitor (A = ${T.A} m², d = ${T.d} mm) is charged to ${T.V0} V and then disconnected. A slab of ${T.m} is slid in to fill the gap. Find the new voltage and stored energy, and the factor by which the field between the plates changes.`,
     parts: [num('V', ($) => $.V, 'V'), num('U', ($) => $.U, 'J'), num('Efac', ($) => 1 / $.k, '× E₀', { label: 'E / E₀' }), mc('where', [[1, 'The energy went into pulling the slab in (work on the slab)'], [2, 'Charge leaked away'], [3, 'It flowed back into the battery']], 1, { label: 'Where did the missing energy go?' })],
     steps: ($, f) => [
-      String.raw`$Q$ stays fixed at ${f($.Q)} C, and $C$ becomes $\kappa C_0$`,
-      String.raw`$V = \dfrac{V_0}{\kappa} = ${texNum($.V)}\ \text{V}$`,
-      String.raw`$U = \dfrac{U_0}{\kappa} = ${texNum($.U)}\ \text{J}$ (it was ${f($.U0)} J)`,
-      String.raw`$E = V/d$ falls with $V$: $E/E_0 = 1/\kappa = ${texNum(1 / $.k)}$, so the field gets weaker.`,
+      String.raw`$C_0 = \dfrac{\varepsilon_0 A}{d} = \dfrac{${pq(EPS0, 'C²/N·m²')}${pq($.A, 'm²')}}{${qty($.d, 'm')}} = ${texNum($.C0)}\ \text{F}$; $Q = C_0V_0 = ${texNum($.Q)}\ \text{C}$ stays fixed, and $C$ becomes $\kappa C_0$`,
+      String.raw`$V = \dfrac{V_0}{\kappa} = \dfrac{${qty($.V0, 'V')}}{${texNum($.k)}} = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$U_0 = \tfrac12 C_0V_0^2 = \tfrac12${pq($.C0, 'F')}${pq($.V0, 'V')}^2 = ${texNum($.U0)}\ \text{J}$, so $U = \dfrac{U_0}{\kappa} = ${texNum($.U)}\ \text{J}$`,
+      String.raw`$E = V/d$ falls with $V$: $E/E_0 = 1/\kappa = 1/${texNum($.k)} = ${texNum(1 / $.k)}$, so the field gets weaker.`,
     ],
     sim: {
       scenario: 'cap-isolated',
@@ -1347,10 +1352,10 @@ export default [
       'Capacitors in series carry the same charge.',
     ],
     steps: ($, f) => [
-      String.raw`$C_{23} = ${texNum($.C23 * 1e6)}\ \mu\text{F}$`,
-      String.raw`$C_{\text{eq}} = ${texNum($.Ceq * 1e6)}\ \mu\text{F}$`,
-      String.raw`$Q_1 = C_{\text{eq}}V = ${texNum($.Q1 * 1e6)}\ \mu\text{C}$`,
-      String.raw`$V_2 = \dfrac{Q_1}{C_{23}} = ${texNum($.V2)}\ \text{V}$`,
+      String.raw`$C_{23} = C_2 + C_3 = ${qty($.C2 * 1e6, 'μF')} + ${qty($.C3 * 1e6, 'μF')} = ${texNum($.C23 * 1e6)}\ \mu\text{F}$`,
+      String.raw`$C_{\text{eq}} = \dfrac{C_1C_{23}}{C_1 + C_{23}} = \dfrac{(${texNum($.C1 * 1e6)})(${texNum($.C23 * 1e6)})}{${texNum($.C1 * 1e6)} + ${texNum($.C23 * 1e6)}}\ \mu\text{F} = ${texNum($.Ceq * 1e6)}\ \mu\text{F}$`,
+      String.raw`$Q_1 = C_{\text{eq}}V = ${pq($.Ceq, 'F')}${pq($.V, 'V')} = ${texNum($.Q1 * 1e6)}\ \mu\text{C}$`,
+      String.raw`$V_2 = \dfrac{Q_1}{C_{23}} = \dfrac{${qty($.Q1, 'C')}}{${qty($.C23, 'F')}} = ${texNum($.V2)}\ \text{V}$`,
     ],
     cases: [kase('hand', { C1: 6, C2: 4, C3: 2, V: 12 }, { Ceq: 3, Q1: 36, V2: 6 })],
   }),
@@ -1365,8 +1370,8 @@ export default [
       num('U', ($) => $.U, 'J'),
     ],
     steps: ($, f) => [
-      String.raw`$Q = CV = ${texNum($.Q)}\ \text{C}$`,
-      String.raw`$U = \tfrac{1}{2}CV^2 = ${texNum($.U)}\ \text{J}$`,
+      String.raw`$Q = CV = ${pq($.C, 'F')}${pq($.V, 'V')} = ${texNum($.Q)}\ \text{C}$`,
+      String.raw`$U = \tfrac{1}{2}CV^2 = \tfrac12${pq($.C, 'F')}${pq($.V, 'V')}^2 = ${texNum($.U)}\ \text{J}$`,
     ],
     sim: {
       scenario: 'cap-defib',
@@ -1389,8 +1394,8 @@ export default [
     ],
     hints: [String.raw`Turn $U = \tfrac12 CV^2$ around for $C$; then $Q = CV$.`],
     steps: ($) => [
-      String.raw`$U = \tfrac12 CV^2 \;\Rightarrow\; C = \dfrac{2U}{V^2} = ${texNum($.C)}\ \text{F}$`,
-      String.raw`$Q = CV = ${texNum($.Q)}\ \text{C}$`,
+      String.raw`$U = \tfrac12 CV^2 \;\Rightarrow\; C = \dfrac{2U}{V^2} = \dfrac{2${pq($.U, 'J')}}{${pq($.V, 'V')}^2} = ${texNum($.C)}\ \text{F}$`,
+      String.raw`$Q = CV = ${pq($.C, 'F')}${pq($.V, 'V')} = ${texNum($.Q)}\ \text{C}$`,
     ],
     sim: {
       scenario: 'cap-defib',
@@ -1414,7 +1419,7 @@ export default [
       const Vf = $.mode === 1 ? 1 : 1 / c;
       const Qf = $.mode === 1 ? c : 1;
       const f = { C: c, Q: Qf, V: Vf, E: Vf / dfac, U: $.mode === 1 ? c : 1 / c }[$.qty];
-      return { f };
+      return { f, c, dfac, Vf, Qf };
     },
     text: (T) => `A charged parallel-plate capacitor ${T.mode}. Then ${T.act}. By what factor does ${T.qty} change?`,
     parts: [num('f', ($) => $.f, '× original', { tol: 0.001 })],
@@ -1422,7 +1427,21 @@ export default [
       String.raw`Battery connected: $V$ is fixed. Isolated: $Q$ is fixed.`,
       String.raw`$C = \dfrac{\kappa\varepsilon_0 A}{d}$, $E = \dfrac{V}{d}$, $U = \tfrac{1}{2}CV^2 = \dfrac{Q^2}{2C}$`,
     ],
-    steps: ($, f) => [`Factor = ${f($.f)}`],
+    steps: ($) => [
+      String.raw`$C = \dfrac{\kappa\varepsilon_0 A}{d}$, so $C \to ${texNum($.c)}\,C$`,
+      $.mode === 1
+        ? String.raw`The battery holds $V$ fixed, so $Q = CV \to ${texNum($.Qf)}\,Q$`
+        : String.raw`Isolated, $Q$ is fixed, so $V = Q/C \to ${texNum($.Vf)}\,V$`,
+      ({
+        C: String.raw`Factor $= ${texNum($.f)}$`,
+        Q: String.raw`Factor $= ${texNum($.f)}$`,
+        V: String.raw`Factor $= ${texNum($.f)}$`,
+        E: String.raw`$E = V/d$, and $d \to ${texNum($.dfac)}\,d$: $E \to \dfrac{${texNum($.Vf)}}{${texNum($.dfac)}}\,E = ${texNum($.f)}\,E$`,
+        U: $.mode === 1
+          ? String.raw`$U = \tfrac12 CV^2$ with $V$ fixed: $U \to ${texNum($.f)}\,U$`
+          : String.raw`$U = \dfrac{Q^2}{2C}$ with $Q$ fixed: $U \to ${texNum($.f)}\,U$`,
+      })[$.qty],
+    ],
     cases: [kase('battery, d×2, U', { act: 1, mode: 1, qty: 'U' }, { f: 0.5 }), kase('isolated, κ, V', { act: 4, mode: 2, qty: 'V' }, { f: 0.5 }), kase('isolated, d×2, E', { act: 1, mode: 2, qty: 'E' }, { f: 1 })],
   }),
 
@@ -1462,11 +1481,11 @@ export default [
     ],
     steps: ($, f) => [
       ({
-        C: String.raw`$C = \dfrac{Q}{V} = ${texNum($.Cval)}\ \text{F}$`,
-        Q: String.raw`$Q = CV = ${texNum($.Qval)}\ \text{C}$`,
-        V: String.raw`$\Delta V = \dfrac{W}{q} = ${texNum($.Vval)}\ \text{V}$`,
-        Efield: String.raw`$E = \dfrac{V}{d} = ${texNum($.Ed)}\ \text{V/m}$`,
-        Esigma: String.raw`$E = \dfrac{Q}{\varepsilon_0 A} = ${texNum($.Esig)}\ \text{V/m}$`,
+        C: String.raw`$C = \dfrac{Q}{V} = \dfrac{${qty($.Q, 'C')}}{${qty($.V, 'V')}} = ${texNum($.Cval)}\ \text{F}$`,
+        Q: String.raw`$Q = CV = ${pq($.C, 'F')}${pq($.V, 'V')} = ${texNum($.Qval)}\ \text{C}$`,
+        V: String.raw`$\Delta V = \dfrac{W}{q} = \dfrac{${qty($.W, 'J')}}{${qty($.qm, 'C')}} = ${texNum($.Vval)}\ \text{V}$`,
+        Efield: String.raw`$E = \dfrac{V}{d} = \dfrac{${qty($.V, 'V')}}{${qty($.d, 'm')}} = ${texNum($.Ed)}\ \text{V/m}$`,
+        Esigma: String.raw`$E = \dfrac{Q}{\varepsilon_0 A} = \dfrac{${qty($.Q, 'C')}}{${pq(EPS0, 'C²/N·m²')}${pq($.A, 'm²')}} = ${texNum($.Esig)}\ \text{V/m}$`,
       })[$.ask],
     ],
     cases: [
@@ -1540,8 +1559,8 @@ export default [
     ],
     hints: [String.raw`An isolated sphere has $C = 4\pi\varepsilon_0 R$; the stored energy is $U = \tfrac12 CV^2$.`],
     steps: ($, f) => [
-      String.raw`$C = 4\pi\varepsilon_0 R = ${texNum($.C)}\ \text{F}$`,
-      String.raw`$U = \tfrac12 CV^2 = ${texNum($.U)}\ \text{J}$`,
+      String.raw`$C = 4\pi\varepsilon_0 R = 4\pi${pq(EPS0, 'C²/N·m²')}${pq($.R, 'm')} = ${texNum($.C)}\ \text{F}$`,
+      String.raw`$U = \tfrac12 CV^2 = \tfrac12${pq($.C, 'F')}${pq($.V, 'V')}^2 = ${texNum($.U)}\ \text{J}$`,
     ],
     sim: { scenario: 'doorknob', setup: (s, $) => { s.bd = { ...s.bd, R: $.R, V: $.V }; }, read: (c) => ({ C: c.bd.C, U: c.bd.U }) },
     cases: [kase('10 kV on a 0.35 m sphere', { R: 0.35, V: 10 }, { C: 3.894e-11, U: 1.947e-3 })],
@@ -1558,8 +1577,8 @@ export default [
     ],
     hints: [String.raw`A uniform gap has $E = V/d$, and the rule says it lets go once $E$ reaches the dielectric strength.`],
     steps: ($, f) => [
-      String.raw`$E = V/d = ${texNum($.E)}\ \text{V/m}$`,
-      String.raw`$V_b = E_{\text{DS}}\,d = (3\times10^6)(${texNum($.d)}) = ${texNum($.Vs)}\ \text{V}$`,
+      String.raw`$E = \dfrac{V}{d} = \dfrac{${qty($.V, 'V')}}{${qty($.d, 'm')}} = ${texNum($.E)}\ \text{V/m}$`,
+      String.raw`$V_b = E_{\text{DS}}\,d = (3\times10^6\ \text{V/m})${pq($.d, 'm')} = ${texNum($.Vs)}\ \text{V}$`,
     ],
     sim: { scenario: 'doorknob', setup: (s, $) => { s.bd = { ...s.bd, V: $.V, d: $.d, p: P_ATM, gas: 'air' }; }, read: (c) => ({ E: c.bd.E, Vs: c.bd.Vstrength }) },
     cases: [kase('18 kV across 4 mm', { V: 18, d: 4 }, { E: 4.5e6, Vs: 12000, sparks: 'yes' })],
@@ -1611,7 +1630,9 @@ export default [
     hints: [String.raw`Breakdown depends on $p\,d$, not on $d$ alone. Work out $p\,d$ for each gap and compare both with the minimum at $1.115$ Pa·m.`],
     steps: ($, f) => [
       String.raw`$p\,d = ${texNum($.p * $.dNarrow)}$ and $${texNum($.p * $.dWide)}$ Pa·m`,
-      String.raw`$V_b = ${texNum($.Vn)}$ V and $${texNum($.Vw)}$ V`,
+      Number.isFinite($.Vn)
+        ? String.raw`$V_b = ${texNum($.Vn)}$ V and $${texNum($.Vw)}$ V`
+        : String.raw`The 1.0 cm gap is so far left of the minimum that Paschen's law gives no breakdown at any voltage; the 6.0 cm gap breaks down at $${texNum($.Vw)}$ V`,
     ],
     cases: [kase('20 Pa', { p: 20 }, { which: 'wide', why: 'left' })],
   }),
@@ -1631,8 +1652,8 @@ export default [
       num('I', ($) => $.I, 'A'),
     ],
     steps: ($, f) => [
-      String.raw`$R = \dfrac{\rho L}{A} = ${texNum($.R)}\ \Omega$`,
-      String.raw`$I = \dfrac{V}{R} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$R = \dfrac{\rho L}{A} = \dfrac{${pq($.rho, 'Ω·m')}${pq($.L, 'm')}}{${qty($.A, 'm²')}} = ${texNum($.R)}\ \Omega$`,
+      String.raw`$I = \dfrac{V}{R} = \dfrac{${qty($.V, 'V')}}{${qty($.R, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
     ],
     sim: {
       scenario: 'ohm-cu100',
@@ -1652,7 +1673,10 @@ export default [
     },
     text: (T, $, f) => `A ${T.m} wire (α = ${f($.alpha)} /°C) has R₀ = ${f($.R0)} Ω at 20 °C. What is its resistance at ${T.T} °C?`,
     parts: [num('R', ($) => $.R, 'Ω')],
-    steps: ($, f) => [String.raw`$R = R_0\left[1 + \alpha(T - 20\,^\circ\text{C})\right] = ${texNum($.R)}\ \Omega$`],
+    steps: ($) => [
+      String.raw`$R_0 = \dfrac{\rho L}{A} = \dfrac{${pq(mat($.m).rho, 'Ω·m')}${pq($.L, 'm')}}{${qty($.A, 'm²')}} = ${texNum($.R0)}\ \Omega$ at 20 °C`,
+      String.raw`$R = R_0\left[1 + \alpha(T - 20\,^\circ\text{C})\right] = ${pq($.R0, 'Ω')}\left[1 + ${pq($.alpha, '/°C')}(${texNum($.T - 20)}\ ^\circ\text{C})\right] = ${texNum($.R)}\ \Omega$`,
+    ],
     sim: {
       scenario: 'ohm-hot',
       setup(s, $) {
@@ -1673,10 +1697,10 @@ export default [
     text: (T) => `A copper wire (ρ = 1.72×10⁻⁸ Ω·m, n = 8.5×10²⁸ electrons/m³) is ${T.L} m long with a ${T.A} mm² cross section, across ${T.V} V. Find the current, the current density, the field inside the wire, and the electron drift speed.`,
     parts: [num('I', ($) => $.I, 'A'), num('J', ($) => $.J, 'A/m²'), num('E', ($) => $.E, 'V/m'), num('vd', ($) => $.vd, 'm/s')],
     steps: ($, f) => [
-      String.raw`$I = \dfrac{V}{R} = ${texNum($.I)}\ \text{A}$`,
-      String.raw`$J = \dfrac{I}{A} = ${texNum($.J)}\ \text{A/m}^2$`,
-      String.raw`$E = \dfrac{V}{L} = ${texNum($.E)}\ \text{V/m}$`,
-      String.raw`$v_d = \dfrac{I}{neA} = ${texNum($.vd)}\ \text{m/s}$ — very slow`,
+      String.raw`$I = \dfrac{V}{R} = \dfrac{VA}{\rho L} = \dfrac{${pq($.V, 'V')}${pq($.A, 'm²')}}{${pq(mat('copper').rho, 'Ω·m')}${pq($.L, 'm')}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$J = \dfrac{I}{A} = \dfrac{${qty($.I, 'A')}}{${qty($.A, 'm²')}} = ${texNum($.J)}\ \text{A/m}^2$`,
+      String.raw`$E = \dfrac{V}{L} = \dfrac{${qty($.V, 'V')}}{${qty($.L, 'm')}} = ${texNum($.E)}\ \text{V/m}$`,
+      String.raw`$v_d = \dfrac{I}{neA} = \dfrac{${qty($.I, 'A')}}{${pq(mat('copper').n, 'm⁻³')}${pq(QE, 'C')}${pq($.A, 'm²')}} = ${texNum($.vd)}\ \text{m/s}$ — very slow`,
     ],
     sim: {
       scenario: 'ohm-cu100',
@@ -1694,8 +1718,8 @@ export default [
     text: (T) => `${T.Q} C of charge passes through a wire in ${T.t} min. What is the average current, and how many electrons pass each second?`,
     parts: [num('I', ($) => $.I, 'A'), num('N', ($) => $.N, 'electrons/s')],
     steps: ($, f) => [
-      String.raw`$I = \dfrac{\Delta Q}{\Delta t} = ${texNum($.I)}\ \text{A}$`,
-      String.raw`$N = \dfrac{I}{e} = ${texNum($.N)}$ per second`,
+      String.raw`$I = \dfrac{\Delta Q}{\Delta t} = \dfrac{${qty($.Q, 'C')}}{${qty($.t, 's')}} = ${texNum($.I)}\ \text{A}$ (minutes to seconds first)`,
+      String.raw`$N = \dfrac{I}{e} = \dfrac{${qty($.I, 'C/s')}}{${qty(QE, 'C')}} = ${texNum($.N)}$ per second`,
     ],
     cases: [kase('hand', { Q: 30, t: 2 }, { I: 0.25, N: 1.5625e18 })],
   }),
@@ -1709,7 +1733,7 @@ export default [
       num('R', ($) => $.R, 'Ω'),
     ],
     hints: [String.raw`The volume is constant, so $A$ shrinks by the same factor that $L$ grows.`],
-    steps: ($, f) => [String.raw`$R = \dfrac{\rho(nL)}{A/n} = n^2 R_0 = ${texNum($.R)}\ \Omega$`],
+    steps: ($, f) => [String.raw`$R = \dfrac{\rho(nL)}{A/n} = n^2 R_0 = (${texNum($.n)})^2${pq($.R0, 'Ω')} = ${texNum($.R)}\ \Omega$`],
     cases: [kase('double', { n: 2, R0: 10 }, { R: 40 })],
   }),
 
@@ -1759,10 +1783,10 @@ export default [
     hints: [String.raw`$I = \dfrac{\Delta Q}{\Delta t}$ defines current; $V = IR$ relates the three circuit quantities.`],
     steps: ($, f) => [
       ({
-        'I-from-Q': String.raw`$I = \dfrac{Q}{t} = ${texNum($.Iq)}\ \text{A}$`,
-        V: String.raw`$V = IR = ${texNum($.Vr)}\ \text{V}$`,
-        I: String.raw`$I = \dfrac{V}{R} = ${texNum($.Ir2)}\ \text{A}$`,
-        R: String.raw`$R = \dfrac{V}{I} = ${texNum($.Rv)}\ \Omega$`,
+        'I-from-Q': String.raw`$I = \dfrac{Q}{t} = \dfrac{${qty($.Q, 'C')}}{${qty($.t, 's')}} = ${texNum($.Iq)}\ \text{A}$`,
+        V: String.raw`$V = IR = ${pq($.Ir, 'A')}${pq($.Rr, 'Ω')} = ${texNum($.Vr)}\ \text{V}$`,
+        I: String.raw`$I = \dfrac{V}{R} = \dfrac{${qty($.Vs, 'V')}}{${qty($.Rr, 'Ω')}} = ${texNum($.Ir2)}\ \text{A}$`,
+        R: String.raw`$R = \dfrac{V}{I} = \dfrac{${qty($.Vs, 'V')}}{${qty($.Ir, 'A')}} = ${texNum($.Rv)}\ \Omega$`,
       })[$.ask],
     ],
     cases: [
@@ -1891,8 +1915,8 @@ export default [
       num('I', ($) => $.I, 'A'),
     ],
     steps: ($, f) => [
-      String.raw`$R = \dfrac{V^2}{P} = ${texNum($.R)}\ \Omega$`,
-      String.raw`$I = \dfrac{P}{V} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$R = \dfrac{V^2}{P} = \dfrac{${pq($.V, 'V')}^2}{${qty($.P, 'W')}} = ${texNum($.R)}\ \Omega$`,
+      String.raw`$I = \dfrac{P}{V} = \dfrac{${qty($.P, 'W')}}{${qty($.V, 'V')}} = ${texNum($.I)}\ \text{A}$`,
     ],
     sim: {
       scenario: 'pwr-60',
@@ -1915,9 +1939,9 @@ export default [
       num('P', ($) => $.P, 'W'),
     ],
     steps: ($, f) => [
-      String.raw`$V_p = \sqrt{2}\,V_{\text{rms}} = ${texNum($.Vp)}\ \text{V}$`,
-      String.raw`$I_{\text{rms}} = \dfrac{V_{\text{rms}}}{R} = ${texNum($.Irms)}\ \text{A}$`,
-      String.raw`$P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}} = ${texNum($.P)}\ \text{W}$`,
+      String.raw`$V_p = \sqrt{2}\,V_{\text{rms}} = \sqrt{2}${pq($.Vrms, 'V')} = ${texNum($.Vp)}\ \text{V}$`,
+      String.raw`$I_{\text{rms}} = \dfrac{V_{\text{rms}}}{R} = \dfrac{${qty($.Vrms, 'V')}}{${qty($.R, 'Ω')}} = ${texNum($.Irms)}\ \text{A}$`,
+      String.raw`$P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}} = ${pq($.Irms, 'A')}${pq($.Vrms, 'V')} = ${texNum($.P)}\ \text{W}$`,
     ],
     sim: {
       scenario: 'pwr-ac',
@@ -1938,8 +1962,8 @@ export default [
     text: (T) => `A ${T.P} W appliance runs ${T.h} hours a day for ${T.days} days. At ${T.rate}¢ per kWh, how much energy does it use and what does it cost?`,
     parts: [num('kWh', ($) => $.kWh, 'kWh'), num('cost', ($) => $.cost, '$', { abs: 0.01 })],
     steps: ($, f) => [
-      String.raw`$E = Pt = ${texNum($.kWh)}\ \text{kWh}$`,
-      `Cost = ${f($.cost)} dollars`,
+      String.raw`$E = Pt = ${pq($.P / 1000, 'kW')}${pq($.h, 'h/day')}${pq($.days, 'days')} = ${texNum($.kWh)}\ \text{kWh}$`,
+      String.raw`Cost $= ${pq($.kWh, 'kWh')}${pq($.rate / 100, 'dollars/kWh')} = ${$.cost.toFixed(2)}$ dollars`,
     ],
     cases: [kase('space heater', { P: 1500, h: 3, days: 30, rate: 15 }, { kWh: 135, cost: 20.25 })],
   }),
@@ -1978,9 +2002,9 @@ export default [
       num('dT', ($) => $.dT, '°C'),
     ],
     steps: ($, f) => [
-      String.raw`$P = \dfrac{V^2}{R} = ${texNum($.P)}\ \text{W}$`,
-      String.raw`$Q = Pt = ${texNum($.Q)}\ \text{J}$`,
-      String.raw`$\Delta T = \dfrac{Q}{mc} = ${texNum($.dT)}\,^\circ\text{C}$`,
+      String.raw`$P = \dfrac{V^2}{R} = \dfrac{${pq($.V, 'V')}^2}{${qty($.R, 'Ω')}} = ${texNum($.P)}\ \text{W}$`,
+      String.raw`$Q = Pt = ${pq($.P, 'W')}${pq($.t, 's')} = ${texNum($.Q)}\ \text{J}$`,
+      String.raw`$\Delta T = \dfrac{Q}{mc} = \dfrac{${qty($.Q, 'J')}}{${pq($.m, 'kg')}${pq(4186, 'J/kg·°C')}} = ${texNum($.dT)}\,^\circ\text{C}$`,
     ],
     sim: {
       scenario: 'pwr-heater',
@@ -1998,7 +2022,10 @@ export default [
     text: (T) => `Appliances of ${T.P1} W, ${T.P2} W and ${T.P3} W run at the same time on one 120 V household circuit with a ${T.Imax} breaker. What total current do they draw? Does the breaker trip?`,
     parts: [num('I', ($) => $.I, 'A'), mc('trip', [[1, 'Yes, it trips'], [0, 'No']], ($) => ($.I > $.Imax ? 1 : 0), { label: 'Does it trip?' })],
     hints: ['Household outlets are in parallel, so the currents add.'],
-    steps: ($, f) => [String.raw`$I = \dfrac{\sum P}{V} = ${texNum($.I)}\ \text{A}$`],
+    steps: ($, f) => [
+      String.raw`$I = \dfrac{\sum P}{V} = \dfrac{(${texNum($.P1)} + ${texNum($.P2)} + ${texNum($.P3)})\ \text{W}}{120\ \text{V}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`${$.I > $.Imax ? 'More' : 'Less'} than the ${$.Imax} A rating, so the breaker ${$.I > $.Imax ? 'trips' : 'holds'}.`,
+    ],
     cases: [kase('kitchen', { P1: 1200, P2: 800, P3: 500, Imax: 15 }, { I: 20.83, trip: 1 })],
   }),
   problem({
@@ -2104,10 +2131,10 @@ export default [
     hints: [String.raw`$P = IV = I^2R = \dfrac{V^2}{R}$ — pick the form that uses what you were given.`],
     steps: ($, f) => [
       ({
-        P: String.raw`$P = \dfrac{V^2}{R} = ${texNum($.Pv)}\ \text{W}$`,
-        R: String.raw`$R = \dfrac{V^2}{P} = ${texNum($.Rp)}\ \Omega$`,
-        I: String.raw`$I = \dfrac{P}{V} = ${texNum($.Ip)}\ \text{A}$`,
-        both: String.raw`$R = \dfrac{V^2}{P} = ${texNum($.Rp)}\ \Omega$ and $I = \dfrac{P}{V} = ${texNum($.Ip)}\ \text{A}$`,
+        P: String.raw`$P = \dfrac{V^2}{R} = \dfrac{${pq($.V, 'V')}^2}{${qty($.R, 'Ω')}} = ${texNum($.Pv)}\ \text{W}$`,
+        R: String.raw`$R = \dfrac{V^2}{P} = \dfrac{${pq($.V, 'V')}^2}{${qty($.P, 'W')}} = ${texNum($.Rp)}\ \Omega$`,
+        I: String.raw`$I = \dfrac{P}{V} = \dfrac{${qty($.P, 'W')}}{${qty($.V, 'V')}} = ${texNum($.Ip)}\ \text{A}$`,
+        both: String.raw`$R = \dfrac{V^2}{P} = \dfrac{${pq($.V, 'V')}^2}{${qty($.P, 'W')}} = ${texNum($.Rp)}\ \Omega$ and $I = \dfrac{P}{V} = \dfrac{${qty($.P, 'W')}}{${qty($.V, 'V')}} = ${texNum($.Ip)}\ \text{A}$`,
       })[$.ask],
     ],
     cases: [
@@ -2126,8 +2153,8 @@ export default [
     parts: [num('R', ($) => $.R, 'Ω'), num('V', ($) => $.V, 'V')],
     hints: [String.raw`You were given $P$ and $I$, so use the form with those two: $P = I^2R$.`],
     steps: ($) => [
-      String.raw`$R = \dfrac{P}{I^2} = ${texNum($.R)}\ \Omega$`,
-      String.raw`$V = \dfrac{P}{I} = IR = ${texNum($.V)}\ \text{V}$`,
+      String.raw`$R = \dfrac{P}{I^2} = \dfrac{${qty($.P, 'W')}}{${pq($.I, 'A')}^2} = ${texNum($.R)}\ \Omega$`,
+      String.raw`$V = \dfrac{P}{I} = \dfrac{${qty($.P, 'W')}}{${qty($.I, 'A')}} = ${texNum($.V)}\ \text{V}$`,
     ],
     sim: {
       scenario: 'pwr-60',
@@ -2187,9 +2214,9 @@ export default [
       String.raw`Average power uses rms values: $P = I_{\text{rms}}^2 R$.`,
     ],
     steps: ($, f) => [
-      String.raw`$I_{\text{rms}} = \dfrac{I_p}{\sqrt{2}} = ${texNum($.Irms)}\ \text{A}$`,
-      String.raw`$f = \dfrac{\omega}{2\pi} = ${texNum($.f)}\ \text{Hz}$`,
-      String.raw`$P_{\text{avg}} = I_{\text{rms}}^2R = ${texNum($.P)}\ \text{W}$`,
+      String.raw`$I_{\text{rms}} = \dfrac{I_p}{\sqrt{2}} = \dfrac{${qty($.Ip, 'A')}}{\sqrt{2}} = ${texNum($.Irms)}\ \text{A}$`,
+      String.raw`$f = \dfrac{\omega}{2\pi} = \dfrac{${qty($.w, 'rad/s')}}{2\pi} = ${texNum($.f)}\ \text{Hz}$`,
+      String.raw`$P_{\text{avg}} = I_{\text{rms}}^2R = ${pq($.Irms, 'A')}^2${pq($.R, 'Ω')} = ${texNum($.P)}\ \text{W}$`,
     ],
     cases: [kase('#11, #13', { Ip: 0.8, w: 240, R: 50 }, { Irms: 0.5657, f: 38.2, P: 16 }, { key: '0.57 A; 38.2 Hz' })],
   }),
@@ -2213,9 +2240,9 @@ export default [
       String.raw`$I_{\text{rms}} = I_p/\sqrt{2}$, then $R = V_{\text{rms}}/I_{\text{rms}}$ and $P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}}$.`,
     ],
     steps: ($) => [
-      String.raw`The peak is ${texNum($.Ip)} A, so $I_{\text{rms}} = \dfrac{${texNum($.Ip)}}{\sqrt{2}} = ${texNum($.Irms)}\ \text{A}$`,
-      String.raw`$R = \dfrac{V_{\text{rms}}}{I_{\text{rms}}} = \dfrac{${$.Vrms}}{${texNum($.Irms)}} = ${texNum($.R)}\ \Omega$`,
-      String.raw`$P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}} = ${texNum($.P)}\ \text{W}$`,
+      String.raw`The peak is ${texNum($.Ip)} A, so $I_{\text{rms}} = \dfrac{${qty($.Ip, 'A')}}{\sqrt{2}} = ${texNum($.Irms)}\ \text{A}$`,
+      String.raw`$R = \dfrac{V_{\text{rms}}}{I_{\text{rms}}} = \dfrac{${qty($.Vrms, 'V')}}{${qty($.Irms, 'A')}} = ${texNum($.R)}\ \Omega$`,
+      String.raw`$P_{\text{avg}} = I_{\text{rms}}V_{\text{rms}} = ${pq($.Irms, 'A')}${pq($.Vrms, 'V')} = ${texNum($.P)}\ \text{W}$`,
     ],
     sim: {
       scenario: 'pwr-ac',

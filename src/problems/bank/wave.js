@@ -3,7 +3,7 @@
  * Each template loads the Interference, Diffraction or Thin film lab into its own numbers, and
  * `read` hands back the lab's value for every answer so the check script compares the two.
  */
-import { problem, kase, range, choice, num, mc, sym, DEG , texNum } from '../kit.js';
+import { problem, kase, range, choice, num, mc, sym, DEG, texNum, texDeg, qty, pq } from '../kit.js';
 
 const W = { exam: 'wave' };
 
@@ -21,8 +21,8 @@ export default [
     ],
     hints: [String.raw`Bright fringes: $d\sin\theta = m\lambda$. For small angles, $y = \dfrac{m\lambda L}{d}$.`],
     steps: ($, f) => [
-      String.raw`$y = \dfrac{m\lambda L}{d} = ${texNum($.y * 1e3)}\ \text{mm}$`,
-      String.raw`$\Delta y = \dfrac{\lambda L}{d} = ${texNum($.dy * 1e3)}\ \text{mm}$`,
+      String.raw`$y = \dfrac{m\lambda L}{d} = \dfrac{(${$.m})${pq($.lam, 'm')}${pq($.L, 'm')}}{${qty($.d, 'm')}} = ${texNum($.y * 1e3)}\ \text{mm}$`,
+      String.raw`$\Delta y = \dfrac{\lambda L}{d} = \dfrac{${pq($.lam, 'm')}${pq($.L, 'm')}}{${qty($.d, 'm')}} = ${texNum($.dy * 1e3)}\ \text{mm}$`,
     ],
     sim: {
       scenario: 'young',
@@ -41,7 +41,7 @@ export default [
       sym('lam_sym', 'dy*d/L', { dy: 'm', d: 'm', L: 'm' }, ($) => $.lam, { unit: 'm', label: String.raw`$\lambda$ as a formula` }),
       num('lam', ($) => $.lam, 'nm', { scale: 1e-9, label: String.raw`$\lambda$` }),
     ],
-    steps: ($, f) => [String.raw`$\lambda = \dfrac{\Delta y\,d}{L} = ${texNum($.lam * 1e9)}\ \text{nm}$`],
+    steps: ($, f) => [String.raw`$\lambda = \dfrac{\Delta y\,d}{L} = \dfrac{${pq($.dy, 'm')}${pq($.d, 'm')}}{${qty($.L, 'm')}} = ${texNum($.lam)}\ \text{m} = ${texNum($.lam * 1e9)}\ \text{nm}$`],
     sim: {
       scenario: 'young',
       // The lab is driven by λ, so set it to the answer and let the lab reproduce the stated Δy.
@@ -62,7 +62,7 @@ export default [
     parts: [num('th', ($) => $.th, '°', { label: 'θ', abs: 0.002 })],
     hints: [String.raw`Dark fringes: $d\sin\theta = \left(m + \tfrac{1}{2}\right)\lambda$`],
     steps: ($, f) => [
-      String.raw`$\sin\theta = \dfrac{(m + \tfrac{1}{2})\lambda}{d} = ${texNum($.s)} \;\Longrightarrow\; \theta$ = ${f($.th)}°`,
+      String.raw`$\sin\theta = \dfrac{(m + \tfrac{1}{2})\lambda}{d} = \dfrac{(${texNum($.m + 0.5)})${pq($.lam, 'm')}}{${qty($.d, 'm')}} = ${texNum($.s)} \;\Longrightarrow\; \theta = ${texDeg($.th)}$`,
     ],
     sim: {
       scenario: 'young',
@@ -86,7 +86,7 @@ export default [
     text: (T) => `One mirror of a Michelson interferometer moves ${T.dd} mm, using ${T.lam} nm light. How many bright fringes pass the detector?`,
     parts: [num('N', ($) => $.N, 'fringes', { abs: 1, tol: 0.005 })],
     hints: ["The light path changes by twice the mirror's displacement."],
-    steps: ($, f) => [String.raw`$N = \dfrac{2\Delta d}{\lambda} = ${texNum($.N)}$`],
+    steps: ($, f) => [String.raw`$N = \dfrac{2\Delta d}{\lambda} = \dfrac{2${pq($.dd, 'm')}}{${qty($.lam, 'm')}} = ${texNum($.N)}$`],
     cases: [kase('HeNe', { dd: 0.1, lam: 632.8 }, { N: 316.06 })],
   }),
 
@@ -103,8 +103,8 @@ export default [
     ],
     hints: [String.raw`Dark fringes: $a\sin\theta = m\lambda$ for $m = 1, 2, \dots$. The central maximum spans from $-\theta_1$ to $+\theta_1$.`],
     steps: ($, f) => [
-      String.raw`$\sin\theta_1 = \dfrac{\lambda}{a} \;\Longrightarrow\; \theta_1$ = ${f($.th)}°`,
-      String.raw`$w = \dfrac{2\lambda L}{a} = ${texNum($.w * 1e3)}\ \text{mm}$`,
+      String.raw`$\sin\theta_1 = \dfrac{\lambda}{a} = \dfrac{${qty($.lam, 'm')}}{${qty($.a, 'm')}} \;\Longrightarrow\; \theta_1 = ${texDeg($.th)}$`,
+      String.raw`$w = \dfrac{2\lambda L}{a} = \dfrac{2${pq($.lam, 'm')}${pq($.L, 'm')}}{${qty($.a, 'm')}} = ${texNum($.w * 1e3)}\ \text{mm}$`,
     ],
     sim: {
       scenario: 'single',
@@ -125,9 +125,9 @@ export default [
     text: (T) => `A grating has ${T.N} lines/mm and is lit with ${T.lam} nm light. Find the line spacing, the angle of the m = ${T.m} maximum, and the highest order you can see.`,
     parts: [num('d', ($) => $.d, 'μm', { scale: 1e-6, label: 'd' }), num('th', ($) => $.th, '°', { label: String.raw`$\theta_m$`, abs: 0.05, tol: 0.005 }), num('mmax', ($) => $.mmax, '', { label: 'Highest order', tol: 0 })],
     steps: ($, f) => [
-      String.raw`$d = \dfrac{1}{N} = ${texNum($.d * 1e6)}\ \mu\text{m}$`,
-      String.raw`$\sin\theta = \dfrac{m\lambda}{d} \;\Longrightarrow\; \theta$ = ${f($.th)}°`,
-      String.raw`$m_{\max} = \left\lfloor \dfrac{d}{\lambda} \right\rfloor = ${texNum($.mmax)}$`,
+      String.raw`$d = \dfrac{1}{N} = \dfrac{1}{${qty($.N, 'lines/m')}} = ${texNum($.d)}\ \text{m} = ${texNum($.d * 1e6)}\ \mu\text{m}$`,
+      String.raw`$\sin\theta = \dfrac{m\lambda}{d} = \dfrac{(${$.m})${pq($.lam, 'm')}}{${qty($.d, 'm')}} = ${texNum($.s)} \;\Longrightarrow\; \theta = ${texDeg($.th)}$`,
+      String.raw`$m_{\max} = \left\lfloor \dfrac{d}{\lambda} \right\rfloor = \left\lfloor ${texNum($.d / $.lam)} \right\rfloor = ${texNum($.mmax)}$`,
     ],
     sim: {
       scenario: 'grating',
@@ -150,8 +150,8 @@ export default [
       num('s', ($) => $.s, 'm', { label: 'Separation' }),
     ],
     steps: ($, f) => [
-      String.raw`$\theta = \dfrac{1.22\lambda}{D} = ${texNum($.th)}\ \text{rad}$`,
-      String.raw`$s = \theta L = ${texNum($.s)}\ \text{m}$`,
+      String.raw`$\theta = \dfrac{1.22\lambda}{D} = \dfrac{1.22${pq($.lam, 'm')}}{${qty($.D, 'm')}} = ${texNum($.th)}\ \text{rad}$`,
+      String.raw`$s = \theta L = ${pq($.th, 'rad')}${pq($.L, 'm')} = ${texNum($.s)}\ \text{m}$`,
     ],
     sim: {
       scenario: 'rayleigh',
@@ -197,8 +197,9 @@ export default [
       String.raw`Use $\lambda_{\text{film}} = \lambda/n$. One shift: bright at $2t = \left(m + \tfrac{1}{2}\right)\lambda_{\text{film}}$. Zero or two shifts: bright at $2t = m\lambda_{\text{film}}$.`,
     ],
     steps: ($, f) => [
-      `Phase-shifting reflections: ${f($.shifts)}`,
-      String.raw`$t_{\min} = ${texNum($.t * 1e9)}\ \text{nm}$`,
+      String.raw`Phase-shifting reflections: ${$.shifts === 1 ? 'one (the top surface only)' : 'two (top and bottom)'}, so ${($.shifts === 1) === ($.want === 1) ? String.raw`the condition is $2t = \left(m + \tfrac12\right)\lambda_{\text{film}}$` : String.raw`the condition is $2t = m\lambda_{\text{film}}$ with $m \ge 1$`}`,
+      String.raw`$\lambda_{\text{film}} = \dfrac{\lambda}{n} = \dfrac{${qty($.lam * 1e9, 'nm')}}{${texNum($.nf)}} = ${texNum(($.lam * 1e9) / $.nf)}\ \text{nm}$`,
+      String.raw`The thinnest film: $t_{\min} = ${($.shifts === 1) === ($.want === 1) ? String.raw`\dfrac{\lambda_{\text{film}}}{4}` : String.raw`\dfrac{\lambda_{\text{film}}}{2}`} = ${texNum($.t * 1e9)}\ \text{nm}$`,
     ],
     sim: {
       scenario: 'soap',

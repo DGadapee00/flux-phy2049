@@ -1,5 +1,13 @@
 /** Exam 1 · Ch V (vectors), 34 (charge), 35 (Coulomb force). */
-import { problem, kase, range, choice, SIGN, num, mc, sym, K, QE, ME, MP, G, DEG, DIR_X, charge, layout, angleDeg, texNum, terms } from '../kit.js';
+import { problem, kase, range, choice, SIGN, num, mc, sym, K, QE, ME, MP, G, DEG, DIR_X, charge, layout, angleDeg, texNum, texDeg, terms, qty, pq } from '../kit.js';
+
+/** Where a vector's signs put it: "in quadrant II", or "on the −y axis" when a component is zero. */
+const QUAD = (x, y) => {
+  const e = 1e-9 * Math.hypot(x, y);
+  if (Math.abs(y) <= e) return x > 0 ? 'on the $+x$ axis' : 'on the $-x$ axis';
+  if (Math.abs(x) <= e) return y > 0 ? 'on the $+y$ axis' : 'on the $-y$ axis';
+  return `in quadrant ${x > 0 ? (y > 0 ? 'I' : 'IV') : y > 0 ? 'II' : 'III'}`;
+};
 
 const E1 = { exam: 'e1' };
 
@@ -14,7 +22,8 @@ export default [
     hints: [String.raw`$|\vec{a}| = \sqrt{a_x^2 + a_y^2}$`, String.raw`$\tan^{-1}(a_y/a_x)$ only gives the right angle in quadrants I and IV. Check which quadrant the vector is in.`],
     steps: ($, f) => [
       String.raw`$|\vec{a}| = \sqrt{(${texNum($.ax)})^2 + (${texNum($.ay)})^2} = ${texNum($.A)}$`,
-      String.raw`$\theta$ = ${f($.th)}° (the quadrant comes from the signs of the components)`,
+      String.raw`$\tan^{-1}\!\left(\dfrac{a_y}{a_x}\right) = \tan^{-1}\!\left(\dfrac{${texNum($.ay)}}{${texNum($.ax)}}\right) = ${texDeg(Math.atan($.ay / $.ax) / DEG)}$`,
+      String.raw`The signs put $\vec{a}$ ${QUAD($.ax, $.ay)}, so $\theta = ${texDeg($.th)}$ from $+x$`,
     ],
     sim: {
       scenario: 'axes',
@@ -36,8 +45,8 @@ export default [
     text: (T) => `A vector has magnitude ${T.A} and points ${T.th}° counterclockwise from +x. Find its x and y components.`,
     parts: [num('ax', ($) => $.ax, '', { label: 'aₓ', abs: 0.02 }), num('ay', ($) => $.ay, '', { label: String.raw`$a_y$`, abs: 0.02 })],
     steps: ($, f) => [
-      String.raw`$a_x = A\cos\theta = ${texNum($.ax)}$`,
-      String.raw`$a_y = A\sin\theta = ${texNum($.ay)}$`,
+      String.raw`$a_x = A\cos\theta = (${texNum($.A)})\cos ${texDeg($.th)} = ${texNum($.ax)}$`,
+      String.raw`$a_y = A\sin\theta = (${texNum($.A)})\sin ${texDeg($.th)} = ${texNum($.ay)}$`,
     ],
     sim: {
       scenario: 'axes',
@@ -63,8 +72,8 @@ export default [
     parts: [num('dot', ($) => $.dot, '', { label: 'a·b', abs: 0.01 }), num('phi', ($) => $.phi, '°', { label: 'φ', abs: 0.6, tol: 0.005 })],
     hints: [String.raw`$\vec{a}\cdot\vec{b} = a_xb_x + a_yb_y = |\vec{a}||\vec{b}|\cos\varphi$`],
     steps: ($, f) => [
-      String.raw`$\vec{a}\cdot\vec{b} = ${texNum($.dot)}$`,
-      String.raw`$\cos\varphi = \dfrac{\vec{a}\cdot\vec{b}}{|\vec{a}||\vec{b}|} \;\Longrightarrow\; \varphi = ${texNum($.phi)}^\circ$`,
+      String.raw`$\vec{a}\cdot\vec{b} = a_xb_x + a_yb_y = (${texNum($.ax)})(${texNum($.bx)}) + (${texNum($.ay)})(${texNum($.by)}) = ${texNum($.dot)}$`,
+      String.raw`$\cos\varphi = \dfrac{\vec{a}\cdot\vec{b}}{|\vec{a}||\vec{b}|} = \dfrac{${texNum($.dot)}}{(${texNum(Math.hypot($.ax, $.ay))})(${texNum(Math.hypot($.bx, $.by))})} \;\Longrightarrow\; \varphi = ${texDeg($.phi)}$`,
     ],
     sim: {
       scenario: 'axes',
@@ -92,8 +101,9 @@ export default [
     parts: [num('R', ($) => $.R, '', { label: '|R|' }), num('th', ($) => $.th, '°', { label: String.raw`$\theta_R$`, abs: 0.6, tol: 0.005, wrap: 360 })],
     hints: ['Add components, not magnitudes.'],
     steps: ($, f) => [
-      String.raw`$R_x = ${texNum($.Rx)}$, $R_y = ${texNum($.Ry)}$`,
-      String.raw`$|\vec{R}| = ${texNum($.R)}$ at ${f($.th)}°`,
+      String.raw`$R_x = A\cos\alpha + B\cos\beta = ${texNum($.A)}\cos ${texDeg($.a)} + ${texNum($.B)}\cos ${texDeg($.b)} = ${texNum($.Rx)}$`,
+      String.raw`$R_y = A\sin\alpha + B\sin\beta = ${texNum($.A)}\sin ${texDeg($.a)} + ${texNum($.B)}\sin ${texDeg($.b)} = ${texNum($.Ry)}$`,
+      String.raw`$|\vec{R}| = \sqrt{R_x^2 + R_y^2} = ${texNum($.R)}$; the signs of $R_x$ and $R_y$ put it ${QUAD($.Rx, $.Ry)}, at $${texDeg($.th)}$`,
     ],
     sim: null,
     cases: [kase('hand', { A: 10, a: 0, B: 10, b: 90 }, { R: 14.14, th: 45 })],
@@ -136,7 +146,7 @@ export default [
     text: (T) => `An object has a net ${T.s} charge of ${T.q} μC. How many electrons were transferred to produce this charge, and were they added or removed?`,
     parts: [num('N', ($) => $.N, 'electrons'), mc('which', [[1, 'Electrons were removed'], [-1, 'Electrons were added']], ($) => $.s, { label: 'Gained or lost?' })],
     steps: ($, f) => [
-      String.raw`$N = \dfrac{|q|}{e} = \dfrac{${texNum($.q)}}{1.6\times 10^{-19}} = ${texNum($.N)}$`,
+      String.raw`$N = \dfrac{|q|}{e} = \dfrac{${qty($.q, 'C')}}{1.6\times 10^{-19}\ \text{C}} = ${texNum($.N)}$`,
       'A positive object lost electrons; a negative object gained them.',
     ],
     cases: [kase('hand', { q: 8, s: -1 }, { N: 5e13, which: -1 })],
@@ -157,8 +167,8 @@ export default [
     ],
     hints: ['Identical conductors split their combined charge equally.'],
     steps: ($, f) => [
-      String.raw`After 1–2: each has $\dfrac{q_1 + q_2}{2} = ${texNum($.a12 * 1e6)}\ \mu\text{C}$`,
-      String.raw`After 2–3: each has $\dfrac{${texNum($.a12 * 1e6)} + q_3}{2} = ${texNum($.final3 * 1e6)}\ \mu\text{C}$`,
+      String.raw`After 1–2: each has $\dfrac{q_1 + q_2}{2} = \dfrac{(${texNum($.q1 * 1e6)}) + (${texNum($.q2 * 1e6)})}{2}\ \mu\text{C} = ${texNum($.a12 * 1e6)}\ \mu\text{C}$`,
+      String.raw`After 2–3: each has $\dfrac{(${texNum($.a12 * 1e6)}) + (${texNum($.q3 * 1e6)})}{2}\ \mu\text{C} = ${texNum($.final3 * 1e6)}\ \mu\text{C}$`,
     ],
     cases: [kase('hand', { q1: 6, q2: -2, q3: 4 }, { s1: 2, s3: 3 })],
   }),
@@ -191,7 +201,7 @@ export default [
       mc('type', [[1, 'Repulsive'], [-1, 'Attractive']], ($) => $.s1 * $.s2, { label: 'Type' }),
     ],
     steps: ($, f) => [
-      String.raw`$F = \dfrac{k|q_1q_2|}{r^2} = ${texNum($.F)}\ \text{N}$`,
+      String.raw`$F = \dfrac{k|q_1q_2|}{r^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.q1, 'C')}${pq($.q2, 'C')}}{${pq($.r, 'm')}^2} = ${texNum($.F)}\ \text{N}$`,
       'Like signs repel; opposite signs attract.',
     ],
     sim: {
@@ -212,7 +222,7 @@ export default [
       sym('r_sym', 'sqrt(k*q1*q2/F)', { q1: 'C', q2: 'C', F: 'N' }, ($) => $.r, { unit: 'm', label: String.raw`$r$ as a formula` }),
       num('r', ($) => $.r, 'm'),
     ],
-    steps: ($, f) => [String.raw`$r = \sqrt{\dfrac{k q_1 q_2}{F}} = ${texNum($.r)}\ \text{m}$`],
+    steps: ($, f) => [String.raw`$r = \sqrt{\dfrac{k q_1 q_2}{F}} = \sqrt{\dfrac{${pq(K, 'N·m²/C²')}${pq($.q1, 'C')}${pq($.q2, 'C')}}{${qty($.F, 'N')}}} = ${texNum($.r)}\ \text{m}$`],
     cases: [kase('hand', { q1: 4, q2: 5, F: 2 }, { r: 0.3 })],
   }),
   problem({
@@ -234,9 +244,9 @@ export default [
     parts: [num('F', ($) => Math.abs($.Fx), 'N', { label: '|F on q₂|' }), mc('dir', DIR_X.slice(0, 2), ($) => Math.sign($.Fx), { label: 'Direction' })],
     hints: [String.raw`Find each force separately with its direction, then add them as signed $x$ components.`],
     steps: ($, f) => [
-      String.raw`From $q_1$: ${f($.F1)} N`,
-      String.raw`From $q_3$: ${f($.F3)} N`,
-      String.raw`Net: $F_x$ = ${f($.Fx)} N`,
+      String.raw`From $q_1$: $F_1 = \dfrac{k|q_1q_2|}{d_1^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.q1, 'C')}${pq($.q2, 'C')}}{${pq($.d1, 'm')}^2} = ${texNum(Math.abs($.F1))}\ \text{N}$, ${$.Q1 * $.Q2 > 0 ? 'repulsive, so toward $+x$' : 'attractive, so toward $-x$'}`,
+      String.raw`From $q_3$: $F_3 = \dfrac{k|q_3q_2|}{d_2^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq($.q3, 'C')}${pq($.q2, 'C')}}{${pq($.d2, 'm')}^2} = ${texNum(Math.abs($.F3))}\ \text{N}$, ${$.Q3 * $.Q2 > 0 ? 'repulsive, so toward $-x$' : 'attractive, so toward $+x$'}`,
+      String.raw`Net: $F_x = (${texNum($.F1)}\ \text{N}) + (${texNum($.F3)}\ \text{N}) = ${texNum($.Fx)}\ \text{N}$`,
     ],
     sim: {
       scenario: 'three',
@@ -258,7 +268,7 @@ export default [
     ],
     hints: [String.raw`$\dfrac{kq_1q}{x^2} = \dfrac{kq_2q}{(d-x)^2}$ — the third charge cancels out.`],
     steps: ($, f) => [
-      String.raw`$\dfrac{x}{d-x} = \sqrt{\dfrac{q_1}{q_2}} \;\Longrightarrow\; x = \dfrac{d}{1+\sqrt{q_2/q_1}} = ${texNum($.x)}\ \text{m}$`,
+      String.raw`$\dfrac{x}{d-x} = \sqrt{\dfrac{q_1}{q_2}} \;\Longrightarrow\; x = \dfrac{d}{1+\sqrt{q_2/q_1}} = \dfrac{${qty($.d, 'm')}}{1 + \sqrt{${texNum($.q2 * 1e6)}/${texNum($.q1 * 1e6)}}} = ${texNum($.x)}\ \text{m}$`,
     ],
     sim: {
       scenario: 'three',
@@ -280,8 +290,9 @@ export default [
     text: (T) => `A +${T.q} μC charge sits at the origin. A ${T.sa} ${T.qa} μC charge is at (−${T.a} cm, 0) and a ${T.sb} ${T.qb} μC charge is at (0, −${T.b} cm). Find the net force on the charge at the origin.`,
     parts: [num('F', ($) => $.F, 'N', { label: '|F|' }), num('th', ($) => $.th, '°', { label: 'Direction from +x', abs: 0.6, tol: 0.005, wrap: 360 })],
     steps: ($, f) => [
-      String.raw`$F_x$ = ${f($.Fx)} N, $F_y$ = ${f($.Fy)} N`,
-      String.raw`$|\vec{F}|$ = ${f($.F)} N at ${f($.th)}°`,
+      String.raw`$F_x = \pm\dfrac{kqq_a}{a^2} = \pm\dfrac{${pq(K, 'N·m²/C²')}${pq($.q, 'C')}${pq($.qa, 'C')}}{${pq($.a, 'm')}^2} = ${texNum($.Fx)}\ \text{N}$ (${$.Fx > 0 ? 'repelled toward $+x$' : 'attracted toward $-x$'})`,
+      String.raw`$F_y = \pm\dfrac{kqq_b}{b^2} = \pm\dfrac{${pq(K, 'N·m²/C²')}${pq($.q, 'C')}${pq($.qb, 'C')}}{${pq($.b, 'm')}^2} = ${texNum($.Fy)}\ \text{N}$ (${$.Fy > 0 ? 'repelled toward $+y$' : 'attracted toward $-y$'})`,
+      String.raw`$|\vec{F}| = \sqrt{F_x^2 + F_y^2} = ${texNum($.F)}\ \text{N}$, at $\theta = ${texDeg($.th)}$ from $+x$ (${QUAD($.Fx, $.Fy)})`,
     ],
     sim: {
       scenario: 'three',
@@ -303,9 +314,9 @@ export default [
     text: (T) => `An electron and a proton are ${T.r} × 10⁻¹⁰ m apart. Find the electric force between them and the ratio $F_E/F_G$ (G = 6.67×10⁻¹¹ N·m²/kg²).`,
     parts: [num('Fe', ($) => $.Fe, 'N', { label: String.raw`$F_E$` }), num('ratio', ($) => $.ratio, '', { label: String.raw`$F_E / F_G$` })],
     steps: ($, f) => [
-      String.raw`$F_E = \dfrac{ke^2}{r^2} = ${texNum($.Fe)}\ \text{N}$`,
-      String.raw`$F_G = \dfrac{G m_e m_p}{r^2} = ${texNum($.Fg)}\ \text{N}$`,
-      String.raw`$\dfrac{F_E}{F_G} = ${texNum($.ratio)}$ — the $1/r^2$ cancels, so the ratio does not depend on $r$.`,
+      String.raw`$F_E = \dfrac{ke^2}{r^2} = \dfrac{${pq(K, 'N·m²/C²')}${pq(QE, 'C')}^2}{${pq($.r, 'm')}^2} = ${texNum($.Fe)}\ \text{N}$`,
+      String.raw`$F_G = \dfrac{G m_e m_p}{r^2} = \dfrac{${pq(6.67e-11, 'N·m²/kg²')}${pq(ME, 'kg')}${pq(MP, 'kg')}}{${pq($.r, 'm')}^2} = ${texNum($.Fg)}\ \text{N}$`,
+      String.raw`$\dfrac{F_E}{F_G} = \dfrac{${qty($.Fe, 'N')}}{${qty($.Fg, 'N')}} = ${texNum($.ratio)}$ — the $1/r^2$ cancels, so the ratio does not depend on $r$.`,
     ],
     cases: [kase('Bohr radius', { r: 0.529 }, { Fe: 8.23e-8, ratio: 2.27e39 })],
   }),
@@ -324,9 +335,9 @@ export default [
       String.raw`The separation is $r = 2L\sin\theta$.`,
     ],
     steps: ($, f) => [
-      String.raw`$F_E = mg\tan\theta = ${texNum($.F)}\ \text{N}$`,
-      String.raw`$r = 2L\sin\theta = ${texNum($.r)}\ \text{m}$`,
-      String.raw`$q = r\sqrt{F_E/k} = ${texNum($.q)}\ \text{C}$`,
+      String.raw`$F_E = mg\tan\theta = ${pq($.m, 'kg')}${pq(G, 'm/s²')}\tan ${texDeg($.th)} = ${texNum($.F)}\ \text{N}$`,
+      String.raw`$r = 2L\sin\theta = 2${pq($.L, 'm')}\sin ${texDeg($.th)} = ${texNum($.r)}\ \text{m}$`,
+      String.raw`$q = r\sqrt{\dfrac{F_E}{k}} = ${pq($.r, 'm')}\sqrt{\dfrac{${qty($.F, 'N')}}{${qty(K, 'N·m²/C²')}}} = ${texNum($.q)}\ \text{C}$`,
     ],
     cases: [kase('hand', { m: 3, L: 0.15, th: 5 }, { q: 1.40e-8 })],
   }),

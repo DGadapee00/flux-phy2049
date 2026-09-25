@@ -1,5 +1,5 @@
 /** Exam 5 · Ch 48 (Faraday/Lenz), 49 (inductance, RL), 50 (motors, transformers, transmission), 51 (applications), 52 (AC circuits). */
-import { problem, kase, range, choice, num, mc, sym, MU0, DEG , texNum } from '../kit.js';
+import { problem, kase, range, choice, num, mc, sym, MU0, DEG, texNum, texDeg, qty, pq } from '../kit.js';
 
 const E5 = { exam: 'e5' };
 const acSet = (s, o) => Object.assign(s, o);
@@ -12,7 +12,10 @@ export default [
     derive: ($) => ({ A: Math.PI * $.r ** 2, Phi: $.B * Math.PI * $.r ** 2 * Math.cos($.th * DEG) }),
     text: (T) => `A circular loop of radius ${T.r} cm sits in a uniform ${T.B} T field. The loop's normal makes ${T.th}° with B. Find the magnetic flux through the loop.`,
     parts: [num('Phi', ($) => $.Phi, 'Wb', { abs: 1e-9 })],
-    steps: ($, f) => [String.raw`$\Phi_B = BA\cos\theta = ${texNum($.Phi)}\ \text{Wb}$`],
+    steps: ($, f) => [
+      String.raw`$A = \pi r^2 = \pi${pq($.r, 'm')}^2 = ${texNum($.A)}\ \text{m}^2$`,
+      String.raw`$\Phi_B = BA\cos\theta = ${pq($.B, 'T')}${pq($.A, 'm²')}\cos ${texDeg($.th)} = ${texNum($.Phi)}\ \text{Wb}$`,
+    ],
     sim: { scenario: 'expand', setup: (s, $) => void Object.assign(s, { B: Math.min(1, $.B), R0: Math.min(0.5, $.r) }) },
     cases: [kase('hand', { B: 0.5, r: 10, th: 60 }, { Phi: 7.854e-3 })],
   }),
@@ -28,8 +31,8 @@ export default [
       sym('emf_sym', 'N*pi*r^2*dB/dt', { N: '1', r: 'm', dB: 'T', dt: 's' }, ($) => $.emf, { unit: 'V', label: String.raw`$|\varepsilon|$ as a formula` }),
       num('emf', ($) => $.emf, 'V', { label: '|ε|' }), num('I', ($) => $.I, 'A')],
     steps: ($, f) => [
-      String.raw`$|\mathcal{E}| = NA\dfrac{\Delta B}{\Delta t} = ${texNum($.emf)}\ \text{V}$`,
-      String.raw`$I = \dfrac{\mathcal{E}}{R} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$|\mathcal{E}| = N\pi r^2\dfrac{\Delta B}{\Delta t} = (${texNum($.N)})\pi${pq($.r, 'm')}^2\,\dfrac{${qty($.dB, 'T')}}{${qty($.dt, 's')}} = ${texNum($.emf)}\ \text{V}$`,
+      String.raw`$I = \dfrac{\mathcal{E}}{R} = \dfrac{${qty($.emf, 'V')}}{${qty($.R, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
     ],
     cases: [kase('hand', { N: 50, r: 5, dB: 0.4, dt: 0.2, R: 4 }, { emf: 0.7854, I: 0.19635 })],
   }),
@@ -52,10 +55,10 @@ export default [
     ],
     hints: [String.raw`The magnetic force on the current opposes the motion (Lenz), so you have to push with $F = ILB$.`],
     steps: ($, f) => [
-      String.raw`$\mathcal{E} = BLv = ${texNum($.emf)}\ \text{V}$`,
-      String.raw`$I = \dfrac{\mathcal{E}}{R} = ${texNum($.I)}\ \text{A}$`,
-      String.raw`$F = ILB = ${texNum($.F)}\ \text{N}$`,
-      String.raw`$P = Fv = I^2R = ${texNum($.P)}\ \text{W}$`,
+      String.raw`$\mathcal{E} = BLv = ${pq($.B, 'T')}${pq($.L, 'm')}${pq($.v, 'm/s')} = ${texNum($.emf)}\ \text{V}$`,
+      String.raw`$I = \dfrac{\mathcal{E}}{R} = \dfrac{${qty($.emf, 'V')}}{${qty($.R, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$F = ILB = ${pq($.I, 'A')}${pq($.L, 'm')}${pq($.B, 'T')} = ${texNum($.F)}\ \text{N}$`,
+      String.raw`$P = Fv = ${pq($.F, 'N')}${pq($.v, 'm/s')} = ${texNum($.P)}\ \text{W}$ (the same as $I^2R$)`,
     ],
     sim: { scenario: 'bar', setup: (s, $) => void Object.assign(s, { B: $.B, width: Math.min(0.8, $.L) }) },
     cases: [kase('hand', { B: 0.5, L: 0.4, v: 2, R: 2 }, { emf: 0.4, I: 0.2, F: 0.04, P: 0.08 })],
@@ -77,7 +80,7 @@ export default [
     text: (T) => `A circular loop in a ${T.B} T field (perpendicular to the loop) is expanding. When its radius is ${T.R} cm, the radius is growing at ${T.Rdot} m/s. Find the induced emf.`,
     parts: [num('emf', ($) => $.emf, 'V', { label: '|ε|' })],
     hints: [String.raw`$\Phi_B = B\pi R^2$, so $\dfrac{d\Phi_B}{dt} = B\,2\pi R\dfrac{dR}{dt}$`],
-    steps: ($, f) => [String.raw`$|\mathcal{E}| = B\,2\pi R\dfrac{dR}{dt} = ${texNum($.emf)}\ \text{V}$`],
+    steps: ($, f) => [String.raw`$|\mathcal{E}| = B\,2\pi R\dfrac{dR}{dt} = ${pq($.B, 'T')}\,2\pi${pq($.R, 'm')}${pq($.Rdot, 'm/s')} = ${texNum($.emf)}\ \text{V}$`],
     sim: { scenario: 'expand', setup: (s, $) => void Object.assign(s, { B: $.B, R0: Math.min(0.5, $.R) }) },
     cases: [kase('hand', { B: 0.4, R: 28, Rdot: 0.1 }, { emf: 0.07037 })],
   }),
@@ -88,7 +91,7 @@ export default [
     valid: ($) => $.emf > 1e-6,
     text: (T) => `A ${T.N}-turn coil of area ${T.A} cm² in a ${T.B} T field is rotated so that the angle between its normal and B goes from ${T.th1}° to ${T.th2}° in ${T.dt} s. Find the average induced emf.`,
     parts: [num('emf', ($) => $.emf, 'V', { label: String.raw`$|\mathcal{E}_{\text{avg}}|$` })],
-    steps: ($, f) => [String.raw`$|\mathcal{E}| = \dfrac{NBA\,|\cos\theta_2 - \cos\theta_1|}{\Delta t} = ${texNum($.emf)}\ \text{V}$`],
+    steps: ($, f) => [String.raw`$|\mathcal{E}| = \dfrac{NBA\,|\cos\theta_2 - \cos\theta_1|}{\Delta t} = \dfrac{(${texNum($.N)})${pq($.B, 'T')}${pq($.A, 'm²')}\,|\cos ${texDeg($.th2)} - \cos ${texDeg($.th1)}|}{${qty($.dt, 's')}} = ${texNum($.emf)}\ \text{V}$`],
     cases: [kase('hand', { N: 10, B: 0.5, A: 400, th1: 0, th2: 90, dt: 0.1 }, { emf: 2 })],
   }),
 
@@ -102,7 +105,7 @@ export default [
       sym('L_sym', 'mu0*N^2*pi*r^2/l', { N: '1', r: 'm', l: 'm' }, ($) => $.L, { unit: 'H', label: String.raw`$L$ as a formula` }),
       num('L', ($) => $.L, 'mH', { scale: 1e-3 }),
     ],
-    steps: ($, f) => [String.raw`$L = \dfrac{\mu_0 N^2 A}{\ell} = ${texNum($.L)}\ \text{H}$`],
+    steps: ($, f) => [String.raw`$L = \dfrac{\mu_0 N^2 \pi r^2}{\ell} = \dfrac{${pq(MU0, 'T·m/A')}(${texNum($.N)})^2\,\pi${pq($.r, 'm')}^2}{${qty($.l, 'm')}} = ${texNum($.L)}\ \text{H}$`],
     cases: [kase('hand', { N: 500, r: 2, l: 30 }, { L: 1.3159 })],
   }),
   problem({
@@ -113,7 +116,7 @@ export default [
     parts: [
       sym('emf_sym', 'L*dI/dt', { L: 'H', dI: 'A', dt: 's' }, ($) => $.emf, { unit: 'V', label: String.raw`$|\varepsilon|$ as a formula` }),
       num('emf', ($) => $.emf, 'V'), mc('dir', [[1, 'It opposes the change in current'], [2, 'It helps the change along'], [3, 'It is zero once the current is steady'], [4, 'It is proportional to the current itself, not to how fast it changes']], [1, 3], { multi: true, label: 'Which statements about the self-induced emf are true?' })],
-    steps: ($, f) => [String.raw`$|\mathcal{E}| = L\dfrac{\Delta I}{\Delta t} = ${texNum($.emf)}\ \text{V}$`],
+    steps: ($, f) => [String.raw`$|\mathcal{E}| = L\dfrac{\Delta I}{\Delta t} = ${pq($.L, 'H')}\dfrac{${qty($.dI, 'A')}}{${qty($.dt, 's')}} = ${texNum($.emf)}\ \text{V}$`],
     cases: [kase('hand', { L: 50, dI: 2, dt: 10 }, { emf: 10, dir: [1, 3] })],
   }),
   problem({
@@ -130,9 +133,9 @@ export default [
       num('tau', ($) => $.tau, 's', { label: 'τ' }), num('I', ($) => $.I, 'A'), num('U', ($) => $.U, 'J')],
     hints: [String.raw`$I(t) = \dfrac{\varepsilon}{R}\left(1 - e^{-t/\tau}\right)$ with $\tau = L/R$, and $U = \tfrac{1}{2}LI^2$`],
     steps: ($, f) => [
-      String.raw`$\tau = \dfrac{L}{R} = ${texNum($.tau)}\ \text{s}$`,
-      String.raw`$I = ${texNum($.I)}\ \text{A}$`,
-      String.raw`$U = \tfrac{1}{2}L\left(\dfrac{\varepsilon}{R}\right)^2 = ${texNum($.U)}\ \text{J}$`,
+      String.raw`$\tau = \dfrac{L}{R} = \dfrac{${qty($.L, 'H')}}{${qty($.R, 'Ω')}} = ${texNum($.tau)}\ \text{s}$, so $t/\tau = ${texNum($.n)}$`,
+      String.raw`$I = \dfrac{\varepsilon}{R}\left(1 - e^{-t/\tau}\right) = \dfrac{${qty($.E, 'V')}}{${qty($.R, 'Ω')}}\left(1 - e^{-${texNum($.n)}}\right) = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$U = \tfrac{1}{2}L\left(\dfrac{\varepsilon}{R}\right)^2 = \tfrac12${pq($.L, 'H')}\left(\dfrac{${qty($.E, 'V')}}{${qty($.R, 'Ω')}}\right)^2 = ${texNum($.U)}\ \text{J}$`,
     ],
     cases: [kase('hand', { L: 200, R: 10, E: 12, n: 1 }, { tau: 0.02, I: 0.7585, U: 0.144 })],
   }),
@@ -148,8 +151,8 @@ export default [
       sym('Vs_sym', 'Vp*Ns/Np', { Vp: 'V', Ns: '1', Np: '1' }, ($) => $.Vs, { unit: 'V', label: String.raw`$V_s$ as a formula` }),
       num('Vs', ($) => $.Vs, 'V'), num('Is', ($) => $.Is, 'A'), mc('type', [[1, 'Step-up'], [-1, 'Step-down']], ($) => ($.Ns > $.Np ? 1 : -1), { label: 'Type' })],
     steps: ($, f) => [
-      String.raw`$V_s = V_p\dfrac{N_s}{N_p} = ${texNum($.Vs)}\ \text{V}$`,
-      String.raw`Power in = power out, so $I_s = I_p\dfrac{N_p}{N_s} = ${texNum($.Is)}\ \text{A}$`,
+      String.raw`$V_s = V_p\dfrac{N_s}{N_p} = ${pq($.Vp, 'V')}\dfrac{${texNum($.Ns)}}{${texNum($.Np)}} = ${texNum($.Vs)}\ \text{V}$`,
+      String.raw`Power in = power out, so $I_s = I_p\dfrac{N_p}{N_s} = ${pq($.Ip, 'A')}\dfrac{${texNum($.Np)}}{${texNum($.Ns)}} = ${texNum($.Is)}\ \text{A}$`,
     ],
     cases: [kase('hand', { Np: 200, Ns: 50, Vp: 120, Ip: 0.5 }, { Vs: 30, Is: 2, type: -1 })],
   }),
@@ -171,8 +174,9 @@ export default [
     ],
     hints: [String.raw`Use $I = P/V$ with the transmission voltage, not $V^2/R$.`],
     steps: ($, f) => [
-      String.raw`$I = \dfrac{P}{V} = ${texNum($.I)}\ \text{A}$`,
-      String.raw`$P_{\text{loss}} = I^2R = ${texNum($.loss)}\ \text{W}$ (${f($.pct)}%)`,
+      String.raw`$I = \dfrac{P}{V} = \dfrac{${qty($.P, 'W')}}{${qty($.V, 'V')}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$P_{\text{loss}} = I^2R = ${pq($.I, 'A')}^2${pq($.R, 'Ω')} = ${texNum($.loss)}\ \text{W}$`,
+      String.raw`As a share of the power sent: $\dfrac{${qty($.loss, 'W')}}{${qty($.P, 'W')}}\times 100 = ${texNum($.pct)}\%$`,
       String.raw`Doubling $V$ cuts the loss by a factor of 4.`,
     ],
     cases: [kase('hand', { P: 500, V: 10, R: 5 }, { I: 50, loss: 12500, pct: 2.5 })],
@@ -184,8 +188,8 @@ export default [
     text: (T, $, f) => `A DC motor with ${T.R} Ω windings runs on ${T.V} V. At full speed its back emf is ${f($.eb)} V. Find the running current and the current at the moment it starts.`,
     parts: [num('I', ($) => $.I, 'A', { label: 'Running' }), num('I0', ($) => $.I0, 'A', { label: 'At start-up' })],
     steps: ($, f) => [
-      String.raw`$I = \dfrac{V - \mathcal{E}_b}{R} = ${texNum($.I)}\ \text{A}$`,
-      String.raw`At start-up $\mathcal{E}_b = 0$, so $I = \dfrac{V}{R} = ${texNum($.I0)}\ \text{A}$`,
+      String.raw`$I = \dfrac{V - \mathcal{E}_b}{R} = \dfrac{${qty($.V, 'V')} - ${qty($.eb, 'V')}}{${qty($.R, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`At start-up $\mathcal{E}_b = 0$, so $I = \dfrac{V}{R} = \dfrac{${qty($.V, 'V')}}{${qty($.R, 'Ω')}} = ${texNum($.I0)}\ \text{A}$`,
     ],
     cases: [kase('hand', { V: 120, R: 2, f: 100 / 120 }, { I: 10, I0: 60 })],
   }),
@@ -204,8 +208,9 @@ export default [
       num('erms', ($) => $.erms, 'V', { label: String.raw`$\mathcal{E}_{\text{rms}}$` }),
     ],
     steps: ($, f) => [
-      String.raw`$\mathcal{E}_{\max} = NBA\omega = ${texNum($.e0)}\ \text{V}$`,
-      String.raw`$\mathcal{E}_{\text{rms}} = \dfrac{\mathcal{E}_{\max}}{\sqrt{2}} = ${texNum($.erms)}\ \text{V}$`,
+      String.raw`$A = \pi r^2 = ${texNum($.A)}\ \text{m}^2$ and $\omega = 2\pi f = ${texNum(2 * Math.PI * $.f)}\ \text{rad/s}$`,
+      String.raw`$\mathcal{E}_{\max} = NBA\omega = (${texNum($.N)})${pq($.B, 'T')}${pq($.A, 'm²')}${pq(2 * Math.PI * $.f, 'rad/s')} = ${texNum($.e0)}\ \text{V}$`,
+      String.raw`$\mathcal{E}_{\text{rms}} = \dfrac{\mathcal{E}_{\max}}{\sqrt{2}} = \dfrac{${qty($.e0, 'V')}}{\sqrt2} = ${texNum($.erms)}\ \text{V}$`,
     ],
     sim: { scenario: 'generator', setup: (s, $) => void Object.assign(s, { N: Math.min($.N, 20), B: $.B, R: Math.min(0.5, $.r) }) },
     cases: [kase('hand', { N: 100, B: 0.5, r: 8, f: 60 }, { e0: 378.99, erms: 267.99 })],
@@ -243,8 +248,8 @@ export default [
       mc('f', [[1, String.raw`$X_C$ decreases`], [2, String.raw`$X_C$ increases`]], 1, { label: String.raw`If $f$ goes up…` }),
     ],
     steps: ($, f) => [
-      String.raw`$X_C = \dfrac{1}{2\pi fC} = ${texNum($.XC)}\ \Omega$`,
-      String.raw`$I = \dfrac{V}{X_C} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$X_C = \dfrac{1}{2\pi fC} = \dfrac{1}{2\pi${pq($.f, 'Hz')}${pq($.C, 'F')}} = ${texNum($.XC)}\ \Omega$`,
+      String.raw`$I = \dfrac{V}{X_C} = \dfrac{${qty($.V, 'V')}}{${qty($.XC, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
     ],
     sim: {
       scenario: 'rc',
@@ -265,8 +270,8 @@ export default [
       sym('XL_sym', '2*pi*f*L', { f: 'Hz', L: 'H' }, ($) => $.XL, { unit: 'Ω', label: String.raw`$X_L$ as a formula` }),
       num('XL', ($) => $.XL, 'Ω', { label: String.raw`$X_L$` }), num('I', ($) => $.I, 'A', { label: String.raw`$I_{\text{rms}}$` }), mc('f', [[1, String.raw`$X_L$ decreases`], [2, String.raw`$X_L$ increases`]], 2, { label: 'If f goes up…' })],
     steps: ($, f) => [
-      String.raw`$X_L = 2\pi fL = ${texNum($.XL)}\ \Omega$`,
-      String.raw`$I = \dfrac{V}{X_L} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$X_L = 2\pi fL = 2\pi${pq($.f, 'Hz')}${pq($.L, 'H')} = ${texNum($.XL)}\ \Omega$`,
+      String.raw`$I = \dfrac{V}{X_L} = \dfrac{${qty($.V, 'V')}}{${qty($.XL, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
     ],
     sim: {
       scenario: 'rl',
@@ -300,10 +305,10 @@ export default [
     ],
     hints: [String.raw`$Z = \sqrt{R^2 + (X_L - X_C)^2}$, $\tan\varphi = \dfrac{X_L - X_C}{R}$, and $P = I^2R = IV\cos\varphi$`],
     steps: ($, f) => [
-      String.raw`$X_L = ${texNum($.XL)}\ \Omega$, $X_C = ${texNum($.XC)}\ \Omega$`,
-      String.raw`$Z = ${texNum($.Z)}\ \Omega \;\Longrightarrow\; I = ${texNum($.I)}\ \text{A}$`,
-      String.raw`$\varphi$ = ${f($.phi)}°, $\cos\varphi = ${texNum($.pf)}$`,
-      String.raw`$P = I^2R = ${texNum($.P)}\ \text{W}$`,
+      String.raw`$X_L = 2\pi fL = 2\pi${pq($.f, 'Hz')}${pq($.L, 'H')} = ${texNum($.XL)}\ \Omega$, $X_C = \dfrac{1}{2\pi fC} = \dfrac{1}{2\pi${pq($.f, 'Hz')}${pq($.C, 'F')}} = ${texNum($.XC)}\ \Omega$`,
+      String.raw`$Z = \sqrt{R^2 + (X_L - X_C)^2} = \sqrt{(${texNum($.R)})^2 + (${texNum($.XL)} - ${texNum($.XC)})^2}\ \Omega = ${texNum($.Z)}\ \Omega \;\Longrightarrow\; I = \dfrac{V}{Z} = \dfrac{${qty($.V, 'V')}}{${qty($.Z, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$\tan\varphi = \dfrac{X_L - X_C}{R} = \dfrac{${texNum($.XL - $.XC)}}{${texNum($.R)}} \;\Longrightarrow\; \varphi = ${texDeg($.phi)}$, and $\cos\varphi = \dfrac{R}{Z} = ${texNum($.pf)}$`,
+      String.raw`$P = I^2R = ${pq($.I, 'A')}^2${pq($.R, 'Ω')} = ${texNum($.P)}\ \text{W}$`,
     ],
     sim: {
       scenario: 'rlc',
@@ -329,9 +334,9 @@ export default [
     ],
     hints: [String.raw`At resonance $X_L = X_C$, so $Z = R$. $V_L$ and $V_C$ can each be larger than the source voltage.`],
     steps: ($, f) => [
-      String.raw`$f_0 = \dfrac{1}{2\pi\sqrt{LC}} = ${texNum($.f0)}\ \text{Hz}$`,
-      String.raw`$I = \dfrac{V}{R} = ${texNum($.I)}\ \text{A}$`,
-      String.raw`$V_L = IX_L = ${texNum($.VL)}\ \text{V}$`,
+      String.raw`$f_0 = \dfrac{1}{2\pi\sqrt{LC}} = \dfrac{1}{2\pi\sqrt{${pq($.L, 'H')}${pq($.C, 'F')}}} = ${texNum($.f0)}\ \text{Hz}$`,
+      String.raw`At resonance $Z = R$: $I = \dfrac{V}{R} = \dfrac{${qty($.V, 'V')}}{${qty($.R, 'Ω')}} = ${texNum($.I)}\ \text{A}$`,
+      String.raw`$V_L = IX_L = I\,(2\pi f_0L) = ${pq($.I, 'A')}${pq(2 * Math.PI * $.f0 * $.L, 'Ω')} = ${texNum($.VL)}\ \text{V}$`,
     ],
     sim: {
       scenario: 'res',
