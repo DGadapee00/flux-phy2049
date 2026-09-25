@@ -23,6 +23,9 @@ import { SEQUENCE } from '../src/problems/sequence.js';
 import COACHING from '../src/problems/coaching/index.js';
 import { PRINCIPLES, PRINCIPLE_TAGS } from '../src/problems/principles.js';
 import { asksPrinciple, principleOptions, primaryOf } from '../src/problems/principle-step.js';
+import { PREDICTIONS } from '../src/data/predictions.js';
+import { run as runPrediction, outcomes as predictionOutcomes, choices as predictionChoices } from '../src/engine/predict.js';
+import { applyScenario } from '../src/data/scenarios.js';
 
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
@@ -391,6 +394,86 @@ if (stepped < PROBLEMS.length * 0.9) err('principle step', `only ${stepped} of $
   if (got?.id !== e3[2].id) err('interleave', `expected the weak one not tried today, got ${got?.id}`);
   if (pickInterleave(pool, p2, { ch: '36A', now })) err('interleave', 'picked from a later chapter');
   if (!tpl(e3[0].id)) err('interleave', 'fixture missing');
+}
+
+/*
+ * Principles most often missed: a wrong principle pick counts against the problem's primary, a
+ * "misapplied X" answer against X, "didn't see which idea" against the primary; slips and
+ * misreadings are counted apart. And pickSet's weight moves a weak principle's problem forward.
+ */
+{
+  const p = createProgress(memoryStorage());
+  const byId = (id) => PROBLEMS.find((t) => t.id === id);
+  const a = byId('e4.43.series'); // primary energy
+  const b = byId('e2.36c.long-wire'); // primary gauss
+  p.record(a.id, { correct: false, seed: 1, principle: { ok: false } });
+  p.noteGap(a.id, 'which');
+  p.record(b.id, { correct: true, seed: 1, principle: { ok: true } });
+  p.record(b.id, { correct: false, seed: 2, principle: { ok: false } });
+  p.noteGap(b.id, 'charge');
+  p.noteGap(b.id, 'slip');
+  const { list, other } = p.principleMisses(PROBLEMS);
+  const row = (id) => list.find((r) => r.id === id);
+  if (row('energy')?.misnamed !== 1 || row('energy')?.unseen !== 1 || row('energy')?.total !== 2) err('principle misses', `energy row wrong: ${JSON.stringify(row('energy'))}`);
+  if (row('gauss')?.misnamed !== 1 || row('gauss')?.asked !== 2) err('principle misses', `gauss row wrong: ${JSON.stringify(row('gauss'))}`);
+  if (row('charge')?.misapplied !== 1) err('principle misses', `charge row wrong: ${JSON.stringify(row('charge'))}`);
+  if (other.slip !== 1 || other.read !== 0) err('principle misses', `slips wrong: ${JSON.stringify(other)}`);
+  if (list[0]?.id !== 'energy') err('principle misses', `most missed should be energy, got ${list[0]?.id}`);
+  // weight: among one chapter's unseen problems, the weighted one comes first for every seed
+  const ch43 = PROBLEMS.filter((t) => t.ch === '43' && !t.enrichment);
+  const target = ch43.find((t) => primaryOf(t) === 'charge');
+  const fresh = createProgress(memoryStorage());
+  for (let seed = 1; seed <= 20; seed++) {
+    const got = pickSet(ch43, fresh, { n: 1, seed, weight: (t) => (t.id === target.id ? 1 : 0) });
+    if (got[0]?.id !== target.id) err('pickSet weight', `seed ${seed}: picked ${got[0]?.id}, not the weighted ${target.id}`);
+  }
+}
+
+/*
+ * Predict first (src/data/predictions.js): every lab has prompts; each prompt starts from its
+ * preset, runs through the lab's own physics, and the lab agrees with what the prompt's `expect`
+ * (and so its explanation) says. Every expected answer is one of the offered choices, and the
+ * prose typesets.
+ */
+{
+  const seenIds = new Set();
+  for (const labId of new Set(EXAMS.flatMap((e) => e.labs))) {
+    if (!PREDICTIONS.some((p) => p.lab === labId)) err(`predict ${labId}`, 'lab has no prediction prompts');
+  }
+  for (const p of PREDICTIONS) {
+    const id = `predict ${p.id}`;
+    if (seenIds.has(p.id)) err(id, 'duplicate id');
+    seenIds.add(p.id);
+    const lab = await loadLab(p.lab);
+    if (!lab) {
+      err(id, `no lab ${p.lab}`);
+      continue;
+    }
+    const list = typeof lab.scenarios === 'function' ? lab.scenarios() : lab.scenarios || [];
+    if (!list.some((sc) => sc.id === p.scenario)) err(id, `lab ${p.lab} has no preset "${p.scenario}"`);
+    const s = lab.defaultState();
+    try {
+      if (lab.applyScenario) lab.applyScenario(p.scenario, s);
+      else applyScenario(lab.id, p.scenario, s);
+      if (p.fits && !p.fits(s)) err(id, 'its own preset does not fit it');
+      p.prep?.(s);
+      const { before, after } = runPrediction(lab, s, p);
+      const got = predictionOutcomes(p, before, after);
+      for (const w of p.watch) {
+        const mode = w.mode || p.mode;
+        if (mode !== 'bool' && !(Number.isFinite(before[w.id]) && Number.isFinite(after[w.id]))) err(id, `${w.id}: not a finite number (${before[w.id]} → ${after[w.id]})`);
+        if (!(w.id in p.expect)) err(id, `${w.id}: no expected outcome`);
+        else if (!predictionChoices(p, w).some(([v]) => v === p.expect[w.id])) err(id, `${w.id}: expected ${p.expect[w.id]} is not among the choices`);
+        if (got[w.id] !== p.expect[w.id]) err(id, `${w.id}: the lab says ${got[w.id]} (${before[w.id]} → ${after[w.id]}), the prompt expects ${p.expect[w.id]}`);
+      }
+      for (const text of [p.ask, p.why, ...p.watch.map((w) => w.label)]) {
+        const html = mathProse(text);
+        if (/katex-error|undefined|NaN/.test(html)) err(id, `prose does not typeset: ${text.slice(0, 60)}`);
+      }
+    } catch (e) {
+      err(id, `throws: ${e.message}`);
+    }
+  }
 }
 
 const noHints = PROBLEMS.filter((t) => !t.hints.length).map((t) => t.id);

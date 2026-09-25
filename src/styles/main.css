@@ -1529,3 +1529,175 @@ body.units-open .legend {
   white-space: nowrap;
   border: 0;
 }
+
+/* ---------- Predict first (src/ui/predict.js) ---------- */
+
+.predict {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.pr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pr-toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pr-toggle::before {
+  content: '▸';
+  font-size: 10px;
+  color: var(--text-dim);
+  transition: transform 0.2s var(--ease);
+}
+
+.pr-toggle[aria-expanded='true']::before {
+  transform: rotate(90deg);
+}
+
+.pr-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--yellow);
+}
+
+.pr-count {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.pr-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.pr-nav button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pr-nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pr-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pr-ask {
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.pr-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pr-q {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.pr-opts button[aria-pressed='true'] {
+  color: var(--text);
+  background: rgba(244, 211, 69, 0.12);
+  border-color: rgba(244, 211, 69, 0.55);
+}
+
+.pr-go {
+  width: 100%;
+  color: var(--yellow);
+  border-color: rgba(244, 211, 69, 0.4);
+  background: rgba(244, 211, 69, 0.06);
+}
+
+.pr-go:disabled {
+  color: var(--text-dim);
+  border-color: var(--border);
+  background: transparent;
+  cursor: default;
+}
+
+.pr-res {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.pr-res.ok {
+  background: rgba(131, 193, 103, 0.08);
+}
+
+.pr-res.bad {
+  background: rgba(252, 98, 85, 0.08);
+}
+
+.pr-vals {
+  font-size: 12.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.pr-ok {
+  color: var(--green);
+}
+
+.pr-bad {
+  color: var(--red);
+}
+
+.pr-why {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.pr-ask .katex,
+.pr-why .katex,
+.pr-q .katex,
+.pr-res .katex {
+  font-size: 1.04em;
+}
+
+.pr-after .btn {
+  flex: 1;
+}

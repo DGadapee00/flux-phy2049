@@ -104,6 +104,40 @@ export function createProgress(storage = browserStorage()) {
     return { asked, ok };
   }
 
+  /**
+   * Which principles trip this student up, from three signals: naming the wrong principle in the
+   * principle step, saying afterwards that they misapplied a principle, and saying they didn't see
+   * which idea to use (charged to the problem's primary principle). Most misses first; only
+   * principles missed at least once. Slips and misreadings aren't about a principle, so they are
+   * counted apart.
+   */
+  function principleMisses(templates) {
+    const by = new Map();
+    const row = (pid) => {
+      if (!by.has(pid)) by.set(pid, { id: pid, asked: 0, misnamed: 0, misapplied: 0, unseen: 0, total: 0 });
+      return by.get(pid);
+    };
+    const other = { slip: 0, read: 0 };
+    for (const t of templates) {
+      const it = get(t.id);
+      const lead = t.principles?.[0];
+      if (!it || !lead) continue;
+      if (it.pAsk) {
+        const r = row(lead);
+        r.asked += it.pAsk;
+        r.misnamed += it.pAsk - (it.pOk || 0);
+      }
+      for (const [gap, n] of Object.entries(it.gaps || {})) {
+        if (gap === 'slip' || gap === 'read') other[gap] += n;
+        else if (gap === 'which') row(lead).unseen += n;
+        else row(gap).misapplied += n;
+      }
+    }
+    const list = [...by.values()].map((r) => ({ ...r, total: r.misnamed + r.misapplied + r.unseen })).filter((r) => r.total > 0);
+    list.sort((a, b) => b.total - a.total || b.misnamed - a.misnamed || a.id.localeCompare(b.id));
+    return { list, other };
+  }
+
   /** 'new' | 'mastered' | 'learning' | 'missed' — for the list icons. */
   function status(id, now = Date.now()) {
     const it = get(id);
@@ -153,6 +187,7 @@ export function createProgress(storage = browserStorage()) {
     record,
     noteGap,
     principleTally,
+    principleMisses,
     status,
     mastery,
     counts,
@@ -171,14 +206,16 @@ export function createProgress(storage = browserStorage()) {
  * Pick n templates spread across chapters, weakest first. Chapters are visited round-robin in
  * syllabus order so every chapter shows up before any repeats; inside a chapter the lowest
  * box goes first (unseen counts as lowest), ties broken at random. At most a quarter of the
- * set is conceptual so an exam set is mostly problems to work.
+ * set is conceptual so an exam set is mostly problems to work. `weight(t)` (0–1), when given, moves
+ * a template ahead of others in its chapter — Mixed sets use it for the principles most missed.
  */
-export function pickSet(templates, progress, { n = 8, seed = Date.now(), maxConceptual = 0.25 } = {}) {
+export function pickSet(templates, progress, { n = 8, seed = Date.now(), maxConceptual = 0.25, weight = null } = {}) {
   const rand = rng(seed >>> 0);
   const byCh = new Map();
   for (const t of templates) {
     if (!byCh.has(t.ch)) byCh.set(t.ch, []);
-    byCh.get(t.ch).push({ t, key: (progress.get(t.id)?.box ?? -1) + rand() * 0.9 });
+    // `weight` (0–1) moves a template up its chapter's queue: a principle the student keeps missing.
+    byCh.get(t.ch).push({ t, key: (progress.get(t.id)?.box ?? -1) + rand() * 0.9 - (weight ? 1.5 * weight(t) : 0) });
   }
   const chapters = [...byCh.keys()].sort((a, b) => CHAPTER_ORDER.indexOf(a) - CHAPTER_ORDER.indexOf(b));
   for (const ch of chapters) byCh.get(ch).sort((a, b) => a.key - b.key);

@@ -519,7 +519,33 @@ await page.click('.pb-head [data-act="exam-submit"]');
 await page.waitForSelector('.pb-table', { timeout: 5000 }).catch(() => {});
 const examDone = await page.evaluate(() => ({ score: document.querySelector('.problems .pb-h')?.textContent, rows: document.querySelectorAll('.pb-table tr').length }));
 if (examInfo.nav !== 8 || !/^(50|49):/.test(examInfo.timer || '') || examDone.score !== 'Score 0%' || examDone.rows < 2) mismatches.push({ name: 'practice exam: 8 problems, timer, results', got: { examInfo, examDone }, exp: '8, 50:00, Score 0%' });
-const practice = { loaded: loaded.n, blindBefore, afterWrong, solved, examInfo, examDone, newErrors: errors.length - loadErrors };
+// Predict first: on the Capacitor lab, predict, make the change, see it graded, undo it.
+await page.keyboard.press('Escape');
+await page.evaluate(() => {
+  try {
+    localStorage.removeItem('flux.predict.v1');
+  } catch {}
+  location.hash = '#/e3/capacitor';
+});
+await page.waitForFunction(() => window.__gauss.state.lab === 'capacitor');
+await page.selectOption('#scenario', 'cap-12v');
+await page.waitForTimeout(300);
+const predictCard = await page.evaluate(() => window.__gauss.predict.current());
+await page.click('[data-pr="try"]');
+await page.click('[data-pr-pick="C"][data-v="0.5"]');
+await page.click('[data-pr-pick="Q"][data-v="0.5"]');
+await page.click('[data-pr-pick="U"][data-v="0.5"]');
+await page.click('[data-pr="change"]');
+await page.waitForTimeout(300);
+const predicted = await page.evaluate(() => ({ cur: window.__gauss.predict.current(), d: window.__gauss.state.cap.d }));
+await page.click('[data-pr="undo"]');
+await page.waitForTimeout(200);
+const undone = await page.evaluate(() => window.__gauss.state.cap.d);
+if (predictCard.id !== 'cap-battery-double-d' || !predicted.cur.result?.allRight || Math.abs(predicted.d - 0.1) > 1e-9 || Math.abs(undone - 0.05) > 1e-9) {
+  mismatches.push({ name: 'predict first: predict, change, graded, undo', got: { predictCard, predicted, undone }, exp: 'cap-battery-double-d, all right, d 5→10 cm, undone to 5 cm' });
+}
+
+const practice = { loaded: loaded.n, blindBefore, afterWrong, solved, examInfo, examDone, predicted: predicted.cur.result?.got, newErrors: errors.length - loadErrors };
 
 console.log(
   JSON.stringify(

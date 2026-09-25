@@ -1098,3 +1098,36 @@ body.problem-blind .veiled .katex {
 .pb-earlier[open] > summary {
   color: var(--text-muted);
 }
+
+/* Principles you most often miss (progress.principleMisses) */
+.pb-weak {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(252, 98, 85, 0.3);
+  border-radius: var(--radius-sm);
+  background: rgba(252, 98, 85, 0.04);
+}
+
+.pb-weak-h {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.pb-weak-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.pb-weak-name {
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.pb-weak-row .btn {
+  padding: 5px 10px;
+  font-size: 11.5px;
+}

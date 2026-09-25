@@ -444,11 +444,27 @@ export function createPractice(api) {
   // Enrichment problems (beyond the course's practice sheets) are for browsing, not for drilling.
   const drillable = (examId) => problemsForExam(examId).filter((t) => !t.enrichment);
 
+  /** The principles this student misses most (at most three), for the list and for weighting sets. */
+  function weakPrinciples() {
+    return progress.principleMisses(PROBLEMS).list.slice(0, 3);
+  }
+
   function startMixed() {
     const tpls = drillable(st.listExam);
-    const ids = pickSet(tpls, progress, { n: Math.min(MIXED_SIZE, tpls.length), maxConceptual: 0.4 }).map((t) => t.id);
+    // Lean the set toward the principles most often missed: they get first call within a chapter.
+    const weak = new Map(weakPrinciples().map((r, i) => [r.id, 1 - i * 0.25]));
+    const weight = weak.size ? (t) => weak.get(primaryOf(t)) || 0 : null;
+    const ids = pickSet(tpls, progress, { n: Math.min(MIXED_SIZE, tpls.length), maxConceptual: 0.4, weight }).map((t) => t.id);
     if (!ids.length) return;
     openProblem(ids[0], { session: { label: 'Mixed set', ids } });
+  }
+
+  /** Practise one principle: up to MIXED_SIZE of its problems from any exam, weakest first. */
+  function startPrinciple(pid) {
+    const tpls = PROBLEMS.filter((t) => !t.enrichment && primaryOf(t) === pid);
+    const ids = pickSet(tpls, progress, { n: Math.min(MIXED_SIZE, tpls.length), maxConceptual: 0.4 }).map((t) => t.id);
+    if (!ids.length) return;
+    openProblem(ids[0], { session: { label: pname(pid), ids } });
   }
 
   function startReview() {
@@ -698,6 +714,7 @@ export function createPractice(api) {
         </div>
         ${lastResults}
       </div>
+      ${weakHTML()}
       <div class="pb-filters">
         ${chip('kind', 'all', 'All')}${chip('kind', 'numeric', 'Numeric')}${chip('kind', 'conceptual', 'Concept')}${chip('kind', 'derivation', 'Derivation')}
         ${labHere ? `<button type="button" class="pb-chip${st.filter.lab ? ' on' : ''}" data-filter="lab:toggle">${esc(LAB_META[labId].title)} lab only</button>` : ''}
@@ -707,6 +724,34 @@ export function createPractice(api) {
       </div>
       <div class="pb-list">${groups.join('') || '<p class="pb-empty">No problems match these filters.</p>'}</div>
       <p class="pb-foot">Your first try uses the worksheet's numbers when there is one; after that the numbers change every time. Working down a chapter, every fourth problem is one you've met from an earlier chapter, due for review. Progress stays in this browser. <button type="button" class="linkish" data-act="reset-progress">Reset progress</button></p>`;
+  }
+
+  /**
+   * "Principles you most often miss": built from the principle step and the what-went-wrong
+   * answers, across every exam. Nothing shows until there is something to show.
+   */
+  function weakHTML() {
+    const { list, other } = progress.principleMisses(PROBLEMS);
+    if (!list.length && !other.slip && !other.read) return '';
+    const rows = list.slice(0, 3).map((r) => {
+      const bits = [
+        r.misnamed ? `named wrong ${r.misnamed} of ${r.asked}` : '',
+        r.misapplied ? `misapplied ${r.misapplied}×` : '',
+        r.unseen ? `didn’t see it ${r.unseen}×` : '',
+      ].filter(Boolean);
+      const n = PROBLEMS.filter((t) => !t.enrichment && primaryOf(t) === r.id).length;
+      return `<div class="pb-weak-row">
+          <div><div class="pb-weak-name">${esc(pname(r.id))}</div><div class="pb-dim">${esc(bits.join(' · '))}</div></div>
+          ${n ? `<button type="button" class="btn" data-weak="${esc(r.id)}" title="${Math.min(MIXED_SIZE, n)} problems decided by this principle, from any exam, weakest first">Practise</button>` : ''}
+        </div>`;
+    });
+    const slips = [other.slip ? `slips ${other.slip}×` : '', other.read ? `misread the question ${other.read}×` : ''].filter(Boolean).join(' · ');
+    return `<section class="pb-weak" aria-label="Principles you most often miss">
+        <div class="pb-weak-h">Principles you most often miss</div>
+        ${rows.join('') || '<p class="pb-dim">No principle stands out yet.</p>'}
+        ${slips ? `<p class="pb-dim">Not about a principle: ${esc(slips)}.</p>` : ''}
+        ${list.length ? '<p class="pb-dim">Mixed sets lean toward these.</p>' : ''}
+      </section>`;
   }
 
   /**
@@ -1214,6 +1259,10 @@ export function createPractice(api) {
       panel.querySelector('.pb-parts .pb-input, .pb-parts input')?.focus({ preventScroll: true });
       const el = $('sr-announce');
       if (el) el.textContent = cur.principle.ok ? `Right: ${pname(pick)}.` : `The deciding principle is ${pname(primaryOf(cur.tpl))}.`;
+      return;
+    }
+    if (t.dataset.weak) {
+      startPrinciple(t.dataset.weak);
       return;
     }
     if (t.dataset.gap && cur && !cur.gap) {

@@ -13,6 +13,7 @@ import { setFrame, refit, defaultView, sceneScale, workPlane } from './engine/fr
 import { applyProblem } from './problems/simbridge.js';
 import { createPractice } from './ui/problems.js';
 import { createUnits } from './ui/units.js';
+import { createPredict } from './ui/predict.js';
 // declared before use by createPractice's callbacks
 let units;
 import { ANSWER_LAYER } from './scene/manim.js';
@@ -431,6 +432,16 @@ practice = createPractice({
   labelLayer: labels.domElement,
 });
 
+// Predict first (src/ui/predict.js): a card under the lab's Setup controls.
+const predict = createPredict({
+  lab: () => app.lab,
+  labId: () => app.labId,
+  slice: () => app.slices[app.labId] || null,
+  bump,
+  setScenario,
+  practiceActive: () => !!practice.current(),
+});
+
 function followUrl() {
   const { examId, labId, problemId, seed } = parseHash();
   if (practice.followUrl(problemId, seed)) return;
@@ -520,6 +531,7 @@ function frame() {
   }
   if (lab?.afterFrame) lab.afterFrame(dt, s, computed, ctx);
   practice.frame();
+  predict.sync();
 
   renderer.render(scene, camera);
   labels.render(scene, camera);
@@ -535,6 +547,7 @@ window.__gauss = {
   camera,
   controls,
   practice,
+  predict,
 };
 
 const boot = parseHash();
