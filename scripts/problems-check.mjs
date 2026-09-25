@@ -256,8 +256,18 @@ for (const [ch, stages] of Object.entries(SEQUENCE)) {
     if (a.length !== n) err('pickSet', `${exam}: picked ${a.length} of ${n}`);
     if (new Set(a.map((t) => t.id)).size !== a.length) err('pickSet', `${exam}: duplicate problem`);
     if (a.map((t) => t.id).join() !== b.map((t) => t.id).join()) err('pickSet', `${exam}: same seed gave different sets`);
-    if (new Set(a.map((t) => t.ch)).size < Math.min(n, chapters.size)) err('pickSet', `${exam}: set skips chapters it had room for`);
-    if (a.filter((t) => t.kind === 'conceptual').length > Math.max(1, Math.floor(n * 0.25))) err('pickSet', `${exam}: too many conceptual problems`);
+    // Coverage and the conceptual cap must hold for every shuffle, not just one lucky seed.
+    for (let seed = 0; seed < 200; seed++) {
+      const s = pickSet(tpls, p, { n, seed });
+      if (new Set(s.map((t) => t.ch)).size < Math.min(n, chapters.size)) {
+        err('pickSet', `${exam}: set skips chapters it had room for (seed ${seed})`);
+        break;
+      }
+      if (s.filter((t) => t.kind === 'conceptual').length > Math.max(1, Math.floor(n * 0.25))) {
+        err('pickSet', `${exam}: too many conceptual problems (seed ${seed})`);
+        break;
+      }
+    }
   }
 }
 

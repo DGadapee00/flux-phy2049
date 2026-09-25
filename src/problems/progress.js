@@ -156,6 +156,10 @@ export function pickSet(templates, progress, { n = 8, seed = Date.now(), maxConc
   const offset = Math.floor(rand() * chapters.length);
   const order = chapters.map((_, i) => chapters[(i + offset) % chapters.length]);
   const capConcept = Math.max(1, Math.floor(n * maxConceptual));
+  // A chapter with nothing but conceptual problems can only be covered from the conceptual
+  // allowance, so a chapter that has other kinds leaves room for those until they have had a turn.
+  const conceptOnly = new Set(chapters.filter((ch) => byCh.get(ch).every(({ t }) => t.kind === 'conceptual')));
+  const picked = new Set();
   const out = [];
   let concept = 0;
   let progressMade = true;
@@ -164,11 +168,13 @@ export function pickSet(templates, progress, { n = 8, seed = Date.now(), maxConc
     for (const ch of order) {
       if (out.length >= n) break;
       const list = byCh.get(ch);
-      const i = list.findIndex(({ t }) => t.kind !== 'conceptual' || concept < capConcept);
+      const reserve = conceptOnly.has(ch) ? 0 : [...conceptOnly].filter((c) => !picked.has(c)).length;
+      const i = list.findIndex(({ t }) => t.kind !== 'conceptual' || concept < capConcept - reserve);
       if (i < 0) continue;
       const [{ t }] = list.splice(i, 1);
       if (t.kind === 'conceptual') concept++;
       out.push(t);
+      picked.add(ch);
       progressMade = true;
     }
   }

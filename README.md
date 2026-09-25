@@ -15,8 +15,8 @@ Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — none 
 lecture notes, worksheets, or Canvas files. (`lessons/` holds handouts written from scratch for this
 app; nothing in it reproduces course material.) **[DEPLOY.md](DEPLOY.md)** covers rebuilding and republishing, and what
 a public build exposes. **[PROVENANCE.md](PROVENANCE.md)** accounts for exactly which course
-material the problem bank draws on, and **[ERRATA.md](ERRATA.md)** lists the fourteen places the app's
-physics disagrees with a printed answer key.
+material the problem bank draws on, and **[ERRATA.md](ERRATA.md)** lists the twenty-four places the app's
+physics disagrees with a printed answer key, or where a question needs a note.
 
 ## Run locally
 
@@ -52,7 +52,7 @@ The self-test checks the code against independent methods rather than against it
 
 ## Practice
 
-Press **P** (or the yellow **Practice** button) for the problem bank: 225 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
+Press **P** (or the yellow **Practice** button) for the problem bank: 258 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each. Every chapter with a lab loads its problems straight into it.
 
 1. **Open a problem.** It loads its own setup into the matching lab — the charges, distances and coordinates exactly as the question states them, with the scene scaled to fit (the note under the problem says what one grid square is worth). Nothing is rescaled, so the lab is reading the problem you are working. While it's unsolved, the lab's numbers are hidden: the readout, the equation panel, value labels in the scene, and the arrows that would show a direction answer, and scene pieces that would give it away (an image, the rays past a lens). The geometry stays visible, the names the question uses (q₁, P, I₂) stay labelled, and the scenario box reads "This problem's setup" rather than a preset name. On a phone, **Show lab** lowers the problem sheet so you can see the scene.
 2. **Symbols before numbers.** Most multi-step problems open with the formula, not the arithmetic. Write it in symbols and the panel typesets it underneath as you go — what you see is what the grader read, so `a/b+c` shows a fraction over `b` alone and a missing bracket is visible while you type. A row of keys under the box inserts the problem's own symbols in their real glyphs (`λ`, `ε₀`, `μ₀`, `π`, `√`, `²`), which is the only way to enter them on a phone; typing works too, and `λ` and `lam` are the same thing. `/` opens a bracketed denominator with the caret inside it, typed or tapped, because `q/Aε₀` means (q/A)·ε₀ to a parser and `q/(Aε₀)` to a physicist. Meanwhile the panel reads the units off what you've typed and prints them under the box, `units: N/C ✓` or `units: C/m — this one should come out in N/C`. That's the exam habit of writing the problem in units first and checking it lands in the right place, confirmed while you write it. The numeric box for that quantity stays locked until its formula is right, so the numbers go into an expression you've already justified. A practice exam turns the lock off.

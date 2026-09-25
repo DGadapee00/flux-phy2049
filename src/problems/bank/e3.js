@@ -1337,16 +1337,16 @@ export default [
     cases: [kase('hand', { A: 0.04, d: 50, V0: 12, m: 'teflon' }, { V: 5.714, U: 2.4274e-10, Efac: 0.4762, where: 1 })],
   }),
   problem({
-    ...E3, id: 'e3.40.combo', ch: '40', lab: 'capacitor', title: 'Capacitors in series and parallel', kind: 'numeric', level: 2, topics: ['capacitance', 'networks'],
+    ...E3, id: 'e3.40.combo', ch: '40', lab: 'capacitor', src: 'Practice 44 #9', title: 'Capacitors in series and parallel', kind: 'numeric', level: 2, topics: ['capacitance', 'networks'],
     vars: { C1: range(1, 20, 1, 'μF', 1e-6), C2: range(1, 20, 1, 'μF', 1e-6), C3: range(1, 20, 1, 'μF', 1e-6), V: range(3, 60, 1, 'V') },
     derive: ($) => {
       const C23 = $.C2 + $.C3;
       const Ceq = ($.C1 * C23) / ($.C1 + C23);
       const Q1 = Ceq * $.V;
-      return { C23, Ceq, Q1, V1: Q1 / $.C1, V2: Q1 / C23 };
+      return { C23, Ceq, Q1, V1: Q1 / $.C1, V2: Q1 / C23, Q3: ($.C3 * Q1) / C23 };
     },
-    text: (T) => `C₁ = ${T.C1} μF is in series with the parallel pair C₂ = ${T.C2} μF and C₃ = ${T.C3} μF, across a ${T.V} V battery. Find $C_{\\text{eq}}$, the charge on C₁, and the voltage across C₂.`,
-    parts: [num('Ceq', ($) => $.Ceq, 'μF', { scale: 1e-6 }), num('Q1', ($) => $.Q1, 'μC', { scale: 1e-6 }), num('V2', ($) => $.V2, 'V')],
+    text: (T) => `C₁ = ${T.C1} μF is in series with the parallel pair C₂ = ${T.C2} μF and C₃ = ${T.C3} μF, across a ${T.V} V battery. Find $C_{\\text{eq}}$, the charge on C₁, the voltage across C₂, and the charge on C₃.`,
+    parts: [num('Ceq', ($) => $.Ceq, 'μF', { scale: 1e-6 }), num('Q1', ($) => $.Q1, 'μC', { scale: 1e-6 }), num('V2', ($) => $.V2, 'V'), num('Q3', ($) => $.Q3, 'μC', { scale: 1e-6 })],
     hints: [
       String.raw`Parallel capacitors add; series capacitors add as reciprocals, $\dfrac{1}{C} = \sum \dfrac{1}{C_i}$.`,
       'Capacitors in series carry the same charge.',
@@ -1355,9 +1355,16 @@ export default [
       String.raw`$C_{23} = C_2 + C_3 = ${qty($.C2 * 1e6, 'μF')} + ${qty($.C3 * 1e6, 'μF')} = ${texNum($.C23 * 1e6)}\ \mu\text{F}$`,
       String.raw`$C_{\text{eq}} = \dfrac{C_1C_{23}}{C_1 + C_{23}} = \dfrac{(${texNum($.C1 * 1e6)})(${texNum($.C23 * 1e6)})}{${texNum($.C1 * 1e6)} + ${texNum($.C23 * 1e6)}}\ \mu\text{F} = ${texNum($.Ceq * 1e6)}\ \mu\text{F}$`,
       String.raw`$Q_1 = C_{\text{eq}}V = ${pq($.Ceq, 'F')}${pq($.V, 'V')} = ${texNum($.Q1 * 1e6)}\ \mu\text{C}$`,
-      String.raw`$V_2 = \dfrac{Q_1}{C_{23}} = \dfrac{${qty($.Q1, 'C')}}{${qty($.C23, 'F')}} = ${texNum($.V2)}\ \text{V}$`,
+      String.raw`$V_2 = \dfrac{Q_1}{C_{23}} = \dfrac{${qty($.Q1, 'C')}}{${qty($.C23, 'F')}} = ${texNum($.V2)}\ \text{V}$ — the same across $C_3$, which sits in parallel with $C_2$`,
+      String.raw`$Q_3 = C_3V_2 = ${pq($.C3, 'F')}${pq($.V2, 'V')} = ${texNum($.Q3 * 1e6)}\ \mu\text{C}$`,
     ],
-    cases: [kase('hand', { C1: 6, C2: 4, C3: 2, V: 12 }, { Ceq: 3, Q1: 36, V2: 6 })],
+    cases: [
+      kase('#9', { C1: 4, C2: 3, C3: 2, V: 12 }, { Ceq: 2.2222, Q1: 26.667, V2: 5.3333, Q3: 10.667 }, {
+        key: 'A) 2.22 μF  B) q1 = 2.67 x 10-5 C, q2 = 1.6 x 10-5 C, q3 = 1.07 x 10-6 C',
+        note: 'q3 = C3·V23 = (2.0 μF)(5.33 V) = 1.07 × 10⁻⁵ C; the key prints 10⁻⁶. The other two charges, 26.7 μC and 16 μC, match, and the three must satisfy q1 = q2 + q3.',
+      }),
+      kase('hand', { C1: 6, C2: 4, C3: 2, V: 12 }, { Ceq: 3, Q1: 36, V2: 6, Q3: 12 }),
+    ],
   }),
   problem({
     ...E3, id: 'e3.40.energy', ch: '40', lab: 'capacitor', title: 'Energy stored in a capacitor', kind: 'numeric', topics: ['capacitance', 'energy'],

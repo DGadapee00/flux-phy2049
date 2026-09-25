@@ -19,13 +19,13 @@ with the physics.
 
 | | |
 |---|---|
-| Problem templates | **225** |
-| …that cite a practice sheet or worksheet (`src: 'Practice 39 #8–10'`) | **85** |
-| …that use a printed answer as a ground-truth check | **59** |
-| Individual printed answers stored | **96**, across 305 worked cases |
-| Templates checked only against physics the app computes itself | **166** |
+| Problem templates | **258** |
+| …that cite a practice sheet or worksheet (`src: 'Practice 39 #8–10'`) | **128** |
+| …that use a printed answer as a ground-truth check | **100** |
+| Individual printed answers stored | **178**, across 390 worked cases |
+| Templates checked only against physics the app computes itself | **158** |
 
-So roughly **three quarters of the bank owes nothing to the course's answer keys.** Where a printed
+So roughly **three fifths of the bank owes nothing to the course's answer keys.** Where a printed
 answer is used, it is used as a test fixture — a check that the app's own physics reproduces the
 number the sheet gives — and the source is cited in the code beside it.
 
@@ -48,24 +48,24 @@ independent method rather than against a stored value — Biot–Savart sums aga
 Ampère loops, Boris-integrated orbits, image-charge surface potentials, Kirchhoff's rules on every
 circuit layout, −ΔΦ/Δt for Faraday, RK4 integration of each AC circuit against its phasor current,
 and paraxial ray tracing that must land every principal ray on the computed image. A further check
-runs all 225 templates through **10,556 comparisons** against the labs.
+runs all 258 templates through **10,748 comparisons** against the labs.
 
 This is why the app can disagree with an answer key and be worth listening to. See
-[ERRATA.md](ERRATA.md) for the fourteen places it does, seven of which look like genuine slips.
+[ERRATA.md](ERRATA.md) for the twenty-four places it does or needs a note, fourteen of which look like genuine slips.
 
 ## Where it is hosted, and who can read it
 
 Public on Cloudflare Pages, at an unlisted URL, with `robots.txt` and an `X-Robots-Tag` header
 asking search engines to skip it. It will not surface in a search for a problem's wording.
 
-**That is a courtesy, not a lock.** Anyone given the link can read everything, including the 96
+**That is a courtesy, not a lock.** Anyone given the link can read everything, including the 178
 printed answers. If those practice sheets are reused from term to term, that is worth deciding
 deliberately rather than by default. Two remedies, either of which can be done the same day:
 
 1. **Gate it.** Cloudflare Access restricts the site to a named list of email addresses, free for up
    to 50 users. Setup is about fifteen minutes and is documented in [DEPLOY.md](DEPLOY.md).
-2. **Remove the printed answers.** Deleting the 96 `key` values costs nothing functionally — those
-   59 templates would simply be checked against the app's own physics, like the other 166.
+2. **Remove the printed answers.** Deleting the 178 `key` values costs nothing functionally — those
+   100 templates would simply be checked against the app's own physics, like the other 158.
 
 ## Student data
 

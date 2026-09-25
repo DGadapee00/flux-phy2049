@@ -1,14 +1,16 @@
 # Where the app and the answer keys disagree
 
-Fourteen places where a printed answer and the app's own physics came out differently. Most were
-found by the app computing the quantity independently and flagging the mismatch, and those are
-recorded in the code beside the problem they belong to (`grep -rn "note: '" src/problems/bank/`).
-Entries 10–14 came out of a review of the Exam 3 material against every printed answer, worked by
-hand.
+Twenty-four places where a printed answer and the app's own physics came out differently, or where a
+question needs a word of warning. Most were found by the app computing the quantity independently and
+flagging the mismatch, and those are recorded in the code beside the problem they belong to
+(`grep -rn "note: '" src/problems/bank/`). Entries 10–14 came out of a review of the Exam 3 material
+against every printed answer, worked by hand, and entries 15–24 out of the same review of the Exam 4
+sheets (Practice 43–47).
 
-**Seven look like genuine slips. Four are convention differences or ambiguities where both answers
-are defensible. Three are not disagreements at all** — they are cases where the app cannot see a
-printed figure, noted here for completeness so the list is the whole list.
+**Fourteen look like genuine slips. Four are convention differences or ambiguities where both answers
+are defensible. Six are not disagreements at all** — cases where the app cannot see a printed figure,
+where the question leaves a direction unstated, or where the wording or the physics deserves a note,
+listed so the list is the whole list.
 
 Everything below uses k = 1/(4πε₀) = 8.99 × 10⁹ N·m²/C² unless stated otherwise.
 
@@ -168,6 +170,98 @@ Exactly, V = 3.07 × 10⁵ V; both are fine at the precision the sheet works to.
 
 ---
 
+## Found in the Exam 4 sheets
+
+Every answer on Practice 43, 44, 45, 46 and 47 was worked by hand, reading battery polarities and
+current directions off the figures. Seven printed answers disagree; each sheet item now has a
+template whose first case is the sheet's own numbers, so all seven are checked on every build.
+
+### 15 · Practice 43 #18–19 — one resistor alone, two in series beside it · *slip*
+- **Key:** I1 = 0.32 A, I2 = 0.24 A, I3 = 0.08 A
+- **Should be:** R₁ **0.24 A**, R₂ **0.08 A**, R₃ **0.08 A** (battery 0.32 A)
+
+R₁ sits alone across the 12 V battery: 12/50 = 0.24 A. R₂ and R₃ share the other branch:
+12/150 = 0.08 A each. The key's three numbers are the battery, R₁ and the R₂–R₃ branch, listed under
+the resistor labels, so "I₁ = 0.32 A" reads as the current in R₁.
+
+*Template `e4.43.branch-currents`.*
+
+### 16 · Practice 43 #21 — three branches, three batteries · *slip*
+- **Key:** I1 = 0.02 A, I2 = 0.08 A, I3 = 0.06 A
+- **Should be:** R₁ **0.033 A**, R₂ 0.060 A, V₂ **0.093 A**
+
+V₂ sits alone in the middle branch, so it holds the two junctions 20 V apart and each outer branch
+is its own loop. Right: (20 − 5)/250 = 0.060 A, as the key says. Left: (20 − 10)/300 = 0.033 A. No
+choice of battery polarity gives 0.02 A in R₁ — the only possibilities are 0.033 A and 0.10 A — and
+the 0.08 A for V₂ follows from the wrong 0.02 A.
+
+*Template `e4.43.three-branch`.*
+
+### 17 · Practice 43 #22 — two batteries, one shared resistor · *slip*
+- **Key:** I1 = 1.55 A, I2 = 0.29 A, I3 = 1.27 A
+- **Should be:** R₁ 1.55 A, R₂ **1.27 A**, R₃ **0.284 A**
+
+Both batteries are drawn facing the same way along the bottom wire, so around the outer loop they
+oppose. The top junction sits at 1.14 V: R₂ carries (−9 − 1.14)/8 = −1.27 A and R₃ carries
+1.14/4 = 0.284 A. The key swaps I₂ and I₃, and 0.284 rounds to 0.28, not 0.29. (The sheet also lists
+V₃ = 5 V, which is not in the circuit.)
+
+*Template `e4.43.two-battery-bridge`, which the Circuits lab solves independently. It names the
+resistors as the lab draws them (middle R₂, right R₃) and says so beside the sheet's case.*
+
+### 18 · Practice 44 #5 — power in the load resistor · *slip*
+- **Key:** 344.4 W
+- **Should be:** **444 W**
+
+With 8.3 A drawn from the 95.0 V, 5.0 Ω battery, the terminal voltage is 95.0 − 41.5 = 53.5 V and
+the resistor gets V_ab·I = 53.5 × 8.3 = 444 W. The key's 344.4 W is I²r = (8.3)²(5.0), the power lost
+inside the battery.
+
+*Template `e4.44.battery-terminal`.*
+
+### 19 · Practice 44 #9 — charge on C₃ · *slip*
+- **Key:** q3 = 1.07 × 10⁻⁶ C
+- **Should be:** **1.07 × 10⁻⁵ C**
+
+C₂ and C₃ share 5.33 V, so q₃ = (2.0 μF)(5.33 V) = 10.7 μC. The exponent is off by one; the check
+q₁ = q₂ + q₃ (26.7 = 16 + 10.7 μC) shows it.
+
+*Template `e3.40.combo`, which now asks for q₃ too.*
+
+### 20 · Practice 44 #16C — voltage across the resistor while discharging · *slip*
+- **Key:** 18.6 V
+- **Should be:** **5.4 V**
+
+This circuit is just the capacitor, a switch and the resistor — no battery — so the loop rule makes
+V_R = V_C at every instant: 5.4 V at 30 s. The key's 18.6 V is 24 − 5.4, the resistor's share in the
+charging circuit of #14. The sheet also calls the part a "50 μC capacitor"; it means 50 μF.
+
+*Template `e4.44.rc-discharge-state`.*
+
+### 21 · Practice 46 #7 — force on a proton at 7000 m/s · *slip*
+- **Key:** 6.27 × 10⁻¹⁶ N
+- **Should be:** **6.72 × 10⁻¹⁶ N**
+
+F = (1.6 × 10⁻¹⁹ C)(7000 m/s)(0.60 T) = 6.72 × 10⁻¹⁶ N — the key has two digits transposed.
+
+*Template `e4.46.qvB-solve`.*
+
+### 22 · Practice 46 #14, Practice 47 #5–7 — directions the question does not fix · *unstated*
+The keys give "into the page" or "out of page" for four answers whose questions state no current
+direction or geometry (#14 has no figure at all; 47 #5 asks only for the size). The sizes all check:
+0.208 N, 6.67 × 10⁻⁷ T, 3.0 × 10⁻⁵ T and 6.67 × 10⁻⁶ T, and those are what the templates grade.
+
+### 23 · Practice 47 #17 — an iron-core solenoid at 78 T · *physics note*
+The arithmetic is right for the stated μ = 6.5 × 10⁻³ T·m/A: B = μnI = 78 T. But iron saturates near
+2 T, so a real iron core would give nowhere near 78 T; B = μnI only holds well below saturation. The
+template gives the key's number and says so in the worked solution.
+
+### 24 · Practice 44 #10–12 — the same option twice · *wording*
+Options A and C are identical ("equal to the battery's terminal voltage") in all three questions, so
+#11's answer is both A and C. The template offers three distinct choices.
+
+---
+
 ## How these were found
 
 Not by proofreading. Every printed answer in the bank is stored as a test fixture, and
@@ -175,4 +269,5 @@ Not by proofreading. Every printed answer in the bank is stored as a test fixtur
 second independent method in 354 further assertions. A mismatch fails the build. Entries 1–9 are
 the mismatches that survived investigation; everything else in the bank agrees with the key to within
 rounding. Entries 10–14 were found by working the Exam 3 sheets by hand, and the ones with a
-template (11 and 14) are now checked the same way.
+template (11 and 14) are now checked the same way. Entries 15–24 were found by working the Exam 4
+sheets by hand; every one of them has a template, so all are checked on every build.
