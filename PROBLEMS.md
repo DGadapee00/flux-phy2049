@@ -26,6 +26,7 @@ node scripts/problems-check.mjs --samples 200 --list   # deeper run, with notes 
 | `src/problems/simbridge.js` | `applyProblem(lab, slice, inst)` loads an instance into a lab's state slice; `headlessCtx()` is for Node |
 | `src/problems/index.js` | `PROBLEMS`, `problemById`, `problemsForExam`, `problemsForLab`, `CHAPTER_ORDER`, `CHAPTER_TITLES` |
 | `src/problems/sequence.js` | The learning path through each chapter: named stages, in study order. The Practice list and its Next button follow it; mixed sets, review and practice exams stay shuffled. A listed chapter must name every template once (the check enforces it). Exams 3 and 4 so far |
+| `src/problems/principles.js` | DRAFT, awaiting instructor review: 28 governing principles (statement, cue, conserved quantity) and a `[primary, …secondary]` tag list for every template. Not used by the app yet; the check requires every template tagged with defined principles |
 | `src/problems/progress.js` | Per-problem history, Leitner-box spaced review, `pickSet` for mixed sets and practice exams. No DOM; storage is injected |
 | `src/problems/bank/e1.js … e7.js, wave.js` | 258 templates covering every chapter on the Fall 2026 syllabus (V, 34–65) |
 | `src/ui/problems.js`, `src/styles/practice.css` | The Practice panel (§4) |
@@ -139,7 +140,7 @@ For every template, `scripts/problems-check.mjs` confirms that:
 
 1. Each worked case reproduces its expected answers, and the grader accepts those values when typed.
 2. N seeded samples are valid and finite, and every choice answer is one of the options.
-3. The text, labels, steps, hints and option feedback never render `undefined` or `NaN`, and the coaching entries point at real templates, parts and options (§2c).
+3. The text, labels, steps, hints and option feedback never render `undefined` or `NaN`, and the coaching entries point at real templates, parts and options (§2c). Every template also carries principle tags that name defined principles (`principles.js`).
 4. Each symbolic key equals `get($)`, and the grader rejects a key scaled by ×1.1. Where a symbolic part declares units, the key's own dimensions are computed from the symbol units and must match the declared answer unit — a key in C/m under a part labelled N/C fails the build.
 5. **The problem and the lab agree.** The script loads the instance into the real lab with `applyProblem`, runs `lab.recompute` headless, and compares `sim.read` with the problem's answers. That's about 25,000 comparisons at 200 samples.
 

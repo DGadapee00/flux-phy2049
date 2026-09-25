@@ -21,6 +21,7 @@ import { loadLab } from '../src/labs/load.js';
 import { LAB_META, EXAMS } from '../src/data/catalog.js';
 import { SEQUENCE } from '../src/problems/sequence.js';
 import COACHING from '../src/problems/coaching/index.js';
+import { PRINCIPLES, PRINCIPLE_TAGS } from '../src/problems/principles.js';
 
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
@@ -323,6 +324,22 @@ for (const [id, c] of Object.entries(COACHING)) {
     }
   }
 }
+
+/*
+ * Principle tags (src/problems/principles.js) are still a draft for the instructor, but they must
+ * stay complete: every template tagged, every tag a defined principle, no tags for ids that are gone.
+ */
+for (const t of PROBLEMS) {
+  const tags = PRINCIPLE_TAGS[t.id];
+  if (!tags || !tags.length) err(t.id, 'no principle tags');
+  else {
+    for (const g of tags) if (!PRINCIPLES[g]) err(t.id, `principle "${g}" is not defined`);
+    if (new Set(tags).size !== tags.length) err(t.id, 'principle listed twice');
+    if (tags.length > 3) err(t.id, 'more than one primary and two secondary principles');
+  }
+}
+for (const id of Object.keys(PRINCIPLE_TAGS)) if (!PROBLEMS.some((t) => t.id === id)) err(id, 'principle tags name a template that does not exist');
+for (const g of Object.keys(PRINCIPLES)) if (!Object.values(PRINCIPLE_TAGS).some((tags) => tags.includes(g))) err(g, 'principle is never used');
 
 const noHints = PROBLEMS.filter((t) => !t.hints.length).map((t) => t.id);
 if (args.includes('--list') && noHints.length) console.log(`templates with no hints (${noHints.length}):`, noHints.join(' '));
