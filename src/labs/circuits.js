@@ -116,7 +116,7 @@ export default defineLab({
   controls() {
     return `
         <div class="lab-block" id="circ-sliders"></div>
-        <p class="tiny">Grey chevrons: the direction each current was <em>assumed</em> when writing the rules. Yellow dots: where charge actually flows. A negative I just means the dots run against the chevron.</p>`;
+        <p class="tiny">Grey chevrons: the direction each current was <em>assumed</em> when writing the rules. Gold dots: where charge actually flows. A negative I just means the dots run against the chevron.</p>`;
   },
   bind(api) {
     document.getElementById('circ-sliders').addEventListener('input', (e) => {

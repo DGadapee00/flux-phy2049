@@ -58,7 +58,7 @@ export default defineLab({
               <span class="mono val" id="q-test-val">+1.00 μC</span>
             </div>
           </label>
-          <p class="tiny">Click empty space to move the probe (the white point, B unless a problem names it). Path A is the gold marker — ΔV and W use A → probe.</p>
+          <p class="tiny">Click empty space to move the probe (the white point, B unless a problem names it). Path A is the purple marker — ΔV and W use A → probe.</p>
           <p class="tiny">Charge spread along a rod, a ring, an arc or a disk: the <a href="#/e3/integral">Integrals</a> tab adds up V = ∫ k dq/r piece by piece.</p>
         </div>`;
   },

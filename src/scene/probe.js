@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { sceneScale } from '../engine/frame.js';
 import { fmtE } from '../ui/format.js';
-import { Arrow, M, markAnswer } from './manim.js';
+import { Arrow, M, Q, markAnswer } from './manim.js';
 
 export class ProbeView {
   constructor(scene) {
@@ -16,7 +16,7 @@ export class ProbeView {
     this.group.add(core);
     this.core = core;
 
-    this.arrow = markAnswer(new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 1, M.yellow, 0.3, 0.2, 0.04));
+    this.arrow = markAnswer(new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 1, Q.E, 0.3, 0.2, 0.04));
     this.group.add(this.arrow);
 
     this.el = document.createElement('div');

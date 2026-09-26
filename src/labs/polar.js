@@ -54,7 +54,7 @@ function polarizerMesh(u) {
   }
   // The stripes turn with the axis; the rim does not.
   const axis = new THREE.Group();
-  axis.add(fatSegments(stripes, { color: M.gold, width: 1.6, opacity: 0.85 }));
+  axis.add(fatSegments(stripes, { color: M.white, width: 1.6, opacity: 0.85 }));
   g.add(disk, rim, axis);
   g.userData.axis = axis;
   return g;
@@ -105,7 +105,7 @@ export default defineLab({
           ${slider('pol-a', 'P1 axis (from vertical)', 0)}
           ${slider('pol-b', 'P2 axis', 45)}
           ${slider('pol-c', 'P3 axis', 90)}
-          <p class="tiny">Unpolarized light in, then Malus I = I₀cos²θ at each polarizer, θ = angle between successive axes. Gold stripes are the transmission axis. The white double arrows show the direction E oscillates and how big it is (E ∝ √I).</p>
+          <p class="tiny">Unpolarized light in, then Malus I = I₀cos²θ at each polarizer, θ = angle between successive axes. White stripes are the transmission axis. The white double arrows show the direction E oscillates and how big it is (E ∝ √I).</p>
         </div>`;
   },
   bind(api) {
@@ -252,7 +252,7 @@ export default defineLab({
       return {
         title: 'One polarizer passes half of unpolarized light',
         body: [
-          String.raw`Unpolarized light has $\vec{E}$ pointing every which way — the star of arrows. A polarizer keeps only the component along its gold axis, and averaging $\cos^2$ over every direction gives one half:`,
+          String.raw`Unpolarized light has $\vec{E}$ pointing every which way — the star of arrows. A polarizer keeps only the component along its white axis, and averaging $\cos^2$ over every direction gives one half:`,
           eq(String.raw`I = \tfrac{1}{2}I_0`),
           'What comes out oscillates along a single line.',
         ],

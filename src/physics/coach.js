@@ -94,7 +94,7 @@ export function coachGauss(surface, charges, extraE, computed) {
       return {
         title: 'Inside, but off-center',
         body: [
-          String.raw`Gauss still gives $\Phi_E = Q_{\text{in}}/\varepsilon_0$, but you cannot pull $|\vec{E}|$ out of the integral: the gold tiles on the near side are stronger than the far side, so`,
+          String.raw`Gauss still gives $\Phi_E = Q_{\text{in}}/\varepsilon_0$, but you cannot pull $|\vec{E}|$ out of the integral: the yellow tiles on the near side are stronger than the far side, so`,
           eq(String.raw`\oint \vec{E}\cdot\hat{n}\,dA \neq |\vec{E}|\,A \quad\text{here.}`),
           String.raw`This is the whole point of the law — the net flux cares about $Q_{\text{in}}$, not about where inside the charge sits.`,
         ],
@@ -105,7 +105,7 @@ export function coachGauss(surface, charges, extraE, computed) {
     return {
       title: String.raw`Charge outside — net flux $\approx 0$`,
       body: [
-        String.raw`Every field line that enters the volume also leaves it, so the blue tiles ($\vec{E}\cdot\hat{n} < 0$) cancel the gold ones ($\vec{E}\cdot\hat{n} > 0$):`,
+        String.raw`Every field line that enters the volume also leaves it, so the blue tiles ($\vec{E}\cdot\hat{n} < 0$) cancel the yellow ones ($\vec{E}\cdot\hat{n} > 0$):`,
         eq(String.raw`Q_{\text{in}} = 0 \;\Longrightarrow\; \Phi_E = 0`),
         String.raw`even though $\vec{E}$ on the surface is nowhere near zero.`,
       ],
@@ -224,7 +224,7 @@ export function coachGauss(surface, charges, extraE, computed) {
     title: 'Closed surface',
     body: [
       eq(String.raw`\Phi_E = \oint \vec{E}\cdot\hat{n}\,dA = \frac{Q_{\text{in}}}{\varepsilon_0}`),
-      String.raw`Gold is outward flux, blue is inward. The numerical sum over the tiles is a Riemann sum for that integral.`,
+      String.raw`Yellow is outward flux, blue is inward. The numerical sum over the tiles is a Riemann sum for that integral.`,
     ],
     canFindE: false,
     Eguess: null,
@@ -370,7 +370,7 @@ export function coachForce(charges) {
     body: [
       String.raw`On the selected charge,`,
       eq(String.raw`\vec{F}_{\text{net}} = \textstyle\sum_i \vec{F}_i = q\,\vec{E}_{\text{others}}`),
-      String.raw`The gold arrow is the net force; the thin arrows are the pairs. For an equilibrium problem you would set $\sum F_x = 0$ and $\sum F_y = 0$.`,
+      String.raw`The pink arrow is the net force; the thin arrows are the pairs. For an equilibrium problem you would set $\sum F_x = 0$ and $\sum F_y = 0$.`,
     ],
     canFindE: false,
   };

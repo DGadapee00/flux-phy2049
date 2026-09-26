@@ -21,11 +21,42 @@ export const M = {
   red: 0xfc6255,
   maroon: 0xc55f73,
   purple: 0x9a72ac,
+  lavender: 0xc7b3dc,
   pink: 0xd147bd,
 };
 
-export const POS_COLOR = M.red;
-export const NEG_COLOR = M.blue;
+/*
+ * What a colour means in a scene, in every lab. One quantity, one colour: a student who has learned
+ * that yellow is E in the Field lab should not find yellow meaning current in Biot–Savart.
+ *
+ *   E (and light, which is E)   yellow      B, and the inductor that makes it   teal
+ *   current I                   gold        force F                             pink
+ *   velocity, travel, S         white       capacitor, C                        purple
+ *   + charge / plate            red         − charge / plate                    blue
+ *   selected                    white ring  a marked point (A)                  purple
+ *   images: real / virtual      purple / lavender
+ *
+ * The three principal rays in the optics labs keep gold / teal / blue: those labs have no current,
+ * field or charge on screen, and the rays are named by colour in their text. Magnitude ramps (field
+ * lines, equipotentials, wire potential) are colour scales, not these.
+ */
+export const Q = {
+  E: M.yellow,
+  B: M.teal,
+  I: M.gold,
+  F: M.pink,
+  v: M.white,
+  C: M.purple,
+  pos: M.red,
+  neg: M.blue,
+  select: M.white,
+  mark: M.purple,
+  imageReal: M.purple,
+  imageVirtual: M.lavender,
+};
+
+export const POS_COLOR = Q.pos;
+export const NEG_COLOR = Q.neg;
 
 /** 3b1b vector-field colormap: slow = blue, fast = red. t in [0, 1]. */
 const RAMP = [M.blueE, M.blue, M.teal, M.green, M.yellow, M.red].map((h) => new THREE.Color(h));

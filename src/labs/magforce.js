@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, disposeTree, makeChargeTexture, POS_COLOR, NEG_COLOR } from '../scene/manim.js';
+import { Arrow, M, Q, fatLine, disposeTree, makeChargeTexture, POS_COLOR, NEG_COLOR } from '../scene/manim.js';
 import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, MU0 } from '../physics/constants.js';
 import { PARTICLES, trajectory, cyclotronRadius, cyclotronPeriod, wireForce, parallelWireForceNumerical, lorentzForce } from '../physics/magforce.js';
@@ -11,7 +11,7 @@ import { sciHTML, fmtForce } from '../ui/format.js';
 import { fmtB } from './biot.js';
 
 /**
- * Color code for magnetism: B teal, E purple, v white, F gold (as in Force), I yellow (as in circuits).
+ * Colours follow the scene palette (Q in src/scene/manim.js): B teal, E yellow, v white, F pink, I gold.
  * B always points along +ŷ (up) for the particle and wire scenarios.
  */
 const SCENARIOS = [
@@ -183,7 +183,7 @@ export default defineLab({
           ${slider('mf-I1', 'Wire 1 current I₁ (+ = up)', -40, 40, 1, 'qI', 'parallel')}
           ${slider('mf-I2', 'Wire 2 current I₂ (+ = up)', -40, 40, 1, 'qI', 'parallel')}
           ${slider('mf-d', 'Separation d', 0.05, 0.8, 0.01, '', 'parallel')}
-          <p class="tiny">Teal arrows: B. Purple: E. White: v. Gold: F. Motion is slowed so one orbit takes a few seconds; the numbers are real SI values.</p>
+          <p class="tiny">Teal arrows: B. Yellow: E. White: v. Pink: F. Motion is slowed so one orbit takes a few seconds; the numbers are real SI values.</p>
         </div>`;
   },
   bind(api) {
@@ -234,15 +234,15 @@ export default defineLab({
   init(ctx) {
     const group = new THREE.Group();
     ctx.scene.add(group);
-    const Bfield = new VectorBatch(group, M.teal);
-    const Efield = new VectorBatch(group, M.purple);
+    const Bfield = new VectorBatch(group, Q.B);
+    const Efield = new VectorBatch(group, Q.E);
     const dotPos = makeChargeTexture(POS_COLOR, 1);
     const dotNeg = makeChargeTexture(NEG_COLOR, -1);
     const particle = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotPos, transparent: true, depthWrite: false, toneMapped: false }));
     particle.scale.setScalar(0.6);
     particle.renderOrder = 5;
     const vArrow = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 2.2, M.white, 0.45, 0.36, 0.06);
-    const fArrow = new Arrow(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 2, M.gold, 0.45, 0.36, 0.075);
+    const fArrow = new Arrow(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 2, Q.F, 0.45, 0.36, 0.075);
     group.add(particle, vArrow, fArrow);
     group.visible = false;
     return { group, Bfield, Efield, particle, dotPos, dotNeg, vArrow, fArrow, scene: null, key: '', time: 0 };
@@ -322,10 +322,10 @@ export default defineLab({
       const half = (state.L / 2) * u;
       const a = Ld.clone().multiplyScalar(-half);
       const b = Ld.clone().multiplyScalar(half);
-      g.add(fatLine([a.x, a.y + 0.8, 0, b.x, b.y + 0.8, 0], { color: M.yellow, width: 5 }));
+      g.add(fatLine([a.x, a.y + 0.8, 0, b.x, b.y + 0.8, 0], { color: Q.I, width: 5 }));
       if (Math.abs(state.I) > 1e-9) {
         const dir = Ld.clone().multiplyScalar(Math.sign(state.I));
-        g.add(new Arrow(dir, new THREE.Vector3(0, 0.8, 0).addScaledVector(dir, half * 0.55), 0.45, M.yellow, 0.36, 0.36, 0.001));
+        g.add(new Arrow(dir, new THREE.Vector3(0, 0.8, 0).addScaledVector(dir, half * 0.55), 0.45, Q.I, 0.36, 0.36, 0.001));
       }
       g.add(new Arrow(up, new THREE.Vector3(-3.4, -1, 0), 3.2, M.teal, 0.36, 0.28, 0.05));
       g.add(label('<span class="qB"><i>B</i></span>', -3.9, 1.6, 0));
@@ -341,10 +341,10 @@ export default defineLab({
       if (c.Fmag > 1e-12) {
         const Fd = new THREE.Vector3(0, 0, Math.sign(c.F.z));
         const Lf = 0.8 + 2.2 * Math.tanh(c.Fmag / 1.5);
-        g.add(new Arrow(Fd, new THREE.Vector3(0, 0.8, 0), Lf, M.gold, 0.4, 0.3, 0.06));
-        g.add(label(`<span style="color:var(--gold,#F0AC5F)"><i>F</i> = ${strip(fmtForce(c.Fmag))}</span>`, 0.4, 0.2, Fd.z * (Lf + 0.5)));
+        g.add(new Arrow(Fd, new THREE.Vector3(0, 0.8, 0), Lf, Q.F, 0.4, 0.3, 0.06));
+        g.add(label(`<span style="color:var(--pink,#D147BD)"><i>F</i> = ${strip(fmtForce(c.Fmag))}</span>`, 0.4, 0.2, Fd.z * (Lf + 0.5)));
       } else {
-        g.add(label('<span style="color:var(--gold,#F0AC5F)"><i>F</i> = 0 (L ∥ B)</span>', 0.6, -0.3, 0));
+        g.add(label('<span style="color:var(--pink,#D147BD)"><i>F</i> = 0 (L ∥ B)</span>', 0.6, -0.3, 0));
       }
       g.add(label(qv('qI', `<i>I</i> = ${state.I.toFixed(1)} A`), b.x + 0.6, b.y + 1.3, 0));
     } else {
@@ -354,10 +354,10 @@ export default defineLab({
         [x1, state.I1, 1],
         [x2, state.I2, 2],
       ].forEach(([x, I, k]) => {
-        g.add(fatLine([x, -3, 0, x, 3, 0], { color: M.yellow, width: 4 }));
+        g.add(fatLine([x, -3, 0, x, 3, 0], { color: Q.I, width: 4 }));
         if (Math.abs(I) > 1e-9) {
           const dir = new THREE.Vector3(0, Math.sign(I), 0);
-          for (const yy of [1.8, -1.8]) g.add(new Arrow(dir, new THREE.Vector3(x, yy - 0.2 * dir.y, 0), 0.4, M.yellow, 0.34, 0.34, 0.001));
+          for (const yy of [1.8, -1.8]) g.add(new Arrow(dir, new THREE.Vector3(x, yy - 0.2 * dir.y, 0), 0.4, Q.I, 0.34, 0.34, 0.001));
         }
         g.add(label(qv('qI', `<i>I</i><sub>${k}</sub> = ${I.toFixed(0)} A`), x, 3.4, 0));
       });
@@ -377,9 +377,9 @@ export default defineLab({
       if (Math.abs(Fx) > 1e-15) {
         const Lf = 0.9 + 1.6 * Math.tanh(Math.abs(Fx) / 2e-4);
         const d2 = new THREE.Vector3(Math.sign(Fx), 0, 0);
-        g.add(new Arrow(d2, new THREE.Vector3(x2, 0.9, 0), Lf, M.gold, 0.36, 0.28, 0.055));
-        g.add(new Arrow(d2.clone().multiplyScalar(-1), new THREE.Vector3(x1, 0.9, 0), Lf, M.gold, 0.36, 0.28, 0.055));
-        g.add(label(`<span style="color:var(--gold,#F0AC5F)">${c.attract ? 'attract' : 'repel'} · <i>F</i>/<i>L</i> = ${strip(fmtForce(Math.abs(Fx)))}/m</span>`, 0, -2.2, 0));
+        g.add(new Arrow(d2, new THREE.Vector3(x2, 0.9, 0), Lf, Q.F, 0.36, 0.28, 0.055));
+        g.add(new Arrow(d2.clone().multiplyScalar(-1), new THREE.Vector3(x1, 0.9, 0), Lf, Q.F, 0.36, 0.28, 0.055));
+        g.add(label(`<span style="color:var(--pink,#D147BD)">${c.attract ? 'attract' : 'repel'} · <i>F</i>/<i>L</i> = ${strip(fmtForce(Math.abs(Fx)))}/m</span>`, 0, -2.2, 0));
       }
     }
     h.Bfield.end(c.kind !== 'parallel');

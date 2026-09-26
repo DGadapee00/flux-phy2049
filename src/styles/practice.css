@@ -1297,3 +1297,398 @@ body.problem-blind .veiled .katex {
 .pb-guide .pb-steps .katex {
   font-size: 1.04em;
 }
+
+/* ---------- Notes (src/ui/notes.js): the class notes, read beside the lab ---------- */
+
+:root {
+  --notes-w: min(760px, calc(100vw - 440px));
+}
+
+.notes {
+  top: var(--below-brand, 230px);
+  left: 16px;
+  width: var(--notes-w);
+  max-height: calc(100vh - var(--below-brand, 230px) - 16px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0 28px 28px;
+  z-index: 12;
+  background: rgb(14, 15, 18);
+  /* The notes' own colour names, mapped onto the app's palette (their legend swatches use them). */
+  --field: var(--blue);
+  --field-soft: rgba(88, 196, 221, 0.1);
+  --copper: var(--gold);
+  --copper-soft: rgba(240, 172, 95, 0.09);
+  --ok: var(--text);
+  --ok-soft: rgba(236, 230, 226, 0.05);
+}
+
+body.notes-open #eq-panel,
+body.notes-open .problems,
+body.notes-open .units-ref {
+  display: none;
+}
+
+@media (min-width: 721px) {
+  body.notes-open .controls,
+  body.notes-open #toggle-host {
+    display: none;
+  }
+}
+
+body.notes-open .legend {
+  left: calc(var(--notes-w) + 32px);
+}
+
+.nt-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 -28px;
+  padding: 12px 28px 10px;
+  background: rgb(14, 15, 18);
+  border-bottom: 1px solid var(--border);
+}
+
+.nt-jump {
+  flex: 1;
+  min-width: 0;
+  max-width: 460px;
+}
+
+.nt-head .pb-x {
+  margin-left: auto;
+}
+
+.nt-doc {
+  font-family: var(--serif);
+  font-size: var(--fs-body);
+  line-height: 1.65;
+  color: var(--text);
+}
+
+.nt-doc .eyebrow {
+  font-family: var(--font);
+  font-size: var(--fs-meta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.nt-doc header.top {
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--border-hover);
+}
+
+.nt-doc h1 {
+  margin: 8px 0 10px;
+  font-family: var(--font);
+  font-size: var(--fs-display);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.nt-doc .lede {
+  color: var(--text-muted);
+}
+
+.nt-doc h2,
+.nt-doc h3 {
+  font-family: var(--font);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.nt-doc h2 {
+  margin-top: 34px;
+  font-size: var(--fs-title);
+}
+
+.nt-doc h2 .n {
+  display: inline-block;
+  min-width: 1.6em;
+  color: var(--blue);
+}
+
+.nt-doc h3 {
+  margin-top: 22px;
+  font-size: var(--fs-body);
+}
+
+.nt-doc p {
+  margin: 10px 0;
+  max-width: 70ch;
+}
+
+.nt-doc ul,
+.nt-doc ol {
+  margin: 10px 0;
+  padding-left: 1.3em;
+  max-width: 68ch;
+}
+
+.nt-doc li {
+  margin: 4px 0;
+}
+
+.nt-doc .part {
+  margin-top: 44px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hover);
+}
+
+.nt-doc .part .eyebrow {
+  color: var(--blue);
+}
+
+.nt-doc .part h2 {
+  margin-top: 4px;
+  font-size: var(--fs-display);
+}
+
+.nt-doc .bridge {
+  margin-top: 20px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-hover);
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.nt-doc .katex-display {
+  margin: 12px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 2px;
+}
+
+.nt-doc .katex {
+  font-size: 1.06em;
+}
+
+/* Callouts: example, derivation, correction, key idea. */
+.nt-doc .box {
+  margin: 18px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(236, 230, 226, 0.03);
+}
+
+.nt-doc .box > .tag {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--font);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nt-doc .box p {
+  margin: 6px 0;
+}
+
+.nt-doc .box.ex > .tag {
+  color: var(--blue);
+}
+
+.nt-doc .box.why {
+  border-color: transparent;
+  background: var(--field-soft);
+}
+
+.nt-doc .box.why > .tag {
+  color: var(--blue);
+}
+
+.nt-doc .box.fix {
+  border-color: rgba(240, 172, 95, 0.3);
+  background: var(--copper-soft);
+}
+
+.nt-doc .box.fix > .tag {
+  color: var(--gold);
+}
+
+.nt-doc .box.key {
+  border-color: var(--border-hover);
+  border-left: 3px solid var(--text);
+}
+
+.nt-doc .box.key > .tag {
+  color: var(--text);
+}
+
+.nt-doc .ans {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--fs-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.nt-doc .tbl {
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.nt-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.nt-doc th,
+.nt-doc td {
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.nt-doc th {
+  font-family: var(--font);
+  font-weight: 600;
+  border-bottom-color: var(--border-hover);
+}
+
+.nt-doc nav.toc {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 24px;
+  margin-top: 20px;
+  font-family: var(--font);
+  font-size: var(--fs-ui);
+}
+
+.nt-doc nav.toc h3 {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+  font-size: var(--fs-meta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.nt-doc nav.toc a {
+  display: flex;
+  gap: 10px;
+  padding: 3px 0;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nt-doc nav.toc a span {
+  min-width: 1.8em;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+}
+
+.nt-doc nav.toc a:hover {
+  color: var(--blue);
+}
+
+.nt-doc .nt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 16px;
+  font-family: var(--font);
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+}
+
+.nt-doc .nt-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.nt-doc a {
+  color: var(--blue);
+}
+
+.nt-doc footer {
+  margin-top: 40px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font);
+  font-size: var(--fs-ui);
+  color: var(--text-muted);
+}
+
+/* Where to go from a section: its lab, and its practice problems. */
+.nt-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 4px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-hover);
+  font-family: var(--font);
+}
+
+.nt-empty .nt-sets {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.nt-empty {
+  padding-top: 20px;
+  font-family: var(--font);
+}
+
+.pb-notes {
+  justify-self: start;
+  align-self: flex-start;
+  font-size: var(--fs-ui);
+}
+
+.eq-notes {
+  align-self: flex-start;
+  font-size: var(--fs-ui);
+}
+
+@media (max-width: 720px) {
+  :root {
+    --notes-w: auto;
+  }
+
+  .notes {
+    top: var(--hdr);
+    left: 0;
+    right: 0;
+    width: auto;
+    height: calc(100dvh - var(--hdr));
+    max-height: none;
+    border-radius: 0;
+    border-width: 1px 0 0;
+    padding: 0 16px calc(28px + env(safe-area-inset-bottom) + (100lvh - 100svh));
+  }
+
+  .nt-head {
+    margin: 0 -16px;
+    padding: 10px 16px;
+  }
+
+  .nt-doc nav.toc {
+    grid-template-columns: 1fr;
+  }
+
+  .nt-jump {
+    font-size: 16px;
+  }
+
+  body.notes-open .toggles,
+  body.notes-open .controls,
+  body.notes-open .readout,
+  body.notes-open .legend {
+    display: none;
+  }
+}

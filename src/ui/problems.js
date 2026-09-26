@@ -24,6 +24,7 @@ import { PRINCIPLES } from '../problems/principles.js';
 import { asksPrinciple, principleOptions, gradePrinciple, primaryOf, UNSURE } from '../problems/principle-step.js';
 import { guidanceFor, workedExample } from '../problems/fading.js';
 import { examById, examLabel, LAB_META } from '../data/catalog.js';
+import { sectionForProblem } from '../notes/index.js';
 import { mathProse, tex } from './shared.js';
 
 const EXAM_MINUTES = 50;
@@ -156,11 +157,6 @@ export function createPractice(api) {
     st.open = on;
     panel.hidden = !on;
     body.classList.toggle('practice-open', on);
-    // The header's Explore | Practice switch shows which mode this is.
-    $('btn-practice').setAttribute('aria-selected', on ? 'true' : 'false');
-    $('btn-practice').classList.toggle('active', on);
-    $('btn-explore')?.setAttribute('aria-selected', on ? 'false' : 'true');
-    $('btn-explore')?.classList.toggle('active', !on);
     if (!on) setLabOpen(false);
     syncBlind();
     updateBrand();
@@ -720,7 +716,7 @@ export function createPractice(api) {
         const cm = Math.round(progress.mastery(mIds) * 100);
         const cc = progress.counts(mIds);
         const earlier = orderByChapter(earlierPool.filter((t) => primaryOf(t) === pid));
-        groups.push(`<section class="pb-ch pb-pgroup">
+        groups.push(`<section class="pb-ch pb-pgroup" data-principle-group="${esc(pid)}">
           <div class="pb-ch-head">
             <span class="pb-ch-name">${esc(P.name)}</span>
             <span class="pb-ch-meter" title="${cm}% mastery"><i style="width:${cm}%"></i></span>
@@ -738,7 +734,7 @@ export function createPractice(api) {
       const chIds = all.filter((t) => t.ch === ch).map((t) => t.id);
       const cc = progress.counts(chIds);
       const cm = Math.round(progress.mastery(chIds) * 100);
-      groups.push(`<section class="pb-ch">
+      groups.push(`<section class="pb-ch" data-ch="${esc(ch)}">
         <div class="pb-ch-head">
           <span class="pb-ch-name">Ch ${esc(ch)} · ${esc(CHAPTER_TITLES[ch] || '')}</span>
           <span class="pb-ch-meter" title="${cm}% mastery"><i style="width:${cm}%"></i></span>
@@ -1032,6 +1028,14 @@ export function createPractice(api) {
     return `<div class="pb-banner quiet"><span>The lab is live.</span>${labButton(cur)}</div>`;
   }
 
+  /** Where the class notes cover this problem's idea. Not in an exam: no notes on the desk. */
+  function notesLink(cur) {
+    if (cur.mode === 'exam') return '';
+    const hit = sectionForProblem(cur.tpl);
+    if (!hit) return '';
+    return `<button type="button" class="linkish pb-notes" data-notes="${esc(hit.set.exam)}:${esc(hit.section.id)}">Notes §${hit.section.n} · ${esc(hit.section.title)}</button>`;
+  }
+
   /** Opens the lab's controls beside the problem, or folds them away again. */
   function labButton(cur) {
     if (!labDrawerReady(cur)) return '';
@@ -1244,6 +1248,7 @@ export function createPractice(api) {
       <div class="pb-kicker">${mixed}${guided}Ch ${esc(tpl.ch)} · ${esc(CHAPTER_TITLES[tpl.ch] || '')} · ${levelDots(tpl.level)} ${KIND_LABEL[tpl.kind] || ''}${src}</div>
       <h2 class="pb-h">${esc(tpl.title)}</h2>
       <p class="pb-text">${prose(cur.view.text)}</p>
+      ${notesLink(cur)}
       ${cur.view.figure ? `<div class="pb-figure">${cur.view.figure}</div>` : ''}
       ${cur.note ? `<p class="pb-note">${esc(cur.note)}</p>` : ''}
       ${bannerHTML(cur)}
@@ -1378,6 +1383,12 @@ export function createPractice(api) {
       panel.querySelector('.pb-parts .pb-input, .pb-parts input')?.focus({ preventScroll: true });
       const el = $('sr-announce');
       if (el) el.textContent = cur.principle.ok ? `Right: ${pname(pick)}.` : `The deciding principle is ${pname(primaryOf(cur.tpl))}.`;
+      return;
+    }
+    if (t.dataset.notes) {
+      if (cur) readInputs(cur);
+      const [examId, section] = t.dataset.notes.split(':');
+      api.openNotes?.({ examId, section, fromProblem: true });
       return;
     }
     if (t.dataset.weak) {
@@ -1655,13 +1666,7 @@ export function createPractice(api) {
     if (st.cur?.mode === 'practice' && !st.cur.finished) check();
   });
 
-  // Explore | Practice: two halves of one switch, so a click on the lit half does nothing.
-  $('btn-practice').addEventListener('click', () => {
-    if (!st.open) open();
-  });
-  $('btn-explore')?.addEventListener('click', () => {
-    if (st.open) close();
-  });
+  // The header's Practice | Notes | Explore switch is wired in main.js, which owns all three modes.
 
   // ------------------------------------------------------------------ public
   function open() {
@@ -1698,10 +1703,31 @@ export function createPractice(api) {
     else open();
   }
 
+  /** From the notes: this exam's list, grouped by chapter, scrolled to the chapter asked for. */
+  function showChapter(ch, examId) {
+    if (inExamView()) {
+      open();
+      return;
+    }
+    if (st.cur && st.cur.mode === 'practice') leaveProblem({ push: false });
+    st.view = 'list';
+    st.listExam = examId || api.examId();
+    st.filter.group = 'chapter';
+    st.filter.kind = 'all';
+    st.filter.lab = false;
+    if (examId && examId !== api.examId()) api.setExam(examId);
+    setOpen(true);
+    renderPanel();
+    const el = panel.querySelector(`[data-ch="${CSS.escape(ch)}"]`);
+    if (el) panel.scrollTop = el.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop - 60;
+  }
+
   return {
     toggle,
     open,
     close,
+    showChapter,
+    isOpen: () => st.open,
     escape() {
       const a = document.activeElement;
       if (a && panel.contains(a) && a.matches('input')) {

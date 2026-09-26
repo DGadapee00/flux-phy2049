@@ -82,11 +82,12 @@ export function createHUD(api) {
   }
 
   /*
-   * Where a phone's header row is too narrow for the full line ("Exam 4 · Circuits & magnetism ·
-   * Fri 10/9"), the picker shows "Exam 4" and the chapter range sits beside it in the brand line.
-   * The same query as mobile.css's header compaction.
+   * A landscape phone keeps the header on one row, too narrow for the full line ("Exam 4 · Circuits
+   * & magnetism · Fri 10/9"), so the picker shows "Exam 4". Everywhere else it has the room: a
+   * portrait phone gives the picker a row of its own (mobile.css).
    */
-  const compact = typeof matchMedia === 'function' ? matchMedia('(max-width: 720px), (max-height: 560px) and (orientation: landscape)') : null;
+  const compact = typeof matchMedia === 'function' ? matchMedia('(min-width: 721px) and (max-height: 560px) and (orientation: landscape), (max-width: 720px) and (orientation: landscape)') : null;
+  const portraitPhone = typeof matchMedia === 'function' ? matchMedia('(max-width: 720px) and (orientation: portrait)') : null;
   let pickerExam = null;
 
   function renderExamPicker(examId) {
@@ -95,12 +96,14 @@ export function createHUD(api) {
     if (!sel) return;
     const short = !!compact?.matches;
     sel.innerHTML = EXAMS.map((e) => {
-      const label = short ? examLabel(e) : examLongLabel(e);
+      // A portrait phone's picker is a row to itself but at 16px type: the weekday is what gives.
+      const label = short ? examLabel(e) : portraitPhone?.matches ? `${examLabel(e)} · ${e.title} · ${e.date.replace(/^\w+\s+/, '')}` : examLongLabel(e);
       return `<option value="${e.id}" title="${escapeHTML(examLongLabel(e))} · Ch ${escapeHTML(e.chapters)}">${escapeHTML(label)}</option>`;
     }).join('');
     sel.value = examId;
   }
   compact?.addEventListener?.('change', () => pickerExam && renderExamPicker(pickerExam));
+  portraitPhone?.addEventListener?.('change', () => pickerExam && renderExamPicker(pickerExam));
 
   function renderLabTabs(exam, labId) {
     const labs = exam?.labs || [];
@@ -328,6 +331,10 @@ export function createHUD(api) {
       api.toggleUnits();
       return;
     }
+    if (e.key === 'n' || e.key === 'N') {
+      api.toggleNotes();
+      return;
+    }
     if (e.key === '[') {
       api.shiftExam(-1);
       return;
@@ -386,7 +393,7 @@ export function createHUD(api) {
       ${lab?.hint ? `<p class="keys-hint">${mathText(lab.hint)}</p>` : ''}
       ${planeLine ? `<p class="keys-hint">${escapeHTML(planeLine)}</p>` : ''}
       <div class="keys-list">${mouse.join('')}${labKeys.join('')}
-        ${row('P', 'Practice')}${row('U', 'Units reference')}
+        ${row('P', 'Practice')}${row('N', 'Class notes')}${row('U', 'Units reference')}
         ${row('1–9', 'Labs in this exam')}${row('[ ]', 'Previous or next exam')}
         ${row('Esc', 'Close a panel')}${row('?', 'This list')}</div>`;
   }

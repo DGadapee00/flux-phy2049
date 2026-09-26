@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { M, Arrow, fatLine, disposeTree, makeChargeTexture, markAnswer, rampColorCVD as rampColor } from './manim.js';
+import { M, Q, Arrow, fatLine, disposeTree, makeChargeTexture, markAnswer, rampColorCVD as rampColor } from './manim.js';
 
 /**
  * Flat schematic for an arbitrary fixed netlist (Circuits lab).
@@ -36,7 +36,7 @@ export class SchematicView {
     this.parts = [];
     this.items = [];
     this.key = '';
-    this.dotTex = makeChargeTexture(M.yellow, 0);
+    this.dotTex = makeChargeTexture(Q.I, 0);
     this.nodeTex = makeChargeTexture(M.white, 0);
     this._c = new THREE.Color();
   }

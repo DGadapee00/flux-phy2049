@@ -17,6 +17,9 @@
   --yellow: #f4d345;
   --gold: #f0ac5f;
   --red: #fc6255;
+  --purple: #9a72ac;
+  --lavender: #c7b3dc;
+  --pink: #d147bd;
 
   --accent: var(--blue);
   --accent-soft: rgba(88, 196, 221, 0.12);
@@ -469,7 +472,7 @@ body.has-legend .eq-panel {
 }
 
 .eq-result .value.qI {
-  color: var(--yellow);
+  color: var(--gold);
 }
 
 .eq-result .value.qR {
@@ -911,7 +914,7 @@ select {
 }
 
 .legend-bdl {
-  background: linear-gradient(90deg, #58c4dd, #2c2e33 50%, #f4d345);
+  background: linear-gradient(90deg, #9a72ac, #2c2e33 50%, #5cd0b3);
 }
 
 .qB {
@@ -1083,7 +1086,8 @@ input[type='checkbox'] {
 }
 
 .charge-label.selected {
-  color: var(--yellow);
+  color: #fff;
+  font-weight: 600;
 }
 
 .probe-label {
@@ -1132,7 +1136,7 @@ input[type='checkbox'] {
 }
 
 .qI {
-  color: var(--yellow);
+  color: var(--gold);
 }
 
 .qR {
@@ -1144,7 +1148,7 @@ input[type='checkbox'] {
 }
 
 .qC {
-  color: var(--gold);
+  color: var(--purple);
 }
 
 .readout .value.qV {
@@ -1152,7 +1156,7 @@ input[type='checkbox'] {
 }
 
 .readout .value.qI {
-  color: var(--yellow);
+  color: var(--gold);
 }
 
 .readout .value.qR {

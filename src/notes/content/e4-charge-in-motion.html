@@ -1,0 +1,753 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Charge in Motion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+  svg: { fontCache: 'global' },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<style>
+:root{
+  --paper:#F5F6F8; --sheet:#FFFFFF; --ink:#1A2130; --muted:#5A6476; --rule:#DCE0E7;
+  --field:#2C4BB5; --field-soft:#E8ECFA;
+  --copper:#A8531C; --copper-soft:#F8ECE3;
+  --ok:#1F6B4E; --ok-soft:#E5F2EC;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans:"IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#11141B; --sheet:#171B24; --ink:#E4E7EE; --muted:#9AA3B5; --rule:#2A3040;
+    --field:#93A7FF; --field-soft:#1C2340;
+    --copper:#E79461; --copper-soft:#2E2119;
+    --ok:#6FCBA2; --ok-soft:#16281F;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#11141B; --sheet:#171B24; --ink:#E4E7EE; --muted:#9AA3B5; --rule:#2A3040;
+  --field:#93A7FF; --field-soft:#1C2340;
+  --copper:#E79461; --copper-soft:#2E2119;
+  --ok:#6FCBA2; --ok-soft:#16281F;
+}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.62;padding-inline:16px;padding-block:0 64px}
+main{max-width:720px;margin:0 auto}
+header.top{max-width:720px;margin:0 auto;padding-block:48px 24px;border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--sans);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(34px,6vw,52px);font-weight:700;letter-spacing:-.01em;margin-block:10px 14px}
+.lede{font-size:19px;color:var(--muted);max-width:62ch;margin:0}
+.part{margin-top:64px;padding-top:18px;border-top:2px solid var(--ink)}
+.part .eyebrow{color:var(--field)}
+.part h2{font-size:34px;margin-top:6px}
+section.topic{margin-top:44px}
+section.topic h2{font-size:26px;font-weight:600;display:flex;gap:12px;align-items:baseline}
+section.topic h2 .n{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--field);min-width:2.2em}
+h3{font-size:19px;font-weight:600;margin-top:26px}
+p{margin-block:12px;max-width:68ch}
+ul,ol{padding-left:1.3em;max-width:66ch}
+li{margin-block:4px}
+a{color:var(--field)}
+a:focus-visible{outline:2px solid var(--field);outline-offset:2px}
+.bridge{font-style:italic;color:var(--muted);border-left:2px solid var(--rule);padding-left:14px;margin-top:22px}
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;padding-block:4px;margin:14px 0!important}
+.box{border-radius:6px;padding:14px 18px;margin:20px 0;border:1px solid var(--rule);background:var(--sheet)}
+.box > .tag{font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px}
+.box p{margin-block:8px}
+.box.ex > .tag{color:var(--field)}
+.box.fix{background:var(--copper-soft);border-color:transparent}
+.box.fix > .tag{color:var(--copper)}
+.box.why{background:var(--field-soft);border-color:transparent}
+.box.why > .tag{color:var(--field)}
+.box.key{background:var(--ok-soft);border-color:transparent}
+.box.key > .tag{color:var(--ok)}
+.ans{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;margin:18px 0}
+table{border-collapse:collapse;width:100%;font-size:16px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--sans);font-weight:600;font-size:15px;border-bottom:2px solid var(--ink)}
+nav.toc{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:4px 28px;font-size:16px}
+nav.toc h3{grid-column:1/-1;font-size:14px;font-family:var(--mono);font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:14px}
+nav.toc a{text-decoration:none;color:var(--ink);display:flex;gap:10px;padding:2px 0}
+nav.toc a span{font-family:var(--mono);font-size:13px;color:var(--field);min-width:2em;padding-top:3px}
+nav.toc a:hover{color:var(--field)}
+@media (max-width:560px){nav.toc{grid-template-columns:1fr} body{font-size:17px} mjx-container[display="true"]{font-size:86%} .box{padding:12px 14px}}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+footer{max-width:720px;margin:64px auto 0;padding-top:16px;border-top:1px solid var(--rule);color:var(--muted);font-size:15px}
+</style>
+
+<header class="top">
+  <div class="eyebrow">PHY 2049 · Calculus Physics II · Week 7 · Lecture notes Ch 43–47, rewritten</div>
+  <h1>Charge in Motion</h1>
+  <p class="lede">One continuous set of notes on DC circuits, RC circuits, magnetic forces, the fields currents make, and magnetism in matter. The whole thing grows out of two ideas: charge is conserved, and moving charge interacts through the magnetic field.</p>
+  <div class="legend">
+    <span><i style="background:var(--field)"></i>Worked example</span>
+    <span><i style="background:var(--field-soft);outline:1px solid var(--field)"></i>Derivation</span>
+    <span><i style="background:var(--copper)"></i>Correction to the original notes</span>
+    <span><i style="background:var(--ok)"></i>Key idea</span>
+  </div>
+  <nav class="toc" aria-label="Contents">
+    <h3>Part I · Circuits</h3>
+    <a href="#s1"><span>1</span>The two rules behind every circuit</a>
+    <a href="#s2"><span>2</span>Series and parallel, derived</a>
+    <a href="#s3"><span>3</span>Reducing networks</a>
+    <a href="#s4"><span>4</span>Kirchhoff's method in full</a>
+    <a href="#s5"><span>5</span>Real sources and combining them</a>
+    <a href="#s6"><span>6</span>Capacitors in combination</a>
+    <a href="#s7"><span>7</span>RC circuits</a>
+    <h3>Part II · Magnetism</h3>
+    <a href="#s8"><span>8</span>The magnetic force on a charge</a>
+    <a href="#s9"><span>9</span>How charges move in B</a>
+    <a href="#s10"><span>10</span>Force on a current</a>
+    <a href="#s11"><span>11</span>Torque and the magnetic dipole</a>
+    <a href="#s12"><span>12</span>Currents make fields: Biot–Savart</a>
+    <a href="#s13"><span>13</span>Forces between currents</a>
+    <a href="#s14"><span>14</span>Ampère's law</a>
+    <a href="#s15"><span>15</span>Magnetism in matter</a>
+    <a href="#s16"><span>16</span>Earth's field and applications</a>
+    <a href="#s17"><span>17</span>Formula sheet</a>
+  </nav>
+</header>
+
+<main>
+
+<div class="part">
+  <div class="eyebrow">Part I</div>
+  <h2>Circuits</h2>
+</div>
+
+<section class="topic" id="s1">
+<h2><span class="n">1</span>The two rules behind every circuit</h2>
+<p>A circuit is a closed conducting path with a source that gives energy to charge (a battery, a power supply, a charged capacitor) and a load that takes that energy (resistors, bulbs, motors). A schematic shows only how the elements connect, not how the real circuit looks. On the DC source symbol the long line is the positive terminal.</p>
+<p>Everything in Part I follows from two conservation laws and one rule for each element.</p>
+
+<h3>Junction rule: charge is conserved</h3>
+<p>A <b>node</b> (junction) is a point where three or more branches meet. Charge can't pile up in a wire, so the charge per second arriving at a node equals the charge per second leaving:</p>
+\[\sum I_{\text{in}} = \sum I_{\text{out}}.\]
+<p>Any stretch of wire with no element on it is a single node, however it is drawn. Spotting this is most of the work in recognizing parallel connections.</p>
+
+<h3>Loop rule: potential is single-valued</h3>
+<p>Electric potential is a property of a location, like height on a hill. If you walk around any closed loop and return to your starting point, you must come back to the same potential:</p>
+\[\sum_{\text{loop}} \Delta V = 0 .\]
+<p>This is energy conservation for a charge carried around the loop: every volt a source gives it, the elements take back.</p>
+
+<h3>Element rules</h3>
+<ul>
+  <li><b>Resistor:</b> Ohm's law, \(\Delta V = IR\), applies to each resistor individually. Going through a resistor <i>in the direction of the current</i> the potential drops by \(IR\).</li>
+  <li><b>Ideal source:</b> going from the − terminal to the + terminal the potential rises by \(\mathcal{E}\), whatever the current.</li>
+  <li><b>Capacitor:</b> going from the + plate to the − plate the potential drops by \(q/C\).</li>
+  <li><b>Wire:</b> no drop (resistance assumed zero).</li>
+</ul>
+<p>Power delivered to any element is \(P = IV\). For a resistor, substituting Ohm's law gives the three equivalent forms</p>
+\[P = IV = I^2R = \frac{V^2}{R}.\]
+</section>
+
+<section class="topic" id="s2">
+<h2><span class="n">2</span>Series and parallel, derived</h2>
+<p>Series and parallel rules are not separate laws. They are what the two rules above say about two simple arrangements.</p>
+
+<h3>Series: one path, so one current</h3>
+<p>Resistors are in series when current must pass through them one after the other, with no node between them. With no node, the junction rule forces the same current \(I\) through each. The loop rule then says the source's rise equals the sum of the drops:</p>
+\[\mathcal{E} = IR_1 + IR_2 + IR_3 + \cdots = I\,(R_1+R_2+R_3+\cdots)\]
+\[\Rightarrow\quad R_s = \sum_k R_k .\]
+<p>Larger resistors take larger shares of the voltage: \(V_k = IR_k\).</p>
+
+<h3>Parallel: two nodes, so one voltage</h3>
+<p>Resistors are in parallel when each one connects directly between the same two nodes. Each then has the same voltage \(V\) across it (the loop rule applied to the small loop through any two of them). The junction rule says the currents add:</p>
+\[I = \frac{V}{R_1}+\frac{V}{R_2}+\frac{V}{R_3}+\cdots\]
+\[\Rightarrow\quad \frac{1}{R_p} = \sum_k \frac{1}{R_k}.\]
+<p>\(R_p\) is always smaller than the smallest branch, because each branch adds another path for current.</p>
+
+<div class="box ex"><span class="tag">Worked example · series</span>
+<p>\(R_1 = 10\ \Omega\), \(R_2 = 15\ \Omega\), \(R_3 = 20\ \Omega\) in series with a 24 V battery.</p>
+<p>\(R_s = 45\ \Omega\), so \(I = 24/45 = 0.533\) A through every resistor.</p>
+<p>Drops: \(V_1 = 5.33\) V, \(V_2 = 8.00\) V, \(V_3 = 10.67\) V. Sum: 24.0 V, as the loop rule requires.</p>
+<p>Power: \(P = I^2R_s = (0.533)^2(45) = 12.8\) W, which equals \(\mathcal{E} I\).</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · parallel</span>
+<p>The same three resistors in parallel across 24 V.</p>
+\[R_p = \left(\tfrac{1}{10}+\tfrac{1}{15}+\tfrac{1}{20}\right)^{-1} = 4.62\ \Omega\]
+\[I = \frac{24}{4.62} = 5.2\ \text{A}.\]
+<p>Branch currents: \(24/10 = 2.4\) A, \(24/15 = 1.6\) A, \(24/20 = 1.2\) A. Sum: 5.2 A, as the junction rule requires.</p>
+</div>
+
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes wrote series power as \(P = IR_1 + IR_2 + \cdots\). Those terms are voltages. Power is \(P = I^2R_1 + I^2R_2 + \cdots\).</p>
+</div>
+
+<h3>Bulbs: reading brightness from the rules</h3>
+<p>A bulb's brightness tracks the power it dissipates. For identical bulbs on the same source:</p>
+<ul>
+  <li><b>Series bulbs are dimmer.</b> Adding a bulb raises \(R_s\), which lowers the shared current. Each bulb gets less power.</li>
+  <li><b>Parallel bulbs keep their brightness.</b> Each still has the full source voltage across it. Adding bulbs only makes the source supply more total current.</li>
+  <li><b>A burned-out bulb is an open circuit.</b> In series it breaks the only path, so all bulbs go out. In parallel only its own branch goes dark.</li>
+</ul>
+</section>
+
+<section class="topic" id="s3">
+<h2><span class="n">3</span>Reducing networks</h2>
+<p>Many circuits are nested combinations of series and parallel. Reduce them from the inside out:</p>
+<ol>
+  <li>Find resistors in series along a single path with no node between them, or resistors connected between the same two nodes.</li>
+  <li>Replace them with their equivalent and redraw.</li>
+  <li>Repeat until one resistance is left. Then \(I = \mathcal{E}/R_{\text{eq}}\).</li>
+  <li>Work backward through your redrawn circuits to find individual currents and voltages.</li>
+</ol>
+<p>Take bulb A in parallel with the series pair B–C (all identical). The B–C branch has twice the resistance, so it carries half as much current as A. A is brighter; B and C are equally dim. Removing A leaves B and C unchanged (the source voltage across their branch hasn't changed). Removing B breaks the B–C path, so C goes out and A is unaffected.</p>
+
+<div class="box ex"><span class="tag">Worked example · four resistors</span>
+<p>A 110 Ω resistor in series with a parallel combination: 180 Ω in one branch, 220 Ω and 250 Ω in series in the other. Source: 24 V (the value that produces the notes' 0.1 A).</p>
+<p>Inner series: \(220+250 = 470\ \Omega\).</p>
+\[\text{Parallel: } \left(\tfrac{1}{470}+\tfrac{1}{180}\right)^{-1} = 130\ \Omega\]
+\[\text{Total: } 110+130 = 240\ \Omega.\]
+<p>\(I = 24/240 = 0.100\) A. It all passes through the 110 Ω resistor, which has no node between it and the source.</p>
+<p>Voltage across the parallel block: \((0.100)(130) = 13.0\) V. Then \(I_{180} = 13.0/180 = 0.0722\) A and \(I_{470} = 13.0/470 = 0.0277\) A. They add to 0.100 A.</p>
+</div>
+
+<p class="bridge">Reduction fails when a circuit has more than one source in different branches, or a bridge-shaped connection. Then you go back to the two rules directly.</p>
+</section>
+
+<section class="topic" id="s4">
+<h2><span class="n">4</span>Kirchhoff's method in full</h2>
+<ol>
+  <li><b>Assign a current to each branch</b>, with a direction you pick. A wrong guess is harmless: that current just comes out negative. Keep the sign in every later equation.</li>
+  <li><b>Write the junction equations.</b> With \(n\) nodes you get \(n-1\) independent ones.</li>
+  <li><b>Choose loops</b> so every element is in at least one loop. Walk each loop in a fixed direction and add the potential changes:
+    <ul>
+      <li>Resistor, walking <i>with</i> the assumed current: \(-IR\). Walking against it: \(+IR\).</li>
+      <li>Source, walking − to +: \(+\mathcal{E}\). Walking + to −: \(-\mathcal{E}\).</li>
+    </ul>
+    Set each sum to zero.</li>
+  <li><b>Solve</b> the system. You need as many independent equations as unknown currents.</li>
+  <li><b>Check</b> by substituting back, or by confirming that power supplied by sources equals power dissipated.</li>
+</ol>
+
+<div class="box ex"><span class="tag">Worked example · single loop with two sources</span>
+<p>A 24 V battery and a 6 V battery that opposes it, with 12 Ω and 8 Ω resistors, all in one loop. Walking clockwise:</p>
+\[+24 - I(12) - 6 - I(8) = 0\]
+\[I = \frac{18\ \text{V}}{20\ \Omega} = 0.90\ \text{A}.\]
+<p>Opposing sources in series subtract. That's just the loop rule, not a separate rule for batteries.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · two loops</span>
+<p>\(V_1 = 10\) V, \(V_2 = 20\) V, \(V_3 = 30\) V, \(R_1 = 400\ \Omega\), \(R_2 = 500\ \Omega\). The junction is written as \(I_1 = I_2 + I_3\). From the loop equations in the lecture figure:</p>
+<p>Loop 1:</p>
+\[-I_1R_1 - V_2 - V_1 = 0\]
+\[I_1 = -\frac{V_1+V_2}{R_1} = -0.075\ \text{A}\]
+<p>Loop 2:</p>
+\[-I_3R_2 + V_3 + V_2 = 0\]
+\[I_3 = \frac{V_2+V_3}{R_2} = +0.100\ \text{A}\]
+<p>Junction: \(I_2 = I_1 - I_3 = -0.075 - 0.100 = -0.175\) A.</p>
+<p>So \(I_1\) and \(I_2\) both flow opposite to their drawn arrows.</p>
+</div>
+
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes solved \(I_1 = I_2 + I_3\) as \(I_2 = I_3 - I_1 = +0.175\) A. Solving it correctly gives \(I_2 = I_1 - I_3 = -0.175\) A. The magnitude matches but the direction is reversed. On an exam, the sign is the answer to "which way does it flow?"</p>
+</div>
+</section>
+
+<section class="topic" id="s5">
+<h2><span class="n">5</span>Real sources and combining them</h2>
+<h3>emf and internal resistance</h3>
+<p>A real source behaves like an ideal emf \(\mathcal{E}\) in series with a small internal resistance \(r\). The loop rule through it gives the <b>terminal voltage</b>, what a voltmeter across the terminals reads:</p>
+\[V_{\text{term}} = \mathcal{E} - Ir .\]
+<p>With no current, \(V_{\text{term}} = \mathcal{E}\). The more current you draw, the more the terminal voltage sags. For a generator, \(r\) is the resistance of its windings.</p>
+
+<div class="box ex"><span class="tag">Worked example · finding r</span>
+<p>A 9 V battery reads 9.0 V with the switch open. Closed through a 10 Ω load, it reads 7.0 V and 0.70 A flows.</p>
+\[r = \frac{\mathcal{E}-V_{\text{term}}}{I} = \frac{9.0-7.0}{0.70} = 2.86\ \Omega.\]
+<p>Check: \(I = \mathcal{E}/(R+r) = 9/12.86 = 0.70\) A. ✓</p>
+</div>
+
+<h3>Sources in series</h3>
+<p>Walk the loop: aligned sources add (\(+\mathcal{E}_1+\mathcal{E}_2\)), reversed ones subtract. A 50 V and a 20 V source aligned in series drive \(70/100 = 0.70\) A through 100 Ω. Reversed, they drive \(30/100 = 0.30\) A.</p>
+
+<h3>Sources in parallel</h3>
+<p>Identical batteries in parallel give the same voltage as one battery, but they share the current, so they last longer and can deliver more. Mismatched batteries in parallel are a different story, and Kirchhoff's rules show why.</p>
+
+<div class="box ex"><span class="tag">Worked example · mismatched batteries in parallel</span>
+<p>A 50 V and a 20 V battery, each with \(r = 1\ \Omega\), both connected + to + across a 100 Ω load. Call the shared terminal voltage \(V\). The junction rule at the top node gives</p>
+\[\frac{50-V}{1} + \frac{20-V}{1} = \frac{V}{100} \quad\Rightarrow\quad V = 34.8\ \text{V}.\]
+<p>The load gets 0.348 A. Meanwhile the 50 V battery pushes \(15.2\) A, and \(14.8\) A of it is forced <i>backward</i> through the 20 V battery. That's a big circulating current that heats both batteries.</p>
+<p>\(V\) came out near the average only because the two internal resistances were equal. In general \(V\) is the average weighted by \(1/r\), and with ideal (\(r=0\)) sources the circuit has no consistent solution at all.</p>
+</div>
+
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes stated \(V = (V_1+V_2)/2\) as a rule for batteries in parallel and computed 0.35 A. That formula only appears as a special case of the analysis above (equal internal resistances), and it hides the large, wasteful current between the batteries. Connecting batteries in parallel with reversed polarity doesn't "add to zero". It is a short circuit through the internal resistances, and it can make batteries overheat.</p>
+</div>
+
+<h3>Practical aside: reading resistors and wires</h3>
+<p>The first two color bands are digits, the third is the power-of-ten multiplier, and the fourth is the tolerance. Digits 0–9 are black, brown, red, orange, yellow, green, blue, violet, grey, white. The standard tolerance bands are brown ±1%, red ±2%, gold ±5%, silver ±10%, and no band ±20%.</p>
+<ul>
+  <li>Brown–red–red–gold is \(12\times10^2 = 1200\ \Omega \pm 5\%\) (±60 Ω).</li>
+  <li>Green–blue–black–silver is \(56\ \Omega \pm 10\%\) (±5.6 Ω).</li>
+</ul>
+<p>Wiring conventions: DC uses red for +, black for − or ground. US AC uses black for hot, white for neutral (it can still carry current and be dangerous) and green or bare for earth ground.</p>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes list pink as the 1% tolerance band. The standard 1% band is brown.</p>
+</div>
+</section>
+
+<section class="topic" id="s6">
+<h2><span class="n">6</span>Capacitors in combination</h2>
+<p>A capacitor stores separated charge: \(+q\) on one plate, \(-q\) on the other, with \(q = CV\). The same two rules give its combination laws, with the roles of voltage and charge swapped compared with resistors.</p>
+
+<h3>Parallel: same voltage, charges add</h3>
+<p>Each capacitor sits across the same two nodes, so each has voltage \(V\). The total charge drawn from the source is</p>
+\[q = C_1V + C_2V + \cdots \quad\Rightarrow\quad C_p = \sum_k C_k .\]
+
+<h3>Series: same charge, voltages add</h3>
+<p>The wire between two series capacitors, together with the plates it connects, is an isolated conductor that started neutral. Charge conservation means that when one plate gets \(-q\), the other gets \(+q\). So every series capacitor holds the same \(q\). The loop rule adds their voltages:</p>
+\[V = \frac{q}{C_1}+\frac{q}{C_2}+\cdots \quad\Rightarrow\quad \frac{1}{C_s} = \sum_k \frac{1}{C_k}.\]
+
+<h3>Energy</h3>
+<p>Moving charge \(dq\) onto a capacitor already at \(V = q/C\) takes work \(dW = (q/C)\,dq\). Integrating from 0 to \(Q\):</p>
+\[U = \int_0^{Q} \frac{q}{C}\,dq = \frac{Q^2}{2C} = \tfrac12 CV^2 = \tfrac12 QV .\]
+
+<div class="box ex"><span class="tag">Worked example · three 20 µF capacitors at 1000 V</span>
+<p><b>Parallel.</b> \(C_p = 60\ \mu\text{F}\).</p>
+<ul>
+  <li>Each capacitor has 1000 V across it and holds \(q = (20\ \mu\text{F})(1000) = 0.020\) C.</li>
+  <li>Total charge: 0.060 C.</li>
+  <li>\(U = \tfrac12(60\times10^{-6})(1000)^2 = 30\) J.</li>
+</ul>
+<p><b>Series.</b> \(C_s = 6.67\ \mu\text{F}\).</p>
+<ul>
+  <li>Every capacitor holds \(q = C_sV = 6.67\times10^{-3}\) C.</li>
+  <li>Each has \(q/C = 333\) V, and the three add to 1000 V.</li>
+  <li>\(U = \tfrac12(6.67\times10^{-6})(1000)^2 = 3.33\) J.</li>
+</ul>
+<p>At the same voltage, the parallel bank stores 9 times as much energy.</p>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>In the parallel case the notes summed only two of the three charges (0.04 C). With three capacitors the total is 0.06 C. The same example also says "at 100 V" but calculates at 1,000 V; the energies above are for 1,000 V.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · combination</span>
+<p>Take \(C_1 = 1\ \mu\text{F}\) in series with \(C_2 = 5\ \mu\text{F}\), and that pair in parallel with \(C_3 = 8\ \mu\text{F}\) (values chosen to match the notes' answer).</p>
+\[C_{12} = \left(\tfrac11+\tfrac15\right)^{-1} = 0.833\ \mu\text{F}\]
+\[C_{\text{eq}} = 0.833 + 8 = 8.83\ \mu\text{F}.\]
+</div>
+<p class="bridge">So far every circuit has been in steady state. Put a resistor and a capacitor together and the circuit needs time to reach that state. Describing that time dependence is where calculus comes in.</p>
+</section>
+
+<section class="topic" id="s7">
+<h2><span class="n">7</span>RC circuits</h2>
+<h3>Charging</h3>
+<p>A source \(\mathcal{E}\), resistor \(R\) and uncharged capacitor \(C\) are in series, and the switch closes at \(t = 0\). The loop rule holds at every instant:</p>
+\[\mathcal{E} - IR - \frac{q}{C} = 0, \qquad I = \frac{dq}{dt}.\]
+<p>That's a first-order differential equation for \(q(t)\).</p>
+
+<div class="box why"><span class="tag">Derivation</span>
+<p>Rearrange and separate variables:</p>
+\[R\frac{dq}{dt} = \frac{C\mathcal{E}-q}{C}\]
+\[\int_0^{q}\frac{dq'}{C\mathcal{E}-q'} = \int_0^{t}\frac{dt'}{RC}.\]
+<p>Integrate both sides:</p>
+\[-\ln\!\left(\frac{C\mathcal{E}-q}{C\mathcal{E}}\right) = \frac{t}{RC}.\]
+<p>Solve for \(q\):</p>
+\[q(t) = Q_f\left(1-e^{-t/\tau}\right)\]
+<p>with final charge \(Q_f = C\mathcal{E}\) and time constant \(\tau = RC\).</p>
+<p>Differentiate to get the current:</p>
+\[I(t) = \frac{dq}{dt} = \frac{\mathcal{E}}{R}\,e^{-t/\tau}.\]
+</div>
+
+<p>Read the physics off the solution:</p>
+<ul>
+  <li><b>At \(t=0\)</b> the capacitor has no charge and no voltage, so it acts like a plain wire. All of \(\mathcal{E}\) is across \(R\), and \(I_0 = \mathcal{E}/R\).</li>
+  <li><b>As \(t\to\infty\)</b> the current dies out and the capacitor acts like an open switch. All of \(\mathcal{E}\) is across \(C\).</li>
+  <li><b>At every moment</b> \(V_R + V_C = \mathcal{E}\).</li>
+  <li><b>The time constant</b> \(\tau = RC\) sets the scale. At \(t = \tau\) the capacitor has \(1-e^{-1} = 63.2\%\) of its final charge. After \(5\tau\) it has 99.3%.</li>
+</ul>
+<p>The capacitor voltage follows the same shape: \(V_C(t) = \mathcal{E}(1-e^{-t/\tau})\). To find when a given charge is reached, solve for \(t\):</p>
+\[t = -\tau\,\ln\!\left(1-\frac{q}{Q_f}\right).\]
+
+<h3>Discharging</h3>
+<p>Remove the source and let a capacitor with initial charge \(Q_0\) discharge through \(R\). Now the capacitor is the source, and the loop rule reads \(IR + q/C = 0\) with \(I = dq/dt\):</p>
+\[\frac{dq}{dt} = -\frac{q}{RC} \quad\Rightarrow\quad q(t) = Q_0\,e^{-t/\tau}\]
+\[I(t) = -\frac{Q_0}{RC}\,e^{-t/\tau}.\]
+<p>The minus sign means the current flows opposite to the charging direction. After one \(\tau\), 36.8% of the charge remains.</p>
+
+<div class="box why"><span class="tag">Derivation · where does the energy go?</span>
+<p>While charging, the source does work \(Q_f\mathcal{E} = C\mathcal{E}^2\). The capacitor ends with \(\tfrac12 C\mathcal{E}^2\). The resistor dissipates</p>
+\[\int_0^\infty I^2R\,dt = \frac{\mathcal{E}^2}{R}\int_0^\infty e^{-2t/\tau}dt\]
+\[= \frac{\mathcal{E}^2}{R}\cdot\frac{\tau}{2} = \tfrac12 C\mathcal{E}^2.\]
+<p>Exactly half the energy is always lost as heat, whatever the value of \(R\). A bigger \(R\) only makes the charging slower.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · charging</span>
+<p>\(\mathcal{E} = 12\) V, \(R = 20\ \text{k}\Omega\), \(C = 100\ \mu\text{F}\). So \(\tau = 2.0\) s, \(Q_f = 1.2\) mC and \(I_0 = 0.60\) mA.</p>
+<div class="tbl"><table>
+<tr><th>t</th><th>q</th><th>I</th><th>V<sub>R</sub></th><th>V<sub>C</sub></th></tr>
+<tr><td>2 s (1τ)</td><td>0.759 mC</td><td>0.221 mA</td><td>4.41 V</td><td>7.59 V</td></tr>
+<tr><td>20 s (10τ)</td><td>1.19995 mC</td><td>2.7×10⁻⁸ A</td><td>5.4×10⁻⁴ V</td><td>11.9995 V</td></tr>
+</table></div>
+<p>Time to half charge: \(t = -\tau\ln(0.5) = \tau\ln 2 = 1.39\) s.</p>
+<p>Time to reach 10 V: \(t = -2\ln(2/12) = 3.58\) s.</p>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes give 1.36 s for half charge; it should be 1.39 s, the value they get themselves in the discharge example. They give 3.2 s for 10 V; it should be 3.58 s. The notes also call charging "a natural log function" and call \(e\) "the natural logarithm". Charging is exponential, and \(e \approx 2.718\) is the base of the natural log.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · discharging</span>
+<p>The same capacitor, charged to 12 V, discharges through 20 kΩ. \(Q_0 = 1.2\) mC and \(\tau = 2\) s.</p>
+<ul>
+  <li>After 2 s: \(q = 0.441\) mC.</li>
+  <li>After 20 s: \(q = 5.4\times10^{-8}\) C.</li>
+  <li>After 3 s: \(V = 12e^{-1.5} = 2.68\) V.</li>
+  <li>Time to fall to 1 V: \(t = -2\ln(1/12) = 4.97\) s.</li>
+  <li>Time to lose half the charge: 1.39 s.</li>
+</ul>
+</div>
+
+<p class="bridge">Part I treated current only as something that carries energy to a load. Moving charge also creates and feels a second field, and that's the rest of this week.</p>
+</section>
+
+<div class="part">
+  <div class="eyebrow">Part II</div>
+  <h2>Magnetism</h2>
+</div>
+
+<section class="topic" id="s8">
+<h2><span class="n">8</span>The magnetic force on a charge</h2>
+<p>Each field is defined by the force it exerts on the property it couples to:</p>
+<ul>
+  <li>gravity couples to mass: \(\vec g = \vec F/m\);</li>
+  <li>the electric field couples to charge: \(\vec E = \vec F/q\);</li>
+  <li>the magnetic field couples to <b>moving</b> charge.</li>
+</ul>
+<p>A charge \(q\) moving with velocity \(\vec v\) through a magnetic field \(\vec B\) feels</p>
+\[\vec F_B = q\,\vec v\times\vec B, \qquad |\vec F_B| = |q|\,vB\sin\varphi,\]
+<p>where \(\varphi\) is the angle between \(\vec v\) and \(\vec B\). The unit is the tesla: \(1\ \text{T} = 1\ \text{N}/(\text{A·m})\). One gauss is \(10^{-4}\) T. Earth's field is about \(5\times10^{-5}\) T; a hospital MRI runs at 1.5–3 T.</p>
+
+<p>Everything notable about this force comes from the cross product:</p>
+<ul>
+  <li><b>No force on a charge at rest</b> (\(v = 0\)). A charged rod held still near a magnet feels nothing.</li>
+  <li><b>No force along the field</b> (\(\varphi = 0\)). The force is largest when \(\vec v\perp\vec B\).</li>
+  <li><b>The force is perpendicular to both \(\vec v\) and \(\vec B\).</b> Its direction comes from the right-hand rule (fingers along \(\vec v\), curl toward \(\vec B\), thumb gives \(\vec v\times\vec B\)). Reverse it for a negative charge.</li>
+  <li><b>The magnetic force does no work.</b> Since \(\vec F_B\perp\vec v\), the power it delivers is \(\vec F_B\cdot\vec v = 0\), so \(dK/dt = 0\). A magnetic field can turn a charge but can never speed it up or slow it down.</li>
+</ul>
+<p>Drawings use ⊙ (dots) for a field pointing out of the page and ⊗ (crosses) for a field into the page. As a check on the right-hand rule, with \(\hat x\) to the right, \(\hat y\) up and \(\hat z\) out of the page:</p>
+<ul>
+  <li>\(\vec v\) up, \(\vec B\) right: \(\hat y\times\hat x = -\hat z\), so the force is into the page.</li>
+  <li>\(\vec v\) up, \(\vec B\) out: \(\hat y\times\hat z = +\hat x\), so the force is to the right.</li>
+  <li>\(\vec v\) right, \(\vec B\) in: \(\hat x\times(-\hat z) = +\hat y\), so the force is up.</li>
+</ul>
+<p>If both fields are present, the total force is the <b>Lorentz force</b>:</p>
+\[\vec F = q\left(\vec E + \vec v\times\vec B\right).\]
+<p>The electric part acts along \(\vec E\) regardless of velocity and can do work. The magnetic part depends on velocity and does no work.</p>
+
+<div class="box ex"><span class="tag">Worked example</span>
+<p>\(q = 200\ \mu\text{C}\), \(v = 6\times10^6\) m/s, \(B = 2\times10^{-3}\) T.</p>
+<ul>
+  <li>At \(\varphi = 90^\circ\): \(F = (200\times10^{-6})(6\times10^6)(2\times10^{-3}) = 2.4\) N.</li>
+  <li>At \(30^\circ\): \(F = 1.2\) N.</li>
+  <li>At \(0^\circ\): \(F = 0\).</li>
+</ul>
+</div>
+</section>
+
+<section class="topic" id="s9">
+<h2><span class="n">9</span>How charges move in B</h2>
+<h3>Perpendicular entry: a circle</h3>
+<p>If \(\vec v\perp\vec B\), the force has constant magnitude, stays perpendicular to the velocity and never changes the speed. That is exactly what a centripetal force does, so the particle moves in a circle:</p>
+\[|q|vB = \frac{mv^2}{r} \quad\Rightarrow\quad r = \frac{mv}{|q|B}, \qquad T = \frac{2\pi r}{v} = \frac{2\pi m}{|q|B}.\]
+<p>The period doesn't depend on speed: faster particles move in bigger circles and take the same time. That fact is how a cyclotron works. Heavier, faster or more weakly charged particles curve less. In a track diagram, curving in the direction \(q\vec v\times\vec B\) predicts for a positive charge means the particle is positive; curving the other way means negative; a straight track means neutral.</p>
+
+<h3>General entry: a helix</h3>
+<p>Split \(\vec v\) into a part along \(\vec B\), \(v_\parallel = v\cos\varphi\), and a part across it, \(v_\perp = v\sin\varphi\). Only \(v_\perp\) feels a force, so the motion is a circle in the plane perpendicular to \(\vec B\) combined with uniform drift along \(\vec B\): a helix.</p>
+\[r = \frac{m v_\perp}{|q|B} = \frac{mv\sin\varphi}{|q|B}, \qquad \text{pitch} = v_\parallel T = \frac{2\pi m\,v\cos\varphi}{|q|B}.\]
+
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes wrote \(r = mv/(qB\sin\varphi)\). The \(\sin\varphi\) belongs in the numerator. Only \(v_\perp\) goes around the circle, so the centripetal condition is \(|q|v_\perp B = mv_\perp^2/r\). As \(\varphi\to 0\) the true radius shrinks to zero (the particle just slides along the field line); the notes' formula would blow up.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · proton vs. electron</span>
+<p>Both move at \(3\times10^6\) m/s perpendicular to a 1 T field.</p>
+<ul>
+  <li><b>Proton:</b> \(r = \dfrac{(1.67\times10^{-27})(3\times10^6)}{(1.6\times10^{-19})(1)} = 3.13\) cm, and \(T = 65.6\) ns.</li>
+  <li><b>Electron:</b> \(r = 17.1\ \mu\)m, and \(T = 35.8\) ps.</li>
+</ul>
+<p>The mass ratio of about 1836 shows up directly in both the radius and the period. If the proton enters at 30° to the field instead, its helix has radius 1.57 cm and pitch 17.0 cm.</p>
+</div>
+
+<p>The helix explains the <b>aurora</b>. Charged solar-wind particles spiral around Earth's field lines and follow them down toward the magnetic poles. There they collide with oxygen and nitrogen in the upper atmosphere, which then emit light. Jupiter and Saturn have aurorae for the same reason.</p>
+
+<h3>Using E and B together</h3>
+<p><b>Velocity selector.</b> Set \(\vec E\) and \(\vec B\) perpendicular to each other and to the beam so the two forces oppose. A particle passes undeflected only when \(qE = qvB\):</p>
+\[v = \frac{E}{B}.\]
+<p>The selected speed doesn't depend on charge or mass. Faster particles are pushed toward the magnetic force, slower ones toward the electric force. For \(E = 1200\) V/m and \(B = 2\times10^{-3}\) T, \(v = 6.0\times10^5\) m/s.</p>
+<p><b>Mass spectrometer.</b> An ion of charge \(q\) is accelerated from rest through \(\Delta V\), so \(\tfrac12 mv^2 = q\Delta V\). It then enters \(\vec B\) and moves on a circle with \(r = mv/(qB)\). Eliminating \(v\):</p>
+\[m = \frac{qB^2r^2}{2\,\Delta V}.\]
+
+<div class="box ex"><span class="tag">Worked example · mass spectrometer</span>
+<p>\(q = 1.6\times10^{-19}\) C, \(\Delta V = 1000\) V, \(B = 2\) T.</p>
+<ul>
+  <li>\(r = 7.9\) mm gives \(m = 2.0\times10^{-26}\) kg = 12.0 u, carbon-12.</li>
+  <li>\(r = 18.3\) mm gives \(m = 1.07\times10^{-25}\) kg = 64.5 u, zinc.</li>
+</ul>
+</div>
+</section>
+
+<section class="topic" id="s10">
+<h2><span class="n">10</span>Force on a current</h2>
+<p>A current is many moving charges. Take a segment \(d\vec L\) of wire (pointing along the current) with cross-section \(A\) and \(n\) carriers per volume, each moving at drift velocity \(\vec v_d\). The segment holds \(nA\,dL\) carriers, and each feels \(q\vec v_d\times\vec B\). Since \(I = nqv_dA\):</p>
+\[d\vec F = (nA\,dL)\,q\,\vec v_d\times\vec B\]
+\[= I\,d\vec L\times\vec B.\]
+<p>For a straight wire of length \(L\) in a uniform field this integrates to</p>
+\[\vec F = I\vec L\times\vec B, \qquad F = ILB\sin\varphi .\]
+<p>For a curved wire or a non-uniform field, you integrate \(I\,d\vec L\times\vec B\) along the wire.</p>
+
+<div class="box ex"><span class="tag">Worked example</span>
+<p>\(L = 1\) m, \(I = 2\) A, \(B = 2\times10^{-3}\) T.</p>
+<ul>
+  <li>At \(45^\circ\): \(F = 2.83\times10^{-3}\) N.</li>
+  <li>At \(90^\circ\) (wire perpendicular to the field, including a field pointing into the page): \(F = 4.0\times10^{-3}\) N.</li>
+  <li>At \(0^\circ\): \(F = 0\).</li>
+</ul>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>Part D in the notes uses \(\sin 90^\circ\) but reports \(2.8\times10^{-3}\) N, copied from the 45° case. With \(\sin 90^\circ = 1\) it's \(4.0\times10^{-3}\) N.</p>
+</div>
+
+<h3>The Hall effect</h3>
+<p>Put a current-carrying strip (width \(w\), thickness \(t\)) in a perpendicular field. The carriers are pushed sideways and pile up on one edge, which leaves the opposite edge with the opposite charge. That builds a transverse electric field \(E_H\) until it cancels the magnetic push: \(qE_H = qv_dB\). The voltage across the strip's width is</p>
+\[V_H = E_H\,w = v_d B w = \frac{IB}{nqt}.\]
+<p>Two things follow. First, a measured \(V_H\) gives \(B\), which is how Hall probes (and the sensors in phones and car ABS systems) work. Second, the <b>sign</b> of \(V_H\) tells you the sign of the carriers. That experiment is how we know the carriers in metals are electrons, while some semiconductors carry current with positive "holes".</p>
+<div class="box ex"><span class="tag">Worked example</span>
+<p>A copper strip with \(n = 8.5\times10^{28}\ \text{m}^{-3}\), \(t = 0.10\) mm, carrying \(I = 2\) A in \(B = 1\) T:</p>
+\[V_H = \frac{(2)(1)}{(8.5\times10^{28})(1.6\times10^{-19})(10^{-4})}\]
+\[\approx 1.5\ \mu\text{V}.\]
+<p>The voltage is tiny because metals have so many carriers. Hall sensors are made from semiconductors, where \(n\) is far smaller.</p>
+</div>
+</section>
+
+<section class="topic" id="s11">
+<h2><span class="n">11</span>Torque and the magnetic dipole</h2>
+<p>Put a rectangular loop (sides \(a\) and \(b\), current \(I\)) in a uniform field. The forces on opposite sides are equal and opposite, so the net force is zero. They don't act along the same line, though, so they produce a torque. Let \(\varphi\) be the angle between the loop's normal and \(\vec B\). The two sides of length \(a\) each feel \(IaB\), with lever arm \((b/2)\sin\varphi\):</p>
+\[\tau = 2\,(IaB)\,\tfrac{b}{2}\sin\varphi = IAB\sin\varphi, \qquad A = ab.\]
+<p>With \(N\) turns, multiply by \(N\). That combination defines the loop's <b>magnetic dipole moment</b>, a vector along the normal given by the right-hand rule (curl fingers with the current, thumb points along \(\vec\mu\)):</p>
+\[\vec\mu = NI\vec A, \qquad \vec\tau = \vec\mu\times\vec B, \qquad U = -\vec\mu\cdot\vec B.\]
+<ul>
+  <li>The torque turns \(\vec\mu\) to line up with \(\vec B\), which is the minimum-energy position \(U = -\mu B\).</li>
+  <li>A compass needle does exactly the same thing, so a current loop and a small bar magnet are the same kind of object. The side of the loop \(\vec\mu\) points out of acts as the north pole.</li>
+  <li>An electric motor keeps a coil rotating by reversing its current every half-turn, just before \(\vec\mu\) lines up with \(\vec B\).</li>
+</ul>
+<div class="box key"><span class="tag">Key idea</span>
+<p>Every magnet, from a fridge magnet to an electron, is described by a dipole moment \(\vec\mu\). Section 15 uses this to explain magnetic materials.</p>
+</div>
+<p class="bridge">So far fields have been given and we asked what they do to charges. The other half of the story runs the opposite way: currents create magnetic fields.</p>
+</section>
+
+<section class="topic" id="s12">
+<h2><span class="n">12</span>Currents make fields: Biot–Savart</h2>
+<p>Each small current element \(I\,d\vec L\) contributes a field at a point displaced by \(\vec r\) from it (unit vector \(\hat r\) points from the element to the point):</p>
+\[d\vec B = \frac{\mu_0}{4\pi}\,\frac{I\,d\vec L\times\hat r}{r^2}\]
+\[\vec B = \frac{\mu_0 I}{4\pi}\int\frac{d\vec L\times\hat r}{r^2}.\]
+<p>Here \(\mu_0 = 4\pi\times10^{-7}\ \text{T·m/A} \approx 1.257\times10^{-6}\ \text{T·m/A}\) is the permeability of free space. The law is like Coulomb's law (an inverse square), but the cross product makes the field wrap around the current instead of pointing away from it. For its direction use <b>right-hand rule 2</b>: thumb along the current, and your curled fingers show how \(\vec B\) circulates.</p>
+
+<h3>Field at the center of a loop</h3>
+<p>At the center of a loop of radius \(R\), every element is at distance \(R\) and \(d\vec L\perp\hat r\). Every contribution points the same way, along the axis. With \(dL = R\,d\theta\):</p>
+\[B = \frac{\mu_0 I}{4\pi R^2}\int_0^{2\pi}R\,d\theta = \frac{\mu_0 I}{2R}.\]
+<p>With \(N\) turns, \(B = N\mu_0 I/2R\).</p>
+
+<h3>Field of a straight wire of length L</h3>
+<p>Put the wire on the \(x\)-axis from \(-L/2\) to \(L/2\), and the point P a distance \(s\) away from its midpoint. Then \(r^2 = x^2+s^2\) and \(|d\vec L\times\hat r| = dx\,\sin\varphi = dx\,s/r\):</p>
+\[B = \frac{\mu_0 I}{4\pi}\int_{-L/2}^{L/2}\frac{s\,dx}{(x^2+s^2)^{3/2}}\]
+\[= \frac{\mu_0 I}{4\pi s}\left[\frac{x}{\sqrt{x^2+s^2}}\right]_{-L/2}^{L/2}\]
+\[= \frac{\mu_0 I}{4\pi s}\,\frac{L}{\sqrt{(L/2)^2+s^2}}.\]
+<p>Now let the wire become very long compared with \(s\), so \(\sqrt{(L/2)^2+s^2}\to L/2\):</p>
+\[\boxed{\,B = \frac{\mu_0 I}{2\pi s}\,} \qquad \text{(long straight wire)}.\]
+<p>The field forms circles around the wire and falls off as \(1/s\), slower than \(1/s^2\), because a long wire is a line of sources rather than a point. Section 14 gets the same result in one line from Ampère's law.</p>
+
+<div class="box ex"><span class="tag">Worked example · single wire</span>
+<p>A long wire carries 2 A upward. RHR 2 puts \(\vec B\) into the page on the right of the wire and out of the page on the left.</p>
+<ul>
+  <li>1 cm to the right: \(B = \dfrac{\mu_0(2)}{2\pi(0.01)} = 4.0\times10^{-5}\) T, into the page.</li>
+  <li>1 m to the left: \(B = 4.0\times10^{-7}\) T, out of the page.</li>
+</ul>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · superposition</span>
+<p>Fields from several sources add as vectors. Two parallel wires are 20 cm apart, carrying \(I_1 = 2\) A and \(I_2 = 5\) A, both upward. Point P is midway, so \(r = 0.10\) m from each.</p>
+<ul>
+  <li>Wire 1 (P is to its right): \(B_1 = 4.0\times10^{-6}\) T, into the page.</li>
+  <li>Wire 2 (P is to its left): \(B_2 = 1.0\times10^{-5}\) T, out of the page.</li>
+</ul>
+\[B_z = -4.0\times10^{-6} + 1.0\times10^{-5}\ \text{T}\]
+<p>so \(B = 6.0\times10^{-6}\) T, out of the page.</p>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes used \(r = 0.01\) m for this midpoint, which gave answers 10 times too large. Halfway across 20 cm is 0.10 m.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · coil</span>
+<p>A 10-turn coil with \(R = 1\) cm carries 2 A. The field at its center is \(B = 10\,\mu_0(2)/(2\times0.01) = 1.26\times10^{-3}\) T.</p>
+</div>
+</section>
+
+<section class="topic" id="s13">
+<h2><span class="n">13</span>Forces between currents</h2>
+<p>Combine the last two ideas. Wire 1 makes a field at wire 2, \(B_1 = \mu_0I_1/2\pi d\), and wire 2's current feels \(I_2LB_1\) in that field. Wire 2 acts on wire 1 in the same way:</p>
+\[\frac{F}{L} = \frac{\mu_0 I_1 I_2}{2\pi d}.\]
+<p>Parallel currents attract and antiparallel currents repel. You can check this with RHR 2 (to find \(\vec B\)) followed by RHR 1 (to find \(\vec F\)). The two forces are always equal and opposite, as Newton's third law requires. This interaction originally defined the ampere.</p>
+
+<div class="box ex"><span class="tag">Worked example</span>
+<p>Two parallel wires 2 m long and 1 cm apart carry 1 A and 2 A.</p>
+<ul>
+  <li>Wire 1's field at wire 2: \(B_1 = 2.0\times10^{-5}\) T.</li>
+  <li>Wire 2's field at wire 1: \(B_2 = 4.0\times10^{-5}\) T.</li>
+</ul>
+\[F_1 = I_1LB_2 = (1)(2)(4.0\times10^{-5}) = 8.0\times10^{-5}\ \text{N}\]
+\[F_2 = I_2LB_1 = (2)(2)(2.0\times10^{-5}) = 8.0\times10^{-5}\ \text{N}\]
+<p>The fields differ, but the forces match.</p>
+</div>
+<p>Current loops behave the same way. Two coaxial loops with currents circulating the same way attract, because their dipoles point the same way (N of one faces S of the other). Loops with opposite currents repel.</p>
+</section>
+
+<section class="topic" id="s14">
+<h2><span class="n">14</span>Ampère's law</h2>
+<p>For steady currents, the magnetic field around any closed path is tied to the current passing through the surface that path bounds:</p>
+\[\oint \vec B\cdot d\vec L = \mu_0\, I_{\text{enc}}.\]
+<p>To find \(I_{\text{enc}}\), curl the fingers of your right hand in the direction you walk the loop; currents along your thumb count as positive. Ampère's law is to magnetism what Gauss's law is to electrostatics. It's always true, but you can use it to <i>solve</i> for \(B\) only when symmetry makes \(\vec B\) parallel to \(d\vec L\) and constant in magnitude along the path. Then the integral becomes \(B\times\)(path length).</p>
+
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes say "currents outside the loop do not contribute to the \(\vec B\)-field." That's wrong. Outside currents do contribute to \(\vec B\) at points on the loop. Their contributions just add up to zero around the <i>closed integral</i>. So Ampère's law gives you \(B\) only when symmetry removes the question of where the field came from.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · enclosed current</span>
+<p>A loop encloses two wires carrying 2 A and 3 A.</p>
+<ul>
+  <li>Both currents in the same direction: \(\oint\vec B\cdot d\vec L = \mu_0(5\ \text{A}) = 6.28\times10^{-6}\) T·m.</li>
+  <li>The 2 A current reversed: \(\oint\vec B\cdot d\vec L = \mu_0(1\ \text{A}) = 1.26\times10^{-6}\) T·m.</li>
+</ul>
+</div>
+
+<h3>Long straight wire, outside and inside</h3>
+<p><b>Outside.</b> Take a circle of radius \(s\) around the wire: \(B(2\pi s) = \mu_0 I\), so \(B = \mu_0 I/2\pi s\). That matches the Biot–Savart result in one line.</p>
+<p><b>Inside.</b> Now take a circle inside a wire of radius \(R\) whose current is spread uniformly. It encloses only \(I\,s^2/R^2\):</p>
+\[B = \frac{\mu_0 I\,s}{2\pi R^2}\quad (s<R).\]
+<p>The field rises linearly from zero at the center, peaks at the surface, then falls off as \(1/s\).</p>
+
+<h3>Solenoid</h3>
+<p>A long, tightly wound coil with \(n = N/L\) turns per meter. By symmetry the field inside is uniform and along the axis, and the field outside is nearly zero. Take a rectangular path with one side of length \(\ell\) inside, one side outside, and two ends perpendicular to the axis. Only the inside side contributes, and it encloses \(n\ell\) turns:</p>
+\[B\ell = \mu_0 (n\ell) I \quad\Rightarrow\quad B = \mu_0 n I = \frac{\mu_0 N I}{L}.\]
+<p>The field doesn't depend on the solenoid's radius or on where you are inside it.</p>
+
+<h3>Toroid</h3>
+<p>A solenoid bent into a ring. Take a circle of radius \(r\) inside the windings. It encloses \(N\) turns, each carrying \(I\):</p>
+\[B(2\pi r) = \mu_0 N I \quad\Rightarrow\quad B = \frac{\mu_0 N I}{2\pi r}.\]
+<p>Outside the ring, a circular path encloses zero net current (as much goes in as comes out), so \(B = 0\). The field is completely contained.</p>
+
+<div class="box ex"><span class="tag">Worked example · solenoid</span>
+<p>A 0.10 m long, air-core solenoid has 1000 turns and carries 2 A:</p>
+\[B = \frac{(1.257\times10^{-6})(1000)(2)}{0.10} = 0.025\ \text{T}.\]
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes then put in an iron core with \(\mu \approx 5000\mu_0\) and reported 130 T. That's physically impossible: iron <b>saturates</b> at about 2 T, once all its domains are aligned. The strongest continuous-field magnets ever built reach about 45 T. A ferromagnet's \(\mu\) is not a constant, so \(B = \mu nI\) is only a small-field estimate. (The notes also call \(\mu\) "permittivity"; the correct word is permeability.)</p>
+</div>
+
+<h3>Gauss's law for magnetism</h3>
+<p>Magnetic field lines never begin or end; they always close on themselves. Mathematically, the net magnetic flux out of any closed surface is zero:</p>
+\[\oint \vec B\cdot d\vec A = 0.\]
+<p>This is the statement that no magnetic monopoles have ever been found. It's why breaking a bar magnet gives two smaller magnets, each with both poles, rather than a separate north and south. Outside a magnet the field lines run from N to S; inside they run S to N and close the loop.</p>
+</section>
+
+<section class="topic" id="s15">
+<h2><span class="n">15</span>Magnetism in matter</h2>
+<p>Every source of magnetism is moving charge. A permanent magnet is ultimately a very large number of atomic magnetic dipoles (Section 11) lined up.</p>
+
+<h3>Where atomic dipoles come from</h3>
+<ul>
+  <li><b>Orbital moment:</b> an electron orbiting the nucleus is a tiny current loop.</li>
+  <li><b>Spin moment:</b> the electron also has an <i>intrinsic</i> magnetic moment tied to its spin. It's usually the larger contribution. Spin is a quantum property, not a literal spinning ball: a classical sphere would need its surface to move faster than light to produce the measured moment.</li>
+  <li><b>Nuclear moments</b> exist but are hundreds of times smaller, since a dipole moment scales roughly like \(q/m\) and a proton is 1836 times heavier than an electron. They're what an MRI detects.</li>
+</ul>
+<p>In most atoms, electrons pair up with opposite spins and their moments cancel. The pairing is required by the Pauli exclusion principle (two electrons in one orbital must have opposite spins), not by magnetic attraction between them. Atoms with unpaired electrons, such as iron with four unpaired 3d electrons, keep a net moment.</p>
+
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes describe spin as the electron "spinning like a top" and say two electrons share an energy level because their magnetic poles line up N-to-S. Spin is intrinsic rather than a rotation, and pairing comes from the Pauli exclusion principle.</p>
+</div>
+
+<h3>Three responses to an applied field</h3>
+<p>Materials are compared by their permeability \(\mu\), or the relative permeability \(\mu_r = \mu/\mu_0\).</p>
+<div class="tbl"><table>
+<tr><th>Type</th><th>μ<sub>r</sub></th><th>What happens</th><th>Examples</th></tr>
+<tr><td>Diamagnetic</td><td>slightly &lt; 1</td><td>The applied field changes electron orbits so they oppose it (like Lenz's law at the atomic scale). The material is weakly <b>repelled</b>. Every material has this effect; it only shows up when nothing stronger is present.</td><td>Copper, water, glass, graphite</td></tr>
+<tr><td>Paramagnetic</td><td>slightly &gt; 1</td><td>Existing atomic dipoles partly align with the field, which heat keeps randomizing. The material is weakly attracted.</td><td>Aluminum, oxygen, air (barely)</td></tr>
+<tr><td>Ferromagnetic</td><td>≫ 1 (hundreds to about 10⁵), and not constant</td><td>A quantum "exchange" interaction locks neighboring spins parallel inside <b>domains</b>. An applied field grows the aligned domains, and the material magnetizes strongly until it saturates.</td><td>Iron, nickel, cobalt, NdFeB</td></tr>
+</table></div>
+<p>Typical values: copper \(\mu_r \approx 0.99999\), water \(\approx 0.99999\), aluminum \(\approx 1.00002\). For ferromagnets the value depends strongly on the field and on the material's history: cobalt about 250, nickel about 600, steel roughly 100–1000, annealed pure iron up to about \(2\times10^5\).</p>
+
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes say induced magnetism "can never" repel. That's true for ferromagnets, but diamagnets are always repelled, which is how a frog can be levitated in a strong magnet. The notes also say aluminum isn't attracted because it has no induced field. It is paramagnetic and very weakly attracted, just too weakly to notice with a fridge magnet.</p>
+</div>
+
+<h3>Why magnets stick to steel</h3>
+<p>A magnet's field aligns domains in nearby steel, so the steel becomes a magnet oriented to attract it. That's why either pole sticks to a fridge, and why a chain of paper clips hangs from one magnet: each clip becomes a magnet with its S end facing the N end above it.</p>
+<ul>
+  <li><b>Soft</b> magnetic materials (transformer iron) lose their alignment when the field is removed.</li>
+  <li><b>Hard</b> materials keep it and become permanent magnets. NdFeB (neodymium–iron–boron) is extremely hard because its crystal structure strongly favors one magnetization axis.</li>
+  <li>Heating a ferromagnet above its <b>Curie temperature</b> (770 °C for iron) destroys the domain order. Cooling it through that temperature inside a strong field locks in the alignment, which is one way magnets are made.</li>
+</ul>
+<p>An <b>electromagnet</b> uses a coil to magnetize a soft iron core. The core multiplies the field by up to about \(\mu_r\), limited by saturation, and the magnet switches off with the current.</p>
+</section>
+
+<section class="topic" id="s16">
+<h2><span class="n">16</span>Earth's field and applications</h2>
+<p>Earth's field comes from a <b>geodynamo</b>: convection of liquid iron in the outer core carries currents that sustain the field. It can't be a permanent magnet, because the core is far hotter than iron's Curie temperature.</p>
+<ul>
+  <li>The field is roughly a dipole tilted about 10° from the rotation axis.</li>
+  <li>Near the geographic north pole is a magnetic <i>south</i> pole. That's why a compass's north end points there.</li>
+  <li>Surface strength is about 25–65 µT.</li>
+  <li>The field dips into the ground at mid-latitudes, roughly 60° below horizontal at UNF.</li>
+  <li>The poles wander tens of kilometers per year. The field has reversed many times at irregular intervals, most recently about 780,000 years ago.</li>
+  <li>The magnetosphere deflects most of the solar wind, and particles that leak in spiral down the field lines to make aurorae (Section 9). Migratory birds, sea turtles and some bacteria navigate by the field.</li>
+</ul>
+
+<h3>MRI</h3>
+<p>Hydrogen nuclei (protons) have magnetic moments. In a strong field \(B_0\), slightly more of them line up in the lower-energy orientation. The moments also <b>precess</b> about the field at the Larmor frequency, 42.58 MHz per tesla, or about 64 MHz at 1.5 T. A radio-frequency pulse at that frequency tips them. As they relax back, they emit <b>radio-frequency</b> signals that are picked up by induction in receiver coils. Field gradients encode position. Image contrast comes mostly from how quickly different tissues relax, not just from how much hydrogen they contain.</p>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes say the relaxing nuclei emit gamma rays. MRI signals are radio waves, around \(10^{-7}\) eV per photon, more than a billion times less energetic than gamma rays. That's why MRI involves no ionizing radiation.</p>
+</div>
+<p><b>Magnetic storage</b> (tape, card stripes, hard drives) writes data by magnetizing tiny regions of a hard magnetic film in one direction or the other. A read head senses the field those regions produce.</p>
+</section>
+
+<section class="topic" id="s17">
+<h2><span class="n">17</span>Formula sheet</h2>
+<div class="tbl"><table>
+<tr><th>Idea</th><th>Result</th></tr>
+<tr><td>Junction / loop rules</td><td>\(\sum I_{\text{in}}=\sum I_{\text{out}}\), \(\;\sum_{\text{loop}}\Delta V = 0\)</td></tr>
+<tr><td>Resistor, power</td><td>\(V=IR\), \(\;P=IV=I^2R=V^2/R\)</td></tr>
+<tr><td>Series / parallel R</td><td>\(R_s=\sum R_k\), \(\;1/R_p=\sum 1/R_k\)</td></tr>
+<tr><td>Real source</td><td>\(V_{\text{term}}=\mathcal{E}-Ir\)</td></tr>
+<tr><td>Series / parallel C</td><td>\(1/C_s=\sum 1/C_k\), \(\;C_p=\sum C_k\)</td></tr>
+<tr><td>Capacitor energy</td><td>\(U=\tfrac12CV^2=Q^2/2C\)</td></tr>
+<tr><td>RC charging</td><td>\(q=C\mathcal{E}(1-e^{-t/RC})\), \(\;I=(\mathcal{E}/R)e^{-t/RC}\)</td></tr>
+<tr><td>RC discharging</td><td>\(q=Q_0e^{-t/RC}\)</td></tr>
+<tr><td>Magnetic / Lorentz force</td><td>\(\vec F=q(\vec E+\vec v\times\vec B)\)</td></tr>
+<tr><td>Circular / helical motion</td><td>\(r=mv_\perp/|q|B\), \(\;T=2\pi m/|q|B\)</td></tr>
+<tr><td>Velocity selector, spectrometer</td><td>\(v=E/B\), \(\;m=qB^2r^2/2\Delta V\)</td></tr>
+<tr><td>Force on current</td><td>\(d\vec F=I\,d\vec L\times\vec B\), \(\;\vec F=I\vec L\times\vec B\)</td></tr>
+<tr><td>Hall voltage</td><td>\(V_H=IB/nqt\)</td></tr>
+<tr><td>Dipole</td><td>\(\vec\mu=NI\vec A\), \(\;\vec\tau=\vec\mu\times\vec B\), \(\;U=-\vec\mu\cdot\vec B\)</td></tr>
+<tr><td>Biot–Savart</td><td>\(d\vec B=\dfrac{\mu_0}{4\pi}\dfrac{I\,d\vec L\times\hat r}{r^2}\)</td></tr>
+<tr><td>Long wire, loop center</td><td>\(B=\mu_0I/2\pi s\), \(\;B=N\mu_0I/2R\)</td></tr>
+<tr><td>Parallel wires</td><td>\(F/L=\mu_0I_1I_2/2\pi d\)</td></tr>
+<tr><td>Ampère, Gauss (B)</td><td>\(\oint\vec B\cdot d\vec L=\mu_0I_{\text{enc}}\), \(\;\oint\vec B\cdot d\vec A=0\)</td></tr>
+<tr><td>Solenoid, toroid</td><td>\(B=\mu_0nI\), \(\;B=\mu_0NI/2\pi r\)</td></tr>
+</table></div>
+</section>
+</main>
+
+<footer>Rewritten from the Fall 2026 PHY 2049 lecture notes, Chapters 43–47. Every worked answer was recomputed. Constants used: \(e = 1.6\times10^{-19}\) C, \(m_p = 1.67\times10^{-27}\) kg, \(m_e = 9.11\times10^{-31}\) kg, \(\mu_0 = 4\pi\times10^{-7}\) T·m/A.</footer>
+
+</body></html>

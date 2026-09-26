@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, disposeTree, markAnswer } from '../scene/manim.js';
+import { Arrow, M, Q, fatLine, disposeTree, markAnswer } from '../scene/manim.js';
 import { UNITS_PER_METER, MU0 } from '../physics/constants.js';
 import {
   Bpolyline,
@@ -89,7 +89,7 @@ function currentGuides(pts, kind, u) {
     const dir = new THREE.Vector3(c.x - a.x, c.y - a.y, c.z - a.z).normalize();
     const mid = new THREE.Vector3(((a.x + c.x) / 2) * u, ((a.y + c.y) / 2) * u, ((a.z + c.z) / 2) * u);
     const L = 0.4;
-    g.add(new Arrow(dir, mid.addScaledVector(dir, -L / 2), L, M.yellow, 0.3, 0.3, 0.001));
+    g.add(new Arrow(dir, mid.addScaledVector(dir, -L / 2), L, Q.I, 0.3, 0.3, 0.001));
   }
   const el = document.createElement('div');
   el.className = 'circuit-label';
@@ -168,7 +168,7 @@ export default defineLab({
           </label>
           <button type="button" class="btn ghost" id="btn-biot-axis">Put probe on the axis</button>
           <button type="button" class="btn accent" id="btn-sweep-biot">Play Σ dB</button>
-          <p class="tiny">dB = (μ₀/4π) I dl × r̂ / r², μ₀ = 4π×10⁻⁷ T·m/A. Yellow chevrons show +I. The teal arrow is B at the probe; click empty floor to move the probe.</p>
+          <p class="tiny">dB = (μ₀/4π) I dl × r̂ / r², μ₀ = 4π×10⁻⁷ T·m/A. Gold chevrons show +I. The teal arrow is B at the probe; click empty floor to move the probe.</p>
         </div>`;
   },
   bind(api) {
@@ -209,7 +209,7 @@ export default defineLab({
   init(ctx) {
     const group = new THREE.Group();
     ctx.scene.add(group);
-    const Barrow = markAnswer(new Arrow(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 1, M.teal, 0.32, 0.24, 0.045));
+    const Barrow = markAnswer(new Arrow(new THREE.Vector3(0, 0, 1), new THREE.Vector3(), 1, Q.B, 0.32, 0.24, 0.045));
     group.add(Barrow);
     group.visible = false;
     return { group, Barrow, wire: null, guides: null, wireKey: '', guideKey: '' };
@@ -256,7 +256,7 @@ export default defineLab({
       const flat = [];
       for (let i = 0; i < b.nShow; i++) flat.push(b.pts[i].x * u, b.pts[i].y * u, b.pts[i].z * u);
       if (flat.length >= 6) {
-        h.wire = fatLine(flat, { color: M.yellow, width: 3.5 });
+        h.wire = fatLine(flat, { color: Q.I, width: 3.5 });
         h.group.add(h.wire);
       }
     }

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { sceneScale } from '../engine/frame.js';
 import { allForces, pairForce } from '../physics/field.js';
-import { Arrow, M, disposeTree, markAnswer } from './manim.js';
+import { Arrow, M, Q, disposeTree, markAnswer } from './manim.js';
 
 const _dir = new THREE.Vector3();
 
@@ -46,7 +46,7 @@ export class ForceView {
       const F = forces[i];
       const mag = Math.hypot(F.x, F.y, F.z);
       if (mag < 1e-12) continue;
-      const color = c.id === selectedId ? M.yellow : M.gold;
+      const color = c.id === selectedId ? Q.select : Q.F;
       this.addArrow(c, F, u, color, c.id === selectedId ? 1.15 : 0.85);
     }
   }

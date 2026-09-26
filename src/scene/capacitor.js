@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { sceneScale } from '../engine/frame.js';
-import { Arrow, M, POS_COLOR, NEG_COLOR, disposeTree } from './manim.js';
+import { Arrow, M, Q, POS_COLOR, NEG_COLOR, disposeTree } from './manim.js';
 
 export class CapacitorView {
   constructor(scene) {
@@ -87,7 +87,7 @@ export class CapacitorView {
         const z = ((j + 0.5) / n - 0.5) * side * 0.7;
         const origin = new THREE.Vector3((-d / 2 + 0.08 * d) * u, y * u, z * u);
         // Heads scale with the arrow, so a short (weak-field) arrow stays an arrow, not a blob.
-        const arrow = new Arrow(Edir.clone(), origin, L, result.breakdown ? M.red : M.yellow, Math.min(0.2, L * 0.3), Math.min(0.14, L * 0.2), 0.022);
+        const arrow = new Arrow(Edir.clone(), origin, L, result.breakdown ? M.red : Q.E, Math.min(0.2, L * 0.3), Math.min(0.14, L * 0.2), 0.022);
         this.group.add(arrow);
         this.field.push(arrow);
       }

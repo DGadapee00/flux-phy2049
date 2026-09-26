@@ -15,8 +15,11 @@ import { applyProblem } from './problems/simbridge.js';
 import { createPractice } from './ui/problems.js';
 import { createUnits } from './ui/units.js';
 import { createPredict } from './ui/predict.js';
+import { createNotes } from './ui/notes.js';
+import { sectionForLab } from './notes/index.js';
 // declared before use by createPractice's callbacks
 let units;
+let notes;
 import { ANSWER_LAYER } from './scene/manim.js';
 
 // Which build this is, so "is the live site current?" has an answer that isn't a guess.
@@ -26,6 +29,7 @@ console.info(
 );
 window.__build = __BUILD__;
 
+const $id = (id) => document.getElementById(id);
 const canvas = document.getElementById('c');
 const { renderer, scene, camera, controls, labels, grid } = createScene(canvas);
 const pool = createViewPool(scene);
@@ -98,10 +102,23 @@ const hud = createHUD({
   },
   togglePractice: () => {
     units?.close(); // they share the left column
+    // Notes can sit over the practice sheet; P goes back to it rather than closing it.
+    if (notes?.isOpen()) {
+      notes.close();
+      if (!practice.isOpen()) practice.open();
+      return;
+    }
     practice.toggle();
   },
   toggleUnits: () => units.toggle(),
-  escape: () => practice.escape(),
+  toggleNotes: () => {
+    units?.close();
+    notes.toggle();
+  },
+  escape: () => {
+    if (notes?.isOpen()) notes.close();
+    else practice.escape();
+  },
   bump,
   slice,
   addCharge: (sign) => {
@@ -312,6 +329,7 @@ async function setExam(examId, preferredLab) {
     pool.hideAll();
     hud.mount(null, exam, { examId: exam.id });
     practice?.onMount({ byProblem: loadingProblem });
+    afterMount();
     writeHash(exam.id, '', { replace: booting, query: app.query });
     app.dirty = true;
   }
@@ -354,6 +372,7 @@ async function setLab(labId, { examId = app.examId } = {}) {
   goCamera(lab);
   hud.mount(lab, examById(app.examId), s);
   practice?.onMount({ byProblem: loadingProblem });
+  afterMount();
   writeHash(app.examId, labId, { replace: booting, query: app.query });
   app.dirty = true;
 }
@@ -415,7 +434,10 @@ async function openProblemInApp(inst, { push = true, query = true } = {}) {
 
 units = createUnits({
   // One overlay at a time: they share the left column.
-  onOpen: () => practice?.close?.(),
+  onOpen: () => {
+    practice?.close?.();
+    notes?.close?.();
+  },
 });
 
 practice = createPractice({
@@ -434,6 +456,7 @@ practice = createPractice({
   labId: () => app.labId,
   examId: () => app.examId,
   setExam: (id) => setExam(id),
+  openNotes: (o) => notes.open(o),
   slice,
   computed,
   labelLayer: labels.domElement,
@@ -448,6 +471,62 @@ const predict = createPredict({
   setScenario,
   practiceActive: () => !!practice.current(),
 });
+
+/*
+ * Notes (src/ui/notes.js): the class notes for an exam, read beside the lab each section describes.
+ * Notes, Practice and Explore are the three modes in the header's switch.
+ */
+notes = createNotes({
+  examId: () => app.examId,
+  showLab: (labId, examId) => {
+    if (app.labId !== labId) setLab(labId, { examId });
+  },
+  explore: (labId, examId) => {
+    practice.close();
+    setLab(labId, { examId });
+  },
+  practiceChapter: (examId, ch) => practice.showChapter(ch, examId),
+});
+
+/** The header's switch shows the mode on screen: Notes over Practice over Explore. */
+const modeButtons = { practice: $id('btn-practice'), notes: $id('btn-notes'), explore: $id('btn-explore') };
+function syncModeSwitch() {
+  const cls = document.body.classList;
+  const mode = cls.contains('notes-open') ? 'notes' : cls.contains('practice-open') ? 'practice' : 'explore';
+  for (const [k, b] of Object.entries(modeButtons)) {
+    if (!b) continue;
+    b.classList.toggle('active', k === mode);
+    b.setAttribute('aria-selected', k === mode ? 'true' : 'false');
+  }
+}
+new MutationObserver(syncModeSwitch).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+modeButtons.practice?.addEventListener('click', () => {
+  units.close();
+  notes.close();
+  if (!practice.isOpen()) practice.open();
+});
+modeButtons.notes?.addEventListener('click', () => {
+  units.close();
+  if (!notes.isOpen()) notes.open({ examId: app.examId });
+});
+modeButtons.explore?.addEventListener('click', () => {
+  units.close();
+  notes.close();
+  practice.close();
+});
+
+/** After a lab or exam mounts: the notes follow the exam, and the lab links to its section. */
+function afterMount() {
+  notes?.onExam(app.examId);
+  const link = $id('eq-notes');
+  if (!link) return;
+  const hit = app.labId ? sectionForLab(app.labId, app.examId) : null;
+  link.hidden = !hit;
+  if (hit) {
+    link.textContent = `Notes §${hit.section.n} · ${hit.section.title} →`;
+    link.onclick = () => notes.open({ examId: hit.set.exam, section: hit.section.id });
+  }
+}
 
 function followUrl() {
   const { examId, labId, problemId, seed } = parseHash();
@@ -492,7 +571,7 @@ const shown = (el) => !!el && el.offsetParent !== null && !el.hidden && getCompu
 function measureFree(w, h) {
   if (w <= 720) return { left: 0, right: w, top: 0, bottom: h, W: w, H: h };
   let left = 0;
-  for (const id of ['eq-panel', 'problems', 'units-ref']) {
+  for (const id of ['eq-panel', 'problems', 'units-ref', 'notes']) {
     const el = document.getElementById(id);
     if (shown(el)) left = Math.max(left, el.getBoundingClientRect().right);
   }
@@ -569,12 +648,17 @@ window.__gauss = {
 };
 
 const boot = parseHash();
+// `#/e4/circuits?n=s4` opens the notes at a section. Read now: booting rewrites the hash.
+const bootNotes = new URLSearchParams(location.hash.split('?')[1] || '').get('n');
 // No link at all: a student opening the app. Practice is the front door, for the exam coming up.
 const bare = !location.hash.replace(/^#\/?/, '');
 setExam(boot.examId, boot.labId).then(() => {
   booting = false;
   if (boot.problemId) practice.followUrl(boot.problemId, boot.seed);
   else if (bare) practice.open();
+  // `#/e4/circuits?n=s4`: open the notes at a section.
+  if (bootNotes && !boot.problemId) notes.open({ examId: app.examId, section: bootNotes });
+  syncModeSwitch();
   recompute();
   syncViews();
   hud.update(publicState(), computed, app.lab);

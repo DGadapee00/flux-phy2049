@@ -9,7 +9,7 @@ import {
   ringAxisPotentialNumerical,
   diskAxisPotentialNumerical,
 } from '../physics/analytic.js';
-import { Arrow, M, POS_COLOR, NEG_COLOR, fatLine, disposeTree, makeChargeTexture, markAnswer } from './manim.js';
+import { Arrow, M, Q, POS_COLOR, NEG_COLOR, fatLine, disposeTree, makeChargeTexture, markAnswer } from './manim.js';
 
 const _dir = new THREE.Vector3();
 
@@ -183,7 +183,8 @@ export class DistributionView {
           (pc.z * 0.35 + P.z * 0.65) * u,
         );
         const L = (0.18 + 0.35 * Math.tanh(mag / 4e4)) * u;
-        const color = Math.abs(pc.dE.x) > Math.abs(pc.dE.y) * 0.7 ? M.blue : M.gold;
+        // Each dE is E, so yellow; the mostly-sideways pieces are dimmed to grey so the ones along y stand out.
+        const color = Math.abs(pc.dE.x) > Math.abs(pc.dE.y) * 0.7 ? M.grey : Q.E;
         const arrow = new Arrow(_dir.clone(), mid, L, current ? M.white : color, 0.18, 0.12, 0.018);
         this.group.add(arrow);
         this.dE.push(arrow);
@@ -207,7 +208,7 @@ export class DistributionView {
       _dir.set(Ex, Ey, Ez).normalize();
       const origin = new THREE.Vector3(P.x * u, P.y * u, P.z * u);
       const L = (0.4 + 0.8 * Math.tanh(mag / 6e4)) * u;
-      this.net = markAnswer(new Arrow(_dir.clone(), origin, L, M.yellow, 0.32, 0.22, 0.045));
+      this.net = markAnswer(new Arrow(_dir.clone(), origin, L, Q.E, 0.32, 0.22, 0.045));
       this.group.add(this.net);
     }
 

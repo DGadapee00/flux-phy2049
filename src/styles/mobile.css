@@ -139,8 +139,9 @@
 
   .mode-switch button {
     min-height: 32px;
-    padding: 0 9px;
+    padding: 0 8px;
   }
+
 
   /* The picker's label ran into its chevron once the mode switch took the room Units had. */
   .exam-select {
@@ -693,5 +694,52 @@
     transform: none;
     width: min(520px, calc(100vw - 320px));
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/*
+ * Portrait phone header, three rows: the exam (logo and picker), the mode (Practice | Notes |
+ * Explore, full width, the app's main navigation), then the lab tabs. Three modes left the picker a
+ * stub when all of it shared one row. The lab tabs only mean something in Explore, so Practice and
+ * Notes drop them and cost no more height than before.
+ */
+@media (max-width: 720px) {
+  .brand {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 6px;
+  }
+
+  .brand-text {
+    display: none;
+  }
+
+  .exam-select {
+    grid-column: 2;
+    grid-row: 1;
+    margin-inline: 10px 0;
+    width: calc(100% - 10px);
+  }
+
+  .practice-row {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .mode-switch {
+    flex: 1;
+  }
+
+  .mode-switch button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .lab-tabs {
+    grid-row: 3;
+  }
+
+  body.practice-open .lab-tabs,
+  body.notes-open .lab-tabs {
+    display: none;
   }
 }

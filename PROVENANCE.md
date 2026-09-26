@@ -15,6 +15,20 @@ a measured loop, ray tracing against the lens equation — and says whether the 
 not a place to look up answers; it is a place to find out whether your own answer survives contact
 with the physics.
 
+## Course material, with the instructor's permission
+
+*Added 26 Sep 2026.* The instructor has said he is happy for FLUX to include the course's notes,
+practice problems and exams, since he rewrites them each term. The project now relies on that
+permission for:
+
+| | |
+|---|---|
+| Lecture notes | **1 set**: Chapters 43–47, *Charge in Motion*, as rewritten notes (every worked answer recomputed, slips in the original marked as corrections). Kept as written in `src/notes/content/e4-charge-in-motion.html` and read in the app's **Notes** mode. |
+| Practice sheets, worksheets, exams | Used as before (below): cited, answers as test fixtures, no copied text. None added wholesale yet. |
+
+Anything added under this permission goes in `src/notes/` or is listed in this table, so the
+account stays countable.
+
 ## What of the course's material is in the repository
 
 | | |
@@ -31,15 +45,17 @@ number the sheet gives — and the source is cited in the code beside it.
 
 ## What is *not* in the repository
 
-- No lecture notes, worksheets, slides, exams, or Canvas files, in any format.
+- No worksheets, slides, exams, or Canvas files, in any format. Lecture notes: only the rewritten
+  Chapter 43–47 notes listed above.
 - No scans, screenshots, or PDFs of course documents.
 - No copied problem text. Every problem statement in the bank is written fresh and generated from
   randomised parameters, so two students opening the same problem see different numbers.
 - No figures. Problems that depend on a printed figure were either rebuilt from scratch with our
   own geometry or left out; those are flagged in the code.
 
-The repository has been source-only since its first commit, and the README has said so throughout.
-Git history is available if useful.
+Until 26 Sep 2026 the repository was source-only, and the README said so throughout; the notes above
+are the first course material added under the instructor's permission. Git history is available if
+useful.
 
 ## How the physics is verified
 

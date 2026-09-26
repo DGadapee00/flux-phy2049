@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, updateFatLine, disposeTree } from '../scene/manim.js';
+import { Arrow, M, Q, fatLine, updateFatLine, disposeTree } from '../scene/manim.js';
 import { acState, vOfT, iOfT } from '../physics/ac.js';
 import { kv, cells, qv, tex, eq } from '../ui/shared.js';
 import { fmtV, fmtI, fmtR, fmtL, fmtC, fmtHz, fmtP } from '../ui/format.js';
@@ -75,8 +75,8 @@ function buildCircuit(group, a) {
       }
       group.add(fatLine(pts, { color: M.teal, width: 3 }));
     } else if (s.kind === 'C' && on) {
-      group.add(fatLine([s.x0, y - 0.3, 0, s.x0, y + 0.3, 0], { color: M.gold, width: 4 }));
-      group.add(fatLine([s.x1, y - 0.3, 0, s.x1, y + 0.3, 0], { color: M.gold, width: 4 }));
+      group.add(fatLine([s.x0, y - 0.3, 0, s.x0, y + 0.3, 0], { color: Q.C, width: 4 }));
+      group.add(fatLine([s.x1, y - 0.3, 0, s.x1, y + 0.3, 0], { color: Q.C, width: 4 }));
     }
     x = s.x1;
   }
@@ -180,10 +180,10 @@ export default defineLab({
     group.add(fatLine([PX, PY - RD - 0.3, 0, PX, PY + RD + 0.3, 0], { color: 0x666666, width: 1.4 }));
 
     const arrow = (color, shaft) => new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(PX, PY, 0), 1, color, 0.3, 0.22, shaft);
-    const arrows = { V: arrow(M.blue, 0.04), I: arrow(M.yellow, 0.04), VR: arrow(M.green, 0.028), VL: arrow(M.teal, 0.028), VC: arrow(M.gold, 0.028) };
+    const arrows = { V: arrow(M.blue, 0.04), I: arrow(Q.I, 0.04), VR: arrow(M.green, 0.028), VL: arrow(M.teal, 0.028), VC: arrow(Q.C, 0.028) };
     Object.values(arrows).forEach((a) => group.add(a));
     const projV = fatLine([0, 0, 0, 1, 0, 0], { color: M.blue, width: 1.4, opacity: 0.55 });
-    const projI = fatLine([0, 0, 0, 1, 0, 0], { color: M.yellow, width: 1.4, opacity: 0.55 });
+    const projI = fatLine([0, 0, 0, 1, 0, 0], { color: Q.I, width: 1.4, opacity: 0.55 });
     group.add(projV, projI);
 
     const labels = {
@@ -332,7 +332,7 @@ export default defineLab({
       if (a.phi > 0) {
         return {
           title: 'Above resonance — inductive',
-          body: `$X_L > X_C$, so the teal $V_L$ outruns the gold $V_C$ and the chain swings $V$ ahead of $I$ by $\\varphi$ = ${deg}°. Lower $f$ toward $f_0$ = ${a.f0.toFixed(1)} Hz and watch $I$ grow.`,
+          body: `$X_L > X_C$, so the teal $V_L$ outruns the purple $V_C$ and the chain swings $V$ ahead of $I$ by $\\varphi$ = ${deg}°. Lower $f$ toward $f_0$ = ${a.f0.toFixed(1)} Hz and watch $I$ grow.`,
         };
       }
       return {

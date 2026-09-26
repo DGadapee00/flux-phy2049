@@ -59,8 +59,8 @@ function rebuildGuides(h, state, u) {
   }
   const g = new THREE.Group();
   for (const [v, color] of [
-    [state.a, M.red],
-    [state.b, M.blue],
+    [state.a, M.purple],
+    [state.b, M.green],
   ]) {
     const segs = [];
     if (Math.abs(v.y) > 1e-3) segs.push(v.x * u, v.y * u, v.z * u, v.x * u, 0, v.z * u);
@@ -88,7 +88,7 @@ function rebuildGuides(h, state, u) {
       const k2 = Math.sin(t * phi) / s;
       pts.push((k1 * ah.x + k2 * bh.x) * r, (k1 * ah.y + k2 * bh.y) * r, (k1 * ah.z + k2 * bh.z) * r);
     }
-    g.add(fatLine(pts, { color: M.yellow, width: 2.5 }));
+    g.add(fatLine(pts, { color: M.white, width: 2, opacity: 0.8 }));
     const el = document.createElement('div');
     el.className = 'probe-label';
     el.style.color = 'var(--yellow)';
@@ -136,10 +136,10 @@ export default defineLab({
   init(ctx) {
     const group = new THREE.Group();
     ctx.scene.add(group);
-    const aArr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, M.red);
-    const bArr = new Arrow(new THREE.Vector3(0, 1, 0), new THREE.Vector3(), 1, M.blue);
-    const aTip = makeTip(M.red, 'a');
-    const bTip = makeTip(M.blue, 'b');
+    const aArr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, M.purple);
+    const bArr = new Arrow(new THREE.Vector3(0, 1, 0), new THREE.Vector3(), 1, M.green);
+    const aTip = makeTip(M.purple, 'a');
+    const bTip = makeTip(M.green, 'b');
     group.add(aArr, bArr, aTip, bTip);
     group.visible = false;
     return { group, aArr, bArr, aTip, bTip };

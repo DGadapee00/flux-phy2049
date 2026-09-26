@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, updateFatLine, markAnswer } from '../scene/manim.js';
+import { Arrow, M, Q, fatLine, updateFatLine, markAnswer } from '../scene/manim.js';
 import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, C_SHEET } from '../physics/constants.js';
 import { planeWave, spectrumBand, wavelengthRGB, BANDS } from '../physics/emwave.js';
@@ -145,14 +145,14 @@ export default defineLab({
     const group = new THREE.Group();
     ctx.scene.add(group);
     group.add(fatLine([X0 * u - 0.6, 0, 0, X1 * u + 0.6, 0, 0], { color: M.white, width: 1.8 }));
-    const Ebatch = new VectorBatch(group, M.red);
+    const Ebatch = new VectorBatch(group, Q.E);
     const Bbatch = new VectorBatch(group, TEAL);
     const zeros = new Array(N_CURVE * 3).fill(0);
     for (let i = 0; i < N_CURVE; i++) zeros[i * 3] = (X0 + (i / (N_CURVE - 1)) * (X1 - X0)) * u;
-    const eCurve = fatLine(zeros, { color: M.red, width: 3 });
+    const eCurve = fatLine(zeros, { color: Q.E, width: 3 });
     const bCurve = fatLine(zeros, { color: TEAL, width: 3 });
     group.add(eCurve, bCurve);
-    const Sarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3((X1 + 0.12) * u, 0, 0), 1.6, M.gold, 0.34, 0.26, 0.05);
+    const Sarr = new Arrow(new THREE.Vector3(1, 0, 0), new THREE.Vector3((X1 + 0.12) * u, 0, 0), 1.6, Q.v, 0.34, 0.26, 0.05);
     // The direction of travel is what "E points +y, B points +z — which way does it go?" asks.
     group.add(markAnswer(Sarr));
     const eLab = label('<i>E</i>', X0 * u - 0.2, (AMP + 0.06) * u, 0);
@@ -196,7 +196,7 @@ export default defineLab({
       now.innerHTML = `${fmtWaveLen(state.lambda)} — ${em.band.name.toLowerCase()}, about the size of a${/^[aeiou]/.test(near[1]) ? 'n' : ''} ${near[1]}`;
     }
     const vis = em.band.id === 'vis';
-    const eColor = vis ? new THREE.Color(em.rgb.r, em.rgb.g, em.rgb.b) : new THREE.Color(M.red);
+    const eColor = vis ? new THREE.Color(em.rgb.r, em.rgb.g, em.rgb.b) : new THREE.Color(Q.E);
     const bColor = new THREE.Color(TEAL);
 
     h.Ebatch.begin();

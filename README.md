@@ -11,9 +11,10 @@ Deep links work the same as locally, e.g. `#/e3/potential` or a single problem a
 The practice bank is built for phones: full-screen problem sheet, thumb-sized targets, inputs that
 don't make Safari zoom. The 3D labs render and respond to touch, but they want a laptop.
 
-Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). Source only — none of the course's
-lecture notes, worksheets, or Canvas files. (`lessons/` holds handouts written from scratch for this
-app; nothing in it reproduces course material.) **[DEPLOY.md](DEPLOY.md)** covers rebuilding and republishing, and what
+Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). The instructor has said he is happy for
+FLUX to include the course's notes, practice problems and exams, since he rewrites them each term;
+so far that covers one set of rewritten lecture notes (Ch 43–47, in `src/notes/`). No worksheets,
+slides or Canvas files. (`lessons/` holds handouts written from scratch for this app.) **[DEPLOY.md](DEPLOY.md)** covers rebuilding and republishing, and what
 a public build exposes. **[PROVENANCE.md](PROVENANCE.md)** accounts for exactly which course
 material the problem bank draws on, and **[ERRATA.md](ERRATA.md)** lists the twenty-four places the app's
 physics disagrees with a printed answer key, or where a question needs a note.
@@ -50,9 +51,22 @@ keeps it (`scripts/playwright.mjs`): this project's own `node_modules`, a global
 
 The self-test checks the code against independent methods rather than against itself: Biot–Savart sums vs closed forms, Ampère loops, Boris-integrated orbits, image-charge surface potentials, Kirchhoff rules on every circuit layout, −ΔΦ/Δt for Faraday, an RK4 simulation of each AC circuit vs its phasor current, and paraxial ray tracing that must land every principal ray on the computed image.
 
+## Notes
+
+**Notes** (the middle of the switch at the top, or **N**) are the class notes for the exam on screen,
+read beside the lab each section describes: open a section and the lab behind the page switches to
+it. Every section ends with where to go next — **See it in the lab** and **Practice Ch 44 · …** — and
+it runs the other way too: a practice problem links to the section it draws on (**Notes §7 · RC
+circuits**, which opens over the problem with a way back to it), and a lab's equation panel links to
+its section. The formula sheet is the last section. Link to a section with `?n=`, e.g.
+`#/e4/rc?n=s7`.
+
+So far the notes cover Exam 4 (*Charge in Motion*, Ch 43–47); the other exams say so and point there.
+Adding a set is a file in `src/notes/content/` and an entry in `src/notes/index.js`.
+
 ## Practice
 
-FLUX has two modes, switched at the top: **Practice** and **Explore**. Practice is the front door — opening the app without a link lands on the practice list for the exam coming up — and **P** switches to it from anywhere. It is the problem bank: 258 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each, or by the principle that decides them. Every chapter with a lab loads its problems straight into it. The list leads with one thing to do: what is due for review, else a mixed set. Filters and grouping fold behind one **Filter** line. **Group by: Principle** puts one law's problems side by side across chapters (Gauss on a sphere, a wire and a sheet), with the ones from earlier exams folded underneath and how often you've named that principle right.
+FLUX has three modes, switched at the top: **Practice**, **Notes** and **Explore**. Practice is the front door — opening the app without a link lands on the practice list for the exam coming up — and **P** switches to it from anywhere. It is the problem bank: 258 generated problems covering every syllabus chapter (V, 34–65), grouped by chapter with a mastery bar for each, or by the principle that decides them. Every chapter with a lab loads its problems straight into it. The list leads with one thing to do: what is due for review, else a mixed set. Filters and grouping fold behind one **Filter** line. **Group by: Principle** puts one law's problems side by side across chapters (Gauss on a sphere, a wire and a sheet), with the ones from earlier exams folded underneath and how often you've named that principle right.
 
 1. **Open a problem.** It loads its own setup into the matching lab — the charges, distances and coordinates exactly as the question states them, with the scene scaled to fit (the note under the problem says what one grid square is worth). Nothing is rescaled, so the lab is reading the problem you are working. While it's unsolved, the lab's numbers are hidden: the readout, the equation panel, value labels in the scene, and the arrows that would show a direction answer, and scene pieces that would give it away (an image, the rays past a lens). The geometry stays visible, the names the question uses (q₁, P, I₂) stay labelled, and the scenario box reads "This problem's setup" rather than a preset name. On a phone, **Show lab** lowers the problem sheet so you can see the scene.
 2. **Name the principle first.** Before the parts appear, the problem asks which principle decides it (conservation of energy, Gauss's law, Faraday's law, and so on), from four choices or "not sure". Experts sort problems by the law that governs them; novices sort by what they look like. Naming the law first makes you practise the expert's sort. A wrong or unsure pick shows the right principle, its statement and the cue that points to it, and that attempt won't count as a clean solve. The solution starts by naming the principle too, plus the other ideas the problem uses.
@@ -102,14 +116,14 @@ The number plane is labeled in real distance and the ticks change with the view,
 ### Exam 4 labs
 
 - **Circuits** (`#/e4/circuits`) — fifteen layouts: series and parallel with three or four resistors, two in parallel, R₁ + (R₂∥R₃) with and without an R₄, R₁ ∥ (R₂ + R₃), two identical-bulb networks, one loop with two batteries, two- and three-battery Kirchhoff circuits, a battery with internal resistance, and three cells-and-bulb circuits side by side. Every circuit problem in the bank loads its own numbers into one of them. Solved by nodal analysis; wires colored by potential, dots show real current (hidden, with the node markers, while a problem is unsolved), grey chevrons show the assumed direction, and a battery set negative is drawn turned round. Junction and loop rules are evaluated live.
-- **RC** (`#/e4/rc`) — a battery, switch, resistor and capacitor in one loop, or two capacitors in parallel or in series. Close the switch and the capacitor charges on a clock that fits five time constants into about six seconds; take the battery out and it discharges. You can scrub time in units of τ. The yellow dots are the current and slow to a stop as the capacitor fills. The plates brighten with their share of the charge. The plot draws V_C and I against t/τ with the present moment marked. Every RC and capacitor-pair problem in Ch 44 loads its own numbers into it.
+- **RC** (`#/e4/rc`) — a battery, switch, resistor and capacitor in one loop, or two capacitors in parallel or in series. Close the switch and the capacitor charges on a clock that fits five time constants into about six seconds; take the battery out and it discharges. You can scrub time in units of τ. The gold dots are the current and slow to a stop as the capacitor fills. The plates brighten with their share of the charge. The plot draws V_C and I against t/τ with the present moment marked. Every RC and capacitor-pair problem in Ch 44 loads its own numbers into it.
 - **Biot–Savart** (`#/e4/biot`) — wire, loop, solenoid. Σ dB is compared with the exact formula for the *same finite* geometry; the ideal limit (μ₀I/2πρ, μ₀nI) is shown separately.
 - **Ampère** (`#/e4/ampere`) — circular Amperian loop as a Riemann sum, pieces colored by B·dl. Centered, off-center, wire outside, two wires, inside a thick wire.
 - **Mag force** (`#/e4/magforce`) — proton / electron orbits and a helix (Boris integration), velocity selector, F = I L × B, parallel wires.
 
 ### Exam 5 labs
 
-- **Faraday** (`#/e5/faraday`) — moving magnet, growing loop, sliding bar, rotating generator. Live ε = −dΦ_B/dt; yellow chevrons are Lenz’s induced current (counterclockwise from +y is +I and makes +B_y).
+- **Faraday** (`#/e5/faraday`) — moving magnet, growing loop, sliding bar, rotating generator. Live ε = −dΦ_B/dt; gold chevrons are Lenz’s induced current (counterclockwise from +y is +I and makes +B_y).
 - **AC** (`#/e5/ac`) — series R, RC, RL, RLC. Phasors and |Z|, φ, f₀. Tune through resonance and I peaks when X_L = X_C.
 
 ### Exam 6 labs
@@ -147,6 +161,16 @@ land on the dark bands of the screen. Untick *show the waves* for the ray diagra
 - **Thin film** (`#/wave/thinfilm`) — the film is drawn to scale *with the wave*, so a quarter-wave film is a quarter of a drawn wavelength thick and the wave inside it is visibly n times shorter. Waves run along each ray and turn over at a reflection that flips; the two that leave the top, and an inset of them with their sum, show crest meeting crest or trough. Each reflection is labelled with whether it flips, beside the extra path 2nt and t_min for bright and for dark. Along the top, two strips show a wedge of this film from thin to thick: in the lab's laser light (bright and dark bands λ/2n apart) and in white light, in true colour — black at the thin end for a soap film, as a bubble goes just before it pops. Anti-reflection coating and soap bubble are both scenarios.
 
 Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops run counterclockwise seen from +y, so current up counts as +I_enc and a positive loop current makes B point up. Faraday uses the same loop convention for Lenz. The EM wave uses E ŷ, B ẑ, travel +x̂ so ŷ × ẑ = x̂.
+
+## Colours
+
+One quantity, one colour, in every lab (`Q` in `src/scene/manim.js`): **E yellow** (and light,
+which is E), **B teal**, **current gold**, **force pink**, **velocity and direction of travel white**,
+**capacitors and C purple**, **+ charge red**, **− charge blue**, a marked point such as A purple, a
+selected charge ringed in white, and images purple (real) or lavender (virtual). The optics labs'
+three principal rays keep gold, teal and blue — no current, field or charge shares those scenes.
+In the panels, yellow is only the one button to press, blue is what is selected, and green and red
+only grade an answer.
 
 ## Controls
 

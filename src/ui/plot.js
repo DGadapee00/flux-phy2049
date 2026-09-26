@@ -1,6 +1,10 @@
 const BLUE = '#58C4DD';
 const YELLOW = '#F4D345';
 const GOLD = '#F0AC5F';
+// The scene palette (Q in src/scene/manim.js): current is gold, a capacitor is purple, a marked point (A) purple.
+const CURRENT = GOLD;
+const CAP = '#9A72AC';
+const MARK = '#9A72AC';
 const RED = '#FC6255';
 const WHITE = '#ECE6E2';
 const SERIF = "italic 13px KaTeX_Math, 'Latin Modern Math', 'Cambria Math', serif";
@@ -104,7 +108,7 @@ export function drawVx(canvas, xs, Vs, probeX, pathAx) {
   ctx.stroke();
   ctx.setLineDash([]);
   dot(ctx, bx, by, YELLOW);
-  if (pathAx != null) dot(ctx, xmap(pathAx), ymap(Vs[nearest(xs, pathAx)]), GOLD);
+  if (pathAx != null) dot(ctx, xmap(pathAx), ymap(Vs[nearest(xs, pathAx)]), MARK);
 
   ctx.fillStyle = WHITE;
   ctx.font = SERIF;
@@ -163,7 +167,7 @@ export function drawAC(canvas, pwr, t) {
   ctx.globalAlpha = 1;
 }
 
-/** One slow-motion cycle of v(t) (blue) and i(t) (yellow), current lagging by φ. */
+/** One slow-motion cycle of v(t) (blue) and i(t) (gold), current lagging by φ. */
 export function drawVI(canvas, { omega, phi, t }) {
   if (!canvas) return;
   const { ctx, w, h } = setup(canvas);
@@ -185,11 +189,11 @@ export function drawVI(canvas, { omega, phi, t }) {
     ctx.stroke();
   };
   curve(BLUE, (tt) => Math.sin(omega * tt));
-  curve(YELLOW, (tt) => Math.sin(omega * tt - phi));
+  curve(CURRENT, (tt) => Math.sin(omega * tt - phi));
   ctx.font = SERIF;
   ctx.fillStyle = BLUE;
   ctx.fillText('V(t)', 14, 16);
-  ctx.fillStyle = YELLOW;
+  ctx.fillStyle = CURRENT;
   ctx.fillText('I(t)', 52, 16);
 }
 
@@ -269,7 +273,7 @@ export function drawPaschen(canvas, { curve, pd, V, min, sparks }) {
 }
 
 /**
- * RC: V_C (gold) and I (yellow) as fractions of their full values against t/τ, one gridline per
+ * RC: V_C (purple, the capacitor) and I (gold, current) as fractions of their full values against t/τ, one gridline per
  * time constant, with the present moment marked on both curves.
  */
 export function drawRC(canvas, { curves, n, charging }) {
@@ -288,12 +292,12 @@ export function drawRC(canvas, { curves, n, charging }) {
     curves.forEach((p, i) => (i ? ctx.lineTo(X(p.x), Y(p[key])) : ctx.moveTo(X(p.x), Y(p[key]))));
     ctx.stroke();
   };
-  curve(GOLD, 'vc');
-  curve(YELLOW, 'i');
+  curve(CAP, 'vc');
+  curve(CURRENT, 'i');
   ctx.font = SERIF;
-  ctx.fillStyle = GOLD;
+  ctx.fillStyle = CAP;
   ctx.fillText(charging ? 'V_C → ε' : 'V_C', w - 70, charging ? top + 10 : y0 - 22);
-  ctx.fillStyle = YELLOW;
+  ctx.fillStyle = CURRENT;
   ctx.fillText('I', 22, top + 12);
   ctx.fillStyle = WHITE;
   ctx.globalAlpha = 0.7;
@@ -308,6 +312,6 @@ export function drawRC(canvas, { curves, n, charging }) {
   ctx.moveTo(X(n), top - 4);
   ctx.lineTo(X(n), y0);
   ctx.stroke();
-  dot(ctx, X(n), Y(charging ? 1 - k : k), GOLD);
-  dot(ctx, X(n), Y(k), YELLOW);
+  dot(ctx, X(n), Y(charging ? 1 - k : k), CAP);
+  dot(ctx, X(n), Y(k), CURRENT);
 }

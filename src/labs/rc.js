@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { M, fatLine, updateFatLine, disposeTree, makeChargeTexture, markAnswer } from '../scene/manim.js';
+import { M, Q, fatLine, updateFatLine, disposeTree, makeChargeTexture, markAnswer } from '../scene/manim.js';
 import { rcState, rcCurves } from '../physics/rc.js';
 import { kv, cells, qv, eq } from '../ui/shared.js';
 import { fmtV, fmtI, fmtR, fmtC, fmtCharge, fmtEnergy, fmtP } from '../ui/format.js';
@@ -12,7 +12,7 @@ import { fmtV, fmtI, fmtR, fmtC, fmtCharge, fmtEnergy, fmtP } from '../ui/format
  * charge; take the battery out and watch it discharge. Time runs from the instant the switch
  * closes, at a pace that fits five time constants into about six seconds, and can be scrubbed.
  *
- * The capacitor's plates fill with color as they take charge, the yellow dots are the current
+ * The capacitor's plates fill with color as they take charge, the gold dots are the current
  * (their speed is I, so they slow to a stop as the capacitor fills), and the plot draws V_C and I
  * against t/τ with the present moment marked.
  */
@@ -145,8 +145,8 @@ function buildCircuit(group, state) {
     const plate = (y, color, width) => fatLine([cx - 0.42, y, 0, cx + 0.42, y, 0], { color, width });
     add(plate(cy + GAP, M.greyDark, 4.5));
     add(plate(cy - GAP, M.greyDark, 4.5));
-    const top = add(markAnswer(plate(cy + GAP, M.gold, 4.5)));
-    const bot = add(markAnswer(plate(cy - GAP, M.gold, 4.5)));
+    const top = add(markAnswer(plate(cy + GAP, Q.C, 4.5)));
+    const bot = add(markAnswer(plate(cy - GAP, Q.C, 4.5)));
     top.position.z = bot.position.z = 0.01;
     parts.plates.push([top, bot]);
   }
@@ -257,7 +257,7 @@ export default defineLab({
               <span class="mono val" id="rc-t-val"></span>
             </div>
           </label>
-          <p class="tiny">The yellow dots are the current: fast at first, slowing to a stop as the capacitor fills. The plates fill with color as they take charge.</p>
+          <p class="tiny">The gold dots are the current: fast at first, slowing to a stop as the capacitor fills. The plates fill with color as they take charge.</p>
         </div>`;
   },
   bind(api) {
@@ -381,7 +381,7 @@ export default defineLab({
     };
     Object.values(labels).forEach((l) => group.add(l));
     group.visible = false;
-    return { group, circuit, labels, dotTex: makeChargeTexture(M.yellow, 0), key: '', parts: null, dots: [], color: new THREE.Color() };
+    return { group, circuit, labels, dotTex: makeChargeTexture(Q.I, 0), key: '', parts: null, dots: [], color: new THREE.Color() };
   },
   enter(ctx, handle) {
     handle.group.visible = true;
@@ -410,12 +410,12 @@ export default defineLab({
     }
     // The switch: open, the lever stands up off its contact.
     updateFatLine(h.parts.lever, state.closed ? [SW[0], YT, 0, SW[1], YT, 0] : [SW[0], YT, 0, SW[1] - 0.08, YT + 0.42, 0]);
-    // Plates fill from dull to bright gold with their share of the full charge.
-    const Q = [r.Q1, r.Q2];
+    // Plates fill from dull to bright purple (the capacitor colour) with their share of the full charge.
+    const charges = [r.Q1, r.Q2];
     h.parts.plates.forEach(([top, bot], i) => {
       const full = r.two ? (state.net === 'series' ? r.Qmax : (i ? state.C2 : state.C1) * r.src) : r.Qmax;
-      const f = Math.min(1, Math.abs(Q[i]) / Math.max(full, 1e-30));
-      h.color.setHex(M.greyDark).lerp(new THREE.Color(M.gold), 0.25 + 0.75 * f);
+      const f = Math.min(1, Math.abs(charges[i]) / Math.max(full, 1e-30));
+      h.color.setHex(M.greyDark).lerp(new THREE.Color(Q.C), 0.25 + 0.75 * f);
       top.material.color.copy(h.color);
       bot.material.color.copy(h.color);
     });

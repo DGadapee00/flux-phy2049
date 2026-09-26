@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { defineLab } from './define.js';
-import { M } from '../scene/manim.js';
+import { M, Q } from '../scene/manim.js';
 import { imageOf, principalRays, fmtCm } from '../physics/optics.js';
 import { wipe, label, line, arrowAt, tick, drawBundle, frameCamera, imageMark } from '../scene/opticsBench.js';
 import { kv, cells, eq } from '../ui/shared.js';
@@ -153,12 +153,12 @@ export default defineLab({
     drawMirror(h.draw, f, halfH);
     drawBundle(h.draw, m.bundle);
 
-    h.draw.add(arrowAt(-state.do, state.ho, M.gold));
+    h.draw.add(arrowAt(-state.do, state.ho, M.white));
     h.draw.add(label('object', -state.do, state.ho + 3));
     if (!m.infinite && Number.isFinite(m.imageX)) {
-      imageMark(h.draw, m.imageX, m.hi, m.real ? M.red : M.blue, m.real ? 'real image' : 'virtual image', m.hi + (m.hi >= 0 ? 3 : -3.5));
+      imageMark(h.draw, m.imageX, m.hi, m.real ? Q.imageReal : Q.imageVirtual, m.real ? 'real image' : 'virtual image', m.hi + (m.hi >= 0 ? 3 : -3.5));
     }
-    tick(h.draw, -f, 'F', M.gold);
+    tick(h.draw, -f, 'F', M.white);
     tick(h.draw, -2 * f, 'C');
     h.draw.add(label('V', 1.8, -2.6));
     if (state.type === 'convex') h.draw.add(label('<small>F and C are behind the mirror</small>', -f, -6));

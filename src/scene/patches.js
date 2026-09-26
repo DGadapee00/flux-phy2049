@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { sceneScale } from '../engine/frame.js';
-import { M } from './manim.js';
+import { M, Q } from './manim.js';
 
 const MAX = 2800;
 const _m = new THREE.Matrix4();
@@ -14,7 +14,7 @@ const _c = new THREE.Color();
 const _b = new THREE.Color();
 
 const NEUTRAL = new THREE.Color(0x2c2e33);
-const OUT = new THREE.Color(M.yellow);
+const OUT = new THREE.Color(Q.E);
 const IN = new THREE.Color(M.blue);
 
 export class PatchView {

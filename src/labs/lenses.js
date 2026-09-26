@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { defineLab } from './define.js';
-import { M } from '../scene/manim.js';
+import { M, Q } from '../scene/manim.js';
 import { imageOf, principalRays, twoLenses, traceRay, fmtCm } from '../physics/optics.js';
 import { RAY_COLORS, wipe, label, line, arrowAt, tick, drawBundle, frameCamera, imageMark } from '../scene/opticsBench.js';
 import { kv, cells, eq } from '../ui/shared.js';
@@ -235,13 +235,13 @@ export default defineLab({
       h.draw.add(line([{ x: left, y: 0 }, { x: right, y: 0 }], { color: 0x666666, width: 1.5 }));
       drawLens(h.draw, 0, L.f, halfH);
       drawBundle(h.draw, L.bundle);
-      h.draw.add(arrowAt(-state.do, state.ho, M.gold));
+      h.draw.add(arrowAt(-state.do, state.ho, M.white));
       h.draw.add(label('object', -state.do, state.ho + 3));
       if (!L.infinite && Number.isFinite(L.imageX)) {
-        imageMark(h.draw, L.imageX, L.hi, L.real ? M.red : M.blue, L.real ? 'real image' : 'virtual image', L.hi + (L.hi >= 0 ? 3 : -3.5));
+        imageMark(h.draw, L.imageX, L.hi, L.real ? Q.imageReal : Q.imageVirtual, L.real ? 'real image' : 'virtual image', L.hi + (L.hi >= 0 ? 3 : -3.5));
       }
-      tick(h.draw, L.f, 'F', M.gold);
-      tick(h.draw, -L.f, 'F', M.gold);
+      tick(h.draw, L.f, 'F', M.white);
+      tick(h.draw, -L.f, 'F', M.white);
       if (L.f > 0) {
         tick(h.draw, 2 * L.f, '2F');
         tick(h.draw, -2 * L.f, '2F');
@@ -267,20 +267,20 @@ export default defineLab({
     if (tele) {
       h.draw.add(label(`← object ${fmtCm(state.do)} away`, -26, 12));
     } else {
-      h.draw.add(arrowAt(-state.do, state.ho, M.gold));
+      h.draw.add(arrowAt(-state.do, state.ho, M.white));
       h.draw.add(label('object', -state.do, state.ho + 2.5));
     }
     if (L.i1 && !L.i1.infinite) {
-      imageMark(h.draw, L.i1.imageX, L.i1.hi, M.yellow, 'intermediate (real)', L.i1.hi + (L.i1.hi >= 0 ? 2.5 : tele ? -7 : -3));
+      imageMark(h.draw, L.i1.imageX, L.i1.hi, Q.imageReal, 'intermediate (real)', L.i1.hi + (L.i1.hi >= 0 ? 2.5 : tele ? -7 : -3));
     }
     if (L.i2 && !L.i2.infinite && Number.isFinite(L.i2.di) && Math.abs(L.i2.di) < 400) {
       const x2 = state.sep + L.i2.di;
-      imageMark(h.draw, x2, L.i2.hi, L.i2.real ? M.red : M.blue, L.i2.real ? 'final (real)' : 'final (virtual)', L.i2.hi + (L.i2.hi >= 0 ? 2.5 : -3));
+      imageMark(h.draw, x2, L.i2.hi, L.i2.real ? Q.imageReal : Q.imageVirtual, L.i2.real ? 'final (real)' : 'final (virtual)', L.i2.hi + (L.i2.hi >= 0 ? 2.5 : -3));
     } else if (L.i2) {
       h.draw.add(label('final image at ∞ — rays leave parallel', state.sep + 30, -11));
     }
-    tick(h.draw, state.fAbs, '<i>F</i><sub>o</sub>', M.gold);
-    tick(h.draw, state.sep - state.f2, '<i>F</i><sub>e</sub>', M.gold);
+    tick(h.draw, state.fAbs, '<i>F</i><sub>o</sub>', M.white);
+    tick(h.draw, state.sep - state.f2, '<i>F</i><sub>e</sub>', M.white);
   },
   law(state) {
     if (state.mode === 'tele') {

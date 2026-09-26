@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { M, Arrow, fatLine, disposeTree, makeChargeTexture } from './manim.js';
+import { M, Q, Arrow, fatLine, disposeTree, makeChargeTexture } from './manim.js';
 import { makeGlowTexture } from './glow.js';
 import { fmtV, fmtI, fmtR, fmtP } from '../ui/format.js';
 
@@ -80,7 +80,7 @@ export class CircuitView {
     this.key = '';
     this.s = 0;
     this.time = 0;
-    this.dotTex = makeChargeTexture(M.yellow, 0);
+    this.dotTex = makeChargeTexture(Q.I, 0);
     this.glowWarm = makeGlowTexture(0xffe9a8);
     this.glowHot = makeGlowTexture(M.red);
     this._v = new THREE.Vector3();
@@ -200,7 +200,7 @@ export class CircuitView {
     this.loadLabel = add(label('circuit-label', 0, yt + 1.5));
 
     // Current: arrow on the right wire, label just inside the loop.
-    this.arrow = add(new Arrow(new THREE.Vector3(0, -1, 0), new THREE.Vector3(), 1, M.yellow, 0.28, 0.2, 0.035));
+    this.arrow = add(new Arrow(new THREE.Vector3(0, -1, 0), new THREE.Vector3(), 1, Q.I, 0.28, 0.2, 0.035));
     this.iLabel = add(label('circuit-label', W - 0.55, Y0 - 1.0));
     this.eqLabel = add(label('circuit-label circuit-eq', -0.35, Y0 + 0.25));
 

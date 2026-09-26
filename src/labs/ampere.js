@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, fatSegments, disposeTree } from '../scene/manim.js';
+import { Arrow, M, Q, fatLine, fatSegments, disposeTree } from '../scene/manim.js';
 import { VectorBatch } from '../scene/arrows.js';
 import { UNITS_PER_METER, MU0 } from '../physics/constants.js';
 import { BlongWire, amperianLoop, enclosedFraction } from '../physics/bfield.js';
@@ -58,8 +58,9 @@ function label(html, x, y, z, cls = 'circuit-label') {
 }
 
 const _neutral = new THREE.Color(0x2c2e33);
-const _plus = new THREE.Color(M.yellow);
-const _minus = new THREE.Color(M.blue);
+// B·dl by sign: teal where B runs along dl (B's own colour), purple where it runs against.
+const _plus = new THREE.Color(Q.B);
+const _minus = new THREE.Color(M.purple);
 const _dim = new THREE.Color(0x2a2b30);
 const _c = new THREE.Color();
 
@@ -104,7 +105,7 @@ export default defineLab({
           ${slider('amp-I2', 'Wire 2 current I₂ (+ = up)', -10, 10, 0.5, 'qI')}
           ${slider('amp-a', 'Wire radius a', 0.1, 0.45, 0.01)}
           <button type="button" class="btn accent" id="btn-sweep-amp">Play ∮ B · dl</button>
-          <p class="tiny">The loop runs counterclockwise seen from above (white chevrons), so current up (+ŷ) counts as positive I_enc — right-hand rule. Gold pieces: B along dl. Blue: against.</p>
+          <p class="tiny">The loop runs counterclockwise seen from above (white chevrons), so current up (+ŷ) counts as positive I_enc — right-hand rule. Teal pieces: B along dl. Purple: against.</p>
         </div>`;
   },
   bind(api) {
@@ -144,7 +145,7 @@ export default defineLab({
   init(ctx) {
     const group = new THREE.Group();
     ctx.scene.add(group);
-    const Bvec = new VectorBatch(group, M.teal);
+    const Bvec = new VectorBatch(group, Q.B);
     group.visible = false;
     return { group, Bvec, wires: null, loop: null, frame: null, wireKey: '', frameKey: '' };
   },
@@ -209,18 +210,18 @@ export default defineLab({
         if (w.a > 0) {
           const cyl = new THREE.Mesh(
             new THREE.CylinderGeometry(w.a * u, w.a * u, 5.6, 64, 1, true),
-            new THREE.MeshBasicMaterial({ color: M.yellow, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }),
+            new THREE.MeshBasicMaterial({ color: Q.I, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }),
           );
           cyl.position.set(x, 0, z);
           g.add(cyl);
           const rim = [];
           for (let i = 0; i <= 96; i++) rim.push(x + w.a * u * Math.cos((i / 96) * TAU), 0.02, z + w.a * u * Math.sin((i / 96) * TAU));
-          g.add(fatLine(rim, { color: M.yellow, width: 1.5, opacity: 0.6 }));
+          g.add(fatLine(rim, { color: Q.I, width: 1.5, opacity: 0.6 }));
         }
-        g.add(fatLine([x, -2.8, z, x, 2.8, z], { color: M.yellow, width: w.a > 0 ? 2 : 4, opacity: w.a > 0 ? 0.55 : 1 }));
+        g.add(fatLine([x, -2.8, z, x, 2.8, z], { color: Q.I, width: w.a > 0 ? 2 : 4, opacity: w.a > 0 ? 0.55 : 1 }));
         if (Math.abs(w.I) > 1e-9) {
           const dir = new THREE.Vector3(0, Math.sign(w.I), 0);
-          for (const yy of [1.7, -1.7]) g.add(new Arrow(dir, new THREE.Vector3(x, yy - 0.2 * dir.y, z), 0.4, M.yellow, 0.34, 0.34, 0.001));
+          for (const yy of [1.7, -1.7]) g.add(new Arrow(dir, new THREE.Vector3(x, yy - 0.2 * dir.y, z), 0.4, Q.I, 0.34, 0.34, 0.001));
         }
         g.add(label(qv('qI', `<i>I</i><sub>${k + 1}</sub> = ${w.I.toFixed(1)} A`), x, 3.15, z));
       });
@@ -366,7 +367,7 @@ export default defineLab({
       return {
         title: String.raw`$\vec{B} \neq 0$ on the loop, but $\oint \vec{B}\cdot d\vec{l} = 0$`,
         body: [
-          String.raw`The wire is outside, so $I_{\text{enc}} = 0$. On the near side $\vec{B}$ runs against $d\vec{l}$ (blue); on the far side it runs along $d\vec{l}$ (gold) but is weaker over a longer stretch, and the two cancel exactly.`,
+          String.raw`The wire is outside, so $I_{\text{enc}} = 0$. On the near side $\vec{B}$ runs against $d\vec{l}$ (purple); on the far side it runs along $d\vec{l}$ (gold) but is weaker over a longer stretch, and the two cancel exactly.`,
           String.raw`Zero circulation does not mean zero field.`,
         ],
       };
@@ -375,7 +376,7 @@ export default defineLab({
       return {
         title: String.raw`Symmetry lets you pull $B$ out of the integral`,
         body: [
-          String.raw`Every piece is the same distance from the wire, so $\vec{B}\cdot d\vec{l} = B\,dl$ all the way around — the loop is uniformly gold. Then`,
+          String.raw`Every piece is the same distance from the wire, so $\vec{B}\cdot d\vec{l} = B\,dl$ all the way around — the loop is uniformly teal. Then`,
           eq(String.raw`B\,(2\pi r) = \mu_0 I_{\text{enc}} \quad\Longrightarrow\quad B = \frac{\mu_0 I_{\text{enc}}}{2\pi r}`),
           `which gives ${fmtB(a.Bsym)}. That first step is legal only because $B$ is constant on the loop.`,
         ],

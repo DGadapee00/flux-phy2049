@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { sceneScale } from '../engine/frame.js';
 import { fmtCharge } from '../ui/format.js';
-import { POS_COLOR, NEG_COLOR, M, makeChargeTexture, fatLine } from './manim.js';
+import { POS_COLOR, NEG_COLOR, M, Q, makeChargeTexture, fatLine } from './manim.js';
 
 export class ChargeView {
   constructor(scene) {
@@ -65,7 +65,7 @@ export class ChargeView {
       const a = (i / 64) * Math.PI * 2;
       pts.push(Math.cos(a), 0, Math.sin(a));
     }
-    const ring = fatLine(pts, { color: M.yellow, width: 2.5 });
+    const ring = fatLine(pts, { color: Q.select, width: 2.5 });
     ring.visible = false;
 
     // Drop line to the floor so height reads clearly in 3D.

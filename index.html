@@ -38,11 +38,12 @@
         <select class="exam-select" id="exam-select" aria-label="Exam"></select>
         <nav class="lab-tabs" id="lab-tabs" role="tablist" aria-label="Labs"></nav>
         <div class="practice-row">
-          <!-- The app's two modes. Practice is the main one; Explore is the labs on their own. -->
+          <!-- The app's three modes. Practice is the main one; Notes are the class notes; Explore is the labs on their own. -->
           <div class="mode-switch" role="tablist" aria-label="Mode">
             <button type="button" id="btn-practice" role="tab" aria-selected="false" aria-controls="problems" title="Practice (P)">
               Practice<span class="mode-badge" id="practice-due" hidden></span>
             </button>
+            <button type="button" id="btn-notes" role="tab" aria-selected="false" aria-controls="notes" title="Class notes (N)">Notes</button>
             <button type="button" id="btn-explore" class="active" role="tab" aria-selected="true" title="The labs on their own">Explore</button>
           </div>
           <button type="button" class="btn ghost units-btn" id="btn-units" aria-expanded="false" aria-controls="units-ref" title="Units reference (U)">Units</button>
@@ -54,6 +55,8 @@
 
       <aside class="hud panel units-ref" id="units-ref" aria-label="Units reference" hidden></aside>
 
+      <aside class="hud panel notes" id="notes" aria-label="Class notes" hidden></aside>
+
       <aside class="hud panel eq-panel" id="eq-panel">
         <div class="law" id="law-line"></div>
         <!-- The lab's headline numbers, larger, under the law they come from. -->
@@ -64,6 +67,8 @@
           <div id="insight-body"></div>
         </div>
         <canvas id="mini-plot" width="300" height="96" hidden></canvas>
+        <!-- The section of the class notes this lab shows (src/notes/index.js). -->
+        <button type="button" class="linkish eq-notes" id="eq-notes" hidden></button>
         <!-- Phone only: the header has no room for Units, so it sits with the symbols it explains. -->
         <button type="button" class="linkish eq-units" id="btn-units-eq" aria-controls="units-ref">Units of these symbols</button>
       </aside>

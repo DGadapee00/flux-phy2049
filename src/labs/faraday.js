@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { defineLab } from './define.js';
-import { Arrow, M, fatLine, disposeTree } from '../scene/manim.js';
+import { Arrow, M, Q, fatLine, disposeTree } from '../scene/manim.js';
 import { UNITS_PER_METER } from '../physics/constants.js';
 import { loopPoints } from '../physics/bfield.js';
 import { expandingLoop, slidingBar, generator, dipoleLoop, inducedCurrent, lenz } from '../physics/faraday.js';
@@ -182,7 +182,7 @@ export default defineLab({
               <span class="mono val" id="far-slow-val">1.0×</span>
             </div>
           </label>
-          <p class="tiny">ε = −dΦ<sub>B</sub>/dt. The disk is Φ: gold for +Φ (along +y), blue for −Φ, brighter near its peak. Yellow chevrons are the induced current. Convention: counterclockwise seen from +y is +I and makes +B<sub>y</sub>.</p>
+          <p class="tiny">ε = −dΦ<sub>B</sub>/dt. The disk is Φ: teal for +Φ (along +y), purple for −Φ, brighter near its peak. Gold chevrons are the induced current. Convention: counterclockwise seen from +y is +I and makes +B<sub>y</sub>.</p>
         </div>`;
   },
   bind(api) {
@@ -222,7 +222,7 @@ export default defineLab({
     ctx.scene.add(group);
 
     const diskMat = new THREE.MeshBasicMaterial({
-      color: M.gold,
+      color: Q.B,
       transparent: true,
       opacity: 0.35,
       side: THREE.DoubleSide,
@@ -313,7 +313,7 @@ export default defineLab({
 
     const R = kind === 'expand' ? f.R : state.R;
     const pts = loopPoints(R, 48, 0);
-    setLine(h.loop, pts, u, M.yellow, 3.2);
+    setLine(h.loop, pts, u, Q.I, 3.2);
 
     if (h.chevrons) {
       h.loop.group.remove(h.chevrons);
@@ -331,7 +331,7 @@ export default defineLab({
         let dir = new THREE.Vector3(c.x - a.x, c.y - a.y, c.z - a.z).normalize();
         if (!ccw) dir.multiplyScalar(-1);
         const mid = new THREE.Vector3(a.x * u, a.y * u, a.z * u);
-        g.add(new Arrow(dir, mid, 0.45, M.yellow, 0.22, 0.22, 0.001));
+        g.add(new Arrow(dir, mid, 0.45, Q.I, 0.22, 0.22, 0.001));
       }
       h.chevrons = g;
       h.loop.group.add(g);
@@ -340,7 +340,7 @@ export default defineLab({
     if (kind !== 'bar') {
       h.disk.scale.setScalar(R * u);
       h.disk.material.opacity = 0.06 + 0.5 * Math.min(1, Math.abs(f.Phi) / f.PhiMax);
-      h.disk.material.color.set(f.Phi >= 0 ? M.gold : M.blue);
+      h.disk.material.color.set(f.Phi >= 0 ? Q.B : M.purple);
       h.disk.rotation.x = -Math.PI / 2;
       h.loop.group.rotation.x = kind === 'generator' ? f.theta : 0;
     } else {
@@ -365,7 +365,7 @@ export default defineLab({
         // The fixed end sits at x = 0, the origin of Φ = B w x.
         h.rails.add(fatLine([-0.05 * u, 0, z1, 1.15 * u, 0, z1], { color: M.white, width: 2.5 }));
         h.rails.add(fatLine([-0.05 * u, 0, -z1, 1.15 * u, 0, -z1], { color: M.white, width: 2.5 }));
-        h.rails.add(fatLine([0, 0, -z1, 0, 0, z1], { color: M.yellow, width: 3 }));
+        h.rails.add(fatLine([0, 0, -z1, 0, 0, z1], { color: Q.I, width: 3 }));
       }
       while (h.bar.children.length) {
         const ch = h.bar.children[0];
@@ -374,11 +374,11 @@ export default defineLab({
       }
       const x = f.x * u;
       const z1 = (state.width / 2) * u;
-      h.bar.add(fatLine([x, 0, -z1, x, 0, z1], { color: M.yellow, width: 4 }));
+      h.bar.add(fatLine([x, 0, -z1, x, 0, z1], { color: Q.I, width: 4 }));
       const flux = new THREE.Mesh(
         new THREE.PlaneGeometry(Math.max(0.02, f.x) * u, state.width * u),
         new THREE.MeshBasicMaterial({
-          color: f.Phi >= 0 ? M.gold : M.blue,
+          color: f.Phi >= 0 ? Q.B : M.purple,
           transparent: true,
           opacity: 0.28,
           side: THREE.DoubleSide,
@@ -398,7 +398,7 @@ export default defineLab({
           [new THREE.Vector3(x / 2, 0.02, z1), new THREE.Vector3(sgn, 0, 0)],
           [new THREE.Vector3(x / 2, 0.02, -z1), new THREE.Vector3(-sgn, 0, 0)],
         ];
-        for (const [p, d] of chev) h.bar.add(new Arrow(d, p.clone().addScaledVector(d, -0.25), 0.5, M.yellow, 0.3, 0.3, 0.001));
+        for (const [p, d] of chev) h.bar.add(new Arrow(d, p.clone().addScaledVector(d, -0.25), 0.5, Q.I, 0.3, 0.3, 0.001));
       }
     }
 

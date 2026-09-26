@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { sceneScale } from '../engine/frame.js';
-import { M } from './manim.js';
+import { M, Q } from './manim.js';
 
 const MAX = 900;
 const _m = new THREE.Matrix4();
@@ -96,7 +96,7 @@ export class ArrowView {
           _d.multiplyScalar(1 / mag);
           const L = (0.05 + 0.09 * Math.tanh(mag / extraEScale)) * u;
           _p.set(p.x * u, p.y * u, p.z * u);
-          _c.set(s.En >= 0 ? M.yellow : M.blue);
+          _c.set(s.En >= 0 ? Q.E : M.blue);
           this.E.push(_p, _d, L, _c);
         }
       }

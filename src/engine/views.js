@@ -10,7 +10,7 @@ import { EquipotentialView } from '../scene/equipotentials.js';
 import { CapacitorView } from '../scene/capacitor.js';
 import { CircuitView } from '../scene/circuit.js';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { M } from '../scene/manim.js';
+import { M, Q } from '../scene/manim.js';
 
 /** Lazy view pool: a lab's first visit builds what it needs; exit hides, does not dispose. */
 export function createViewPool(scene) {
@@ -41,7 +41,7 @@ export function createViewPool(scene) {
         const label = new CSS2DObject(el);
         const mesh = new THREE.Mesh(
           new THREE.SphereGeometry(0.09, 20, 14),
-          new THREE.MeshBasicMaterial({ color: M.gold, toneMapped: false }),
+          new THREE.MeshBasicMaterial({ color: Q.mark, toneMapped: false }),
         );
         label.position.set(0, 0.35, 0);
         mesh.add(label);
