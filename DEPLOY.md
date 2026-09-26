@@ -87,7 +87,7 @@ deliberately stayed inside a private repo. A hosted build puts the *rendered* ve
 it on the open internet — the source files stay private, but anyone with the URL can read
 the problems and check the answers.
 
-The build also carries the class notes in `src/notes/` (one set so far, Ch 43–47), which the
+The build also carries the class notes in `src/notes/` (two sets so far, Ch 38–42 and 43–47), which the
 instructor has allowed to be included along with the course's practice problems and exams; see
 [PROVENANCE.md](PROVENANCE.md). They are as public as the rest of the site.
 

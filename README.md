@@ -13,7 +13,7 @@ don't make Safari zoom. The 3D labs render and respond to touch, but they want a
 
 Repo: https://github.com/DGadapee00/flux-phy2049 (`main`). The instructor has said he is happy for
 FLUX to include the course's notes, practice problems and exams, since he rewrites them each term;
-so far that covers one set of rewritten lecture notes (Ch 43–47, in `src/notes/`). No worksheets,
+so far that covers two sets of rewritten lecture notes (Ch 38–42 and 43–47, in `src/notes/`). No worksheets,
 slides or Canvas files. (`lessons/` holds handouts written from scratch for this app.) **[DEPLOY.md](DEPLOY.md)** covers rebuilding and republishing, and what
 a public build exposes. **[PROVENANCE.md](PROVENANCE.md)** accounts for exactly which course
 material the problem bank draws on, and **[ERRATA.md](ERRATA.md)** lists the twenty-four places the app's
@@ -61,7 +61,9 @@ circuits**, which opens over the problem with a way back to it), and a lab's equ
 its section. The formula sheet is the last section. Link to a section with `?n=`, e.g.
 `#/e4/rc?n=s7`.
 
-So far the notes cover Exam 4 (*Charge in Motion*, Ch 43–47); the other exams say so and point there.
+So far the notes cover Exam 3 (*Potential to Power*, Ch 38–42) and Exam 4 (*Charge in Motion*,
+Ch 43–47); the other exams say so and point to those. Open the notes and change the exam picker, and
+the notes follow.
 Adding a set is a file in `src/notes/content/` and an entry in `src/notes/index.js`.
 
 ## Practice

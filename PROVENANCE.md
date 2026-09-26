@@ -23,7 +23,7 @@ permission for:
 
 | | |
 |---|---|
-| Lecture notes | **1 set**: Chapters 43–47, *Charge in Motion*, as rewritten notes (every worked answer recomputed, slips in the original marked as corrections). Kept as written in `src/notes/content/e4-charge-in-motion.html` and read in the app's **Notes** mode. |
+| Lecture notes | **2 sets**, as rewritten notes (every worked answer recomputed, slips in the original marked as corrections): Chapters 38–42, *Potential to Power* (`src/notes/content/e3-potential-to-power.html`), and Chapters 43–47, *Charge in Motion* (`src/notes/content/e4-charge-in-motion.html`). Kept as written and read in the app's **Notes** mode. |
 | Practice sheets, worksheets, exams | Used as before (below): cited, answers as test fixtures, no copied text. None added wholesale yet. |
 
 Anything added under this permission goes in `src/notes/` or is listed in this table, so the
@@ -45,8 +45,8 @@ number the sheet gives — and the source is cited in the code beside it.
 
 ## What is *not* in the repository
 
-- No worksheets, slides, exams, or Canvas files, in any format. Lecture notes: only the rewritten
-  Chapter 43–47 notes listed above.
+- No worksheets, slides, exams, or Canvas files, in any format. Lecture notes: only the two rewritten
+  sets listed above (Chapters 38–42 and 43–47).
 - No scans, screenshots, or PDFs of course documents.
 - No copied problem text. Every problem statement in the bank is written fresh and generated from
   randomised parameters, so two students opening the same problem see different numbers.

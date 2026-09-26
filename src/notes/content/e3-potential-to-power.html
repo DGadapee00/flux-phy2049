@@ -1,0 +1,687 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Potential to Power</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+  svg: { fontCache: 'global' },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<style>
+:root{
+  --paper:#F5F6F8; --sheet:#FFFFFF; --ink:#1A2130; --muted:#5A6476; --rule:#DCE0E7;
+  --field:#2C4BB5; --field-soft:#E8ECFA;
+  --copper:#A8531C; --copper-soft:#F8ECE3;
+  --ok:#1F6B4E; --ok-soft:#E5F2EC;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans:"IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#11141B; --sheet:#171B24; --ink:#E4E7EE; --muted:#9AA3B5; --rule:#2A3040;
+    --field:#93A7FF; --field-soft:#1C2340;
+    --copper:#E79461; --copper-soft:#2E2119;
+    --ok:#6FCBA2; --ok-soft:#16281F;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#11141B; --sheet:#171B24; --ink:#E4E7EE; --muted:#9AA3B5; --rule:#2A3040;
+  --field:#93A7FF; --field-soft:#1C2340;
+  --copper:#E79461; --copper-soft:#2E2119;
+  --ok:#6FCBA2; --ok-soft:#16281F;
+}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.62;padding-inline:16px;padding-block:0 64px}
+main{max-width:720px;margin:0 auto}
+header.top{max-width:720px;margin:0 auto;padding-block:48px 24px;border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--sans);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(34px,6vw,52px);font-weight:700;letter-spacing:-.01em;margin-block:10px 14px}
+.lede{font-size:19px;color:var(--muted);max-width:62ch;margin:0}
+.part{margin-top:64px;padding-top:18px;border-top:2px solid var(--ink)}
+.part .eyebrow{color:var(--field)}
+.part h2{font-size:34px;margin-top:6px}
+section.topic{margin-top:44px}
+section.topic h2{font-size:26px;font-weight:600;display:flex;gap:12px;align-items:baseline}
+section.topic h2 .n{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--field);min-width:2.2em}
+h3{font-size:19px;font-weight:600;margin-top:26px}
+p{margin-block:12px;max-width:68ch}
+ul,ol{padding-left:1.3em;max-width:66ch}
+li{margin-block:4px}
+a{color:var(--field)}
+a:focus-visible{outline:2px solid var(--field);outline-offset:2px}
+.bridge{font-style:italic;color:var(--muted);border-left:2px solid var(--rule);padding-left:14px;margin-top:22px}
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;padding-block:4px;margin:14px 0!important}
+.box{border-radius:6px;padding:14px 18px;margin:20px 0;border:1px solid var(--rule);background:var(--sheet)}
+.box > .tag{font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px}
+.box p{margin-block:8px}
+.box.ex > .tag{color:var(--field)}
+.box.fix{background:var(--copper-soft);border-color:transparent}
+.box.fix > .tag{color:var(--copper)}
+.box.why{background:var(--field-soft);border-color:transparent}
+.box.why > .tag{color:var(--field)}
+.box.key{background:var(--ok-soft);border-color:transparent}
+.box.key > .tag{color:var(--ok)}
+.ans{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;margin:18px 0}
+table{border-collapse:collapse;width:100%;font-size:16px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--sans);font-weight:600;font-size:15px;border-bottom:2px solid var(--ink)}
+nav.toc{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:4px 28px;font-size:16px}
+nav.toc h3{grid-column:1/-1;font-size:14px;font-family:var(--mono);font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:14px}
+nav.toc a{text-decoration:none;color:var(--ink);display:flex;gap:10px;padding:2px 0}
+nav.toc a span{font-family:var(--mono);font-size:13px;color:var(--field);min-width:2em;padding-top:3px}
+nav.toc a:hover{color:var(--field)}
+@media (max-width:560px){nav.toc{grid-template-columns:1fr} body{font-size:17px} mjx-container[display="true"]{font-size:86%} .box{padding:12px 14px}}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+footer{max-width:720px;margin:64px auto 0;padding-top:16px;border-top:1px solid var(--rule);color:var(--muted);font-size:15px}
+</style>
+
+<header class="top">
+  <div class="eyebrow">PHY 2049 · Calculus Physics II · Week 5 · Lecture notes Ch 38–42, rewritten</div>
+  <h1>Potential to Power</h1>
+  <p class="lede">One continuous set of notes on electric potential energy, electric potential, capacitors and dielectrics, current and resistance, and electrical power. The whole thing follows one quantity, energy, from the field where it's stored to the resistor where it's spent.</p>
+  <div class="legend">
+    <span><i style="background:var(--field)"></i>Worked example</span>
+    <span><i style="background:var(--field-soft);outline:1px solid var(--field)"></i>Derivation</span>
+    <span><i style="background:var(--copper)"></i>Correction to the original notes</span>
+    <span><i style="background:var(--ok)"></i>Key idea</span>
+  </div>
+  <nav class="toc" aria-label="Contents">
+    <h3>Part I · Potential</h3>
+    <a href="#s1"><span>1</span>Work and potential energy</a>
+    <a href="#s2"><span>2</span>Potential energy of point charges</a>
+    <a href="#s3"><span>3</span>Electric potential</a>
+    <a href="#s4"><span>4</span>Potential from charges</a>
+    <a href="#s5"><span>5</span>Field from potential</a>
+    <a href="#s6"><span>6</span>Equipotentials and conductors</a>
+    <a href="#s7"><span>7</span>Energy conservation with charges</a>
+    <h3>Part II · Capacitors</h3>
+    <a href="#s8"><span>8</span>Capacitance</a>
+    <a href="#s9"><span>9</span>Energy in the field</a>
+    <a href="#s10"><span>10</span>Dielectrics and breakdown</a>
+    <h3>Part III · Current and power</h3>
+    <a href="#s11"><span>11</span>Current and current density</a>
+    <a href="#s12"><span>12</span>Resistance and Ohm's law</a>
+    <a href="#s13"><span>13</span>Electrical power</a>
+    <a href="#s14"><span>14</span>Alternating current</a>
+    <a href="#s15"><span>15</span>Household electricity and safety</a>
+    <a href="#s16"><span>16</span>Formula sheet</a>
+  </nav>
+</header>
+
+<main>
+
+<div class="part">
+  <div class="eyebrow">Part I</div>
+  <h2>Potential</h2>
+</div>
+
+<section class="topic" id="s1">
+<h2><span class="n">1</span>Work and potential energy</h2>
+<p>A force \(\vec F\) does work on an object moving along a path from A to B:</p>
+\[W = \int_A^B \vec F\cdot d\vec r = \int_A^B F\cos\theta\,dr .\]
+<p>Only the component of force along the motion counts. The work is positive when the force helps the motion, zero when it's perpendicular, and negative when it opposes it. The unit is the joule, \(1\ \text{J} = 1\ \text{N·m}\).</p>
+<p>For some forces the work depends only on the endpoints, not on the path taken. These are <b>conservative</b> forces. Gravity is one, and so is the electrostatic force. For a conservative force you can define a potential energy \(U\) that keeps track of that work:</p>
+\[\Delta U = U_B - U_A = -W_{\text{field}} .\]
+<p>When the field does positive work (the object "falls" the way the field pushes it), the potential energy goes down, and that energy shows up as kinetic energy. Only <i>changes</i> in \(U\) matter, so you're free to choose where \(U = 0\).</p>
+<div class="box key"><span class="tag">Key idea</span>
+<p>Gravity and the electric force work the same way. Mass creates a gravitational field that stores energy \(mgy\) near Earth's surface. Charge creates an electric field that stores electric potential energy. Everything in Part I is this one idea applied to charges.</p>
+</div>
+</section>
+
+<section class="topic" id="s2">
+<h2><span class="n">2</span>Potential energy of point charges</h2>
+<p>Hold a charge \(Q\) fixed and let a charge \(q\) move radially from \(r_A\) to \(r_B\). The Coulomb force on \(q\) is \(\vec F = kqQ\,\hat r/r^2\), with \(k = 9.0\times10^9\ \text{N·m}^2/\text{C}^2\). Keep the signs of \(q\) and \(Q\) in the formula and the algebra takes care of attraction and repulsion automatically; there's no need to decide on a \(\cos\varphi\) by hand.</p>
+
+<div class="box why"><span class="tag">Derivation</span>
+\[W_{\text{field}} = \int_{r_A}^{r_B} \frac{kqQ}{r^2}\,dr = kqQ\left[-\frac1r\right]_{r_A}^{r_B}\]
+\[= -kqQ\left(\frac{1}{r_B}-\frac{1}{r_A}\right)\]
+\[\Delta U = -W_{\text{field}} = kqQ\left(\frac{1}{r_B}-\frac{1}{r_A}\right).\]
+<p>Choose \(U = 0\) when the charges are infinitely far apart (\(r_A\to\infty\)). Then the potential energy of the pair at separation \(r\) is</p>
+\[U(r) = \frac{kqQ}{r}.\]
+</div>
+<ul>
+  <li><b>Like charges</b> (\(qQ > 0\)): \(U\) is positive and grows as they get closer. You have to push them together.</li>
+  <li><b>Unlike charges</b> (\(qQ < 0\)): \(U\) is negative and becomes more negative as they get closer. They fall together on their own.</li>
+  <li>\(U\) belongs to the <b>pair</b>, not to either charge alone.</li>
+</ul>
+
+<div class="box ex"><span class="tag">Worked example · two charges</span>
+<p>\(Q = +3\) nC is fixed. \(q = +5\) nC can be at B (\(r_B = 10\) cm) or A (\(r_A = 15\) cm). Note that \(kqQ = 1.35\times10^{-7}\ \text{J·m}\).</p>
+<ul>
+  <li>At B: \(U_B = 1.35\times10^{-7}/0.10 = 1.35\times10^{-6}\) J.</li>
+  <li>At A: \(U_A = 9.0\times10^{-7}\) J.</li>
+  <li><b>B → A</b> (moving apart): \(\Delta U = -4.5\times10^{-7}\) J. The repulsion does the work, and \(q\) gains that much kinetic energy.</li>
+  <li><b>A → B</b> (moving together): \(\Delta U = +4.5\times10^{-7}\) J. Something has to push.</li>
+  <li><b>Make \(Q = -3\) nC and move A → B:</b> the attraction pulls \(q\) in, so the potential energy falls:
+\[\Delta U = kqQ\left(\tfrac{1}{r_B} - \tfrac{1}{r_A}\right)\]
+\[= (-1.35\times10^{-7})(10 - 6.67) = -4.5\times10^{-7}\ \text{J}.\]</li>
+</ul>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>For part C (negative \(Q\), moving A → B) the notes give \(+4.5\times10^{-7}\) J and say \(q\) "gains potential energy". Opposite charges moving closer <i>lose</i> potential energy, so \(\Delta U = -4.5\times10^{-7}\) J. The notes' general formula is also labeled as the change "from B to A" when it's the change from A to B.</p>
+</div>
+
+<h3>Systems of charges</h3>
+<p>The potential energy of a group of charges is the work needed to assemble it, bringing the charges in from infinity one at a time. The first one costs nothing. Each later one costs \(kq_iq_j/r_{ij}\) for every charge already in place. The result is simply one term per pair:</p>
+\[U_{\text{system}} = \sum_{\text{pairs } i<j} \frac{kq_iq_j}{r_{ij}}.\]
+<div class="box ex"><span class="tag">Worked example · three charges</span>
+<p>\(q_1 = 3.1\ \mu\text{C}\), \(q_2 = 2.5\ \mu\text{C}\), \(q_3 = 2.0\ \mu\text{C}\), with \(r_{12} = 17\) cm, \(r_{23} = 20\) cm, \(r_{13} = 25\) cm.</p>
+<ul>
+  <li>Pair 1–2: 0.410 J</li>
+  <li>Pair 2–3: 0.225 J</li>
+  <li>Pair 1–3: 0.223 J</li>
+</ul>
+<p>Total: \(U = 0.858\) J. All three charges are positive, so every term is positive: it takes work to hold this group together.</p>
+</div>
+
+<h3>Uniform field</h3>
+<p>In a uniform field \(\vec E\), the force \(q\vec E\) is constant. Moving a distance \(\Delta x\) along the field:</p>
+\[W_{\text{field}} = qE\,\Delta x, \qquad \Delta U = -qE\,\Delta x .\]
+<p>A positive charge loses potential energy moving along \(\vec E\), like a ball rolling downhill. A negative charge gains potential energy moving the same way. Moving perpendicular to \(\vec E\) involves no work at all.</p>
+</section>
+
+<section class="topic" id="s3">
+<h2><span class="n">3</span>Electric potential</h2>
+<p>Potential energy depends on both the field and the charge you put in it. Dividing out the charge leaves a property of the location alone, the <b>electric potential</b>:</p>
+\[V = \frac{U}{q}, \qquad \Delta V = \frac{\Delta U}{q} = -\int_A^B \vec E\cdot d\vec r .\]
+<p>The unit is the volt, \(1\ \text{V} = 1\ \text{J/C}\). "Voltage" means a potential difference.</p>
+<ul>
+  <li><b>\(V\) is a scalar.</b> It has a sign but no direction, which makes it much easier to add up than \(\vec E\).</li>
+  <li><b>\(V\) decreases along the field direction.</b> \(\vec E\) points "downhill" in potential.</li>
+  <li><b>Potential and potential energy are different things.</b> \(V\) (volts) is a property of a point. \(U = qV\) (joules) is the energy a particular charge would have there. A positive charge lowers its energy by moving to lower \(V\); a negative charge lowers its energy by moving to <i>higher</i> \(V\). A neutral particle doesn't care about \(V\) at all.</li>
+</ul>
+<p>In a uniform field, \(\Delta V = -E\,\Delta x\) along the field. So \(E\) can be measured in V/m, which is the same unit as N/C.</p>
+
+<div class="box ex"><span class="tag">Worked example · parallel plates</span>
+<p>Two plates 10 cm apart have a uniform field of 2000 V/m between them, pointing from the + plate (A) to the − plate (E). Points B, C, D are spaced every 2.5 cm. Choose \(V = 0\) on the − plate.</p>
+<ul>
+  <li>Across the plates: \(\Delta V = Ed = (2000)(0.10) = 200\) V.</li>
+  <li>Potentials, from the + plate down: \(V_A = 200\) V, \(V_B = 150\) V, \(V_C = 100\) V, \(V_D = 50\) V, \(V_E = 0\).</li>
+  <li>Each 2.5 cm step along the field changes \(V\) by \(-50\) V. In a uniform field, equal steps give equal changes: \(\Delta V = -E\,\Delta x\).</li>
+  <li>A +10 µC charge at B has \(U = qV_B = (10\times10^{-6})(150) = 1.5\times10^{-3}\) J.</li>
+</ul>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes assign \(V_A = -200\) V, \(V_B = -150\) V and so on, which makes the potential <i>increase</i> from the + plate toward the − plate, so each difference comes out as +50 V. Potential decreases along \(\vec E\), so going from A to E each step is \(-50\) V. The notes also write \(\Delta V = E/\Delta x\); it's \(E\,\Delta x\).</p>
+</div>
+
+<p>Four equal charges sit in the same kind of field, with A and B positive and C and D negative. A is nearer the + plate than B, and C is nearer the + plate than D.</p>
+<ul>
+  <li><b>Potential depends only on position.</b> \(V_A > V_B\) and \(V_C > V_D\), since both A and C are farther "up" the field.</li>
+  <li><b>Potential energy depends on the sign too.</b> For the positive charges, A has the higher energy. For the negative charges, D has the higher energy, because a negative charge "wants" to climb toward the + plate.</li>
+</ul>
+
+<div class="box ex"><span class="tag">Worked example · work against a field</span>
+<p>Moving a +2 µC charge 0.5 m against a uniform 400 V/m field raises its potential by \(\Delta V = (400)(0.5) = 200\) V. The work you must do is</p>
+\[W_{\text{you}} = \Delta U = q\Delta V\]
+\[= (2\times10^{-6})(200) = 4.0\times10^{-4}\ \text{J}.\]
+</div>
+</section>
+
+<section class="topic" id="s4">
+<h2><span class="n">4</span>Potential from charges</h2>
+<h3>A point charge</h3>
+<p>Take the zero of potential at infinity and bring a test charge in from there:</p>
+\[V(r) = -\int_\infty^r \frac{kq}{r'^2}\,dr' = \frac{kq}{r}.\]
+<p>A positive charge makes positive potential, which falls off with distance. A negative charge makes negative potential, which rises toward zero with distance.</p>
+
+<h3>Superposition</h3>
+<p>Potential adds as plain numbers, with signs:</p>
+\[V = \sum_i \frac{kq_i}{r_i}.\]
+<p>Unlike field calculations, you don't need the directions of the charges from the point, only their distances.</p>
+<div class="box ex"><span class="tag">Worked example · four arrangements</span>
+<p>A charge \(+2q\) and a charge \(-q\), with \(q = 1\ \mu\text{C}\) and \(r_0 = 1\) m. Note \(kq/r_0 = 9000\) V. The potential at P for each set of distances:</p>
+<div class="tbl"><table>
+<tr><th>Case</th><th>+2q at</th><th>−q at</th><th>V at P</th></tr>
+<tr><td>(a)</td><td>2r₀</td><td>r₀</td><td>9000 − 9000 = 0 V</td></tr>
+<tr><td>(b)</td><td>r₀</td><td>2r₀</td><td>18,000 − 4500 = 13,500 V</td></tr>
+<tr><td>(c)</td><td>2r₀</td><td>2r₀</td><td>9000 − 4500 = 4500 V</td></tr>
+<tr><td>(d)</td><td>2r₀</td><td>r₀</td><td>0 V (same distances as a)</td></tr>
+</table></div>
+<p>Cases (a) and (d) can look different on paper and still give the same answer, because only distances matter.</p>
+</div>
+
+<h3>Continuous charge</h3>
+<p>Break the charge into pieces \(dq\) and integrate:</p>
+\[V = k\int\frac{dq}{r}, \qquad dq = \lambda\,dl,\ \ \sigma\,dA,\ \text{ or }\ \rho\,dV.\]
+<p>The recipe: choose a piece \(dq\), write its distance \(r\) to the point in terms of your integration variable, then integrate over the object. Because \(V\) is a scalar there are no components to track, which is why potential is often the easiest route to the field (Section 5).</p>
+
+<div class="box ex"><span class="tag">Worked example · ring on its axis</span>
+<p>A ring of radius \(R\) carries charge \(Q = 2\pi R\lambda\). Point P is on the axis, a distance \(s\) from the center. Every piece of the ring is the same distance \(r = \sqrt{R^2+s^2}\) from P, so the integral is easy:</p>
+\[V = \frac{k}{\sqrt{R^2+s^2}}\int dq\]
+\[= \frac{kQ}{\sqrt{R^2+s^2}}.\]
+<p>At the center (\(s = 0\)), \(V = kQ/R\). Far away (\(s\gg R\)), \(V\to kQ/s\), as if all the charge were at one point.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · line segment</span>
+<p>A rod of length \(L\) with uniform \(\lambda\) lies on the \(x\)-axis from \(-L/2\) to \(L/2\). Point P is a distance \(y\) above its center. A piece \(dq = \lambda\,dx\) is at distance \(r = \sqrt{x^2+y^2}\):</p>
+\[V = k\lambda\int_{-L/2}^{L/2}\frac{dx}{\sqrt{x^2+y^2}}\]
+\[= k\lambda\Big[\ln\!\big(x+\sqrt{x^2+y^2}\big)\Big]_{-L/2}^{L/2}\]
+<p>Let \(a = \sqrt{(L/2)^2+y^2}\). Since \((a + L/2)(a - L/2) = y^2\), the answer simplifies to</p>
+\[V = 2k\lambda\,\ln\!\left(\frac{L/2 + a}{y}\right).\]
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes set this example up as "determine the electric field strength" but calculate the potential. They call the ring a "disk", and the steps of the recipe skip from 2 to 4.</p>
+</div>
+</section>
+
+<section class="topic" id="s5">
+<h2><span class="n">5</span>Field from potential</h2>
+<p>Section 3 got \(V\) by integrating \(\vec E\). Going the other way, you get \(\vec E\) by differentiating \(V\). In one dimension:</p>
+\[E_x = -\frac{dV}{dx}.\]
+<p>In three dimensions the field is minus the <b>gradient</b> of the potential:</p>
+\[\vec E = -\nabla V = -\left(\frac{\partial V}{\partial x}\hat x + \frac{\partial V}{\partial y}\hat y + \frac{\partial V}{\partial z}\hat z\right).\]
+<p>The gradient points in the direction \(V\) rises fastest, so \(\vec E\) points the way \(V\) falls fastest. Its size is how steep that fall is.</p>
+
+<h3>Reading a V(x) graph</h3>
+<ul>
+  <li>The slope of \(V(x)\) at a point gives \(-E_x\) there.</li>
+  <li>A negative slope means \(\vec E\) points toward \(+x\). A positive slope means \(\vec E\) points toward \(-x\).</li>
+  <li>A flat spot (zero slope) means \(E = 0\) there, even if \(V\) isn't zero.</li>
+  <li>A point where \(V = 0\) can still have a strong field, if the curve is steep there.</li>
+  <li>A straight-line graph means a uniform field, with \(|E| = |\Delta V/\Delta x|\).</li>
+</ul>
+
+<div class="box ex"><span class="tag">Worked example · differentiating</span>
+<p>If \(V(x) = Ax^2 + Bx + C\), then</p>
+\[\vec E = -\frac{dV}{dx}\hat x = -(2Ax + B)\,\hat x .\]
+<p>The field is a vector, so keep the unit vector.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · integrating</span>
+<p>If \(\vec E = De^{-mx}\,\hat x\), the potential difference from \(x = 0\) to \(x = d\) is</p>
+\[\Delta V = -\int_0^d De^{-mx}\,dx = -\frac{D}{m}\left(1 - e^{-md}\right).\]
+<p>It's negative for \(D > 0\): moving along the field lowers the potential.</p>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes' answer is \(\frac{D}{m}e^{-md} + \frac{D}{m}\), which has a sign error in the second term. It should be \(\frac{D}{m}\left(e^{-md} - 1\right)\), the same as above.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · ring field from its potential</span>
+<p>Differentiate the ring's potential from Section 4 along the axis:</p>
+\[E_s = -\frac{d}{ds}\frac{kQ}{\sqrt{R^2+s^2}} = \frac{kQ\,s}{(R^2+s^2)^{3/2}}.\]
+<p>This matches the result from adding field components directly, with none of the cancellation arguments. The field is zero at the center, where \(V\) is largest.</p>
+</div>
+</section>
+
+<section class="topic" id="s6">
+<h2><span class="n">6</span>Equipotentials and conductors</h2>
+<p>An <b>equipotential surface</b> is a surface where \(V\) is the same everywhere. It's like a contour line on a topographic map.</p>
+<ul>
+  <li><b>\(\vec E\) is perpendicular to every equipotential.</b> If \(\vec E\) had a component along the surface, \(V\) would change along it.</li>
+  <li><b>Moving along an equipotential takes no work</b>, since \(\Delta U = q\Delta V = 0\).</li>
+  <li><b>Closely spaced equipotentials mean a strong field</b>, like closely spaced contour lines on a steep hill.</li>
+  <li><b>Point charge:</b> equipotentials are concentric spheres. <b>Dipole:</b> they bunch up near each charge, and the plane halfway between the charges is at \(V = 0\) even though the field there isn't zero.</li>
+</ul>
+<p>A <b>conductor in equilibrium is an equipotential</b>, surface and interior both. If any potential difference existed, its free charges would move until it was gone. So field lines always meet a conductor's surface at right angles.</p>
+<p><b>Ground</b> is a conductor connected to the Earth, taken as \(V = 0\). The Earth is so large it can supply or absorb charge without its own potential changing noticeably. Where you put zero is a choice. Only differences are physical, and "zero potential" never means "zero field".</p>
+
+<div class="box ex"><span class="tag">Worked example · equipotential map</span>
+<p>A map shows equipotentials between two conductors, with A at +40 V and H at −20 V. Take a +6.0 µC charge with \(m = 0.5\) g.</p>
+<ul>
+  <li><b>Field at D:</b> the field is perpendicular to the lines through D and points toward lower potential, toward E.</li>
+  <li><b>Field between D and E:</b> they are 0.2 m apart and differ by 10 V, so \(E \approx 10/0.2 = 50\) V/m.</li>
+  <li><b>E sits on the 0 V line, but the field there isn't zero.</b></li>
+  <li><b>Work to carry the charge from H to A</b> (any path): \(W = q(V_A - V_H)\), which is \((6.0\times10^{-6})(60) = 3.6\times10^{-4}\) J.</li>
+  <li><b>G to F:</b> both are on the same equipotential, so \(W = 0\).</li>
+  <li><b>Released from rest at A:</b> at H, \(\tfrac12mv^2 = q(V_A - V_H)\), so \(v = \sqrt{2(3.6\times10^{-4})/(5\times10^{-4})} = 1.2\) m/s.</li>
+</ul>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes give the H-to-A work as \(3.6\times10^{-6}\) J. \((6\times10^{-6})(60) = 3.6\times10^{-4}\) J. The later speed of 1.2 m/s uses the correct value.</p>
+</div>
+</section>
+
+<section class="topic" id="s7">
+<h2><span class="n">7</span>Energy conservation with charges</h2>
+<p>When only electric forces do work, the total energy is constant:</p>
+\[\Delta K + \Delta U = 0 \quad\Rightarrow\quad \Delta K = -q\,\Delta V .\]
+<p>A charge released from rest that moves through a potential difference \(\Delta V\) reaches speed</p>
+\[v = \sqrt{\frac{2|q\,\Delta V|}{m}}.\]
+<p>A positive charge speeds up by falling to lower \(V\). A negative charge speeds up by climbing to higher \(V\).</p>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes describe conservation as "no net work is done". What's conserved is \(K + U\). The electric field can do plenty of work; it just converts \(U\) into \(K\). The formula above is also a final speed, not an initial one.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · stopping a charge</span>
+<p>A sphere (\(m = 5\) g, \(q = -100\ \mu\text{C}\)) enters a field at 10 m/s, moving along \(\vec E\). The force on a negative charge points opposite \(\vec E\), so the sphere slows down. To stop it:</p>
+\[\Delta U = -\Delta K = \tfrac12(0.005)(10)^2 = 0.25\ \text{J}.\]
+\[\Delta V = \frac{\Delta U}{q} = \frac{0.25}{-100\times10^{-6}} = -2500\ \text{V}.\]
+<p>The sphere stops once it has moved to a potential 2500 V lower. (The notes give the size, 2500 V, without the sign.)</p>
+</div>
+
+<h3>The electron-volt</h3>
+<p>The energy an electron gains falling through 1 V is a convenient unit for atoms and particles:</p>
+\[1\ \text{eV} = (1.6\times10^{-19}\ \text{C})(1\ \text{V}) = 1.6\times10^{-19}\ \text{J}.\]
+<p>An electron accelerated from rest through 100 V gains 100 eV and reaches</p>
+\[v = \sqrt{\frac{2(100)(1.6\times10^{-19})}{9.11\times10^{-31}}} = 5.9\times10^6\ \text{m/s}.\]
+
+<h3>Where potential differences come from</h3>
+<p>Every source separates charge, and the separated charge creates a field and therefore a potential difference.</p>
+<ul>
+  <li>A <b>battery</b> uses chemical reactions to push positive charge toward one terminal and negative toward the other, against their mutual repulsion.</li>
+  <li><b>Generators</b> use changing magnetic fields.</li>
+  <li><b>Solar cells</b> use light.</li>
+  <li><b>Piezoelectric crystals</b> use pressure.</li>
+  <li><b>Rubbing</b> (friction) transfers charge between materials.</li>
+</ul>
+<p>A 9 V battery gives each coulomb of charge 9 J. Moving one electron from the + terminal to the − terminal, against the field, takes \(W = (1.6\times10^{-19})(9) = 1.44\times10^{-18}\) J, which is 9 eV.</p>
+<p class="bridge">The simplest device for separating and storing charge is two conductors facing each other. That's a capacitor, and Part II uses everything above to analyze it.</p>
+</section>
+
+<div class="part">
+  <div class="eyebrow">Part II</div>
+  <h2>Capacitors</h2>
+</div>
+
+<section class="topic" id="s8">
+<h2><span class="n">8</span>Capacitance</h2>
+<p>A capacitor is any two conductors holding equal and opposite charges \(\pm Q\). Each conductor is an equipotential (Section 6), so there's a definite potential difference \(\Delta V\) between them, and it's proportional to \(Q\). The ratio is the <b>capacitance</b>:</p>
+\[C = \frac{Q}{\Delta V}.\]
+<p>The unit is the farad, \(1\ \text{F} = 1\ \text{C/V}\). Typical values are in µF, nF and pF. \(C\) depends only on the conductors' shape, size and spacing, and on what fills the gap.</p>
+
+<div class="box why"><span class="tag">Derivation · parallel plates</span>
+<p>Two plates of area \(A\), separated by \(d\), carry charge density \(\sigma = Q/A\). Apply Gauss's law to a small box with one face inside a plate (where \(E = 0\)) and one face in the gap:</p>
+\[EA_{\text{box}} = \frac{\sigma A_{\text{box}}}{\varepsilon_0}\]
+\[\Rightarrow\quad E = \frac{\sigma}{\varepsilon_0} = \frac{Q}{\varepsilon_0 A}.\]
+<p>The field is uniform, so \(\Delta V = Ed = Qd/(\varepsilon_0A)\). Then</p>
+\[C = \frac{Q}{\Delta V} = \frac{\varepsilon_0 A}{d},\]
+<p>with \(\varepsilon_0 = 8.85\times10^{-12}\ \text{C}^2/(\text{N·m}^2)\).</p>
+<p>Bigger plates hold more charge at the same voltage. Closer plates need less voltage for the same charge.</p>
+</div>
+
+<p>The same method works for any geometry: assume \(\pm Q\), find \(\vec E\) with Gauss's law, integrate to get \(\Delta V\), and divide. For coaxial cylinders (radii \(a < b\), length \(L\)), \(E = Q/(2\pi\varepsilon_0 r L)\) between them, which gives</p>
+\[C = \frac{2\pi\varepsilon_0 L}{\ln(b/a)}.\]
+<p>Coaxial cable is built this way. With \(b = 2a\), it has about 80 pF per meter.</p>
+
+<div class="box ex"><span class="tag">Worked example · plate capacitor</span>
+<p>Plates of area 1.5 m², 2 mm apart in air, held at 12 V.</p>
+<ul>
+  <li>\(C = \dfrac{(8.85\times10^{-12})(1.5)}{2\times10^{-3}} = 6.64\ \text{nF}\)</li>
+  <li>\(Q = C\Delta V = 7.97\times10^{-8}\) C on each plate.</li>
+  <li>\(E = \Delta V/d = 6000\) V/m.</li>
+</ul>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · field from charge density</span>
+<p>With \(\sigma = 2.0\times10^{-8}\ \text{C/m}^2\) on each plate, the field between them is</p>
+\[E = \frac{\sigma}{\varepsilon_0} = \frac{2.0\times10^{-8}}{8.85\times10^{-12}} = 2260\ \text{N/C}.\]
+<p>With 100 V across a 10 cm gap, \(E = 1000\) V/m, and the equipotentials are equally spaced planes parallel to the plates: 75 V is 7.5 cm from the 0 V plate. (The field bends outward near the plates' edges, called fringing, which the formula ignores.)</p>
+</div>
+</section>
+
+<section class="topic" id="s9">
+<h2><span class="n">9</span>Energy in the field</h2>
+<p>Charging a capacitor means moving charge from one plate to the other against a growing voltage. When the plates hold \(q\), moving another \(dq\) costs \(dW = (q/C)\,dq\):</p>
+\[U = \int_0^Q \frac{q}{C}\,dq = \frac{Q^2}{2C} = \tfrac12 C\Delta V^2 = \tfrac12 Q\,\Delta V.\]
+<p>Where is that energy stored? For parallel plates, substitute \(C = \varepsilon_0A/d\) and \(\Delta V = Ed\):</p>
+\[U = \tfrac12\frac{\varepsilon_0A}{d}(Ed)^2 = \left(\tfrac12\varepsilon_0E^2\right)(Ad).\]
+<p>Since \(Ad\) is the volume between the plates, the energy per unit volume is</p>
+\[u = \tfrac12\varepsilon_0E^2 .\]
+<div class="box key"><span class="tag">Key idea</span>
+<p>The energy is stored in the field itself, with density \(\tfrac12\varepsilon_0E^2\). That result doesn't depend on the plates. It holds for any electric field anywhere.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · defibrillator</span>
+<p>A 30 µF capacitor charged to 5000 V stores</p>
+\[U = \tfrac12(30\times10^{-6})(5000)^2 = 375\ \text{J}.\]
+<p>It releases that energy in a few milliseconds, which is a peak power of tens of kilowatts. This is also why large capacitors (in old CRT TVs, power supplies and camera flashes) can be dangerous long after they're unplugged. Always discharge them before working on them.</p>
+</div>
+
+<div class="box ex"><span class="tag">Worked example · a thundercloud as a capacitor</span>
+<p>Model a cloud base (area \(8\times10^7\ \text{m}^2\), about 5 km radius) 1000 m above the ground as a parallel-plate capacitor in air. Air breaks down at about \(3\times10^6\) V/m.</p>
+<ul>
+  <li>Largest voltage: \(V = Ed = 3\times10^9\) V.</li>
+  <li>\(C = \varepsilon_0A/d = 7.1\times10^{-7}\) F.</li>
+  <li>\(U = \tfrac12CV^2 = 3.2\times10^{12}\) J.</li>
+  <li>Check with the energy density: \(u = \tfrac12\varepsilon_0(3\times10^6)^2 = 40\ \text{J/m}^3\) over \(8\times10^{10}\ \text{m}^3\). Same answer.</li>
+</ul>
+<p>That would run a 2 kW household for about 50 years. In reality the field isn't uniform and lightning releases far less than this upper bound.</p>
+</div>
+</section>
+
+<section class="topic" id="s10">
+<h2><span class="n">10</span>Dielectrics and breakdown</h2>
+<p>A <b>dielectric</b> is an insulator whose molecules polarize in a field: each molecule's charges shift slightly, or its existing dipoles rotate. Inside a capacitor, the polarized layer leaves a thin sheet of bound negative charge next to the + plate and positive next to the − plate. Those sheets partly cancel the field of the free charge on the plates.</p>
+<p>The <b>dielectric constant</b> \(\kappa\) (also called relative permittivity) measures how much the field is reduced, for the same free charge:</p>
+\[\kappa = \frac{E_0}{E} = \frac{\varepsilon}{\varepsilon_0}\ \ (\ge 1), \qquad C = \kappa C_0 = \frac{\kappa\varepsilon_0A}{d}.\]
+<p>Inside the dielectric, \(\varepsilon_0\) is replaced by \(\varepsilon = \kappa\varepsilon_0\) in every formula, including \(u = \tfrac12\kappa\varepsilon_0E^2\).</p>
+
+<h3>Battery connected, or not?</h3>
+<p>What changes when you slide in a dielectric depends on what's held fixed. Both cases below start from the same air-filled capacitor.</p>
+<div class="tbl"><table>
+<tr><th></th><th>Battery connected (V fixed)</th><th>Isolated (Q fixed)</th></tr>
+<tr><td>C</td><td>× κ</td><td>× κ</td></tr>
+<tr><td>Q</td><td>× κ (the battery supplies more)</td><td>unchanged</td></tr>
+<tr><td>V</td><td>unchanged</td><td>÷ κ</td></tr>
+<tr><td>E between the plates</td><td>unchanged (= V/d)</td><td>÷ κ</td></tr>
+<tr><td>Stored energy</td><td>× κ</td><td>÷ κ</td></tr>
+</table></div>
+
+<div class="box ex"><span class="tag">Worked example · adding nylon</span>
+<p>Fill the 6.64 nF capacitor from Section 8 with 2 mm of nylon (\(\kappa \approx 3.4\)), with the 12 V supply still connected.</p>
+<ul>
+  <li>\(C = 3.4 \times 6.64 = 22.6\) nF.</li>
+  <li>\(Q = 2.71\times10^{-7}\) C. The supply pushes on extra charge to keep 12 V.</li>
+  <li>\(E\) stays at 6000 V/m.</li>
+</ul>
+<p>If the supply were disconnected first, \(Q\) would stay at \(7.97\times10^{-8}\) C while \(V\) dropped to 3.5 V and \(E\) to 1760 V/m.</p>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes' table gives nylon \(\kappa = 410\), and the example multiplies the capacitance by 410. Nylon's dielectric constant is about 3.4 to 3.6, close to paper's. Materials with \(\kappa\) in the hundreds or thousands are special ceramics such as barium titanate. The notes' description of permittivity also contradicts itself ("resists" the field, then lets the field "pass through easily"). The cleaner statement: higher \(\kappa\) means more polarization, so less field for a given free charge.</p>
+</div>
+
+<div class="tbl"><table>
+<tr><th>Material</th><th>κ</th><th>Dielectric strength (MV/m)</th></tr>
+<tr><td>Vacuum</td><td>1</td><td>—</td></tr>
+<tr><td>Dry air</td><td>1.00054</td><td>≈ 3</td></tr>
+<tr><td>Teflon</td><td>2.1</td><td>≈ 60</td></tr>
+<tr><td>Paper</td><td>≈ 3.5</td><td>≈ 16</td></tr>
+<tr><td>Nylon</td><td>≈ 3.4</td><td>≈ 14</td></tr>
+<tr><td>Rubber (neoprene)</td><td>≈ 6.7</td><td>≈ 12</td></tr>
+<tr><td>Water (pure)</td><td>80</td><td>—</td></tr>
+</table></div>
+
+<h3>Breakdown</h3>
+<p>A strong enough field rips electrons off molecules. Those electrons are accelerated and knock off more, in an avalanche, and the insulator suddenly conducts. The largest field a material can withstand is its <b>dielectric strength</b>, so a gap of thickness \(d\) can hold at most</p>
+\[V_{\max} = (\text{dielectric strength})\times d .\]
+<div class="box ex"><span class="tag">Worked example</span>
+<p>For a 0.5 mm gap:</p>
+<ul>
+  <li>Dry air (3 MV/m): \(V_{\max} = 1500\) V.</li>
+  <li>Nylon (14 MV/m): \(V_{\max} = 7000\) V.</li>
+</ul>
+<p>So a good dielectric does two jobs at once: it raises \(C\) and it lets the capacitor hold a higher voltage.</p>
+</div>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The breakdown example uses 1 MV/m for dry air (500 V), even though the lightning example a page earlier uses the standard 3 MV/m. With 3 MV/m the 0.5 mm air gap holds 1500 V.</p>
+</div>
+<p>Uses of capacitors include camera flashes and defibrillators (store energy slowly, release it fast), touchscreens (your finger changes the capacitance at a grid point), and circuit filters and timing (Week 7's RC circuits).</p>
+<p class="bridge">So far charge has been at rest. Connect the plates of a charged capacitor with a wire and the field drives the charge through it. That's current, and Part III follows the energy as it's carried and spent.</p>
+</section>
+
+<div class="part">
+  <div class="eyebrow">Part III</div>
+  <h2>Current and power</h2>
+</div>
+
+<section class="topic" id="s11">
+<h2><span class="n">11</span>Current and current density</h2>
+<p>A conductor in equilibrium has no field inside it. Connect it across a potential difference, though, and a field is maintained inside the wire, pointing from high \(V\) to low \(V\). That field pushes the free charges along. <b>Current</b> is the rate at which charge passes through a cross-section:</p>
+\[I = \frac{dq}{dt}, \qquad 1\ \text{A} = 1\ \text{C/s}.\]
+<ul>
+  <li><b>Conventional current</b> points the way positive charge would flow, from + to − outside a source. In metal wires the actual carriers are electrons moving the other way. Every formula uses conventional current.</li>
+  <li><b>Charge is conserved</b>, so current can't be used up or pile up. Whatever flows into a junction flows out (\(I_{\text{in}} = I_1 + I_2\)). The bulb uses up the carriers' <i>energy</i>, not the carriers.</li>
+  <li><b>Current flows through an element; voltage is across it.</b></li>
+</ul>
+<div class="box ex"><span class="tag">Worked example · counting electrons</span>
+<p>1.0 A for 60 s moves 60 C, which is \(60/1.6\times10^{-19} = 3.75\times10^{20}\) electrons.</p>
+</div>
+
+<h3>Current density and drift</h3>
+<p>The <b>current density</b> \(\vec J\) is current per unit area (A/m²), pointing along the conventional current. The total current is its flux through a surface:</p>
+\[I = \int\vec J\cdot d\vec A \qquad(\text{uniform: } J = I/A).\]
+<p>With \(n\) carriers per cubic meter, each with charge \(q\), moving at average <b>drift velocity</b> \(\vec v_d\):</p>
+\[\vec J = nq\,\vec v_d .\]
+<div class="box ex"><span class="tag">Worked example · drift speed</span>
+<p>1.0 A in a copper wire with a 1.0 mm² cross-section (\(n = 8.5\times10^{28}\ \text{m}^{-3}\)):</p>
+\[v_d = \frac{I}{nqA} = \frac{1.0}{(8.5\times10^{28})(1.6\times10^{-19})(10^{-6})}\]
+\[= 7.4\times10^{-5}\ \text{m/s}.\]
+<p>That's about 4 hours per meter. The light still comes on at once because the <i>field</i> sets up throughout the wire at a large fraction of the speed of light, pushing every electron in the circuit at nearly the same moment.</p>
+</div>
+</section>
+
+<section class="topic" id="s12">
+<h2><span class="n">12</span>Resistance and Ohm's law</h2>
+<h3>The microscopic view</h3>
+<p>Electrons accelerate in the field, collide with the vibrating lattice, and start over. The net result is a drift velocity proportional to the field. For many materials, that means current density proportional to field:</p>
+\[\vec J = \sigma\vec E \qquad\text{or equivalently}\qquad \vec E = \rho\vec J, \qquad \rho = \frac{1}{\sigma}.\]
+<p>\(\rho\) is the material's <b>resistivity</b> (Ω·m) and \(\sigma\) its <b>conductivity</b> (S/m). These are properties of the material alone. Metals have a "sea" of loosely bound outer electrons, so their resistivity is very low. Insulators have none, so it's enormous.</p>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes write the microscopic Ohm's law as \(\vec J = \rho\vec E\). It's the reverse: \(\vec J = \vec E/\rho = \sigma\vec E\). A high-resistivity material carries <i>less</i> current in a given field. The notes also call \(G = 1/R\) "conductivity". \(G\) is <b>conductance</b> (a property of a particular object, in siemens). Conductivity \(\sigma = 1/\rho\) is the material property.</p>
+</div>
+
+<h3>From material to object</h3>
+<p>Take a wire of length \(L\) and cross-section \(A\) with voltage \(\Delta V\) across it. Then \(E = \Delta V/L\) and \(J = I/A\). Substitute into \(E = \rho J\):</p>
+\[\frac{\Delta V}{L} = \rho\frac{I}{A} \quad\Rightarrow\quad \Delta V = I\left(\frac{\rho L}{A}\right)\]
+\[\Delta V = IR, \qquad R = \frac{\rho L}{A}.\]
+<p>This is <b>Ohm's law</b>. Resistance (Ω) belongs to the object: longer wires resist more, fatter wires less. A copper block has the same resistivity however it's connected, but its resistance is largest when current runs along its long, narrow direction. A material is <b>ohmic</b> if \(R\) stays constant as you change the voltage, so its \(V\)–\(I\) graph is a straight line through the origin with slope \(R\). Diodes, semiconductors and a bulb filament as it heats up are non-ohmic.</p>
+
+<div class="box ex"><span class="tag">Worked example · headlights</span>
+<p>A 12 V battery across 8 Ω headlights drives \(I = 12/8 = 1.5\) A.</p>
+</div>
+<div class="box ex"><span class="tag">Worked example · a long copper wire</span>
+<p>100 m of copper (\(\rho = 1.72\times10^{-8}\ \Omega\)·m) with \(A = 3.3\times10^{-6}\ \text{m}^2\):</p>
+\[R = \frac{(1.72\times10^{-8})(100)}{3.3\times10^{-6}} = 0.52\ \Omega.\]
+<p>An ideal 9 V source would drive \(9/0.52 = 17\) A. A real 9 V battery can't: its internal resistance of an ohm or two limits the current to a few amps. That's the \(V_{\text{term}} = \mathcal{E} - Ir\) idea covered in Week 7.</p>
+</div>
+
+<h3>Temperature</h3>
+<p>Hotter lattices vibrate more and scatter electrons more, so for metals resistivity rises roughly linearly with temperature:</p>
+\[\rho = \rho_0\left[1+\alpha(T - T_0)\right], \qquad R = R_0\left[1+\alpha(T-T_0)\right].\]
+<p>Typical \(\alpha\) values (per °C): tungsten \(+4.5\times10^{-3}\), copper \(+4.0\times10^{-3}\), iron \(+5\times10^{-3}\), nichrome \(+0.4\times10^{-3}\), carbon \(-0.5\times10^{-3}\), silicon \(-75\times10^{-3}\). Semiconductors like silicon have negative \(\alpha\): heating frees more carriers, which outweighs the extra scattering.</p>
+<div class="box ex"><span class="tag">Worked example · nichrome heater</span>
+<p>10 m of nichrome wire (\(\rho = 1.0\times10^{-6}\ \Omega\)·m, \(A = 2\times10^{-7}\ \text{m}^2\)) on 120 V.</p>
+<ul>
+  <li>At 20 °C: \(R_0 = 50\ \Omega\) and \(I = 2.4\) A.</li>
+  <li>At 1000 °C: \(R = 50[1 + (0.4\times10^{-3})(980)] = 69.6\ \Omega\) and \(I = 1.72\) A.</li>
+</ul>
+<p>The current is highest at the instant you switch it on. The same effect makes incandescent bulbs most likely to burn out at switch-on.</p>
+</div>
+</section>
+
+<section class="topic" id="s13">
+<h2><span class="n">13</span>Electrical power</h2>
+<p>Charge \(dq\) falling through a potential difference \(V\) gives up energy \(V\,dq\). The rate at which that happens is</p>
+\[P = \frac{dW}{dt} = V\frac{dq}{dt} = IV .\]
+<p>For a resistor, Ohm's law gives the equivalent forms</p>
+\[P = IV = I^2R = \frac{V^2}{R}, \qquad 1\ \text{W} = 1\ \text{J/s}.\]
+<p>Energy is power integrated over time, \(E = \int P\,dt\). For constant power that's \(P\Delta t\). A 60 W bulb converts 60 J into light and heat every second. In a resistor, all the electrical energy becomes thermal energy, often called Joule heating.</p>
+<p>Which form to use depends on what's fixed. With the same current (series), \(I^2R\) says the bigger resistor gets more power. With the same voltage (parallel, like household outlets), \(V^2/R\) says the <i>smaller</i> resistor gets more power.</p>
+
+<div class="box ex"><span class="tag">Worked examples</span>
+<ul>
+  <li>A toy motor drawing 0.6 A from 3 V uses \(P = 1.8\) W.</li>
+  <li>An 8 Ω speaker carrying 2 A dissipates \(P = I^2R = 32\) W.</li>
+  <li>An 18 Ω heater on 120 V delivers \(P = V^2/R = 800\) W, which is 800 J of heat every second.</li>
+  <li>A 60 W bulb on 120 V has \(R = V^2/P = 240\ \Omega\) and draws \(I = 0.50\) A.</li>
+  <li>A 100 W bulb on 120 V has \(R = 144\ \Omega\) and draws \(I = 100/120 = 0.83\) A.</li>
+</ul>
+<p>The brighter bulb has the <i>lower</i> resistance, because at fixed voltage \(P = V^2/R\).</p>
+</div>
+</section>
+
+<section class="topic" id="s14">
+<h2><span class="n">14</span>Alternating current</h2>
+<p><b>DC</b> (batteries, solar cells) keeps one polarity, so current always flows the same way. <b>AC</b> (the power grid, generators) reverses sinusoidally:</p>
+\[V(t) = V_p\sin(2\pi f t), \qquad I(t) = I_p\sin(2\pi f t).\]
+<p>Here \(f = 1/T\) is the frequency (60 Hz in the US), and \(2\pi f t\) is the phase angle in radians. For a resistor, current and voltage peak together. Ohm's law applies at every instant: \(V(t) = I(t)R\).</p>
+
+<div class="box why"><span class="tag">Derivation · rms values</span>
+<p>Instantaneous power in a resistor is \(P(t) = I_p^2R\sin^2(\omega t)\). Average it over one period using \(\sin^2\theta = \tfrac12(1-\cos2\theta)\). The cosine averages to zero:</p>
+\[\bar P = \frac{1}{T}\int_0^T I_p^2R\sin^2(\omega t)\,dt\]
+\[= \tfrac12 I_p^2R = \tfrac12 I_pV_p .\]
+<p>To make AC formulas look like DC formulas, define the <b>root-mean-square</b> value (the square root of the average of the square):</p>
+\[I_{\text{rms}} = \sqrt{\overline{I^2}} = \frac{I_p}{\sqrt2}, \qquad V_{\text{rms}} = \frac{V_p}{\sqrt2}.\]
+<p>Then</p>
+\[\bar P = I_{\text{rms}}V_{\text{rms}} = I_{\text{rms}}^2R = \frac{V_{\text{rms}}^2}{R}.\]
+</div>
+<p>An AC current of 10 A rms heats a resistor exactly as much as 10 A DC. That's why ratings are given in rms. US household voltage is 120 V rms, which peaks at \(120\sqrt2 = 170\) V. A 240 V rms supply peaks at 339 V.</p>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes write \(P_{\text{avg}} = I_pV_p = (I_p/\sqrt2)(V_p/\sqrt2)\). The first step drops the factor of ½; \(I_pV_p\) is the <i>peak</i> power. It should read \(\bar P = \tfrac12I_pV_p = I_{\text{rms}}V_{\text{rms}}\). Calling it "\(P_{\text{rms}}\)" is also misleading; the meaningful quantity is the average power.</p>
+</div>
+</section>
+
+<section class="topic" id="s15">
+<h2><span class="n">15</span>Household electricity and safety</h2>
+<p>A US outlet has three conductors:</p>
+<ul>
+  <li><b>Hot</b> (black), which alternates at 120 V rms.</li>
+  <li><b>Neutral</b> (white), which is bonded to ground at the panel and carries the return current. It can still be dangerous.</li>
+  <li><b>Ground</b> (green or bare), which carries no current in normal use.</li>
+</ul>
+<p>A device's current flows between hot and neutral. Ground gives everyone a common zero of potential, and it's a safety path.</p>
+<ul>
+  <li><b>Grounding:</b> if a hot wire touches a metal case, the ground wire gives the fault current a very low-resistance path. The resulting large current trips the breaker almost immediately, instead of leaving the case sitting at 120 V waiting for someone to touch it.</li>
+  <li><b>Breakers and fuses</b> open the circuit when the current exceeds what the wiring can carry without overheating (\(P = I^2R\) in the wires). They protect the building from fire, not people from shock.</li>
+  <li><b>GFCI outlets</b> compare the current in hot and neutral. A mismatch of about 5 mA means current is leaking somewhere, possibly through a person, and they cut power in milliseconds. That's why they're required near water.</li>
+</ul>
+<div class="box fix"><span class="tag">Correction to the original notes</span>
+<p>The notes describe ground as "removing excess charge" from conductors. In household wiring, ground protects you by carrying a large fault current that trips the breaker, not by draining static charge.</p>
+</div>
+<p><b>The body.</b> The voltage drives the current, and the current does the harm. How much current flows depends on the path and on skin resistance: dry skin can be around 100 kΩ, wet skin as little as about 1 kΩ. Rough thresholds for 60 Hz current through the torso:</p>
+<ul>
+  <li>about 1 mA: you can feel it;</li>
+  <li>10–20 mA: muscles clamp and you may not be able to let go;</li>
+  <li>around 100 mA across the chest: can cause ventricular fibrillation.</li>
+</ul>
+<p>Wet skin is what turns 120 V from unpleasant to lethal (\(I = V/R\)).</p>
+<p>Practical rules:</p>
+<ul>
+  <li>Stay away from exposed conductors at 50 V or more.</li>
+  <li>Keep equipment grounded and cords undamaged.</li>
+  <li>Don't overload outlets or use extension cords as permanent wiring.</li>
+  <li>Use GFCIs near water.</li>
+  <li>Shut off the breaker before any repair, and leave panel work to licensed electricians.</li>
+</ul>
+<p class="bridge">Next week (Week 7, <i>Charge in Motion</i>) combines these pieces into full circuits: Kirchhoff's rules, real sources, RC timing, and then the magnetic side of moving charge.</p>
+</section>
+
+<section class="topic" id="s16">
+<h2><span class="n">16</span>Formula sheet</h2>
+<div class="tbl"><table>
+<tr><th>Idea</th><th>Result</th></tr>
+<tr><td>Work, potential energy</td><td>\(W=\int\vec F\cdot d\vec r\), \(\;\Delta U=-W_{\text{field}}\)</td></tr>
+<tr><td>Point-charge pair, system</td><td>\(U=kqQ/r\), \(\;U=\sum_{i<j}kq_iq_j/r_{ij}\)</td></tr>
+<tr><td>Potential</td><td>\(V=U/q\), \(\;\Delta V=-\int\vec E\cdot d\vec r\)</td></tr>
+<tr><td>Uniform field</td><td>\(\Delta V=-E\,\Delta x\), \(\;\Delta U=q\Delta V\)</td></tr>
+<tr><td>Point charge, superposition</td><td>\(V=kq/r\), \(\;V=\sum kq_i/r_i\), \(\;V=k\int dq/r\)</td></tr>
+<tr><td>Ring on axis</td><td>\(V=kQ/\sqrt{R^2+s^2}\)</td></tr>
+<tr><td>Field from potential</td><td>\(\vec E=-\nabla V\), \(\;E_x=-dV/dx\)</td></tr>
+<tr><td>Energy conservation</td><td>\(\Delta K=-q\Delta V\), \(\;1\ \text{eV}=1.6\times10^{-19}\ \text{J}\)</td></tr>
+<tr><td>Capacitance</td><td>\(C=Q/\Delta V\), \(\;C=\kappa\varepsilon_0A/d\)</td></tr>
+<tr><td>Plate field</td><td>\(E=\sigma/\varepsilon_0=\Delta V/d\)</td></tr>
+<tr><td>Coaxial capacitor</td><td>\(C=2\pi\varepsilon_0L/\ln(b/a)\)</td></tr>
+<tr><td>Stored energy</td><td>\(U=\tfrac12CV^2=Q^2/2C\), \(\;u=\tfrac12\kappa\varepsilon_0E^2\)</td></tr>
+<tr><td>Dielectric, breakdown</td><td>\(\kappa=E_0/E\), \(\;V_{\max}=(\text{DS})\,d\)</td></tr>
+<tr><td>Current, density</td><td>\(I=dq/dt\), \(\;I=\int\vec J\cdot d\vec A\), \(\;\vec J=nq\vec v_d\)</td></tr>
+<tr><td>Ohm's law</td><td>\(\vec J=\sigma\vec E\), \(\;V=IR\), \(\;R=\rho L/A\)</td></tr>
+<tr><td>Temperature</td><td>\(R=R_0[1+\alpha(T-T_0)]\)</td></tr>
+<tr><td>Power</td><td>\(P=IV=I^2R=V^2/R\), \(\;E=\int P\,dt\)</td></tr>
+<tr><td>AC</td><td>\(V_{\text{rms}}=V_p/\sqrt2\), \(\;\bar P=I_{\text{rms}}V_{\text{rms}}=\tfrac12I_pV_p\)</td></tr>
+</table></div>
+</section>
+</main>
+
+<footer>Rewritten from the Fall 2026 PHY 2049 lecture notes, Chapters 38–42. Every worked answer was recomputed. Constants used: \(k = 9.0\times10^9\ \text{N·m}^2/\text{C}^2\), \(\varepsilon_0 = 8.85\times10^{-12}\ \text{C}^2/(\text{N·m}^2)\), \(e = 1.6\times10^{-19}\) C.</footer>
+
+</body></html>
