@@ -38,12 +38,14 @@
         <select class="exam-select" id="exam-select" aria-label="Exam"></select>
         <nav class="lab-tabs" id="lab-tabs" role="tablist" aria-label="Labs"></nav>
         <div class="practice-row">
-          <button type="button" class="practice-btn" id="btn-practice" aria-expanded="false" aria-controls="problems" title="Practice (P)">
-            <span>Practice</span>
-          </button>
-          <button type="button" class="practice-btn units-btn" id="btn-units" aria-expanded="false" aria-controls="units-ref" title="Units reference (U)">
-            <span>Units</span>
-          </button>
+          <!-- The app's two modes. Practice is the main one; Explore is the labs on their own. -->
+          <div class="mode-switch" role="tablist" aria-label="Mode">
+            <button type="button" id="btn-practice" role="tab" aria-selected="false" aria-controls="problems" title="Practice (P)">
+              Practice<span class="mode-badge" id="practice-due" hidden></span>
+            </button>
+            <button type="button" id="btn-explore" class="active" role="tab" aria-selected="true" title="The labs on their own">Explore</button>
+          </div>
+          <button type="button" class="btn ghost units-btn" id="btn-units" aria-expanded="false" aria-controls="units-ref" title="Units reference (U)">Units</button>
           <span class="practice-stat" id="practice-stat"></span>
         </div>
       </header>
@@ -62,6 +64,8 @@
           <div id="insight-body"></div>
         </div>
         <canvas id="mini-plot" width="300" height="96" hidden></canvas>
+        <!-- Phone only: the header has no room for Units, so it sits with the symbols it explains. -->
+        <button type="button" class="linkish eq-units" id="btn-units-eq" aria-controls="units-ref">Units of these symbols</button>
       </aside>
 
       <aside class="hud panel toggles" id="toggles">

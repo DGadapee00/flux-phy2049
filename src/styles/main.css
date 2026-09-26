@@ -25,8 +25,29 @@
   --neg: var(--blue);
   --neg-soft: rgba(88, 196, 221, 0.12);
   --ok: var(--green);
-  --warn: var(--yellow);
+  --warn: var(--gold);
   --danger: var(--red);
+
+  /*
+   * Type scale: five sizes, nothing between. meta = labels and captions; ui = controls and body
+   * text in panels; body = problem statements and values; title = panel and problem titles;
+   * display = the one big number (the exam timer). The only size off the scale is 16px for inputs
+   * on a phone (mobile.css), where anything smaller makes Safari zoom the page.
+   */
+  --fs-meta: 11px;
+  --fs-ui: 13px;
+  --fs-body: 15px;
+  --fs-title: 18px;
+  --fs-display: 24px;
+
+  /*
+   * What a colour means in the panels (the scene keeps its physics colours: + red, − blue, current
+   * yellow, B teal…). Yellow: the one primary button on screen. Blue: selected, focused, a link.
+   * Green / red: right / wrong, and only when grading. Amber: a warning.
+   */
+  --select: var(--blue);
+  --select-soft: rgba(88, 196, 221, 0.12);
+  --select-line: rgba(88, 196, 221, 0.55);
 
   --radius: 6px;
   --radius-sm: 4px;
@@ -52,7 +73,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: var(--fs-ui);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
@@ -129,14 +150,14 @@ body {
 
 .brand-text h1 {
   font-family: var(--serif);
-  font-size: 22px;
+  font-size: var(--fs-display);
   font-weight: 400;
   letter-spacing: 0.14em;
   line-height: 1.1;
 }
 
 .brand-text .subtitle {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 
@@ -147,7 +168,7 @@ body {
   width: 100%;
   margin-top: 10px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-ui);
   font-weight: 500;
   color: var(--text);
   background: rgba(255, 255, 255, 0.05);
@@ -197,7 +218,7 @@ body {
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-ui);
   font-weight: 500;
   cursor: pointer;
   transition: color 0.2s var(--ease), background 0.2s var(--ease);
@@ -216,7 +237,7 @@ body {
   bottom: 1px;
   height: 2px;
   border-radius: 2px;
-  background: var(--yellow);
+  background: var(--text);
   transform: scaleX(0);
   transition: transform 0.35s var(--ease);
 }
@@ -258,7 +279,7 @@ body {
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-ui);
   cursor: pointer;
   transition: all 0.2s var(--ease);
 }
@@ -270,8 +291,8 @@ body {
 
 .toggle.active {
   color: var(--text);
-  border-color: rgba(88, 196, 221, 0.55);
-  background: var(--accent-soft);
+  border-color: var(--select-line);
+  background: var(--select-soft);
 }
 
 .toggle-dot {
@@ -284,8 +305,8 @@ body {
 
 .toggle.active .toggle-dot {
   opacity: 1;
-  border-color: var(--blue);
-  background: var(--blue);
+  border-color: var(--select);
+  background: var(--select);
 }
 
 /* ---------- Buttons ---------- */
@@ -301,7 +322,7 @@ body {
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-ui);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s var(--ease);
@@ -319,9 +340,9 @@ body {
 .btn.accent {
   width: 100%;
   margin-top: 4px;
-  font-family: var(--serif);
-  font-size: 15px;
-  font-weight: 400;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 600;
   color: var(--yellow);
   background: rgba(244, 211, 69, 0.08);
   border-color: rgba(244, 211, 69, 0.4);
@@ -396,6 +417,12 @@ body.has-legend .eq-panel {
   font-size: 1.32em;
 }
 
+/* Units from the equation panel: phone only (mobile.css), where the header has no room for it. */
+.eq-units {
+  display: none;
+  justify-self: start;
+}
+
 /* The headline numbers: two, larger than the rows under them, and never cut to "9…". */
 .eq-result {
   display: grid;
@@ -410,7 +437,7 @@ body.has-legend .eq-panel {
 }
 
 .eq-result .label {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-weight: 500;
   color: var(--text-muted);
 }
@@ -418,7 +445,7 @@ body.has-legend .eq-panel {
 .eq-result .value {
   margin-top: 1px;
   font-family: var(--serif);
-  font-size: 19px;
+  font-size: var(--fs-title);
   line-height: 1.25;
   color: var(--text);
   overflow-wrap: anywhere;
@@ -426,7 +453,7 @@ body.has-legend .eq-panel {
 }
 
 .eq-result .value.ok {
-  color: var(--ok);
+  color: var(--text);
 }
 
 .eq-result .value.warn {
@@ -460,7 +487,7 @@ body.has-legend .eq-panel {
 
 .eq-live {
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: var(--fs-body);
   color: var(--text-muted);
   display: grid;
   gap: 3px;
@@ -491,7 +518,7 @@ body.has-legend .eq-panel {
 }
 
 .eq-live .ok {
-  color: var(--ok);
+  color: var(--text);
 }
 
 .eq-live .warn {
@@ -514,15 +541,16 @@ sup {
 }
 
 .insight-title {
-  font-family: var(--serif);
-  font-size: 15px;
-  color: var(--yellow);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  color: var(--text);
   margin-bottom: 4px;
+  font-weight: 600;
 }
 
 .insight p {
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: var(--fs-ui);
   line-height: 1.6;
 }
 
@@ -576,14 +604,14 @@ sup {
 }
 
 .panel-header h2 {
-  font-family: var(--serif);
-  font-size: 16px;
-  font-weight: 400;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 600;
   color: var(--text);
 }
 
 .panel-header .hint {
-  font-size: 10.5px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
   text-align: right;
 }
@@ -602,7 +630,7 @@ sup {
 
 .field > span,
 .mini-label {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-weight: 500;
   color: var(--text-muted);
 }
@@ -618,7 +646,7 @@ sup {
 }
 
 .val {
-  font-size: 14px;
+  font-size: var(--fs-body);
   color: var(--text);
   min-width: 70px;
   text-align: right;
@@ -668,7 +696,7 @@ select {
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 11.5px;
+  font-size: var(--fs-meta);
   cursor: pointer;
   transition: all 0.2s var(--ease);
 }
@@ -680,8 +708,8 @@ select {
 
 .seg button.active {
   color: var(--text);
-  background: var(--accent-soft);
-  border-color: rgba(88, 196, 221, 0.55);
+  background: var(--select-soft);
+  border-color: var(--select-line);
 }
 
 .charge-list {
@@ -706,7 +734,7 @@ select {
 }
 
 .charge-item .mono {
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 
 .charge-item.empty {
@@ -720,21 +748,21 @@ select {
 }
 
 .charge-item.selected {
-  border-color: rgba(244, 211, 69, 0.55);
-  background: rgba(244, 211, 69, 0.05);
+  border-color: var(--select-line);
+  background: var(--select-soft);
 }
 
 .badge {
   font-family: var(--font);
-  font-size: 10px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 999px;
 }
 
 .badge.in {
-  color: var(--ok);
-  background: rgba(131, 193, 103, 0.14);
+  color: var(--text);
+  background: rgba(236, 230, 226, 0.1);
 }
 
 .badge.out {
@@ -744,7 +772,7 @@ select {
 
 .badge.on {
   color: var(--warn);
-  background: rgba(244, 211, 69, 0.14);
+  background: rgba(240, 172, 95, 0.14);
 }
 
 .charge-item input[type='range'] {
@@ -760,7 +788,7 @@ select {
 
 .q-name {
   font-family: var(--math);
-  font-size: 14px;
+  font-size: var(--fs-body);
   color: var(--text-muted);
 }
 
@@ -771,7 +799,7 @@ select {
 }
 
 .num-field .unit {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
 }
 
@@ -788,7 +816,7 @@ select {
   background: rgba(0, 0, 0, 0.32);
   color: var(--text);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: var(--fs-ui);
   font-variant-numeric: tabular-nums;
 }
 
@@ -813,7 +841,7 @@ select {
 }
 
 .coord-head {
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
   text-align: center;
   letter-spacing: 0.04em;
@@ -821,16 +849,16 @@ select {
 
 .coord-name {
   font-family: var(--math);
-  font-size: 13px;
+  font-size: var(--fs-ui);
   color: var(--text-muted);
 }
 
 .coord-row.selected .coord-name {
-  color: var(--yellow);
+  color: var(--select);
 }
 
 .coord-unit {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
 }
 
@@ -857,10 +885,11 @@ select {
 }
 
 .legend-title {
-  font-family: var(--serif);
-  font-size: 14px;
+  font-family: var(--font);
+  font-size: var(--fs-ui);
   color: var(--text);
   margin-bottom: 6px;
+  font-weight: 600;
 }
 
 .legend-bar {
@@ -908,13 +937,13 @@ select {
 .legend-row {
   display: flex;
   justify-content: space-between;
-  font-size: 10.5px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
   margin-top: 4px;
 }
 
 .tiny {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
   line-height: 1.45;
 }
@@ -963,14 +992,14 @@ input[type='checkbox'] {
 }
 
 .readout .label {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-weight: 500;
   color: var(--text-muted);
 }
 
 .readout .value {
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: var(--fs-title);
   color: var(--text);
   margin-top: 1px;
   white-space: nowrap;
@@ -980,7 +1009,7 @@ input[type='checkbox'] {
 }
 
 .readout .value.ok {
-  color: var(--ok);
+  color: var(--text);
 }
 
 .readout .value.warn {
@@ -995,7 +1024,7 @@ input[type='checkbox'] {
 
 .grid-tick {
   font-family: var(--font);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   letter-spacing: 0.02em;
   color: var(--text-muted);
   pointer-events: none;
@@ -1012,7 +1041,7 @@ input[type='checkbox'] {
 .probe-label,
 .axis-label {
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: var(--fs-body);
   color: var(--text);
   pointer-events: none;
   white-space: nowrap;
@@ -1046,7 +1075,7 @@ input[type='checkbox'] {
 }
 
 .charge-label .cl-val {
-  font-size: 13px;
+  font-size: var(--fs-ui);
 }
 
 .charge-label.small {
@@ -1065,7 +1094,7 @@ input[type='checkbox'] {
 .probe-name {
   font-family: var(--serif);
   font-style: italic;
-  font-size: 16px;
+  font-size: var(--fs-body);
   color: var(--text);
   pointer-events: none;
   white-space: nowrap;
@@ -1085,14 +1114,14 @@ input[type='checkbox'] {
 .mark-label .mark-val {
   display: block;
   font-family: var(--font);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 
 .axis-label {
   font-family: var(--math);
   font-style: italic;
-  font-size: 20px;
+  font-size: var(--fs-title);
   transform: translate(-50%, -50%);
 }
 
@@ -1169,14 +1198,14 @@ input[type='checkbox'] {
 }
 
 .circuit-label .name {
-  font-size: 19px;
+  font-size: var(--fs-title);
   color: var(--text);
 }
 
 /* "Bulb A": the name a problem uses for that element, set above its R and I lines. */
 .circuit-label .circuit-bulb {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: var(--fs-ui);
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
@@ -1184,7 +1213,7 @@ input[type='checkbox'] {
 .circuit-label small {
   display: block;
   font-family: var(--font);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 
@@ -1209,7 +1238,7 @@ input[type='checkbox'] {
 
 .circuit-sign {
   font-family: var(--serif);
-  font-size: 22px;
+  font-size: var(--fs-display);
   color: var(--blue);
   transform: translate(-50%, -50%);
   text-shadow: 0 0 4px #000;
@@ -1232,7 +1261,7 @@ input[type='range']::-webkit-slider-thumb {
   height: 14px;
   border-radius: 50%;
   background: var(--bg);
-  border: 2px solid var(--yellow);
+  border: 2px solid var(--text);
   cursor: pointer;
   transition: transform 0.15s var(--ease);
 }
@@ -1246,14 +1275,14 @@ input[type='range']::-moz-range-thumb {
   height: 12px;
   border-radius: 50%;
   background: var(--bg);
-  border: 2px solid var(--yellow);
+  border: 2px solid var(--text);
   cursor: pointer;
 }
 
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--yellow);
+  outline: 2px solid var(--select);
   outline-offset: 2px;
 }
 
@@ -1331,19 +1360,19 @@ body.units-open .legend {
 }
 
 .ur-sym {
-  font-size: 17px;
+  font-size: var(--fs-title);
   color: var(--accent, #e8c16a);
   padding-top: 1px;
   overflow: hidden;
 }
 
 .ur-name {
-  font-size: 13px;
+  font-size: var(--fs-ui);
   font-weight: 600;
 }
 
 .ur-unit {
-  font-size: 13px;
+  font-size: var(--fs-ui);
   margin-top: 1px;
 }
 
@@ -1353,7 +1382,7 @@ body.units-open .legend {
 }
 
 .ur-base {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   opacity: 0.5;
   font-variant-numeric: tabular-nums;
   margin-top: 2px;
@@ -1361,7 +1390,7 @@ body.units-open .legend {
 
 .ur-from {
   margin-top: 5px;
-  font-size: 12px;
+  font-size: var(--fs-ui);
   opacity: 0.8;
 }
 
@@ -1379,7 +1408,7 @@ body.units-open .legend {
 /* Wave bench (Interference, Diffraction): the ruler beside the screen and the inset at P. */
 .ruler-label {
   font-family: var(--font);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1409,7 +1438,7 @@ body.units-open .legend {
 
 .wave-inset-title {
   font-family: var(--font);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   margin-bottom: 2px;
 }
@@ -1417,7 +1446,7 @@ body.units-open .legend {
 .wave-inset-caption {
   white-space: nowrap;
   font-family: var(--font);
-  font-size: 12px;
+  font-size: var(--fs-ui);
   color: var(--text);
   text-align: center;
   pointer-events: none;
@@ -1447,7 +1476,7 @@ body.units-open .legend {
 }
 
 .spec-title {
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   margin-bottom: 6px;
 }
@@ -1473,7 +1502,7 @@ body.units-open .legend {
 
 .spec-band span {
   display: block;
-  font-size: 9.5px;
+  font-size: var(--fs-meta);
   line-height: 16px;
   text-align: center;
   color: rgba(255, 255, 255, 0.85);
@@ -1484,7 +1513,7 @@ body.units-open .legend {
   position: absolute;
   top: 17px;
   transform: translateX(-50%);
-  font-size: 9.5px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 
@@ -1523,7 +1552,7 @@ body.units-open .legend {
   position: absolute;
   top: 3px;
   transform: translateX(-50%);
-  font-size: 9.5px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
   white-space: nowrap;
 }
@@ -1567,14 +1596,14 @@ body.units-open .legend {
 .predict.open {
   margin: 0 -6px;
   padding: 10px 10px 12px;
-  border: 1px solid rgba(244, 211, 69, 0.28);
+  border: 1px solid var(--border-hover);
   border-radius: var(--radius);
-  background: rgba(244, 211, 69, 0.04);
+  background: rgba(236, 230, 226, 0.03);
 }
 
 .pr-watch {
-  font-size: 12.5px;
-  color: var(--yellow);
+  font-size: var(--fs-ui);
+  color: var(--text-muted);
   animation: pr-pulse 1.2s ease-in-out infinite;
 }
 
@@ -1605,7 +1634,7 @@ body.units-open .legend {
 
 .pr-toggle::before {
   content: '▸';
-  font-size: 10px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
   transition: transform 0.2s var(--ease);
 }
@@ -1615,13 +1644,14 @@ body.units-open .legend {
 }
 
 .pr-title {
-  font-family: var(--serif);
-  font-size: 15px;
-  color: var(--yellow);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  color: var(--text);
+  font-weight: 600;
 }
 
 .pr-count {
-  font-size: 10.5px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
@@ -1630,7 +1660,7 @@ body.units-open .legend {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10.5px;
+  font-size: var(--fs-meta);
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
@@ -1644,7 +1674,7 @@ body.units-open .legend {
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-ui);
   line-height: 1;
   cursor: pointer;
 }
@@ -1662,7 +1692,7 @@ body.units-open .legend {
 
 .pr-ask {
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: var(--fs-body);
   line-height: 1.45;
   color: var(--text);
 }
@@ -1674,21 +1704,26 @@ body.units-open .legend {
 }
 
 .pr-q {
-  font-size: 11.5px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 
 .pr-opts button[aria-pressed='true'] {
   color: var(--text);
-  background: rgba(244, 211, 69, 0.12);
-  border-color: rgba(244, 211, 69, 0.55);
+  background: var(--select-soft);
+  border-color: var(--select-line);
 }
 
 .pr-go {
   width: 100%;
+  font-weight: 600;
   color: var(--yellow);
   border-color: rgba(244, 211, 69, 0.4);
-  background: rgba(244, 211, 69, 0.06);
+  background: rgba(244, 211, 69, 0.08);
+}
+
+.pr-go:hover:not(:disabled) {
+  background: rgba(244, 211, 69, 0.15);
 }
 
 .pr-go:disabled {
@@ -1703,7 +1738,7 @@ body.units-open .legend {
   gap: 2px;
   padding: 6px 8px;
   border-radius: var(--radius-sm);
-  font-size: 11.5px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 
@@ -1716,7 +1751,7 @@ body.units-open .legend {
 }
 
 .pr-vals {
-  font-size: 12.5px;
+  font-size: var(--fs-ui);
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -1730,7 +1765,7 @@ body.units-open .legend {
 }
 
 .pr-why {
-  font-size: 12px;
+  font-size: var(--fs-ui);
   line-height: 1.5;
   color: var(--text);
 }
@@ -1771,13 +1806,13 @@ body.units-open .legend {
 }
 
 .keys-head h2 {
-  font-family: var(--serif);
-  font-size: 16px;
-  font-weight: 400;
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  font-weight: 600;
 }
 
 .keys-hint {
-  font-size: 12px;
+  font-size: var(--fs-ui);
   line-height: 1.5;
   color: var(--text-muted);
 }
@@ -1794,7 +1829,7 @@ body.units-open .legend {
   grid-template-columns: 64px 1fr;
   align-items: center;
   gap: 10px;
-  font-size: 12.5px;
+  font-size: var(--fs-ui);
   color: var(--text);
 }
 
@@ -1804,6 +1839,6 @@ body.units-open .legend {
   border: 1px solid var(--border-hover);
   border-radius: 3px;
   font-family: var(--font);
-  font-size: 11px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }

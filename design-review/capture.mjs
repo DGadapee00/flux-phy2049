@@ -136,7 +136,8 @@ async function answers(page) {
   });
 }
 
-for (const size of SIZES) {
+const RUN_SIZES = process.env.FLUX_SIZES ? SIZES.filter((z) => process.env.FLUX_SIZES.split(',').includes(String(z.w))) : SIZES;
+for (const size of RUN_SIZES) {
   console.log(`== ${size.w}×${size.h}`);
   const tag = size.w;
 
@@ -206,6 +207,10 @@ for (const size of SIZES) {
     await shot(page, 'practice-list-chapter', size);
     await scrollPanel(page, '#problems', '.pb-list');
     await shot(page, 'practice-list-chapter-scrolled', size);
+    if (await page.$('[data-act="filters"][aria-expanded="false"]')) {
+      await clickSel(page, '[data-act="filters"]');
+      await shot(page, 'practice-list-filters-open', size);
+    }
     await clickSel(page, '[data-filter="group:principle"]');
     await page.evaluate(() => (document.querySelector('#problems').scrollTop = 0));
     await shot(page, 'practice-list-principle', size);
@@ -256,8 +261,15 @@ for (const size of SIZES) {
     await shot(page, 'problem-solved-labvals', size);
     await scrollPanel(page, '#problems');
     await shot(page, 'problem-solved-end', size);
+    // The lab's controls, opened from the solved problem.
+    if (await page.$('[data-act="lab"]')) {
+      await clickSel(page, '[data-act="lab"]');
+      await page.waitForTimeout(900);
+      await page.evaluate(() => (document.querySelector('#problems').scrollTop = 0));
+      await shot(page, 'problem-lab-open', size);
+    }
     // Change the setup, then the banner offers Reset to the problem.
-    const sl = await page.$('#lab-controls input[type=range]');
+    const sl = await page.$('#lab-controls input[type=range]:visible');
     if (sl && !size.phone) {
       await sl.focus();
       await page.keyboard.press('ArrowRight');
@@ -333,7 +345,13 @@ for (const size of SIZES) {
   if (want('units')) {
     const { ctx, page } = await fresh(size);
     await go(page, '#/e3/capacitor');
-    await clickSel(page, '#btn-units');
+    if (size.phone) {
+      // No room in a phone header: Units is reached from the Equations sheet.
+      await setSheet(page, 'eq');
+      await scrollPanel(page, '#eq-panel');
+      await shot(page, 'units-link-phone', size);
+      await clickSel(page, '#btn-units-eq');
+    } else await clickSel(page, '#btn-units');
     await shot(page, 'units-open', size);
     await ctx.close();
   }

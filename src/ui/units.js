@@ -63,6 +63,7 @@ export function createUnits({ onOpen } = {}) {
   }
 
   btn?.addEventListener('click', () => setOpen(!open));
+  document.getElementById('btn-units-eq')?.addEventListener('click', () => setOpen(true));
 
   return {
     toggle: () => setOpen(!open),

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { Arrow, M, fatLine, disposeTree, markAnswer } from './manim.js';
+import { freeAspect } from '../engine/viewport.js';
 
 /**
  * Shared drawing for the Mirrors and Lenses labs: an optical axis in centimeters, scaled by U scene
@@ -72,7 +73,7 @@ export function imageMark(group, x, h, color, caption, captionY) {
 
 /**
  * Camera that frames every x of interest (cm) between the side panels.
- * The free strip between the HUD panels is roughly 55% of the screen width.
+ * It fits the free space between the HUD panels, measured each frame by main.js.
  */
 export function frameCamera(xs, hs) {
   const finite = xs.filter(Number.isFinite).map((x) => Math.max(-150, Math.min(150, x)));
@@ -82,8 +83,8 @@ export function frameCamera(xs, hs) {
   const width = (xmax - xmin) * U;
   const height = 2 * (hmax + 5) * U;
   const tan = Math.tan((20 * Math.PI) / 180);
-  const aspect = typeof window === 'undefined' ? 1.6 : window.innerWidth / Math.max(1, window.innerHeight);
-  const D = Math.max(8, width / (2 * tan * aspect * 0.55), height / (2 * tan * 0.8));
+  // Fit the free space between the panels (src/engine/viewport.js), not the whole window.
+  const D = Math.max(8, width / (2 * tan * freeAspect()), height / (2 * tan * 0.8));
   const cx = ((xmin + xmax) / 2) * U;
   return { pos: new THREE.Vector3(cx, 0.1, Math.min(45, D)), target: new THREE.Vector3(cx, 0.1, 0) };
 }

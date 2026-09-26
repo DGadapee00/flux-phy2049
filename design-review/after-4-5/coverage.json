@@ -1,0 +1,1954 @@
+[
+ {
+  "lab": "#/e2/gauss",
+  "size": "1440x900",
+  "practice": false,
+  "pct": 39,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    504
+   ],
+   "controls": [
+    1124,
+    196,
+    300,
+    678
+   ],
+   "toggles": [
+    984,
+    16,
+    440,
+    94
+   ],
+   "legend": [
+    16,
+    811,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e2/gauss",
+  "size": "1440x900",
+  "practice": true,
+  "pct": 30,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    646
+   ],
+   "legend": [
+    512,
+    811,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/capacitor",
+  "size": "1440x900",
+  "practice": false,
+  "pct": 38,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    586
+   ],
+   "controls": [
+    1124,
+    196,
+    300,
+    593
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/capacitor",
+  "size": "1440x900",
+  "practice": true,
+  "pct": 31,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    646
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/potential",
+  "size": "1440x900",
+  "practice": false,
+  "pct": 41,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    558
+   ],
+   "controls": [
+    1124,
+    196,
+    300,
+    688
+   ],
+   "toggles": [
+    1035,
+    16,
+    389,
+    55
+   ],
+   "legend": [
+    16,
+    811,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/potential",
+  "size": "1440x900",
+  "practice": true,
+  "pct": 32,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    646
+   ],
+   "legend": [
+    512,
+    811,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/circuits",
+  "size": "1440x900",
+  "practice": false,
+  "pct": 35,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "eq-panel": [
+    16,
+    257,
+    360,
+    520
+   ],
+   "controls": [
+    1124,
+    196,
+    300,
+    543
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "legend": [
+    16,
+    811,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/circuits",
+  "size": "1440x900",
+  "practice": true,
+  "pct": 31,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    257,
+    480,
+    627
+   ],
+   "legend": [
+    512,
+    811,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/magforce",
+  "size": "1440x900",
+  "practice": false,
+  "pct": 37,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "eq-panel": [
+    16,
+    257,
+    360,
+    601
+   ],
+   "controls": [
+    1124,
+    196,
+    300,
+    592
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/magforce",
+  "size": "1440x900",
+  "practice": true,
+  "pct": 30,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    257,
+    480,
+    627
+   ]
+  }
+ },
+ {
+  "lab": "#/e7/lenses",
+  "size": "1440x900",
+  "practice": false,
+  "pct": 34,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    526
+   ],
+   "controls": [
+    1124,
+    196,
+    300,
+    594
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e7/lenses",
+  "size": "1440x900",
+  "practice": true,
+  "pct": 29,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    646
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/interference",
+  "size": "1440x900",
+  "practice": false,
+  "pct": 41,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    646
+   ],
+   "controls": [
+    1124,
+    196,
+    300,
+    688
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/interference",
+  "size": "1440x900",
+  "practice": true,
+  "pct": 31,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    646
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/diffraction",
+  "size": "1440x900",
+  "practice": false,
+  "pct": 39,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    646
+   ],
+   "controls": [
+    1124,
+    196,
+    300,
+    674
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/diffraction",
+  "size": "1440x900",
+  "practice": true,
+  "pct": 29,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    1273,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    646
+   ]
+  }
+ },
+ {
+  "lab": "#/e2/gauss",
+  "size": "1280x720",
+  "practice": false,
+  "pct": 44,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    378
+   ],
+   "controls": [
+    964,
+    196,
+    300,
+    508
+   ],
+   "toggles": [
+    824,
+    16,
+    440,
+    94
+   ],
+   "legend": [
+    16,
+    631,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e2/gauss",
+  "size": "1280x720",
+  "practice": true,
+  "pct": 33,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    466
+   ],
+   "legend": [
+    512,
+    631,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/capacitor",
+  "size": "1280x720",
+  "practice": false,
+  "pct": 45,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    466
+   ],
+   "controls": [
+    964,
+    196,
+    300,
+    508
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/capacitor",
+  "size": "1280x720",
+  "practice": true,
+  "pct": 35,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    466
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/potential",
+  "size": "1280x720",
+  "practice": false,
+  "pct": 45,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    378
+   ],
+   "controls": [
+    964,
+    196,
+    300,
+    508
+   ],
+   "toggles": [
+    875,
+    16,
+    389,
+    55
+   ],
+   "legend": [
+    16,
+    631,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/potential",
+  "size": "1280x720",
+  "practice": true,
+  "pct": 36,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    466
+   ],
+   "legend": [
+    512,
+    631,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/circuits",
+  "size": "1280x720",
+  "practice": false,
+  "pct": 41,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "eq-panel": [
+    16,
+    257,
+    360,
+    359
+   ],
+   "controls": [
+    964,
+    196,
+    300,
+    508
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "legend": [
+    16,
+    631,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/circuits",
+  "size": "1280x720",
+  "practice": true,
+  "pct": 34,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    257,
+    480,
+    447
+   ],
+   "legend": [
+    512,
+    631,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/magforce",
+  "size": "1280x720",
+  "practice": false,
+  "pct": 44,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "eq-panel": [
+    16,
+    257,
+    360,
+    447
+   ],
+   "controls": [
+    964,
+    196,
+    300,
+    508
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/magforce",
+  "size": "1280x720",
+  "practice": true,
+  "pct": 33,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    257,
+    480,
+    447
+   ]
+  }
+ },
+ {
+  "lab": "#/e7/lenses",
+  "size": "1280x720",
+  "practice": false,
+  "pct": 43,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    466
+   ],
+   "controls": [
+    964,
+    196,
+    300,
+    508
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e7/lenses",
+  "size": "1280x720",
+  "practice": true,
+  "pct": 32,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    466
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/interference",
+  "size": "1280x720",
+  "practice": false,
+  "pct": 45,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    466
+   ],
+   "controls": [
+    964,
+    196,
+    300,
+    508
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/interference",
+  "size": "1280x720",
+  "practice": true,
+  "pct": 34,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    466
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/diffraction",
+  "size": "1280x720",
+  "practice": false,
+  "pct": 43,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    466
+   ],
+   "controls": [
+    964,
+    196,
+    300,
+    508
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/diffraction",
+  "size": "1280x720",
+  "practice": true,
+  "pct": 32,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    1113,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    466
+   ]
+  }
+ },
+ {
+  "lab": "#/e2/gauss",
+  "size": "1024x768",
+  "practice": false,
+  "pct": 56,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    426
+   ],
+   "controls": [
+    708,
+    196,
+    300,
+    556
+   ],
+   "toggles": [
+    568,
+    16,
+    440,
+    94
+   ],
+   "legend": [
+    16,
+    679,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e2/gauss",
+  "size": "1024x768",
+  "practice": true,
+  "pct": 42,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    514
+   ],
+   "legend": [
+    512,
+    679,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/capacitor",
+  "size": "1024x768",
+  "practice": false,
+  "pct": 57,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    514
+   ],
+   "controls": [
+    708,
+    196,
+    300,
+    556
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/capacitor",
+  "size": "1024x768",
+  "practice": true,
+  "pct": 44,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    514
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/potential",
+  "size": "1024x768",
+  "practice": false,
+  "pct": 56,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    426
+   ],
+   "controls": [
+    708,
+    196,
+    300,
+    556
+   ],
+   "toggles": [
+    619,
+    16,
+    389,
+    55
+   ],
+   "legend": [
+    16,
+    679,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/potential",
+  "size": "1024x768",
+  "practice": true,
+  "pct": 45,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    420,
+    209
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    514
+   ],
+   "legend": [
+    512,
+    679,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/circuits",
+  "size": "1024x768",
+  "practice": false,
+  "pct": 52,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "eq-panel": [
+    16,
+    257,
+    360,
+    407
+   ],
+   "controls": [
+    708,
+    196,
+    300,
+    543
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "legend": [
+    16,
+    679,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/circuits",
+  "size": "1024x768",
+  "practice": true,
+  "pct": 43,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    257,
+    480,
+    495
+   ],
+   "legend": [
+    512,
+    679,
+    176,
+    73
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/magforce",
+  "size": "1024x768",
+  "practice": false,
+  "pct": 55,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "eq-panel": [
+    16,
+    257,
+    360,
+    495
+   ],
+   "controls": [
+    708,
+    196,
+    300,
+    556
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/magforce",
+  "size": "1024x768",
+  "practice": true,
+  "pct": 41,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    347,
+    228
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    257,
+    480,
+    495
+   ]
+  }
+ },
+ {
+  "lab": "#/e7/lenses",
+  "size": "1024x768",
+  "practice": false,
+  "pct": 54,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    514
+   ],
+   "controls": [
+    708,
+    196,
+    300,
+    556
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/e7/lenses",
+  "size": "1024x768",
+  "practice": true,
+  "pct": 40,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    514
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/interference",
+  "size": "1024x768",
+  "practice": false,
+  "pct": 57,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    514
+   ],
+   "controls": [
+    708,
+    196,
+    300,
+    556
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/interference",
+  "size": "1024x768",
+  "practice": true,
+  "pct": 43,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    514
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/diffraction",
+  "size": "1024x768",
+  "practice": false,
+  "pct": 54,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "eq-panel": [
+    16,
+    238,
+    360,
+    514
+   ],
+   "controls": [
+    708,
+    196,
+    300,
+    556
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/diffraction",
+  "size": "1024x768",
+  "practice": true,
+  "pct": 40,
+  "panels": {
+   "brand": [
+    16,
+    16,
+    304,
+    209
+   ],
+   "toggles": [
+    857,
+    16,
+    151,
+    55
+   ],
+   "problems": [
+    16,
+    238,
+    480,
+    514
+   ]
+  }
+ },
+ {
+  "lab": "#/e2/gauss",
+  "size": "390x844",
+  "practice": false,
+  "pct": 50,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "controls": [
+    0,
+    587,
+    390,
+    203
+   ],
+   "toggles": [
+    0,
+    93,
+    390,
+    50
+   ],
+   "readout": [
+    0,
+    794,
+    390,
+    50
+   ],
+   "legend": [
+    10,
+    149,
+    172,
+    54
+   ]
+  }
+ },
+ {
+  "lab": "#/e2/gauss",
+  "size": "390x844",
+  "practice": true,
+  "pct": 100,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "problems": [
+    0,
+    93,
+    390,
+    751
+   ],
+   "legend": [
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/capacitor",
+  "size": "390x844",
+  "practice": false,
+  "pct": 47,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "controls": [
+    0,
+    587,
+    390,
+    203
+   ],
+   "toggles": [
+    0,
+    93,
+    390,
+    50
+   ],
+   "readout": [
+    0,
+    794,
+    390,
+    50
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/capacitor",
+  "size": "390x844",
+  "practice": true,
+  "pct": 100,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "problems": [
+    0,
+    93,
+    390,
+    751
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/potential",
+  "size": "390x844",
+  "practice": false,
+  "pct": 50,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "controls": [
+    0,
+    587,
+    390,
+    203
+   ],
+   "toggles": [
+    0,
+    93,
+    390,
+    50
+   ],
+   "readout": [
+    0,
+    794,
+    390,
+    50
+   ],
+   "legend": [
+    10,
+    149,
+    172,
+    54
+   ]
+  }
+ },
+ {
+  "lab": "#/e3/potential",
+  "size": "390x844",
+  "practice": true,
+  "pct": 100,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "problems": [
+    0,
+    93,
+    390,
+    751
+   ],
+   "legend": [
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/circuits",
+  "size": "390x844",
+  "practice": false,
+  "pct": 50,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "controls": [
+    0,
+    587,
+    390,
+    203
+   ],
+   "toggles": [
+    0,
+    93,
+    390,
+    50
+   ],
+   "readout": [
+    0,
+    794,
+    390,
+    50
+   ],
+   "legend": [
+    10,
+    149,
+    172,
+    54
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/circuits",
+  "size": "390x844",
+  "practice": true,
+  "pct": 100,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "problems": [
+    0,
+    93,
+    390,
+    751
+   ],
+   "legend": [
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/magforce",
+  "size": "390x844",
+  "practice": false,
+  "pct": 47,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "controls": [
+    0,
+    587,
+    390,
+    203
+   ],
+   "toggles": [
+    0,
+    93,
+    390,
+    50
+   ],
+   "readout": [
+    0,
+    794,
+    390,
+    50
+   ]
+  }
+ },
+ {
+  "lab": "#/e4/magforce",
+  "size": "390x844",
+  "practice": true,
+  "pct": 100,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "problems": [
+    0,
+    93,
+    390,
+    751
+   ]
+  }
+ },
+ {
+  "lab": "#/e7/lenses",
+  "size": "390x844",
+  "practice": false,
+  "pct": 47,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "controls": [
+    0,
+    587,
+    390,
+    203
+   ],
+   "toggles": [
+    0,
+    93,
+    390,
+    50
+   ],
+   "readout": [
+    0,
+    794,
+    390,
+    50
+   ]
+  }
+ },
+ {
+  "lab": "#/e7/lenses",
+  "size": "390x844",
+  "practice": true,
+  "pct": 100,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "problems": [
+    0,
+    93,
+    390,
+    751
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/interference",
+  "size": "390x844",
+  "practice": false,
+  "pct": 54,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "controls": [
+    0,
+    587,
+    390,
+    203
+   ],
+   "toggles": [
+    0,
+    93,
+    390,
+    50
+   ],
+   "readout": [
+    0,
+    794,
+    390,
+    50
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/interference",
+  "size": "390x844",
+  "practice": true,
+  "pct": 100,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "problems": [
+    0,
+    93,
+    390,
+    751
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/diffraction",
+  "size": "390x844",
+  "practice": false,
+  "pct": 47,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "controls": [
+    0,
+    587,
+    390,
+    203
+   ],
+   "toggles": [
+    0,
+    93,
+    390,
+    50
+   ],
+   "readout": [
+    0,
+    794,
+    390,
+    50
+   ]
+  }
+ },
+ {
+  "lab": "#/wave/diffraction",
+  "size": "390x844",
+  "practice": true,
+  "pct": 100,
+  "panels": {
+   "brand": [
+    0,
+    0,
+    390,
+    93
+   ],
+   "problems": [
+    0,
+    93,
+    390,
+    751
+   ]
+  }
+ }
+]

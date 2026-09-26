@@ -10,6 +10,7 @@ import { createChargePointer } from './engine/pointer.js';
 import { loadLab, loadExamLabs } from './labs/load.js';
 import { addChargeTo, deleteSelectedFrom, setChargeQOn, setCoordOn } from './labs/charges-ui.js';
 import { setFrame, refit, defaultView, sceneScale, workPlane } from './engine/frame.js';
+import { setFreeRect, freeAspect, DESIGN_FREE } from './engine/viewport.js';
 import { applyProblem } from './problems/simbridge.js';
 import { createPractice } from './ui/problems.js';
 import { createUnits } from './ui/units.js';
@@ -158,8 +159,14 @@ controls.addEventListener('start', () => {
  */
 function fitNarrow(lab, cam) {
   if (lab.orbit !== false || lab.cameraFor) return cam;
-  const aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight);
-  const k = Math.min(2.4, Math.max(1, 1.05 / aspect));
+  /*
+   * On a laptop, what has to fit is the free strip between the panels, not the window: a flat lab
+   * framed for the 750px strip at 1440 wide was cut off by the panels in the 330px strip at 1024.
+   * DESIGN_FREE is that 1440×900 strip's width over the window height, where every lab looked right.
+   */
+  const phone = canvas.clientWidth <= 720;
+  const aspect = phone ? canvas.clientWidth / Math.max(1, canvas.clientHeight) : freeAspect();
+  const k = Math.min(2.4, Math.max(1, (phone ? 1.05 : DESIGN_FREE) / aspect));
   if (k === 1) return cam;
   const pos = cam.target.clone().add(cam.pos.clone().sub(cam.target).multiplyScalar(k));
   return { pos, target: cam.target };
@@ -475,21 +482,31 @@ function syncViews() {
 }
 
 /**
- * The practice panel is wider than the equation panel, so while it is open the picture slides
- * right to stay centered in the free space (a projection offset: orbit, picking, and labels all follow).
+ * The scene is framed into the free space between the panels, not the window: the picture slides to
+ * the middle of that space (a projection offset: orbit, picking, and labels all follow), and flat labs
+ * back off to fit its width (fitNarrow, opticsBench's frameCamera). In Practice the problem sheet is
+ * the left column and Setup is folded away, so the picture moves right, into the space it leaves.
  */
 const view = { shift: 0, lift: 0, w: 0, h: 0 };
+const shown = (el) => !!el && el.offsetParent !== null && !el.hidden && getComputedStyle(el).display !== 'none';
+function measureFree(w, h) {
+  if (w <= 720) return { left: 0, right: w, top: 0, bottom: h, W: w, H: h };
+  let left = 0;
+  for (const id of ['eq-panel', 'problems', 'units-ref']) {
+    const el = document.getElementById(id);
+    if (shown(el)) left = Math.max(left, el.getBoundingClientRect().right);
+  }
+  const controlsEl = document.getElementById('controls');
+  const right = shown(controlsEl) ? controlsEl.getBoundingClientRect().left : w;
+  return { left, right: Math.max(left + 1, right), top: 0, bottom: h, W: w, H: h };
+}
 function stepViewShift() {
   const w = canvas.clientWidth;
   const h = canvas.clientHeight;
-  let target = 0;
   let lift = 0;
-  if (document.body.classList.contains('practice-open') && w > 720) {
-    const left = document.getElementById('problems').getBoundingClientRect().right;
-    const controlsEl = document.getElementById('controls');
-    const right = controlsEl.offsetParent ? controlsEl.getBoundingClientRect().left : w;
-    target = Math.max(0, Math.round((left + right) / 2 - w / 2));
-  }
+  const free = measureFree(w, h);
+  setFreeRect(free);
+  const target = w > 720 ? Math.round((free.left + free.right) / 2 - w / 2) : 0;
   // Phone, problem sheet lowered to show the lab: centre the picture in the strip above the sheet.
   if (document.body.classList.contains('practice-open') && document.body.classList.contains('scene-peek') && w <= 720) {
     const top = document.getElementById('problems').getBoundingClientRect().top;
@@ -504,8 +521,9 @@ function stepViewShift() {
   view.lift = nextLift;
   view.w = w;
   view.h = h;
-  if (Math.abs(next) < 0.5 && Math.abs(nextLift) < 0.5) camera.clearViewOffset();
-  else camera.setViewOffset(w, h, -next, nextLift, w, h);
+  if (Math.abs(next) < 0.5 && Math.abs(nextLift) < 0.5) {
+    if (camera.view?.enabled) camera.clearViewOffset();
+  } else camera.setViewOffset(w, h, -next, nextLift, w, h);
 }
 
 function frame() {
@@ -551,9 +569,12 @@ window.__gauss = {
 };
 
 const boot = parseHash();
+// No link at all: a student opening the app. Practice is the front door, for the exam coming up.
+const bare = !location.hash.replace(/^#\/?/, '');
 setExam(boot.examId, boot.labId).then(() => {
   booting = false;
   if (boot.problemId) practice.followUrl(boot.problemId, boot.seed);
+  else if (bare) practice.open();
   recompute();
   syncViews();
   hud.update(publicState(), computed, app.lab);

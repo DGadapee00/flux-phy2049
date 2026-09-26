@@ -156,8 +156,12 @@ export function createPractice(api) {
     st.open = on;
     panel.hidden = !on;
     body.classList.toggle('practice-open', on);
-    $('btn-practice').setAttribute('aria-expanded', on ? 'true' : 'false');
+    // The header's Explore | Practice switch shows which mode this is.
+    $('btn-practice').setAttribute('aria-selected', on ? 'true' : 'false');
     $('btn-practice').classList.toggle('active', on);
+    $('btn-explore')?.setAttribute('aria-selected', on ? 'false' : 'true');
+    $('btn-explore')?.classList.toggle('active', !on);
+    if (!on) setLabOpen(false);
     syncBlind();
     updateBrand();
   }
@@ -181,24 +185,43 @@ export function createPractice(api) {
     const blind = st.open && ((inExamView() && !!cur) || (!!cur && holdsSetup && cur.mode === 'practice' && !cur.finished && !cur.peeked));
     body.classList.toggle('problem-blind', blind);
     api.setSceneBlind?.(blind);
+    // A practice exam is an exam: no lab controls, and no scene at all for a question that has none.
+    const exam = st.open && inExamView() && !!cur;
+    body.classList.toggle('exam-mode', exam);
+    body.classList.toggle('scene-idle', exam && !holdsSetup);
+    if (blind || exam || !cur) setLabOpen(false);
+  }
+
+  /*
+   * The lab controls, while practising. The problem is the main thing on screen and the lab is its
+   * picture; the controls wait in a closed drawer until the lab has something to teach — once the
+   * problem is solved or peeked, or when it only opens the topic's lab without its numbers.
+   */
+  function labDrawerReady(cur = st.cur) {
+    if (!cur || cur.mode !== 'practice' || !cur.tpl.lab || api.labId() !== cur.tpl.lab) return false;
+    return !cur.tpl.sim || cur.finished || cur.peeked;
+  }
+
+  function setLabOpen(on) {
+    body.classList.toggle('lab-open', !!on);
   }
 
   function updateBrand() {
     const el = $('practice-stat');
     if (!el) return;
-    if (examActive()) {
-      el.textContent = `Practice exam · ${fmtClock(st.exam.endsAt - Date.now())} left`;
-      return;
-    }
-    const ids = problemsForExam(api.examId()).map((p) => p.id);
-    const c = progress.counts(ids);
+    /*
+     * The header says only what needs saying: a running exam's clock, and how many reviews are due
+     * (a badge on Practice). The problem count and mastery live in the practice list, where they
+     * mean something; a newcomer is not greeted with a zero.
+     */
     const due = progress.dueIds(PROBLEMS.map((p) => p.id)).length;
-    // No zeros for a newcomer: say what is here, then what has been done once there is something.
-    const bits = [`${ids.length} problems`];
-    if (c.mastered) bits.push(`${c.mastered} mastered`);
-    else if (c.seen) bits.push(`${c.seen} tried`);
-    if (due) bits.push(`${due} due`);
-    el.textContent = bits.join(' · ');
+    const badge = $('practice-due');
+    if (badge) {
+      badge.textContent = due ? String(due) : '';
+      badge.hidden = !due;
+      badge.title = due ? `${due} due for review` : '';
+    }
+    el.textContent = examActive() ? `Practice exam · ${fmtClock(st.exam.endsAt - Date.now())} left` : '';
   }
 
   // ------------------------------------------------------------------ attempts
@@ -266,6 +289,7 @@ export function createPractice(api) {
 
   function leaveProblem({ push = true } = {}) {
     body.classList.remove('scene-peek');
+    setLabOpen(false);
     st.cur = null;
     st.view = 'list';
     st.token++;
@@ -622,6 +646,15 @@ export function createPractice(api) {
     }
   }
 
+  /** The filter button's own label says what the list is showing, so it can stay folded. */
+  function filterSummary(labTitle) {
+    const kind = { all: 'All problems', numeric: 'Numeric', conceptual: 'Concept', derivation: 'Derivation' }[st.filter.kind] || 'All problems';
+    const bits = [kind];
+    if (st.filter.lab && labTitle) bits.push(`${labTitle} lab only`);
+    bits.push(st.filter.group === 'principle' ? 'by principle' : 'by chapter');
+    return `Filter · ${bits.join(' · ')}`;
+  }
+
   function listHTML() {
     const exam = examById(st.listExam);
     const all = problemsForExam(exam.id);
@@ -633,12 +666,26 @@ export function createPractice(api) {
     const labHere = labId && all.some((t) => t.lab === labId);
     const tpls = orderByChapter(filteredTemplates(exam.id));
 
+    /*
+     * One primary action, and it is the one that matters most now: a running exam, else what is due
+     * for review, else a mixed set. The others sit beside it as plain buttons.
+     */
     const ex = st.exam;
-    let examBtn;
-    if (ex && !ex.done) {
-      examBtn = `<button type="button" class="btn accent" data-act="exam-resume">Resume practice exam · ${fmtClock(ex.endsAt - Date.now())} left</button>`;
+    const running = ex && !ex.done;
+    const examLabelTxt = running ? `Resume practice exam · ${fmtClock(ex.endsAt - Date.now())} left` : `Practice exam · ${Math.min(EXAM_SIZE, all.length)} problems · ${EXAM_MINUTES} min`;
+    const examAct = running ? 'exam-resume' : 'exam-start';
+    const mixedLabel = `Mixed set · ${Math.min(MIXED_SIZE, all.length)}`;
+    const reviewTitle = 'Problems from any exam whose review date has come';
+    let actionsHTML;
+    if (running) {
+      actionsHTML = `<button type="button" class="btn accent" data-act="${examAct}">${examLabelTxt}</button>
+        <div class="pb-row"><button type="button" class="btn" data-act="mixed">${mixedLabel}</button>${due ? `<button type="button" class="btn" data-act="review" title="${reviewTitle}">Review due · ${due}</button>` : ''}</div>`;
+    } else if (due) {
+      actionsHTML = `<button type="button" class="btn accent" data-act="review" title="${reviewTitle}">Review due · ${due}</button>
+        <div class="pb-row"><button type="button" class="btn" data-act="mixed">${mixedLabel}</button><button type="button" class="btn" data-act="${examAct}">${examLabelTxt}</button></div>`;
     } else {
-      examBtn = `<button type="button" class="btn accent" data-act="exam-start">Practice exam · ${Math.min(EXAM_SIZE, all.length)} problems · ${EXAM_MINUTES} min</button>`;
+      actionsHTML = `<button type="button" class="btn accent" data-act="mixed">${mixedLabel}</button>
+        <div class="pb-row"><button type="button" class="btn" data-act="${examAct}">${examLabelTxt}</button></div>`;
     }
     const lastResults = ex && ex.done && ex.examId === exam.id ? `<button type="button" class="linkish" data-act="exam-results">Last exam results</button>` : '';
 
@@ -726,20 +773,23 @@ export function createPractice(api) {
           : `<p class="pb-welcome">${c.total} problems for this exam. Pick one below, or let a mixed set choose.</p>`
       }
       <div class="pb-actions">
-        ${examBtn}
-        <div class="pb-row">
-          <button type="button" class="btn" data-act="mixed">Mixed set · ${Math.min(MIXED_SIZE, all.length)}</button>
-          <button type="button" class="btn${due ? ' due' : ''}" data-act="review" ${due ? '' : 'disabled'} title="Problems from any exam whose review date has come">Review due · ${due}</button>
-        </div>
+        ${actionsHTML}
         ${lastResults}
       </div>
       ${weakHTML()}
-      <div class="pb-filters">
-        ${chip('kind', 'all', 'All')}${chip('kind', 'numeric', 'Numeric')}${chip('kind', 'conceptual', 'Concept')}${chip('kind', 'derivation', 'Derivation')}
-        ${labHere ? `<button type="button" class="pb-chip${st.filter.lab ? ' on' : ''}" data-filter="lab:toggle">${esc(LAB_META[labId].title)} lab only</button>` : ''}
-      </div>
-      <div class="pb-filters pb-group" role="group" aria-label="Group problems by">
-        <span class="pb-dim">Group by</span>${chip('group', 'chapter', 'Chapter')}${chip('group', 'principle', 'Principle')}
+      <div class="pb-filterbox${st.filterOpen ? ' open' : ''}">
+        <button type="button" class="pb-filter-toggle" data-act="filters" aria-expanded="${!!st.filterOpen}">${esc(filterSummary(labHere ? LAB_META[labId].title : ''))}</button>
+        ${
+          st.filterOpen
+            ? `<div class="pb-filters" role="group" aria-label="Kind of problem">
+          ${chip('kind', 'all', 'All')}${chip('kind', 'numeric', 'Numeric')}${chip('kind', 'conceptual', 'Concept')}${chip('kind', 'derivation', 'Derivation')}
+          ${labHere ? `<button type="button" class="pb-chip${st.filter.lab ? ' on' : ''}" data-filter="lab:toggle">${esc(LAB_META[labId].title)} lab only</button>` : ''}
+        </div>
+        <div class="pb-filters pb-group" role="group" aria-label="Group problems by">
+          <span class="pb-dim">Group by</span>${chip('group', 'chapter', 'Chapter')}${chip('group', 'principle', 'Principle')}
+        </div>`
+            : ''
+        }
       </div>
       <div class="pb-list">${groups.join('') || '<p class="pb-empty">No problems match these filters.</p>'}</div>
       <p class="pb-foot">Your first try uses the worksheet's numbers when there is one; after that the numbers change every time. Working down a chapter, every fourth problem is one you've met from an earlier chapter, due for review. Progress stays in this browser. <button type="button" class="linkish" data-act="reset-progress">Reset progress</button></p>`;
@@ -761,7 +811,7 @@ export function createPractice(api) {
       const n = PROBLEMS.filter((t) => !t.enrichment && primaryOf(t) === r.id).length;
       return `<div class="pb-weak-row">
           <div><div class="pb-weak-name">${esc(pname(r.id))}</div><div class="pb-dim">${esc(bits.join(' · '))}</div></div>
-          ${n ? `<button type="button" class="btn" data-weak="${esc(r.id)}" title="${Math.min(MIXED_SIZE, n)} problems decided by this principle, from any exam, weakest first">Practise</button>` : ''}
+          ${n ? `<button type="button" class="btn" data-weak="${esc(r.id)}" title="${Math.min(MIXED_SIZE, n)} problems decided by this principle, from any exam, weakest first">Practice</button>` : ''}
         </div>`;
     });
     const slips = [other.slip ? `slips ${other.slip}×` : '', other.read ? `misread the question ${other.read}×` : ''].filter(Boolean).join(' · ');
@@ -967,18 +1017,26 @@ export function createPractice(api) {
       return `<div class="pb-banner warn"><span>The ${esc(labTitle)} lab for this problem isn't on screen.</span><button type="button" class="linkish" data-act="restore">Show it</button></div>`;
     }
     if (!cur.tpl.sim) {
-      return `<div class="pb-banner quiet"><span>The ${esc(labTitle)} lab is open for this topic. It isn't set to this problem's numbers, so explore it freely.</span></div>`;
+      return `<div class="pb-banner quiet"><span>The ${esc(labTitle)} lab is open for this topic. It isn't set to this problem's numbers.</span>${labButton(cur)}</div>`;
     }
     if (st.edited) {
-      return `<div class="pb-banner warn"><span>You changed the setup, so the lab no longer matches this problem.</span><button type="button" class="linkish" data-act="restore">Reset to the problem</button></div>`;
+      // Reset to the problem is in the sticky head, where it stays in reach.
+      return `<div class="pb-banner warn"><span>You changed the setup, so the lab no longer matches this problem.</span></div>`;
     }
     if (!cur.finished && !cur.peeked) {
       return `<div class="pb-banner"><span>The ${esc(labTitle)} lab shows this setup. Its numbers are hidden until you solve it.</span><button type="button" class="linkish" data-act="peek" title="Counts as a peek: this attempt won't count as a clean solve">Peek</button></div>`;
     }
     if (cur.tpl.sim?.read) {
-      return `<div class="pb-banner good"><span>The lab is live: its numbers are shown next to your answers. Change the setup to explore.</span></div>`;
+      return `<div class="pb-banner good"><span>The lab is live: its numbers are shown next to your answers.</span>${labButton(cur)}</div>`;
     }
-    return `<div class="pb-banner quiet"><span>The lab is live. Change the setup to explore what-ifs.</span></div>`;
+    return `<div class="pb-banner quiet"><span>The lab is live.</span>${labButton(cur)}</div>`;
+  }
+
+  /** Opens the lab's controls beside the problem, or folds them away again. */
+  function labButton(cur) {
+    if (!labDrawerReady(cur)) return '';
+    const on = body.classList.contains('lab-open');
+    return `<button type="button" class="linkish pb-labbtn" data-act="lab" aria-pressed="${on}">${on ? 'Hide lab controls' : 'Explore in the lab'}</button>`;
   }
 
   /**
@@ -1154,8 +1212,11 @@ export function createPractice(api) {
       // On a phone the sheet covers the lab; this lowers it so the scene shows above the problem.
       const peek = body.classList.contains('scene-peek');
       const sceneBtn = cur.tpl.lab ? `<button type="button" class="pb-scene" data-act="scene" aria-pressed="${peek}">${peek ? 'Full problem' : 'Show lab'}</button>` : '';
+      // Changing the setup scrolls nowhere near the top of a long solution, so the way back sits in the sticky head.
+      const resetBtn = st.edited && cur.tpl.sim && api.labId() === cur.tpl.lab ? `<button type="button" class="btn pb-reset" data-act="restore">Reset to the problem</button>` : '';
       head = `<div class="pb-head">
           <button type="button" class="pb-back" data-act="list">← ${s ? esc(s.label) + pos : 'Problems'}</button>
+          ${resetBtn}
           ${sceneBtn}
           <button type="button" class="pb-x" data-act="close" title="Back to the lab (P)" aria-label="Close practice">×</button>
         </div>`;
@@ -1384,6 +1445,15 @@ export function createPractice(api) {
         body.classList.toggle('scene-peek');
         renderPanel();
         break;
+      case 'lab':
+        if (cur) readInputs(cur);
+        setLabOpen(!body.classList.contains('lab-open'));
+        renderPanel();
+        break;
+      case 'filters':
+        st.filterOpen = !st.filterOpen;
+        renderPanel();
+        break;
       case 'hint':
         if (cur) {
           readInputs(cur);
@@ -1585,7 +1655,13 @@ export function createPractice(api) {
     if (st.cur?.mode === 'practice' && !st.cur.finished) check();
   });
 
-  $('btn-practice').addEventListener('click', () => toggle());
+  // Explore | Practice: two halves of one switch, so a click on the lit half does nothing.
+  $('btn-practice').addEventListener('click', () => {
+    if (!st.open) open();
+  });
+  $('btn-explore')?.addEventListener('click', () => {
+    if (st.open) close();
+  });
 
   // ------------------------------------------------------------------ public
   function open() {
