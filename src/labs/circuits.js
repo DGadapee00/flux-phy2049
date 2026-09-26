@@ -276,10 +276,15 @@ export default defineLab({
   readout(state, computed) {
     const c = computed.circ;
     if (!c) return '';
-    const bat = c.edges.find((e) => e.type === 'V');
+    const bats = c.edges.filter((e) => e.type === 'V');
+    const bat = bats[0];
+    // One battery: R_eq and its current. Several: each battery's own current, not the first one twice.
+    const lead =
+      c.Req != null
+        ? [[String.raw`$R_{\text{eq}}$`, fmtOhm(c.Req), 'qR'], ['Battery current', fmtI(c.sol.I[bat.id]), 'qI']]
+        : bats.slice(0, 2).map((b, i) => [`Battery ${i + 1} current`, fmtI(c.sol.I[b.id]), 'qI']);
     return cells([
-      [c.Req != null ? String.raw`$R_{\text{eq}}$` : 'Battery 1 current', c.Req != null ? fmtOhm(c.Req) : fmtI(c.sol.I[bat.id]), c.Req != null ? 'qR' : 'qI'],
-      ['Battery current', fmtI(c.sol.I[bat.id]), 'qI'],
+      ...lead,
       [String.raw`Loop rule, max $|\sum \Delta V|$`, fmtV(c.loopMax), 'ok'],
       ['Power delivered', fmtP(c.Pbat), 'qP'],
     ]);

@@ -31,16 +31,6 @@
   background: rgba(244, 211, 69, 0.18);
 }
 
-.practice-btn kbd {
-  font-family: var(--font);
-  font-size: 10px;
-  line-height: 1;
-  color: var(--text-muted);
-  border: 1px solid var(--border-hover);
-  border-radius: 3px;
-  padding: 2px 5px;
-}
-
 .practice-stat {
   min-width: 0;
   font-size: 11px;
@@ -67,7 +57,7 @@ body.practice-open .legend {
   top: var(--below-brand, 230px);
   left: 16px;
   width: min(384px, calc(100vw - 360px));
-  max-height: calc(100vh - var(--below-brand, 230px) - 118px);
+  max-height: calc(100vh - var(--below-brand, 230px) - 16px);
   overflow: auto;
   overscroll-behavior: contain;
   padding: 14px 16px 16px;
@@ -77,10 +67,7 @@ body.practice-open .legend {
   background: rgba(14, 15, 18, 0.94);
 }
 
-/* The readout is hidden while blind, so the panel can run to the hint bar. */
-body.problem-blind .problems {
-  max-height: calc(100vh - var(--below-brand, 230px) - 56px);
-}
+
 
 .problems > * {
   flex-shrink: 0;
@@ -343,6 +330,12 @@ body.problem-blind .problems {
 .pb-dot.s-mastered {
   border-color: var(--green);
   background: var(--green);
+}
+
+.pb-welcome {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 
 .pb-foot,
@@ -780,6 +773,7 @@ body.problem-blind .problems {
 
 /* Blind mode: the lab keeps its geometry; numbers that would give the answer away are hidden. */
 body.problem-blind #eq-live,
+body.problem-blind #eq-result,
 body.problem-blind #insight,
 body.problem-blind #mini-plot,
 body.problem-blind #readout {

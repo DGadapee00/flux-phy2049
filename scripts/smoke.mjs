@@ -545,18 +545,24 @@ await page.waitForFunction(() => window.__gauss.state.lab === 'capacitor');
 await page.selectOption('#scenario', 'cap-12v');
 await page.waitForTimeout(300);
 const predictCard = await page.evaluate(() => window.__gauss.predict.current());
+// The card opens on a lab's first visit; this run has been here before, so it may be folded.
+if (await page.$('.pr-toggle[aria-expanded="false"]')) await page.click('.pr-toggle');
 await page.click('[data-pr="try"]');
 await page.click('[data-pr-pick="C"][data-v="0.5"]');
 await page.click('[data-pr-pick="Q"][data-v="0.5"]');
 await page.click('[data-pr-pick="U"][data-v="0.5"]');
 await page.click('[data-pr="change"]');
-await page.waitForTimeout(300);
+// The change plays out in the lab: partway through, d is between its old and new values.
+await page.waitForTimeout(700);
+const midway = await page.evaluate(() => ({ phase: window.__gauss.predict.current().phase, d: window.__gauss.state.cap.d }));
+await page.waitForFunction(() => window.__gauss.predict.current().phase === 'done', null, { timeout: 5000 });
 const predicted = await page.evaluate(() => ({ cur: window.__gauss.predict.current(), d: window.__gauss.state.cap.d }));
 await page.click('[data-pr="undo"]');
-await page.waitForTimeout(200);
+await page.waitForFunction(() => window.__gauss.predict.current().phase === 'idle', null, { timeout: 5000 });
 const undone = await page.evaluate(() => window.__gauss.state.cap.d);
-if (predictCard.id !== 'cap-battery-double-d' || !predicted.cur.result?.allRight || Math.abs(predicted.d - 0.1) > 1e-9 || Math.abs(undone - 0.05) > 1e-9) {
-  mismatches.push({ name: 'predict first: predict, change, graded, undo', got: { predictCard, predicted, undone }, exp: 'cap-battery-double-d, all right, d 5→10 cm, undone to 5 cm' });
+const played = midway.phase === 'changing' && midway.d > 0.05 + 1e-6 && midway.d < 0.1 - 1e-6;
+if (predictCard.id !== 'cap-battery-double-d' || !played || !predicted.cur.result?.allRight || Math.abs(predicted.d - 0.1) > 1e-9 || Math.abs(undone - 0.05) > 1e-9) {
+  mismatches.push({ name: 'predict first: predict, change played, graded, undo', got: { predictCard, midway, predicted, undone }, exp: 'cap-battery-double-d, d sliding mid-change, all right, d 5→10 cm, undone to 5 cm' });
 }
 
 const practice = { loaded: loaded.n, blindBefore, afterWrong, solved, examInfo, examDone, predicted: predicted.cur.result?.got, newErrors: errors.length - loadErrors };

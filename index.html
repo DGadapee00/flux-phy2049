@@ -34,16 +34,15 @@
           <h1>FLUX</h1>
           <p class="subtitle" id="brand-sub">PHY 2049</p>
         </div>
-        <nav class="exam-tabs" id="exam-tabs" aria-label="Exams"></nav>
-        <!-- Same control as the lab's Scenario picker; shown instead of the tabs on a phone. -->
+        <!-- Which exam: named and dated, so nobody has to hover a numeral to find Friday's. -->
         <select class="exam-select" id="exam-select" aria-label="Exam"></select>
         <nav class="lab-tabs" id="lab-tabs" role="tablist" aria-label="Labs"></nav>
         <div class="practice-row">
-          <button type="button" class="practice-btn" id="btn-practice" aria-expanded="false" aria-controls="problems">
-            <span>Practice</span><kbd>P</kbd>
+          <button type="button" class="practice-btn" id="btn-practice" aria-expanded="false" aria-controls="problems" title="Practice (P)">
+            <span>Practice</span>
           </button>
-          <button type="button" class="practice-btn units-btn" id="btn-units" aria-expanded="false" aria-controls="units-ref">
-            <span>Units</span><kbd>U</kbd>
+          <button type="button" class="practice-btn units-btn" id="btn-units" aria-expanded="false" aria-controls="units-ref" title="Units reference (U)">
+            <span>Units</span>
           </button>
           <span class="practice-stat" id="practice-stat"></span>
         </div>
@@ -55,6 +54,8 @@
 
       <aside class="hud panel eq-panel" id="eq-panel">
         <div class="law" id="law-line"></div>
+        <!-- The lab's headline numbers, larger, under the law they come from. -->
+        <div class="eq-result" id="eq-result"></div>
         <div class="eq-live" id="eq-live"></div>
         <div class="insight" id="insight">
           <div class="insight-title" id="insight-title"></div>
@@ -72,7 +73,10 @@
         </div>
         <div id="toggle-host"></div>
         <button type="button" class="btn ghost" id="btn-reset-cam">Reset view</button>
+        <button type="button" class="btn ghost keys-btn" id="btn-keys" aria-expanded="false" aria-controls="keys" title="Mouse and keyboard (?)">?</button>
       </aside>
+
+      <aside class="hud panel keys" id="keys" aria-label="Mouse and keyboard" hidden></aside>
 
       <aside class="hud panel controls" id="controls">
         <div class="panel-header">
@@ -80,31 +84,21 @@
           <span class="hint" id="setup-hint">Drag charges through the surface</span>
         </div>
 
+        <!-- First, not last: the prediction is the best moment in a lab, so it is not left below the fold. -->
+        <section class="predict" id="predict" aria-label="Predict first" hidden></section>
+
         <label class="field">
           <span>Scenario</span>
           <select id="scenario"></select>
         </label>
 
         <div id="lab-controls"></div>
-
-        <section class="predict" id="predict" aria-label="Predict first" hidden></section>
       </aside>
 
       <div id="legend-host"></div>
 
       <footer class="hud panel readout" id="readout"></footer>
 
-      <div class="hud hint-bar" id="hint-bar">
-        <span id="hint-orbit">Drag to orbit</span>
-        <span class="sep">·</span>
-        <span>Scroll to zoom</span>
-        <span class="sep">·</span>
-        <span id="hint-action">Drag a charge through the surface</span>
-        <span class="sep">·</span>
-        <span id="hint-plane">Shift-drag for height</span>
-        <span class="sep">·</span>
-        <span>1–9 labs · [ ] exams</span>
-      </div>
     </div>
 
     <script type="module" src="/src/main.js"></script>

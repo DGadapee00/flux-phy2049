@@ -73,7 +73,8 @@ export const EXAMS = [
     n: 8,
     title: 'Wave optics',
     chapters: '63–65',
-    date: 'Final 12/9',
+    date: 'Wed 12/9',
+    final: true,
     labs: ['interference', 'diffraction', 'thinfilm'],
     coming: [],
   },
@@ -120,4 +121,36 @@ export function examForLab(labId) {
 export function examIndex(id) {
   const i = EXAMS.findIndex((e) => e.id === id);
   return i < 0 ? 1 : i;
+}
+
+/** What the unit is called in short: "Exam 4", or "Final" for wave optics, which is on the final. */
+export function examLabel(exam) {
+  return exam.final ? 'Final' : `Exam ${exam.n}`;
+}
+
+/** The picker's full line: "Exam 4 · Circuits & magnetism · Fri 10/9". */
+export function examLongLabel(exam) {
+  return `${examLabel(exam)} · ${exam.title} · ${exam.date}`;
+}
+
+/**
+ * The exam date as a Date, the end of that day in `year`. The catalog writes dates without a year
+ * ("Fri 10/9"), so the caller supplies the one it is asking about.
+ */
+export function examDay(exam, year) {
+  const m = /(\d+)\/(\d+)/.exec(exam.date || '');
+  return m ? new Date(year, Number(m[1]) - 1, Number(m[2]), 23, 59, 59) : null;
+}
+
+/**
+ * The exam a student opening the app today is working toward: the first one not yet past, counting
+ * the exam day itself. After the final, the final. A brand-new student lands here, not on whichever
+ * exam the app was first built around.
+ */
+export function nextExam(now = new Date()) {
+  const year = now.getFullYear();
+  return EXAMS.find((e) => {
+    const d = examDay(e, year);
+    return d && d >= now;
+  }) || EXAMS[EXAMS.length - 1];
 }

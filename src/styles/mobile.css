@@ -76,10 +76,6 @@
     display: none;
   }
 
-  .exam-tabs {
-    display: none;
-  }
-
   .exam-select {
     display: block;
     grid-column: 3;
@@ -92,6 +88,7 @@
      * it, so the picker ended flush against the Practice button with no gap at all.
      */
     margin-inline: 10px;
+    margin-top: 0;
     width: calc(100% - 20px);
   }
 
@@ -132,8 +129,7 @@
     }
   }
 
-  .practice-stat,
-  .practice-btn kbd {
+  .practice-stat {
     display: none;
   }
 
@@ -148,7 +144,6 @@
    * Tabs scroll sideways instead of wrapping. Wrapping is what grew the header to 196px — a third
    * of the screen — and it got worse the further into the term you went.
    */
-  .exam-tabs,
   .lab-tabs {
     grid-row: auto;
     flex-wrap: nowrap;
@@ -158,14 +153,12 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .exam-tabs::-webkit-scrollbar,
   .lab-tabs::-webkit-scrollbar,
   .toggles::-webkit-scrollbar,
   .readout::-webkit-scrollbar {
     display: none;
   }
 
-  .exam-tab,
   .tab {
     flex: 0 0 auto;
     min-height: 34px;
@@ -183,9 +176,10 @@
     right: 14px;
   }
 
-  /* Keyboard shortcuts and shift-drag mean nothing on a touch screen, and the bar overflowed. */
-  .hint-bar {
-    display: none;
+  /* Keyboard shortcuts and shift-drag mean nothing on a touch screen. */
+  .keys-btn,
+  .keys {
+    display: none !important;
   }
 }
 
@@ -255,10 +249,9 @@
     transform: none;
     border-radius: 0;
     border-width: 1px 0 0;
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(45%, max-content);
-    overflow-x: auto;
+    /* Two headline numbers side by side, not a strip that scrolls a third one half into view. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
@@ -360,6 +353,10 @@
 
   .readout .label {
     font-size: 10px;
+  }
+
+  .readout .cell:nth-child(n + 3) {
+    display: none;
   }
 
   .readout .value {

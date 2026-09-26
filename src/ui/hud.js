@@ -1,4 +1,4 @@
-import { EXAMS, examById, LAB_META } from '../data/catalog.js';
+import { EXAMS, examById, LAB_META, examLabel, examLongLabel } from '../data/catalog.js';
 import { setLawEl, prose, mathText, escapeHTML } from './shared.js';
 import { drawVx, drawAC, drawVI, drawPaschen, drawRC } from './plot.js';
 import { resetChargeListSig } from '../labs/charges-ui.js';
@@ -81,28 +81,26 @@ export function createHUD(api) {
     else if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth;
   }
 
-  function renderExamTabs(examId) {
-    $('exam-tabs').innerHTML = EXAMS.map((e) => {
-      const on = e.id === examId;
-      const label = e.id === 'wave' ? 'W' : String(e.n);
-      return `<button type="button" class="exam-tab${on ? ' active' : ''}" data-exam="${e.id}" aria-selected="${on}" title="Exam ${e.n}: ${e.title}">${label}</button>`;
-    }).join('');
-    revealActive($('exam-tabs'));
-    // The phone shows this instead of the strip; both are driven from the same EXAMS list.
+  /*
+   * Where a phone's header row is too narrow for the full line ("Exam 4 · Circuits & magnetism ·
+   * Fri 10/9"), the picker shows "Exam 4" and the chapter range sits beside it in the brand line.
+   * The same query as mobile.css's header compaction.
+   */
+  const compact = typeof matchMedia === 'function' ? matchMedia('(max-width: 720px), (max-height: 560px) and (orientation: landscape)') : null;
+  let pickerExam = null;
+
+  function renderExamPicker(examId) {
+    pickerExam = examId;
     const sel = $('exam-select');
-    if (sel) {
-      /*
-       * Short labels: a native select shows the selected option's own text, and "Exam 2 · Ch 36-37"
-       * does not fit the width this row can spare. The chapter range sits beside the picker in the
-       * brand line, and title carries the full text for a hover or long press.
-       */
-      sel.innerHTML = EXAMS.map((e) => {
-        const label = e.id === 'wave' ? 'Waves' : `Exam ${e.n}`;
-        return `<option value="${e.id}" title="${label} · Ch ${escapeHTML(e.chapters)}">${label}</option>`;
-      }).join('');
-      sel.value = examId;
-    }
+    if (!sel) return;
+    const short = !!compact?.matches;
+    sel.innerHTML = EXAMS.map((e) => {
+      const label = short ? examLabel(e) : examLongLabel(e);
+      return `<option value="${e.id}" title="${escapeHTML(examLongLabel(e))} · Ch ${escapeHTML(e.chapters)}">${escapeHTML(label)}</option>`;
+    }).join('');
+    sel.value = examId;
   }
+  compact?.addEventListener?.('change', () => pickerExam && renderExamPicker(pickerExam));
 
   function renderLabTabs(exam, labId) {
     const labs = exam?.labs || [];
@@ -219,19 +217,18 @@ export function createHUD(api) {
   function mount(lab, exam, state) {
     const examId = exam?.id || 'e2';
     const labId = lab?.id || '';
-    renderExamTabs(examId);
+    renderExamPicker(examId);
     renderLabTabs(exam, labId);
     /*
-     * Two spans so the phone can drop the first. "Exam 2" repeats the highlighted exam tab, which
-     * on a phone now sits in the same row — the chapter range is the part that is not on screen
-     * anywhere else.
+     * Two spans so the phone can drop the first. The exam itself is named in the picker; the
+     * chapter range is the part that is not on screen anywhere else.
      */
     $('brand-sub').innerHTML = exam
-      ? `<span class="sub-course">PHY 2049 · Exam ${exam.n === 8 ? 'final' : exam.n} · </span><span class="sub-ch">Ch ${escapeHTML(exam.chapters)}</span>`
+      ? `<span class="sub-course">PHY 2049 · </span><span class="sub-ch">Ch ${escapeHTML(exam.chapters)}</span>`
       : '<span class="sub-course">PHY 2049</span>';
     $('setup-hint').innerHTML = mathText(lab?.hint || exam?.coming?.join(' · ') || '');
-    $('hint-action').innerHTML = mathText(lab?.hint || '');
-    $('hint-orbit').textContent = lab && lab.orbit === false ? 'Rotation locked' : 'Drag to orbit';
+    mountedLab = lab || null;
+    renderKeys();
     fillScenarios(lab);
     lawKey = '';
     resetChargeListSig();
@@ -254,17 +251,13 @@ export function createHUD(api) {
     renderLegend(lab);
     syncScenario(state);
     // The scene is a canvas; give it a name, and point to where its numbers are written out.
-    $('c')?.setAttribute('aria-label', `${lab.title} lab scene. Its values are listed in the equation panel and the readout below it.`);
+    $('c')?.setAttribute('aria-label', `${lab.title} lab scene. Its values are listed in the equation panel.`);
   }
 
   $('exam-select')?.addEventListener('change', (e) => {
     Promise.resolve(api.setExam(e.target.value)).catch((err) => {
       console.error('FLUX: could not open that exam', err);
     });
-  });
-  $('exam-tabs').addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-exam]');
-    if (btn) api.setExam(btn.dataset.exam);
   });
   $('lab-tabs').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-lab]');
@@ -314,11 +307,19 @@ export function createHUD(api) {
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (!$('keys').hidden) {
+        setKeys(false);
+        return;
+      }
       api.escape();
       return;
     }
     if (e.target.matches('input, select, textarea')) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === '?') {
+      setKeys($('keys').hidden);
+      return;
+    }
     if (e.key === 'p' || e.key === 'P') {
       api.togglePractice();
       return;
@@ -342,21 +343,91 @@ export function createHUD(api) {
     api.handleKey(e);
   });
 
+  /*
+   * Mouse and keyboard, on demand. This used to be a bar along the bottom of every lab, in dim type
+   * over the scene, saying the same things on every visit. It is read once; after that it is noise.
+   */
+  let mountedLab = null;
+  let planeLine = '';
+
   /** What plane a drag runs in, and what one grid square is worth — the scene's legend, in words. */
   function updatePlaneHint(lab) {
-    const el = $('hint-plane');
-    if (!el) return;
     const plane = workPlane();
     const off = PLANE_AXES[plane].off;
-    el.textContent = lab?.frame
-      ? `${plane} plane · 1 square = ${lenLabel(1 / sceneScale())} · Shift-drag for ${off}`
-      : 'Shift-drag for height';
+    const line = lab?.frame ? `Drags stay in the ${plane} plane (1 square = ${lenLabel(1 / sceneScale())}). Shift-drag moves along ${off}; Alt drops the snap.` : '';
+    if (line !== planeLine) {
+      planeLine = line;
+      if (!$('keys').hidden) renderKeys();
+    }
+  }
+
+  const ACTION_TEXT = {
+    sweep: ['Space', 'Play or pause the sum'],
+    'add+': ['+', 'Add a positive charge'],
+    'add-': ['−', 'Add a negative charge'],
+    delete: ['Delete', 'Remove the selected charge'],
+    reset: ['R', 'Reset the view'],
+  };
+
+  function renderKeys() {
+    const el = $('keys');
+    if (!el || el.hidden) return;
+    const lab = mountedLab;
+    const row = (k, t) => `<div class="keys-row"><kbd>${k}</kbd><span>${t}</span></div>`;
+    const mouse = [
+      lab && lab.orbit === false ? row('Drag', 'Rotation is locked in this lab') : row('Drag', 'Orbit the scene'),
+      row('Scroll', 'Zoom'),
+    ];
+    const seen = new Set();
+    const labKeys = Object.values(lab?.keys || {})
+      .filter((a) => ACTION_TEXT[a] && !seen.has(a) && seen.add(a))
+      .map((a) => row(...ACTION_TEXT[a]));
+    el.innerHTML = `<div class="keys-head"><h2>Mouse and keyboard</h2><button type="button" class="pb-x" data-keys-close aria-label="Close">×</button></div>
+      ${lab?.hint ? `<p class="keys-hint">${mathText(lab.hint)}</p>` : ''}
+      ${planeLine ? `<p class="keys-hint">${escapeHTML(planeLine)}</p>` : ''}
+      <div class="keys-list">${mouse.join('')}${labKeys.join('')}
+        ${row('P', 'Practice')}${row('U', 'Units reference')}
+        ${row('1–9', 'Labs in this exam')}${row('[ ]', 'Previous or next exam')}
+        ${row('Esc', 'Close a panel')}${row('?', 'This list')}</div>`;
+  }
+
+  function setKeys(on) {
+    const el = $('keys');
+    el.hidden = !on;
+    $('btn-keys').setAttribute('aria-expanded', on ? 'true' : 'false');
+    if (on) renderKeys();
+  }
+
+  $('btn-keys').addEventListener('click', () => setKeys($('keys').hidden));
+  $('keys').addEventListener('click', (e) => {
+    if (e.target.closest('[data-keys-close]')) setKeys(false);
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (!$('keys').hidden && !e.target.closest('#keys, #btn-keys')) setKeys(false);
+  });
+
+  /**
+   * The lab's headline numbers: its readout's first two cells, set larger at the top of the
+   * equation panel. The readout strip itself is phone-only now; on a laptop it sat in a band that
+   * shrank to 276px at 1024 wide and showed "9…" instead of a number.
+   */
+  let resultHTML = null;
+  function renderResult(html) {
+    if (html === resultHTML) return;
+    resultHTML = html;
+    const el = $('eq-result');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    const top = [...tmp.querySelectorAll('.cell')].slice(0, 2);
+    el.innerHTML = top.map((c) => c.outerHTML).join('');
+    el.hidden = top.length === 0;
   }
 
   function update(state, computed, lab) {
     if (!lab) {
       $('eq-live').innerHTML = '';
       $('readout').innerHTML = '';
+      renderResult('');
       $('insight-title').textContent = examById(state.examId)?.title || '';
       $('insight-body').innerHTML = prose((examById(state.examId)?.coming || []).join(', '));
       $('mini-plot').hidden = true;
@@ -378,7 +449,9 @@ export function createHUD(api) {
 
     setLaw(lab.law(state, computed));
     $('eq-live').innerHTML = lab.liveRows(state, computed);
-    $('readout').innerHTML = lab.readout(state, computed);
+    const readout = lab.readout(state, computed);
+    $('readout').innerHTML = readout;
+    renderResult(readout);
 
     const plot = lab.plot(state, computed);
     const canvas = $('mini-plot');

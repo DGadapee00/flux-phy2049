@@ -1,12 +1,14 @@
 /**
- * Predict first, in free lab play: a card at the foot of the Setup panel.
+ * Predict first, in free lab play: a card at the top of the Setup panel, open on a lab's first
+ * visit and folded to one line after that.
  *
  *   1. It names a change ("the battery stays connected; double d"). Try it loads the setup the
  *      prompt is written for, unless the lab is already on it.
  *   2. The student predicts what happens to each watched quantity — bigger, smaller, same; a
  *      factor; or yes/no — while the lab still shows the setup before the change.
- *   3. Make the change applies it to the lab itself, and the card grades each prediction against
- *      the lab's own before-and-after values (src/engine/predict.js), with the reasoning.
+ *   3. Make the change plays the change out in the lab itself (the numbers slide from before to
+ *      after, so the scene moves while you watch), and the card then grades each prediction
+ *      against the lab's own before-and-after values (src/engine/predict.js), with the reasoning.
  *   4. Undo puts the setup back; Next moves on to the lab's next prompt.
  *
  * Prompts live in src/data/predictions.js. The card hides while a practice problem is open, since
@@ -21,9 +23,11 @@ const KEY = 'flux.predict.v1';
 function readTally() {
   try {
     const d = JSON.parse(localStorage.getItem(KEY) || 'null');
-    return d && d.v === 1 && d.items ? d : { v: 1, items: {}, open: true };
+    const t = d && d.v === 1 && d.items ? d : { v: 1, items: {} };
+    t.seen ||= {};
+    return t;
   } catch {
-    return { v: 1, items: {}, open: true };
+    return { v: 1, items: {}, seen: {} };
   }
 }
 
@@ -38,12 +42,107 @@ function writeTally(d) {
 /** Whether the lab already holds a setup the prompt can start from, or needs its preset loaded. */
 const fitsNow = (p, s) => !!s && (p.fits ? p.fits(s) : s.scenarioId === p.scenario && !s.custom);
 
+/*
+ * The change, played out. Every number the prompt changes slides from its old value to its new one
+ * over about a second and a half, one frame at a time through the lab's own recompute, so the plates
+ * part, the lens thickens, the pattern spreads while the student watches. Anything that is not a
+ * number (a switch, a preset name) changes at the start. Grading never looks at these frames: it
+ * was settled on copies of the state before the first one (src/engine/predict.js).
+ */
+const PLAY_MS = 1500;
+const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Paths to the numbers that differ between two states of the same shape, or null if the shapes differ. */
+function numberDiffs(a, b, path = [], out = []) {
+  if (typeof a === 'number' && typeof b === 'number') {
+    if (a !== b && Number.isFinite(a) && Number.isFinite(b)) out.push({ path, from: a, to: b, int: Number.isInteger(a) && Number.isInteger(b) });
+    return out;
+  }
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    if (Array.isArray(a) !== Array.isArray(b)) return null;
+    const ka = Object.keys(a);
+    const kb = Object.keys(b);
+    if (ka.length !== kb.length || ka.some((k) => !(k in b))) return null;
+    for (const k of ka) if (numberDiffs(a[k], b[k], [...path, k], out) === null) return null;
+    return out;
+  }
+  return out;
+}
+
+function setPath(obj, path, v) {
+  let o = obj;
+  for (let i = 0; i < path.length - 1; i++) o = o[path[i]];
+  o[path[path.length - 1]] = v;
+}
+
+function replaceState(s, next) {
+  for (const k of Object.keys(s)) delete s[k];
+  Object.assign(s, cloneState(next));
+}
+
 const same = (a, b) => (typeof a === 'number' && typeof b === 'number' ? Math.abs(a - b) < 1e-9 : a === b);
 
 export function createPredict(api) {
   const host = document.getElementById('predict');
   const tally = readTally();
-  const st = { labId: null, idx: 0, phase: 'idle', picks: {}, result: null, snapshot: null, hidden: null, setupKey: '' };
+  const st = { labId: null, idx: 0, phase: 'idle', picks: {}, result: null, snapshot: null, hidden: null, setupKey: '', open: true, play: null };
+
+  /**
+   * Slide the live state `s` to `target` and call done() at the end. Returns false (and changes
+   * nothing) when the two can't be tweened, so the caller snaps instead.
+   */
+  function play(s, target, done) {
+    const diffs = reducedMotion() ? null : numberDiffs(s, target);
+    if (!diffs || diffs.length === 0) return false;
+    // Start from the target's shape (switches already thrown), with the changing numbers at their old values.
+    const start = cloneState(target);
+    for (const d of diffs) setPath(start, d.path, d.from);
+    replaceState(s, start);
+    const t0 = performance.now();
+    const token = {};
+    st.play = { token, s, target, done };
+    const step = (now) => {
+      if (st.play?.token !== token) return;
+      const k = Math.min(1, (now - t0) / PLAY_MS);
+      if (k >= 1) {
+        finishPlay();
+        return;
+      }
+      const e = ease(k);
+      for (const d of diffs) {
+        const v = d.from + (d.to - d.from) * e;
+        setPath(s, d.path, d.int ? Math.round(v) : v);
+      }
+      api.bump();
+      requestAnimationFrame(step);
+    };
+    api.bump();
+    requestAnimationFrame(step);
+    return true;
+  }
+
+  /**
+   * Land exactly on the target, now: at the end of the slide, or when the student leaves mid-way.
+   * Leaving for another lab (`away`) lands the old lab quietly: bump() would mark the lab now on
+   * screen as hand-edited.
+   */
+  function finishPlay({ away = false } = {}) {
+    const p = st.play;
+    if (!p) return;
+    st.play = null;
+    replaceState(p.s, p.target);
+    if (away) p.s.dirty = true;
+    else {
+      api.bump();
+      p.done();
+    }
+  }
+
+  /** A practice problem took the lab over and wrote its own setup: stop, and touch nothing. */
+  function cancelPlay() {
+    st.play = null;
+  }
 
   const prompts = () => predictionsFor(st.labId);
   const prompt = () => prompts()[st.idx] || null;
@@ -98,8 +197,8 @@ export function createPredict(api) {
     const { before, after } = run(lab, s, p);
     const got = outcomes(p, before, after);
     st.snapshot = cloneState(s);
-    p.apply(s);
-    api.bump();
+    const target = cloneState(s);
+    p.apply(target);
     const rights = p.watch.map((w) => same(st.picks[w.id], got[w.id]));
     const allRight = rights.every(Boolean);
     const t = (tally.items[p.id] ||= { n: 0, right: 0 });
@@ -107,22 +206,39 @@ export function createPredict(api) {
     if (allRight) t.right++;
     writeTally(tally);
     st.result = { before, after, got, rights, allRight, usual: matchesExpect(p, got) };
-    st.phase = 'done';
+    const reveal = () => {
+      st.phase = 'done';
+      render();
+      const say = document.getElementById('sr-announce');
+      if (say) say.textContent = allRight ? 'Prediction right.' : `${rights.filter(Boolean).length} of ${rights.length} predictions right.`;
+    };
+    // The change is the show: play it in the lab, and only then say how the prediction did.
+    st.phase = 'changing';
     render();
-    const say = document.getElementById('sr-announce');
-    if (say) say.textContent = allRight ? 'Prediction right.' : `${rights.filter(Boolean).length} of ${rights.length} predictions right.`;
+    if (!play(s, target, reveal)) {
+      p.apply(s);
+      api.bump();
+      reveal();
+    }
   }
 
   function undo() {
     const s = api.slice();
     if (!st.snapshot || !s) return;
-    for (const k of Object.keys(s)) delete s[k];
-    Object.assign(s, cloneState(st.snapshot));
+    const back = st.snapshot;
     st.snapshot = null;
-    api.bump();
-    st.phase = 'idle';
-    st.result = null;
+    const settle = () => {
+      st.phase = 'idle';
+      st.result = null;
+      render();
+    };
+    st.phase = 'changing';
     render();
+    if (!play(s, back, settle)) {
+      replaceState(s, back);
+      api.bump();
+      settle();
+    }
   }
 
   function render() {
@@ -132,14 +248,16 @@ export function createPredict(api) {
     const list = prompts();
     const p = prompt();
     const done = list.filter((x) => tally.items[x.id]?.right).length;
+    const busy = st.phase === 'predict' || st.phase === 'changing';
     const head = `<div class="pr-head">
-        <button type="button" class="pr-toggle" data-pr="toggle" aria-expanded="${tally.open}">
+        <button type="button" class="pr-toggle" data-pr="toggle" aria-expanded="${st.open}">
           <span class="pr-title">Predict first</span>
           <span class="pr-count">${done}/${list.length} right</span>
         </button>
-        ${tally.open ? `<span class="pr-nav"><button type="button" data-pr="prev" aria-label="Previous prediction" ${st.phase === 'predict' ? 'disabled' : ''}>‹</button><span>${st.idx + 1} of ${list.length}</span><button type="button" data-pr="next" aria-label="Next prediction" ${st.phase === 'predict' ? 'disabled' : ''}>›</button></span>` : ''}
+        ${st.open ? `<span class="pr-nav"><button type="button" data-pr="prev" aria-label="Previous prediction" ${busy ? 'disabled' : ''}>‹</button><span>${st.idx + 1} of ${list.length}</span><button type="button" data-pr="next" aria-label="Next prediction" ${busy ? 'disabled' : ''}>›</button></span>` : ''}
       </div>`;
-    if (!tally.open) {
+    host.classList.toggle('open', st.open);
+    if (!st.open) {
       host.innerHTML = head;
       return;
     }
@@ -162,6 +280,8 @@ export function createPredict(api) {
       const ready = p.watch.every((w) => st.picks[w.id] !== undefined);
       bodyHTML = `${ask}${rows}
         <button type="button" class="btn pr-go" data-pr="change" ${ready ? '' : 'disabled'}>${ready ? 'Make the change' : 'Predict each one first'}</button>`;
+    } else if (st.phase === 'changing') {
+      bodyHTML = `${ask}<p class="pr-watch" role="status">Watch the lab…</p>`;
     } else {
       const r = st.result;
       const rows = p.watch
@@ -201,8 +321,7 @@ export function createPredict(api) {
     const n = prompts().length;
     switch (b.dataset.pr) {
       case 'toggle':
-        tally.open = !tally.open;
-        writeTally(tally);
+        st.open = !st.open;
         render();
         break;
       case 'prev':
@@ -233,7 +352,14 @@ export function createPredict(api) {
       const labId = api.labId();
       const hidden = !labId || api.practiceActive();
       if (labId !== st.labId) {
+        finishPlay({ away: true });
+        // The card opens on a lab's first visit; once it has been seen there, it waits folded.
+        if (st.labId && !st.hidden && prompts().length && !tally.seen[st.labId]) {
+          tally.seen[st.labId] = true;
+          writeTally(tally);
+        }
         st.labId = labId;
+        st.open = !!labId && !tally.seen[labId];
         reset(labId ? firstOpen() : 0);
         st.hidden = hidden;
         render();
@@ -249,6 +375,7 @@ export function createPredict(api) {
       if (hidden !== st.hidden) {
         st.hidden = hidden;
         // A problem took the lab over: whatever was mid-prediction no longer describes it.
+        if (hidden) cancelPlay();
         if (hidden && st.phase !== 'idle') reset(st.idx);
         render();
       }

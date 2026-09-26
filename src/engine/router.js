@@ -1,4 +1,4 @@
-import { EXAMS, LAB_META, examById } from '../data/catalog.js';
+import { EXAMS, LAB_META, examById, nextExam } from '../data/catalog.js';
 
 /**
  * Parse `#/e2/gauss`, `#/gauss`, or empty, plus an optional problem query:
@@ -13,7 +13,11 @@ export function parseHash() {
   const problem = { problemId, seed: Number.isFinite(s) ? Math.max(0, Math.floor(s)) : 0 };
 
   const [a, b] = raw.split('/').filter(Boolean);
-  if (!a) return { examId: 'e2', labId: 'gauss', ...problem };
+  if (!a) {
+    // No link: open the exam coming up next, on its first lab.
+    const exam = nextExam();
+    return { examId: exam.id, labId: exam.labs[0] || null, ...problem };
+  }
   if (LAB_META[a] && !b) {
     const meta = LAB_META[a];
     return { examId: meta.exam, labId: a, ...problem };

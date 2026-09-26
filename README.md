@@ -65,11 +65,11 @@ Press **P** (or the yellow **Practice** button) for the problem bank: 258 genera
 
 Links open a specific version: `#/e2/field?p=e2.36a.collinear&s=0`. Progress is saved in this browser only. Authoring, answer-key notes and the checks: [PROBLEMS.md](PROBLEMS.md).
 
-Every panel is typeset — including the practice panel, where the statement, hints and worked steps are set as mathematics rather than as ASCII. In the labs: the law at the top of the equation panel, the live rows under it, the explainer at the bottom, and the readout across the bottom of the screen all render their symbols with KaTeX, with the central equation of an explainer set on its own line.
+Every panel is typeset — including the practice panel, where the statement, hints and worked steps are set as mathematics rather than as ASCII. In the labs: the law at the top of the equation panel, the live rows under it, the explainer at the bottom, and the two headline numbers set larger under the law all render their symbols with KaTeX, with the central equation of an explainer set on its own line.
 
 ## Predict first
 
-Every lab has a **Predict first** card at the foot of its Setup panel: 53 short experiments across the 26 labs. Each one names a change ("the battery stays connected; pull the plates to twice the separation") and asks what it does to one to three quantities. You answer bigger / smaller / same, or by what factor, or yes / no. You answer while the lab still shows the setup before the change. **Make the change** then does it in the lab, and the card grades each prediction against the lab's own before-and-after values and gives the reasoning. **Undo** puts the setup back. **Try it** first loads the preset the experiment is written for, unless the lab is already on it. Several experiments aim at the classic wrong answers: a narrower slit gives a *wider* pattern, a period that doesn't depend on speed, a third polarizer that lets light *through*, a bigger Gaussian sphere with the same flux. The card hides while a practice problem is open, and a tally of right predictions stays in this browser.
+Every lab has a **Predict first** card at the top of its Setup panel, open the first time you visit the lab and folded to one line after that: 53 short experiments across the 26 labs. Each one names a change ("the battery stays connected; pull the plates to twice the separation") and asks what it does to one to three quantities. You answer bigger / smaller / same, or by what factor, or yes / no. You answer while the lab still shows the setup before the change. **Make the change** then plays the change out in the lab — the numbers slide from before to after over a second and a half, so you watch the plates part or the pattern spread — and the card then grades each prediction against the lab's own before-and-after values and gives the reasoning. **Undo** plays it back. **Try it** first loads the preset the experiment is written for, unless the lab is already on it. Several experiments aim at the classic wrong answers: a narrower slit gives a *wider* pattern, a period that doesn't depend on speed, a third polarizer that lets light *through*, a bigger Gaussian sphere with the same flux. The card hides while a practice problem is open, and a tally of right predictions stays in this browser.
 
 ## Setting up by hand
 
@@ -151,7 +151,8 @@ Sign conventions: B is along +ŷ in Mag force; Amperian loops and current loops 
 ## Controls
 
 - **P** opens Practice, **Esc** closes it
-- Exam tabs **1–7 W**, or `[` / `]`; Back / Forward walk through the labs you visited
+- The exam picker (named and dated), or `[` / `]`; Back / Forward walk through the labs you visited. With no link, the app opens on the next exam coming up
+- **?** lists the mouse and keyboard controls for the lab on screen
 - Labs in the current exam: keys `1–9`
 - Drag to orbit (Ohm / Power / Circuits / Refraction / Mirrors / Lenses lock rotation), scroll to zoom
 - Drag a charge in the work plane; **Shift-drag** moves it along the third axis; **Alt** drops the snap

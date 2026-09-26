@@ -23,7 +23,7 @@ import { createProgress, pickSet, pickInterleave, MASTERED_BOX, INTERVAL_DAYS } 
 import { PRINCIPLES } from '../problems/principles.js';
 import { asksPrinciple, principleOptions, gradePrinciple, primaryOf, UNSURE } from '../problems/principle-step.js';
 import { guidanceFor, workedExample } from '../problems/fading.js';
-import { examById, LAB_META } from '../data/catalog.js';
+import { examById, examLabel, LAB_META } from '../data/catalog.js';
 import { mathProse, tex } from './shared.js';
 
 const EXAM_MINUTES = 50;
@@ -193,7 +193,12 @@ export function createPractice(api) {
     const ids = problemsForExam(api.examId()).map((p) => p.id);
     const c = progress.counts(ids);
     const due = progress.dueIds(PROBLEMS.map((p) => p.id)).length;
-    el.textContent = `${ids.length} problems · ${c.mastered} mastered${due ? ` · ${due} due` : ''}`;
+    // No zeros for a newcomer: say what is here, then what has been done once there is something.
+    const bits = [`${ids.length} problems`];
+    if (c.mastered) bits.push(`${c.mastered} mastered`);
+    else if (c.seen) bits.push(`${c.seen} tried`);
+    if (due) bits.push(`${due} due`);
+    el.textContent = bits.join(' · ');
   }
 
   // ------------------------------------------------------------------ attempts
@@ -707,15 +712,19 @@ export function createPractice(api) {
 
     return `<div class="pb-head">
         <div>
-          <div class="pb-kicker">Practice · ${exam.id === 'wave' ? 'Final exam' : `Exam ${exam.n}`} · Ch ${esc(exam.chapters)}</div>
+          <div class="pb-kicker">Practice · ${esc(examLabel(exam))} · Ch ${esc(exam.chapters)}</div>
           <h2 class="pb-h">${esc(exam.title)}</h2>
         </div>
         <button type="button" class="pb-x" data-act="close" title="Back to the lab (P)" aria-label="Close practice">×</button>
       </div>
-      <div class="pb-meter" title="Mastery: a problem counts once you've solved it cleanly on ${MASTERED_BOX} spaced reviews">
+      ${
+        c.seen
+          ? `<div class="pb-meter" title="Mastery: a problem counts once you've solved it cleanly on ${MASTERED_BOX} spaced reviews">
         <div class="pb-meter-bar"><i style="width:${pct}%"></i></div>
         <div class="pb-meter-text"><span>${c.mastered} of ${c.total} mastered</span><span>${c.seen} tried</span></div>
-      </div>
+      </div>`
+          : `<p class="pb-welcome">${c.total} problems for this exam. Pick one below, or let a mixed set choose.</p>`
+      }
       <div class="pb-actions">
         ${examBtn}
         <div class="pb-row">

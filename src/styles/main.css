@@ -94,7 +94,6 @@ body {
 .hud .btn,
 .hud .toggle,
 .hud .tab,
-.hud .exam-tab,
 .hud input,
 .hud select,
 .hud .seg button {
@@ -141,21 +140,16 @@ body {
   color: var(--text-muted);
 }
 
-.exam-tabs {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 2px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-
-/* Hidden on desktop, where all eight tabs fit; mobile.css shows it instead of the strip. */
+/* The exam picker: full name and date on a laptop; mobile.css moves it into the phone's one-line header. */
 .exam-select {
-  display: none;
+  display: block;
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 10px;
   font: inherit;
   font-size: 13px;
-  color: var(--ink);
+  font-weight: 500;
+  color: var(--text);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -172,31 +166,6 @@ body {
   background-repeat: no-repeat;
   background-position: right 7px center;
   background-size: 10px 6px;
-}
-
-.exam-tab {
-  flex: 1;
-  min-width: 0;
-  padding: 4px 0 5px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-dim);
-  font: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.2s var(--ease), background 0.2s var(--ease);
-}
-
-.exam-tab:hover {
-  color: var(--text);
-  background: rgba(236, 230, 226, 0.04);
-}
-
-.exam-tab.active {
-  color: var(--yellow);
-  background: rgba(244, 211, 69, 0.1);
 }
 
 .lab-tabs {
@@ -384,7 +353,7 @@ body {
   width: min(360px, calc(100vw - 360px));
   /* The readout sits at bottom:42 and stands ~70 tall, so stopping 64px short ran straight
      through it on any window short enough for this panel to reach its limit. */
-  max-height: calc(100vh - var(--below-brand, 196px) - 124px);
+  max-height: calc(100vh - var(--below-brand, 196px) - 16px);
   overflow: auto;
   overscroll-behavior: contain;
   /*
@@ -410,8 +379,9 @@ body {
   flex-shrink: 0;
 }
 
+/* The legend sits in the bottom-left corner under this panel; stop short of it. */
 body.has-legend .eq-panel {
-  max-height: calc(100vh - var(--below-brand, 196px) - 180px);
+  max-height: calc(100vh - var(--below-brand, 196px) - 104px);
 }
 
 .law {
@@ -424,6 +394,63 @@ body.has-legend .eq-panel {
 
 .law .katex {
   font-size: 1.32em;
+}
+
+/* The headline numbers: two, larger than the rows under them, and never cut to "9…". */
+.eq-result {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.eq-result .cell {
+  min-width: 0;
+}
+
+.eq-result .label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.eq-result .value {
+  margin-top: 1px;
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.25;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.eq-result .value.ok {
+  color: var(--ok);
+}
+
+.eq-result .value.warn {
+  color: var(--warn);
+}
+
+.eq-result .value.bad {
+  color: var(--danger);
+}
+
+.eq-result .value.qV {
+  color: var(--blue);
+}
+
+.eq-result .value.qI {
+  color: var(--yellow);
+}
+
+.eq-result .value.qR {
+  color: var(--green);
+}
+
+.eq-result .value.qP {
+  color: var(--red);
 }
 
 .law-row {
@@ -533,7 +560,7 @@ sup {
   top: 196px;
   right: 16px;
   width: 300px;
-  max-height: calc(100vh - 260px);
+  max-height: calc(100vh - 196px - 16px);
   overflow: auto;
   padding: 14px;
   display: flex;
@@ -820,7 +847,7 @@ select {
 
 .legend {
   left: 16px;
-  bottom: 96px;
+  bottom: 16px;
   padding: 9px 12px;
   border-radius: var(--radius);
   background: var(--panel);
@@ -964,21 +991,6 @@ input[type='checkbox'] {
   color: var(--danger);
 }
 
-.hint-bar {
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  color: var(--text-dim);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.hint-bar .sep {
-  opacity: 0.5;
-}
-
 /* ---------- In-scene labels (Manim background stroke instead of boxes) ---------- */
 
 .grid-tick {
@@ -1120,6 +1132,13 @@ input[type='checkbox'] {
 
 .readout .value.qP {
   color: var(--red);
+}
+
+/* Phone only (mobile.css): on a laptop its numbers are the equation panel's result row. */
+@media (min-width: 721px) {
+  .readout {
+    display: none;
+  }
 }
 
 .eq-live .katex {
@@ -1276,7 +1295,7 @@ select:focus-visible {
   top: var(--below-brand, 230px);
   left: 16px;
   width: min(384px, calc(100vw - 360px));
-  max-height: calc(100vh - var(--below-brand, 230px) - 118px);
+  max-height: calc(100vh - var(--below-brand, 230px) - 16px);
   overflow: auto;
   overscroll-behavior: contain;
   padding: 14px 16px 16px;
@@ -1415,7 +1434,7 @@ body.units-open .legend {
   position: fixed;
   left: 416px;
   right: 332px;
-  bottom: 124px;
+  bottom: 16px;
   max-width: 920px;
   margin-inline: auto;
   padding: 8px 14px 6px;
@@ -1540,8 +1559,29 @@ body.units-open .legend {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Open, it reads as the lab's opening question rather than one more control. */
+.predict.open {
+  margin: 0 -6px;
+  padding: 10px 10px 12px;
+  border: 1px solid rgba(244, 211, 69, 0.28);
+  border-radius: var(--radius);
+  background: rgba(244, 211, 69, 0.04);
+}
+
+.pr-watch {
+  font-size: 12.5px;
+  color: var(--yellow);
+  animation: pr-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pr-pulse {
+  50% {
+    opacity: 0.45;
+  }
 }
 
 .pr-head {
@@ -1704,4 +1744,66 @@ body.units-open .legend {
 
 .pr-after .btn {
   flex: 1;
+}
+
+/* ---------- Mouse and keyboard (the ? button; replaces the hint bar) ---------- */
+
+.keys-btn {
+  min-width: 34px;
+  font-weight: 600;
+}
+
+.keys {
+  top: 84px;
+  right: 16px;
+  width: 300px;
+  z-index: 20;
+  padding: 12px 14px 14px;
+  background: rgba(14, 15, 18, 0.96);
+  display: grid;
+  gap: 8px;
+}
+
+.keys-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.keys-head h2 {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.keys-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.keys-list {
+  display: grid;
+  gap: 5px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.keys-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.keys-row kbd {
+  justify-self: start;
+  padding: 1px 6px;
+  border: 1px solid var(--border-hover);
+  border-radius: 3px;
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--text-muted);
 }

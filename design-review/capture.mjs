@@ -10,7 +10,8 @@
  * words.json), gallery (every lab × scenario at 1440×900 → shots/gallery).
  *
  * Output: design-review/shots/<name>-<width>.png. Needs the dev server on :5174 (npm start).
- * Env: FLUX_FONTS=/dir serves Google Fonts from local files (see routeFonts); FLUX_SIZES=1440,390
+ * Env: FLUX_OUT=dir writes the shots somewhere else (design-review/after for the post-fix set);
+ * FLUX_FONTS=/dir serves Google Fonts from local files (see routeFonts); FLUX_SIZES=1440,390
  * limits the review and focus groups to those widths.
  */
 import fs from 'node:fs';
@@ -18,7 +19,7 @@ import path from 'node:path';
 import { chromium } from '../scripts/playwright.mjs';
 
 const BASE = 'http://localhost:5174/';
-const OUT = path.resolve('design-review/shots');
+const OUT = path.resolve(process.env.FLUX_OUT || 'design-review/shots');
 fs.mkdirSync(OUT, { recursive: true });
 
 const SIZES = [
@@ -143,6 +144,12 @@ for (const size of SIZES) {
     const { ctx, page } = await fresh(size);
     await go(page, '');
     await shot(page, 'first-load', size);
+    if (!size.phone) {
+      await page.keyboard.press('?');
+      await page.waitForTimeout(300);
+      await shot(page, 'keys-sheet', size);
+      await page.keyboard.press('Escape');
+    }
     if (size.phone) {
       // What is under the fold of the Setup sheet on first load.
       await scrollPanel(page, '#controls');
@@ -178,8 +185,12 @@ for (const size of SIZES) {
     await shot(page, 'predict-before', size);
     const go2 = await page.$('[data-pr="change"]:not([disabled])');
     if (go2) {
-      await clickSel(page, '[data-pr="change"]');
-      await page.waitForTimeout(1200);
+      await page.click('[data-pr="change"]');
+      // The change plays out over about 1.5 s: one frame partway, then the graded card.
+      await page.waitForTimeout(500);
+      await shot(page, 'predict-changing', size);
+      await page.waitForFunction(() => window.__gauss.predict.current().phase !== 'changing', null, { timeout: 6000 }).catch(() => {});
+      await page.waitForTimeout(300);
       await scrollPanel(page, '#controls', '#predict');
       await shot(page, 'predict-after', size);
       await scrollPanel(page, '#controls');
